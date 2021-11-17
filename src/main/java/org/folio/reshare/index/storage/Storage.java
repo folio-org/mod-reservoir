@@ -25,8 +25,8 @@ public class Storage {
   /**
    * Doc.
    */
-  public Storage(Vertx vertx) {
-    this.tenantPgPool = TenantPgPoolImpl.tenantPgPool(vertx,"diku");
+  public Storage(Vertx vertx, String tenant) {
+    this.tenantPgPool = TenantPgPoolImpl.tenantPgPool(vertx,tenant);
     this.stmtUpsertBibRecord = tenantPgPool.preparedQuery(
             "INSERT INTO {schema}.bib_record "
                     + "(local_identifier, library_id, match_key, source, inventory) "

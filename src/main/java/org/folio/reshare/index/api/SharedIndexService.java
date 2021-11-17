@@ -3,17 +3,20 @@ package org.folio.reshare.index.api;
 import io.vertx.core.Vertx;
 import io.vertx.core.json.JsonObject;
 import io.vertx.ext.web.RoutingContext;
+import io.vertx.ext.web.validation.RequestParameters;
+import io.vertx.ext.web.validation.ValidationHandler;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.folio.okapi.common.XOkapiHeaders;
 import org.folio.reshare.index.storage.Storage;
 
 public class SharedIndexService {
 
   private static final Logger log = LogManager.getLogger(SharedIndexService.class);
-  final Storage storage;
+  final Vertx vertx;
 
   public SharedIndexService(Vertx vertx) {
-    storage = new Storage(vertx);
+    this.vertx = vertx;
   }
 
   /**
@@ -25,7 +28,6 @@ public class SharedIndexService {
     routingCtx.response().putHeader("Content-Type", "text/plain");
     routingCtx.end("To be implemented");
   }
-
 
   /**
    * Doc.
@@ -41,7 +43,8 @@ public class SharedIndexService {
     MatchKey matchKey = new MatchKey(inventory.getJsonObject("instance"));
     inventory.getJsonObject("instance").put("matchKey", matchKey.getKey());
 
-    storage.upsertBibRecord(localIdentifier, libraryId, matchKey.getKey(), source, inventory)
+    storage(routingCtxt)
+        .upsertBibRecord(localIdentifier, libraryId, matchKey.getKey(), source, inventory)
         .onComplete(
           bibRecord -> {
             if (bibRecord.succeeded()) {
@@ -50,6 +53,11 @@ public class SharedIndexService {
               errorResponse(routingCtxt, requestJson, bibRecord.cause().getMessage());
             }
           });
+  }
+
+  private Storage storage(RoutingContext routingContext) {
+    String tenant = routingContext.request().getHeader(XOkapiHeaders.TENANT);
+    return new Storage(vertx, tenant);
   }
 
   private void errorResponse(RoutingContext routingCtxt, JsonObject inputJson, String message) {
