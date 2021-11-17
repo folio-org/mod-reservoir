@@ -1,0 +1,6 @@
+in: query
+name: query
+description: CQL query
+required: false
+schema:
+  type: string

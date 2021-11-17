@@ -1,0 +1,18 @@
+{
+  "description": "List of key/value parameters of an error",
+  "type": "object",
+  "properties": {
+    "key": {
+      "description": "The key for this parameter",
+      "type": "string"
+    },
+    "value": {
+      "description": "The value of this parameter",
+      "type": "string"
+    }
+  },
+  "additionalProperties": false,
+  "required": [
+    "key"
+  ]
+}

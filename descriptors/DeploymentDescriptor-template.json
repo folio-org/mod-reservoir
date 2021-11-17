@@ -1,0 +1,7 @@
+{
+  "srvcId": "${artifactId}-${version}",
+  "nodeId": "localhost",
+  "descriptor": {
+    "exec": "java -jar ../mod-reshare-index/target/mod-reshare-index-fat.jar -Dhttp.port=%p"
+  }
+}

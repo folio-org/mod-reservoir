@@ -1,0 +1,6 @@
+in: query
+name: facets
+description: facet names. Each facet is separted by comma.
+required: false
+schema:
+  type: string

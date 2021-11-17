@@ -1,0 +1,47 @@
+{
+  "agreementId": "20000000-0000-4000-8000-000000000000",
+  "accessCountPeriods": ["2020-01", "2020-02", "2020-03", "2020-04", "2020-05", "2020-06"],
+  "totalItemRequestsTotal": 996,
+  "totalItemRequestsByPeriod": [190, 436, 102, 169, 99, null],
+  "uniqueItemRequestsTotal": 447,
+  "uniqueItemRequestsByPeriod": [81, 207, 41, 64, 38, 59],
+  "items": [
+    {
+    "kbId": "21000000-0000-4000-8000-000000000000",
+    "title": "Journal A",
+    "printISSN":  "1111-2222",
+    "onlineISSN": "1111-1223",
+    "accessType": "Controlled",
+    "metricType": "Total_Item_Requests",
+    "accessCountTotal": 577,
+    "accessCountsByPeriod": [190, 264, 61, 10, 52, null]
+    },{
+    "kbId": "21000000-0000-4000-8000-000000000000",
+    "title": "Journal A",
+    "printISSN":  "1111-2222",
+    "onlineISSN": "1111-1223",
+    "accessType": "Controlled",
+    "metricType": "Unique_Item_Requests",
+    "accessCountTotal": 298,
+    "accessCountsByPeriod": [81, 142, 32, 4, 21, 18]
+    },{
+    "kbId": "22000000-0000-4000-8000-000000000000",
+    "title": "Journal B",
+    "printISSN":  "2222-3333",
+    "onlineISSN": "2222-2334",
+    "accessType": "Controlled",
+    "metricType": "Total_Item_Requests",
+    "accessCountTotal": 419,
+    "accessCountsByPeriod": [0, 172, 41, 159, 47, null]
+    },{
+    "kbId": "22000000-0000-4000-8000-000000000000",
+    "title": "Journal B",
+    "printISSN":  "2222-3333",
+    "onlineISSN": "2222-2334",
+    "accessType": "Controlled",
+    "metricType": "Unique_Item_Requests",
+    "accessCountTotal": 149,
+    "accessCountsByPeriod": [0, 63, 9, 60, 17, 41]
+    }
+  ]
+}

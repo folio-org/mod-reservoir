@@ -1,0 +1,7 @@
+in: query
+name: csv
+description: whether to return CSV response with details.
+required: false
+schema:
+  type: boolean
+  default: false

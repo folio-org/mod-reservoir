@@ -1,0 +1,23 @@
+{
+  "description": "report titles (for both request and response)",
+  "type": "object",
+  "properties": {
+    "titles": {
+      "description": "List of titles",
+      "type": "array",
+      "items": {
+        "type": "object",
+        "$ref": "reportTitle.json"
+      }
+    },
+    "resultInfo": {
+      "description": "Common result set information",
+      "type": "object",
+      "$ref" : "resultInfo.json"
+    }
+  },
+  "additionalProperties": false,
+  "required": [
+    "titles"
+  ]
+}
