@@ -1,9 +1,6 @@
 package org.folio.reshare.index.api;
 
-import io.vertx.core.Future;
-import io.vertx.core.Promise;
 import io.vertx.core.Vertx;
-import io.vertx.core.json.JsonArray;
 import io.vertx.core.json.JsonObject;
 import io.vertx.ext.web.RoutingContext;
 import org.apache.logging.log4j.LogManager;
@@ -39,11 +36,12 @@ public class SharedIndexService {
 
     final String localIdentifier = requestJson.getString("localIdentifier");
     final String libraryId = requestJson.getString("libraryId");
-    final String matchKey = requestJson.getString("matchKey");
     final JsonObject source = requestJson.getJsonObject("source");
     final JsonObject inventory = requestJson.getJsonObject("inventory");
+    MatchKey matchKey = new MatchKey(inventory.getJsonObject("instance"));
+    inventory.getJsonObject("instance").put("matchKey", matchKey.getKey());
 
-    storage.upsertBibRecord(localIdentifier, libraryId, matchKey, source, inventory)
+    storage.upsertBibRecord(localIdentifier, libraryId, matchKey.getKey(), source, inventory)
         .onComplete(
           bibRecord -> {
             if (bibRecord.succeeded()) {
