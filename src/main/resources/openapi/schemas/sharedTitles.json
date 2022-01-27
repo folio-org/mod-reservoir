@@ -1,5 +1,5 @@
 {
-  "description": "report titles (for both request and response)",
+  "description": "shared titles",
   "type": "object",
   "properties": {
     "titles": {
@@ -7,7 +7,7 @@
       "type": "array",
       "items": {
         "type": "object",
-        "$ref": "reportTitle.json"
+        "$ref": "sharedTitle.json"
       }
     },
     "resultInfo": {

@@ -1,0 +1,26 @@
+{
+  "description": "shared title",
+  "type": "object",
+  "properties": {
+    "localIdentifier": {
+      "type": "string",
+      "description" : "local identifier (as assigned by the library)"
+    },
+    "libraryId": {
+      "type": "string",
+      "description": "Library identifier"
+    },
+    "source": {
+      "type": "object",
+      "description": "Source object"
+    },
+    "inventory": {
+      "type": "object",
+      "description": "Inventory object"
+    }
+  },
+  "additionalProperties": false,
+  "required": [
+    "localIdentifier", "libraryId", "source", "inventory"
+  ]
+}
