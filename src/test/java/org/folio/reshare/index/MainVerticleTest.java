@@ -94,6 +94,7 @@ public class MainVerticleTest {
     JsonObject sharedTitle = new JsonObject()
             .put("localIdentifier", "HRID00121")
             .put("libraryId", "diku911")
+            .put("source", new JsonObject())
             .put("inventory", new JsonObject().put("instance", new JsonObject()));
     RestAssured.given()
             .header(XOkapiHeaders.TENANT, TENANT)
