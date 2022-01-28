@@ -31,9 +31,6 @@
 
   <properties>
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-    <openapi-generator.version>5.1.0</openapi-generator.version>
-    <jackson-databind-nullable.version>0.1.0</jackson-databind-nullable.version>
-    <tenant.yaml.file>${project.basedir}/src/main/resources/openapi/tenant-2.0.yaml</tenant.yaml.file>
   </properties>
 
   <dependencyManagement>
