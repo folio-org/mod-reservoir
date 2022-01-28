@@ -30,18 +30,18 @@
           "methods": [
             "GET"
           ],
-          "pathPattern": "/reshare-index/shared-titles",
+          "pathPattern": "/shared-index/shared-titles",
           "permissionsRequired": [
-            "reshare-index.collection.get"
+            "shared-index.titles.collection.get"
           ]
         },
         {
           "methods": [
             "PUT"
           ],
-          "pathPattern": "/reshare-index/shared-titles",
+          "pathPattern": "/shared-index/shared-titles",
           "permissionsRequired": [
-            "reshare-index.item.put"
+            "shared-index.titles.item.put"
           ]
         }
       ]
@@ -50,22 +50,22 @@
   "requires": [],
   "permissionSets": [
     {
-      "permissionName": "reshare-index.collection.get",
-      "displayName": "reshare - get titles",
-      "description": "lookup reshare titles"
+      "permissionName": "shared-index.titles.collection.get",
+      "displayName": "shared index - get titles",
+      "description": "lookup shared titles"
     },
     {
-      "permissionName": "reshare-index.collection.item.put",
-      "displayName": "reshare - upsert title",
-      "description": "update or insert reshare title"
+      "permissionName": "shared-index.titles.item.put",
+      "displayName": "shared index - upsert title",
+      "description": "update or insert shared title"
     },
     {
-      "permissionName": "reshare-index.all",
-      "displayName": "reshare - all permissions",
+      "permissionName": "shared-index.all",
+      "displayName": "shared index - all permissions",
       "description": "create, update, retrieve and delete shared titles",
       "subPermissions": [
-        "reshare-index.collection.get",
-        "reshare-index.item.put"
+        "shared-index.titles.collection.get",
+        "shared-index.titles.item.put"
       ]
     }
   ],

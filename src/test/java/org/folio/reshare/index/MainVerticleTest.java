@@ -141,7 +141,7 @@ public class MainVerticleTest {
         .put("/shared-index/shared-titles")
         .then().statusCode(400)
         .header("Content-Type", is("text/plain"))
-        .body(is("ERROR: relation \"unknowntenant_mod_reshare_index.bib_record\" does not exist (42P01)"));
+        .body(is("ERROR: relation \"unknowntenant_mod_shared_index.bib_record\" does not exist (42P01)"));
   }
 
   @Test

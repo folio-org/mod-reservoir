@@ -1,7 +1,7 @@
 <project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
   <modelVersion>4.0.0</modelVersion>
   <groupId>org.folio</groupId>
-  <artifactId>mod-reshare-index</artifactId>
+  <artifactId>mod-shared-index</artifactId>
   <version>0.0.1-SNAPSHOT</version>
   <packaging>jar</packaging>
 
@@ -38,7 +38,7 @@
       <dependency>
         <groupId>io.vertx</groupId>
         <artifactId>vertx-stack-depchain</artifactId>
-        <version>4.2.2</version>
+        <version>4.2.4</version>
         <type>pom</type>
         <scope>import</scope>
       </dependency>
@@ -62,12 +62,12 @@
       <dependency>
         <groupId>org.folio.okapi</groupId>
         <artifactId>okapi-common</artifactId>
-        <version>4.8.2</version>
+        <version>4.12.0</version>
       </dependency>
       <dependency>
         <groupId>org.folio.okapi</groupId>
         <artifactId>okapi-testing</artifactId>
-        <version>4.8.2</version>
+        <version>4.12.0</version>
       </dependency>
       <dependency>
         <groupId>org.z3950.zing</groupId>

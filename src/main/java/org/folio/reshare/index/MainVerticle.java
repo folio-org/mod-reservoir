@@ -18,8 +18,8 @@ public class MainVerticle extends AbstractVerticle {
 
   @Override
   public void start(Promise<Void> promise) {
-    TenantPgPool.setModule("mod-reshare-index");
-    ModuleVersionReporter m = new ModuleVersionReporter("org.folio/mod-reshare-index");
+    TenantPgPool.setModule("mod-shared-index");
+    ModuleVersionReporter m = new ModuleVersionReporter("org.folio/mod-shared-index");
     log.info("Starting {} {} {}", m.getModule(), m.getVersion(), m.getCommitId());
 
     final int port = Integer.parseInt(
