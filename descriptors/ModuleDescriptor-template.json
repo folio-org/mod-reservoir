@@ -1,6 +1,6 @@
 {
   "id": "${artifactId}-${version}",
-  "name": "ReShare Index",
+  "name": "Share Index Module",
   "provides": [
     {
       "id": "_tenant",
