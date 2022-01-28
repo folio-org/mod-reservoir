@@ -6,6 +6,7 @@ import io.restassured.response.ExtractableResponse;
 import io.restassured.response.Response;
 import io.vertx.core.DeploymentOptions;
 import io.vertx.core.Vertx;
+import io.vertx.core.json.JsonArray;
 import io.vertx.core.json.JsonObject;
 import io.vertx.ext.unit.TestContext;
 import io.vertx.ext.unit.junit.VertxUnitRunner;
@@ -21,6 +22,9 @@ import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.testcontainers.containers.PostgreSQLContainer;
 
+import static org.hamcrest.Matchers.empty;
+import static org.hamcrest.Matchers.emptyArray;
+import static org.hamcrest.Matchers.equalTo;
 import static org.hamcrest.Matchers.is;
 
 @RunWith(VertxUnitRunner.class)
@@ -97,14 +101,36 @@ public class MainVerticleTest {
   }
 
   @Test
-  public void testGetSharedTitles() {
-    String tenant = "tenant1";
+  public void testGetSharedTitlesUnknownTenant() {
     RestAssured.given()
-        .header(XOkapiHeaders.TENANT, tenant)
+        .header(XOkapiHeaders.TENANT, "unknowntenant")
         .get("/shared-index/shared-titles")
         .then().statusCode(400)
         .header("Content-Type", is("text/plain"))
-        .body(is("getSharedTitles: not implemented"));
+        .body(is("ERROR: relation \"unknowntenant_mod_shared_index.bib_record\" does not exist (42P01)"));
+  }
+
+  @Test
+  public void testGetSharedTitlesBadCqlField() {
+    RestAssured.given()
+        .header(XOkapiHeaders.TENANT, "unknowntenant")
+        .get("/shared-index/shared-titles?query=foo=bar")
+        .then().statusCode(400)
+        .header("Content-Type", is("text/plain"))
+        .body(is("Unsupported CQL index: foo"));
+  }
+
+  @Test
+  public void testGetSharedTitlesEmpty(TestContext context) {
+    String tenant = "tenant1";
+    tenantOp(context, tenant, new JsonObject().put("module_to", "mod-reshare-index-1.0.0"), null);
+    RestAssured.given()
+        .header(XOkapiHeaders.TENANT, tenant)
+        .get("/shared-index/shared-titles")
+        .then().statusCode(200)
+        .header("Content-Type", is("application/json"))
+        .body("titles", empty())
+        .body("resultInfo.totalRecords", is(0));
   }
 
   @Test
@@ -161,5 +187,31 @@ public class MainVerticleTest {
         .body(sharedTitle.encode())
         .put("/shared-index/shared-titles")
         .then().statusCode(204);
+
+    RestAssured.given()
+        .header(XOkapiHeaders.TENANT, tenant)
+        .get("/shared-index/shared-titles")
+        .then().statusCode(200)
+        .header("Content-Type", is("application/json"))
+        .body("titles[0].localIdentifier", is("HRID00121"))
+        .body("titles[0].libraryId", is(libraryId))
+        .body("resultInfo.totalRecords", is(1));
+
+    RestAssured.given()
+        .header(XOkapiHeaders.TENANT, tenant)
+        .get("/shared-index/shared-titles?query=libraryId=" + libraryId)
+        .then().statusCode(200)
+        .header("Content-Type", is("application/json"))
+        .body("titles[0].localIdentifier", is("HRID00121"))
+        .body("titles[0].libraryId", is(libraryId))
+        .body("resultInfo.totalRecords", is(1));
+
+    RestAssured.given()
+        .header(XOkapiHeaders.TENANT, tenant)
+        .get("/shared-index/shared-titles?query=libraryId=" + UUID.randomUUID())
+        .then().statusCode(200)
+        .header("Content-Type", is("application/json"))
+        .body("titles", empty())
+        .body("resultInfo.totalRecords", is(0));
   }
 }

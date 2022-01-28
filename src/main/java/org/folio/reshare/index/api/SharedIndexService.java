@@ -6,12 +6,17 @@ import io.vertx.core.json.JsonObject;
 import io.vertx.ext.web.Router;
 import io.vertx.ext.web.RoutingContext;
 import io.vertx.ext.web.openapi.RouterBuilder;
+import io.vertx.ext.web.validation.RequestParameter;
+import io.vertx.ext.web.validation.RequestParameters;
+import io.vertx.ext.web.validation.ValidationHandler;
 import java.util.function.Function;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.folio.reshare.index.storage.Storage;
 import org.folio.tlib.RouterCreator;
 import org.folio.tlib.TenantInitHooks;
+import org.folio.tlib.postgres.PgCqlField;
+import org.folio.tlib.postgres.PgCqlQuery;
 import org.folio.tlib.util.TenantUtil;
 
 public class SharedIndexService implements RouterCreator, TenantInitHooks {
@@ -37,13 +42,32 @@ public class SharedIndexService implements RouterCreator, TenantInitHooks {
     MatchKey matchKey = new MatchKey(inventory.getJsonObject("instance"));
     inventory.getJsonObject("instance").put("matchKey", matchKey.getKey());
 
+
     return storage(ctx)
         .upsertBibRecord(localIdentifier, libraryId, matchKey.getKey(), source, inventory)
         .onSuccess(bibRecord -> ctx.response().setStatusCode(204).end());
   }
 
+  static String stringOrNull(RequestParameter requestParameter) {
+    return requestParameter == null ? null : requestParameter.getString();
+  }
+
   Future<Void> getSharedTitles(RoutingContext ctx) {
-    throw new RuntimeException("getSharedTitles: not implemented");
+    PgCqlQuery pgCqlQuery = PgCqlQuery.query();
+    pgCqlQuery.addField(
+        new PgCqlField("cql.allRecords", PgCqlField.Type.ALWAYS_MATCHES));
+    pgCqlQuery.addField(
+        new PgCqlField("id", PgCqlField.Type.UUID));
+    pgCqlQuery.addField(
+        new PgCqlField("local_identifier", "localIdentifier", PgCqlField.Type.TEXT));
+    pgCqlQuery.addField(
+        new PgCqlField("library_id", "libraryId", PgCqlField.Type.UUID));
+
+    RequestParameters params = ctx.get(ValidationHandler.REQUEST_CONTEXT_KEY);
+    pgCqlQuery.parse(stringOrNull(params.queryParameter("query")));
+
+    Storage storage = storage(ctx);
+    return storage.getTitles(ctx, pgCqlQuery.getWhereClause(), pgCqlQuery.getOrderByClause());
   }
 
   static void failHandler(RoutingContext ctx) {
