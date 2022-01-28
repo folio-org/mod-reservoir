@@ -139,37 +139,6 @@
       <artifactId>okapi-common</artifactId>
     </dependency>
     <dependency>
-      <groupId>io.netty</groupId>
-      <artifactId>netty-transport-native-epoll</artifactId>
-      <classifier>linux-x86_64</classifier>
-    </dependency>
-    <dependency>
-      <groupId>io.netty</groupId>
-      <artifactId>netty-tcnative-boringssl-static</artifactId>
-      <scope>runtime</scope>
-    </dependency>
-    <dependency>
-      <groupId>org.openapitools</groupId>
-      <artifactId>openapi-generator</artifactId>
-      <version>${openapi-generator.version}</version>
-      <exclusions>
-        <exclusion>
-          <groupId>org.slf4j</groupId>
-          <artifactId>slf4j-simple</artifactId>
-        </exclusion>
-      </exclusions>
-    </dependency>
-    <dependency>
-      <groupId>org.openapitools</groupId>
-      <artifactId>openapi-generator-maven-plugin</artifactId>
-      <version>${openapi-generator.version}</version>
-    </dependency>
-    <dependency>
-      <groupId>org.openapitools</groupId>
-      <artifactId>jackson-databind-nullable</artifactId>
-      <version>${jackson-databind-nullable.version}</version>
-    </dependency>
-    <dependency>
       <groupId>org.apache.commons</groupId>
       <artifactId>commons-csv</artifactId>
     </dependency>
