@@ -8,11 +8,16 @@
       "interfaceType": "system",
       "handlers": [
         {
-          "methods": [ "POST" ],
+          "methods": [
+            "POST"
+          ],
           "pathPattern": "/_/tenant"
         },
         {
-          "methods": [ "GET", "DELETE" ],
+          "methods": [
+            "GET",
+            "DELETE"
+          ],
           "pathPattern": "/_/tenant/{id}"
         }
       ]
@@ -22,25 +27,46 @@
       "version": "1.0",
       "handlers": [
         {
-          "methods": [ "GET" ],
+          "methods": [
+            "GET"
+          ],
           "pathPattern": "/reshare-index/shared-titles",
-          "permissionsRequired": [ "reshare-index" ]
+          "permissionsRequired": [
+            "reshare-index.collection.get"
+          ]
         },
         {
-          "methods": [ "PUT" ],
+          "methods": [
+            "PUT"
+          ],
           "pathPattern": "/reshare-index/shared-titles",
-          "permissionsRequired": [ "reshare-index" ]
-
+          "permissionsRequired": [
+            "reshare-index.item.put"
+          ]
         }
       ]
     }
   ],
-  "requires" : [],
-  "permissionSets" : [
+  "requires": [],
+  "permissionSets": [
     {
-      "permissionName": "reshare-index",
-      "displayName": "Manage ReShare Index",
-      "description": "Create, update, retrieve and delete shared titles"
+      "permissionName": "reshare-index.collection.get",
+      "displayName": "reshare - get titles",
+      "description": "lookup reshare titles"
+    },
+    {
+      "permissionName": "reshare-index.collection.item.put",
+      "displayName": "reshare - upsert title",
+      "description": "update or insert reshare title"
+    },
+    {
+      "permissionName": "reshare-index.all",
+      "displayName": "reshare - all permissions",
+      "description": "create, update, retrieve and delete shared titles",
+      "subPermissions": [
+        "reshare-index.collection.get",
+        "reshare-index.item.put"
+      ]
     }
   ],
   "launchDescriptor": {
@@ -49,21 +75,52 @@
     "dockerArgs": {
       "HostConfig": {
         "Memory": 536870912,
-        "PortBindings": { "8081/tcp": [ { "HostPort": "%p" } ] }
+        "PortBindings": {
+          "8081/tcp": [
+            {
+              "HostPort": "%p"
+            }
+          ]
+        }
       }
     },
     "env": [
-      { "name": "JAVA_OPTIONS",
+      {
+        "name": "JAVA_OPTIONS",
         "value": "-XX:MaxRAMPercentage=66.0"
       },
-      { "name": "DB_HOST", "value": "postgres" },
-      { "name": "DB_PORT", "value": "5432" },
-      { "name": "DB_USERNAME", "value": "folio_admin" },
-      { "name": "DB_PASSWORD", "value": "folio_admin" },
-      { "name": "DB_DATABASE", "value": "okapi_modules" },
-      { "name": "DB_QUERYTIMEOUT", "value": "60000" },
-      { "name": "DB_CHARSET", "value": "UTF-8" },
-      { "name": "DB_MAXPOOLSIZE", "value": "5" }
+      {
+        "name": "DB_HOST",
+        "value": "postgres"
+      },
+      {
+        "name": "DB_PORT",
+        "value": "5432"
+      },
+      {
+        "name": "DB_USERNAME",
+        "value": "folio_admin"
+      },
+      {
+        "name": "DB_PASSWORD",
+        "value": "folio_admin"
+      },
+      {
+        "name": "DB_DATABASE",
+        "value": "okapi_modules"
+      },
+      {
+        "name": "DB_QUERYTIMEOUT",
+        "value": "60000"
+      },
+      {
+        "name": "DB_CHARSET",
+        "value": "UTF-8"
+      },
+      {
+        "name": "DB_MAXPOOLSIZE",
+        "value": "5"
+      }
     ]
   }
 }

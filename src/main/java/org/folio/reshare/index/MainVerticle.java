@@ -3,7 +3,6 @@ package org.folio.reshare.index;
 import io.vertx.core.AbstractVerticle;
 import io.vertx.core.Promise;
 import io.vertx.core.http.HttpServerOptions;
-import io.vertx.ext.web.client.WebClient;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.folio.okapi.common.Config;
@@ -34,14 +33,14 @@ public class MainVerticle extends AbstractVerticle {
         new HealthApi(),
     };
 
-    RouterCreator.mountAll(vertx, WebClient.create(vertx), routerCreators)
-            .compose(router -> {
-              HttpServerOptions so = new HttpServerOptions()
-                      .setHandle100ContinueAutomatically(true);
-              return vertx.createHttpServer(so)
-                      .requestHandler(router)
-                      .listen(port).mapEmpty();
-            })
-            .onComplete(x -> promise.handle(x.mapEmpty()));
+    RouterCreator.mountAll(vertx, routerCreators)
+        .compose(router -> {
+          HttpServerOptions so = new HttpServerOptions()
+              .setHandle100ContinueAutomatically(true);
+          return vertx.createHttpServer(so)
+              .requestHandler(router)
+              .listen(port).mapEmpty();
+        })
+        .onComplete(x -> promise.handle(x.mapEmpty()));
   }
 }

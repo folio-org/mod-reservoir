@@ -5,15 +5,14 @@ import io.vertx.core.Vertx;
 import io.vertx.core.json.JsonObject;
 import io.vertx.ext.web.Router;
 import io.vertx.ext.web.RoutingContext;
-import io.vertx.ext.web.client.WebClient;
 import io.vertx.ext.web.openapi.RouterBuilder;
 import java.util.function.Function;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-import org.folio.okapi.common.XOkapiHeaders;
 import org.folio.reshare.index.storage.Storage;
 import org.folio.tlib.RouterCreator;
 import org.folio.tlib.TenantInitHooks;
+import org.folio.tlib.util.TenantUtil;
 
 public class SharedIndexService implements RouterCreator, TenantInitHooks {
 
@@ -25,11 +24,10 @@ public class SharedIndexService implements RouterCreator, TenantInitHooks {
   }
 
   private Storage storage(RoutingContext routingContext) {
-    String tenant = routingContext.request().getHeader(XOkapiHeaders.TENANT);
-    return new Storage(vertx, tenant);
+    return new Storage(vertx, TenantUtil.tenant(routingContext));
   }
 
-  Future<Void> putSharedTitle(Vertx vertx, RoutingContext ctx) {
+  Future<Void> putSharedTitle(RoutingContext ctx) {
     JsonObject requestJson = ctx.getBodyAsJson();
 
     final String localIdentifier = requestJson.getString("localIdentifier");
@@ -44,7 +42,7 @@ public class SharedIndexService implements RouterCreator, TenantInitHooks {
         .onSuccess(bibRecord -> ctx.response().setStatusCode(204).end());
   }
 
-  Future<Void> getSharedTitles(Vertx vertx, RoutingContext ctx) {
+  Future<Void> getSharedTitles(RoutingContext ctx) {
     throw new RuntimeException("getSharedTitles: not implemented");
   }
 
@@ -81,12 +79,21 @@ public class SharedIndexService implements RouterCreator, TenantInitHooks {
   }
 
   @Override
-  public Future<Router> createRouter(Vertx vertx, WebClient webClient) {
+  public Future<Router> createRouter(Vertx vertx) {
     return RouterBuilder.create(vertx, "openapi/reshare-index-1.0.yaml")
         .map(routerBuilder -> {
-          add(routerBuilder, "getSharedTitles", ctx -> getSharedTitles(vertx, ctx));
-          add(routerBuilder, "putSharedTitle", ctx -> putSharedTitle(vertx, ctx));
+          add(routerBuilder, "getSharedTitles", ctx -> getSharedTitles(ctx));
+          add(routerBuilder, "putSharedTitle", ctx -> putSharedTitle(ctx));
           return routerBuilder.createRouter();
         });
+  }
+
+  @Override
+  public Future<Void> postInit(Vertx vertx, String tenant, JsonObject tenantAttributes) {
+    if (!tenantAttributes.containsKey("module_to")) {
+      return Future.succeededFuture(); // doing nothing for disable
+    }
+    Storage storage = new Storage(vertx, tenant);
+    return storage.init();
   }
 }

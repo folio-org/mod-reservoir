@@ -8,7 +8,8 @@
     },
     "libraryId": {
       "type": "string",
-      "description": "Library identifier"
+      "description": "Library identifier",
+      "format": "uuid"
     },
     "source": {
       "type": "object",
