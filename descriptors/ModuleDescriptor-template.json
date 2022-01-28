@@ -1,6 +1,6 @@
 {
   "id": "${artifactId}-${version}",
-  "name": "ReShare Index",
+  "name": "Share Index Module",
   "provides": [
     {
       "id": "_tenant",
@@ -8,11 +8,16 @@
       "interfaceType": "system",
       "handlers": [
         {
-          "methods": [ "POST" ],
+          "methods": [
+            "POST"
+          ],
           "pathPattern": "/_/tenant"
         },
         {
-          "methods": [ "GET", "DELETE" ],
+          "methods": [
+            "GET",
+            "DELETE"
+          ],
           "pathPattern": "/_/tenant/{id}"
         }
       ]
@@ -22,25 +27,46 @@
       "version": "1.0",
       "handlers": [
         {
-          "methods": [ "GET" ],
-          "pathPattern": "/reshare-index/shared-titles",
-          "permissionsRequired": [ "reshare-index" ]
+          "methods": [
+            "GET"
+          ],
+          "pathPattern": "/shared-index/shared-titles",
+          "permissionsRequired": [
+            "shared-index.titles.collection.get"
+          ]
         },
         {
-          "methods": [ "PUT" ],
-          "pathPattern": "/reshare-index/shared-titles",
-          "permissionsRequired": [ "reshare-index" ]
-
+          "methods": [
+            "PUT"
+          ],
+          "pathPattern": "/shared-index/shared-titles",
+          "permissionsRequired": [
+            "shared-index.titles.item.put"
+          ]
         }
       ]
     }
   ],
-  "requires" : [],
-  "permissionSets" : [
+  "requires": [],
+  "permissionSets": [
     {
-      "permissionName": "reshare-index",
-      "displayName": "Manage ReShare Index",
-      "description": "Create, update, retrieve and delete shared titles"
+      "permissionName": "shared-index.titles.collection.get",
+      "displayName": "shared index - get titles",
+      "description": "lookup shared titles"
+    },
+    {
+      "permissionName": "shared-index.titles.item.put",
+      "displayName": "shared index - upsert title",
+      "description": "update or insert shared title"
+    },
+    {
+      "permissionName": "shared-index.all",
+      "displayName": "shared index - all permissions",
+      "description": "create, update, retrieve and delete shared titles",
+      "subPermissions": [
+        "shared-index.titles.collection.get",
+        "shared-index.titles.item.put"
+      ]
     }
   ],
   "launchDescriptor": {
@@ -49,21 +75,52 @@
     "dockerArgs": {
       "HostConfig": {
         "Memory": 536870912,
-        "PortBindings": { "8081/tcp": [ { "HostPort": "%p" } ] }
+        "PortBindings": {
+          "8081/tcp": [
+            {
+              "HostPort": "%p"
+            }
+          ]
+        }
       }
     },
     "env": [
-      { "name": "JAVA_OPTIONS",
+      {
+        "name": "JAVA_OPTIONS",
         "value": "-XX:MaxRAMPercentage=66.0"
       },
-      { "name": "DB_HOST", "value": "postgres" },
-      { "name": "DB_PORT", "value": "5432" },
-      { "name": "DB_USERNAME", "value": "folio_admin" },
-      { "name": "DB_PASSWORD", "value": "folio_admin" },
-      { "name": "DB_DATABASE", "value": "okapi_modules" },
-      { "name": "DB_QUERYTIMEOUT", "value": "60000" },
-      { "name": "DB_CHARSET", "value": "UTF-8" },
-      { "name": "DB_MAXPOOLSIZE", "value": "5" }
+      {
+        "name": "DB_HOST",
+        "value": "postgres"
+      },
+      {
+        "name": "DB_PORT",
+        "value": "5432"
+      },
+      {
+        "name": "DB_USERNAME",
+        "value": "folio_admin"
+      },
+      {
+        "name": "DB_PASSWORD",
+        "value": "folio_admin"
+      },
+      {
+        "name": "DB_DATABASE",
+        "value": "okapi_modules"
+      },
+      {
+        "name": "DB_QUERYTIMEOUT",
+        "value": "60000"
+      },
+      {
+        "name": "DB_CHARSET",
+        "value": "UTF-8"
+      },
+      {
+        "name": "DB_MAXPOOLSIZE",
+        "value": "5"
+      }
     ]
   }
 }

@@ -1,9 +1,9 @@
 openapi: 3.0.0
 info:
-  title: ReShare Index
+  title: Shared Index
   version: v1
 paths:
-  /reshare-index/shared-titles:
+  /shared-index/shared-titles:
     parameters:
       - $ref: headers/okapi-tenant.yaml
       - $ref: headers/okapi-token.yaml
@@ -13,7 +13,7 @@ paths:
       - $ref: parameters/query.yaml
       - $ref: parameters/offset.yaml
     get:
-      description: Get shared titles
+      description: Get shared titles.
       operationId: getSharedTitles
       responses:
         "200":
@@ -27,15 +27,21 @@ paths:
         "500":
           $ref: "#/components/responses/trait_500"
     put:
-      description: Enter a title for sharing
+      description: Enter a title for sharing.
       operationId: putSharedTitle
-      reponse:
-        "201":
-          "description": OK
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: schemas/sharedTitle.json
+      responses:
+        "204":
+          description: OK
         "400":
           $ref: "#/components/responses/trait_400"
         "500":
           $ref: "#/components/responses/trait_500"
+# components
 components:
   responses:
     trait_400:
