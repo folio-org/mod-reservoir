@@ -6,7 +6,7 @@
   <packaging>jar</packaging>
 
   <name>ReShare Index</name>
-  <url>https://github.com/indexdata/mod-reshare-index</url>
+  <url>https://github.com/folio-org/mod-shared-index</url>
   <description>
     module holdings bibliographic records, items and source records for shared titles</description>
   <inceptionYear>2021</inceptionYear>
@@ -15,9 +15,9 @@
     <url>https://dev.folio.org/</url>
   </organization>
   <scm>
-    <url>https://github.com/indexdata/mod-reshare-index</url>
-    <connection>scm:git:git://github.com/indexdata/mod-reshare-index.git</connection>
-    <developerConnection>scm:git:git@github.com:indexdata/mod-reshare-index.git</developerConnection>
+    <url>https://github.com/folio-org/mod-shared-index</url>
+    <connection>scm:git:git://github.com/folio-org/mod-shared-index.git</connection>
+    <developerConnection>scm:git:git@github.com:folio-org/mod-shared-index.git</developerConnection>
     <tag>HEAD</tag>
   </scm>
 
