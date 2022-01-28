@@ -1,11 +1,12 @@
-# ReShare Index
+# mod-shared-index
 
-Copyright (C) 2021 The Open Library Foundation
+Copyright (C) 2021-2022 The Open Library Foundation
 
 This software is distributed under the terms of the Apache License,
 Version 2.0. See the file "[LICENSE](LICENSE)" for more information.
 
 ## Introduction
+
 A service that generates an index of bibliographic records and items for the purpose of consortial re-sharing.
 The index is made as simple as possible in order to be optimized for fast loading. 
 
@@ -13,6 +14,8 @@ The index is made as simple as possible in order to be optimized for fast loadin
 
 ### Issue tracker
 
+See project [MODSI](https://issues.folio.org/browse/MODSI)
+at the [FOLIO issue tracker](https://dev.folio.org/guidelines/issue-tracker).
 
 ### Code of Conduct
 
