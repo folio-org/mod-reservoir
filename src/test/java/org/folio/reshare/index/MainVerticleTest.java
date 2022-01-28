@@ -101,7 +101,7 @@ public class MainVerticleTest {
     String tenant = "tenant1";
     RestAssured.given()
         .header(XOkapiHeaders.TENANT, tenant)
-        .get("/reshare-index/shared-titles")
+        .get("/shared-index/shared-titles")
         .then().statusCode(400)
         .header("Content-Type", is("text/plain"))
         .body(is("getSharedTitles: not implemented"));
@@ -117,10 +117,10 @@ public class MainVerticleTest {
         .put("source", new JsonObject())
         .put("inventory", new JsonObject().put("instance", new JsonObject()));
     RestAssured.given()
-        .header(XOkapiHeaders.TENANT, "bad_tenant")
+        .header(XOkapiHeaders.TENANT, tenant)
         .header("Content-Type", "application/json")
         .body(sharedTitle.encode())
-        .put("/reshare-index/shared-titles")
+        .put("/shared-index/shared-titles")
         .then().statusCode(400)
         .header("Content-Type", is("text/plain"))
         .body(is("X-Okapi-Tenant header must match ^[a-z][a-z0-9]{0,30}$"));
@@ -138,7 +138,7 @@ public class MainVerticleTest {
         .header(XOkapiHeaders.TENANT, "unknowntenant")
         .header("Content-Type", "application/json")
         .body(sharedTitle.encode())
-        .put("/reshare-index/shared-titles")
+        .put("/shared-index/shared-titles")
         .then().statusCode(400)
         .header("Content-Type", is("text/plain"))
         .body(is("ERROR: relation \"unknowntenant_mod_reshare_index.bib_record\" does not exist (42P01)"));
@@ -159,7 +159,7 @@ public class MainVerticleTest {
         .header(XOkapiHeaders.TENANT, tenant)
         .header("Content-Type", "application/json")
         .body(sharedTitle.encode())
-        .put("/reshare-index/shared-titles")
+        .put("/shared-index/shared-titles")
         .then().statusCode(204);
   }
 }

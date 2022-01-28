@@ -1,9 +1,9 @@
 openapi: 3.0.0
 info:
-  title: ReShare Index
+  title: Shared Index
   version: v1
 paths:
-  /reshare-index/shared-titles:
+  /shared-index/shared-titles:
     parameters:
       - $ref: headers/okapi-tenant.yaml
       - $ref: headers/okapi-token.yaml
