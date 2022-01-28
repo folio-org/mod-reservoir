@@ -80,7 +80,7 @@ public class SharedIndexService implements RouterCreator, TenantInitHooks {
 
   @Override
   public Future<Router> createRouter(Vertx vertx) {
-    return RouterBuilder.create(vertx, "openapi/reshare-index-1.0.yaml")
+    return RouterBuilder.create(vertx, "openapi/shared-index-1.0.yaml")
         .map(routerBuilder -> {
           add(routerBuilder, "getSharedTitles", ctx -> getSharedTitles(ctx));
           add(routerBuilder, "putSharedTitle", ctx -> putSharedTitle(ctx));
