@@ -6,7 +6,6 @@ import io.restassured.response.ExtractableResponse;
 import io.restassured.response.Response;
 import io.vertx.core.DeploymentOptions;
 import io.vertx.core.Vertx;
-import io.vertx.core.json.JsonArray;
 import io.vertx.core.json.JsonObject;
 import io.vertx.ext.unit.TestContext;
 import io.vertx.ext.unit.junit.VertxUnitRunner;
@@ -123,7 +122,7 @@ public class MainVerticleTest {
   @Test
   public void testGetSharedTitlesEmpty(TestContext context) {
     String tenant = "tenant1";
-    tenantOp(context, tenant, new JsonObject().put("module_to", "mod-reshare-index-1.0.0"), null);
+    tenantOp(context, tenant, new JsonObject().put("module_to", "mod-shared-index-1.0.0"), null);
     RestAssured.given()
         .header(XOkapiHeaders.TENANT, tenant)
         .get("/shared-index/shared-titles")
@@ -173,7 +172,7 @@ public class MainVerticleTest {
   @Test
   public void putSharedTitle(TestContext context) {
     String tenant = "tenant2";
-    tenantOp(context, tenant, new JsonObject().put("module_to", "mod-reshare-index-1.0.0"), null);
+    tenantOp(context, tenant, new JsonObject().put("module_to", "mod-shared-index-1.0.0"), null);
 
     String libraryId = UUID.randomUUID().toString();
     JsonObject sharedTitle = new JsonObject()
@@ -214,4 +213,16 @@ public class MainVerticleTest {
         .body("titles", empty())
         .body("resultInfo.totalRecords", is(0));
   }
+
+  @Test
+  public void upgradeDb(TestContext context) {
+    String tenant = "tenant3";
+    tenantOp(context, tenant, new JsonObject()
+        .put("module_to", "mod-shared-index-1.0.0"), null);
+    tenantOp(context, tenant, new JsonObject()
+        .put("module_from", "mod-shared-index-1.0.0")
+        .put("module_to", "mod-shared-index-1.0.1"), null);
+  }
+
+
 }

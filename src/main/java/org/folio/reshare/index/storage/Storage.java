@@ -14,6 +14,7 @@ import io.vertx.sqlclient.SqlConnection;
 import io.vertx.sqlclient.Tuple;
 import java.util.Collections;
 import java.util.List;
+import java.util.UUID;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.function.Function;
 import org.apache.logging.log4j.LogManager;
@@ -44,10 +45,9 @@ public class Storage {
    */
   public Future<Void> init() {
     return pool.execute(List.of(
-            "CREATE EXTENSION IF NOT EXISTS \"uuid-ossp\"",
             "SET search_path TO " + pool.getSchema(),
             "CREATE TABLE IF NOT EXISTS " + bibRecordTable
-                + "(id uuid NOT NULL DEFAULT uuid_generate_v4() PRIMARY KEY,"
+                + "(id uuid NOT NULL PRIMARY KEY,"
                 + "local_identifier VARCHAR NOT NULL,"
                 + "library_id uuid NOT NULL,"
                 + "title VARCHAR,"
@@ -58,10 +58,12 @@ public class Storage {
                 + "source JSONB NOT NULL,"
                 + "inventory JSONB"
                 + ")",
-            "CREATE UNIQUE INDEX idx_local_id ON " + bibRecordTable
+            "CREATE UNIQUE INDEX IF NOT EXISTS idx_local_id ON " + bibRecordTable
                 + " (local_identifier, library_id)",
-            "CREATE INDEX idx_bib_record_match_key ON " + bibRecordTable + " (match_key)",
-            "CREATE VIEW " + itemView + " AS SELECT id, local_identifier, library_id, match_key,"
+            "CREATE INDEX IF NOT EXISTS idx_bib_record_match_key ON " + bibRecordTable
+                + " (match_key)",
+            "CREATE OR REPLACE VIEW " + itemView
+                + " AS SELECT id, local_identifier, library_id, match_key,"
                 + " jsonb_array_elements("
                 + " (jsonb_array_elements((inventory->>'holdingsRecords')::JSONB)->>'items')::JSONB"
                 + ") item FROM " + bibRecordTable
@@ -81,13 +83,13 @@ public class Storage {
 
     return pool.preparedQuery(
         "INSERT INTO " + bibRecordTable
-            + " (local_identifier, library_id, match_key, source, inventory)"
-            + " VALUES ($1, $2, $3, $4, $5)"
+            + " (id, local_identifier, library_id, match_key, source, inventory)"
+            + " VALUES ($1, $2, $3, $4, $5, $6)"
             + " ON CONFLICT (local_identifier, library_id) DO UPDATE "
-            + " SET match_key = $3, "
-            + "     source = $4, "
-            + "     inventory = $5").execute(
-        Tuple.of(localIdentifier, libraryId, matchKey, source, inventory)
+            + " SET match_key = $4, "
+            + "     source = $5, "
+            + "     inventory = $6").execute(
+        Tuple.of(UUID.randomUUID(), localIdentifier, libraryId, matchKey, source, inventory)
     ).mapEmpty();
   }
 
