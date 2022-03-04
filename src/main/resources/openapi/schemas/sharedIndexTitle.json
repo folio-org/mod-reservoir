@@ -1,0 +1,27 @@
+{
+  "description": "Shared record",
+  "type": "object",
+  "properties": {
+    "globalId": {
+      "type": "string",
+      "description": "Global identifier",
+      "format" : "uuid"
+    },
+    "localId": {
+      "type": "string",
+      "description": "Local identifier"
+    },
+    "matchKeys": {
+      "type": "object",
+      "description" : "match keys for this record"
+    },
+    "payload": {
+      "type": "object",
+      "description" : "combined marc, inventory"
+    }
+  },
+  "additionalProperties": false,
+  "required": [
+    "globalId", "localId", "matchKeys", "payload"
+  ]
+}

@@ -1,0 +1,22 @@
+{
+  "description": "shared index match key",
+  "type": "object",
+  "properties": {
+    "id": {
+      "type": "string",
+      "description" : "match key identifier"
+    },
+    "method": {
+      "type": "string",
+      "description": "method"
+    },
+    "params": {
+      "type": "object",
+      "description": "parameter references"
+    }
+  },
+  "additionalProperties": false,
+  "required": [
+    "id", "method", "params"
+  ]
+}
