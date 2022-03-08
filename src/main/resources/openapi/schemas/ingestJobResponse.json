@@ -1,0 +1,19 @@
+{
+  "description": "Ingest job request",
+  "type": "object",
+  "properties": {
+    "sourceId": {
+      "type": "string",
+      "description" : "Source identifier",
+      "format": "uuid"
+    },
+    "autoRollBackTimeout": {
+      "type": "integer",
+      "description": "Timeout in seconds"
+    }
+  },
+  "additionalProperties": false,
+  "required": [
+    "sourceId"
+  ]
+}

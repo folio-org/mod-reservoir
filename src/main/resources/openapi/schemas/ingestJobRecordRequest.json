@@ -1,0 +1,23 @@
+{
+  "description": "Ingest job records request",
+  "type": "array",
+  "items": {
+    "type": "object",
+    "properties": {
+      "localId": {
+        "type": "string",
+        "description": "Local identifier"
+      },
+      "marcPayload": {
+        "type": "object"
+      },
+      "inventoryPayload": {
+        "type": "object"
+      }
+    },
+    "additionalProperties": false,
+    "required": [
+      "localId"
+    ]
+  }
+}

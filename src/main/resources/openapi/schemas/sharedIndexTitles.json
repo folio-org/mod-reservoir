@@ -1,0 +1,23 @@
+{
+  "description": "shared index records",
+  "type": "object",
+  "properties": {
+    "items": {
+      "description": "List of records",
+      "type": "array",
+      "items": {
+        "type": "object",
+        "$ref": "sharedIndexTitle.json"
+      }
+    },
+    "resultInfo": {
+      "description": "Common result set information",
+      "type": "object",
+      "$ref" : "resultInfo.json"
+    }
+  },
+  "additionalProperties": false,
+  "required": [
+    "items"
+  ]
+}
