@@ -44,7 +44,7 @@ public class SharedIndexService implements RouterCreator, TenantInitHooks {
 
 
     return storage(ctx)
-        .upsertBibRecord(localIdentifier, libraryId, matchKey.getKey(), source, inventory)
+        .upsertBibRecord(localIdentifier, libraryId, source, inventory)
         .onSuccess(bibRecord -> ctx.response().setStatusCode(204).end());
   }
 

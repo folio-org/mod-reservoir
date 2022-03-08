@@ -24,8 +24,11 @@ import org.folio.tlib.postgres.TenantPgPool;
 public class Storage {
   private static final Logger log = LogManager.getLogger(Storage.class);
 
+
   TenantPgPool pool;
   String bibRecordTable;
+  String matchKeyConfigTable;
+  String matchKeyValueTable;
   String itemView;
 
   /**
@@ -36,6 +39,8 @@ public class Storage {
   public Storage(Vertx vertx, String tenant) {
     this.pool = TenantPgPool.pool(vertx,tenant);
     this.bibRecordTable = pool.getSchema() + ".bib_record";
+    this.matchKeyConfigTable = pool.getSchema() + ".match_key_config";
+    this.matchKeyValueTable = pool.getSchema() + ".match_key_value";
     this.itemView = pool.getSchema() + ".item_view";
   }
 
@@ -50,23 +55,34 @@ public class Storage {
                 + "(id uuid NOT NULL PRIMARY KEY,"
                 + "local_identifier VARCHAR NOT NULL,"
                 + "library_id uuid NOT NULL,"
-                + "title VARCHAR,"
-                + "match_key VARCHAR NOT NULL,"
-                + "isbn VARCHAR,"
-                + "issn VARCHAR,"
-                + "publisher_distributor_number VARCHAR,"
                 + "source JSONB NOT NULL,"
                 + "inventory JSONB"
                 + ")",
             "CREATE UNIQUE INDEX IF NOT EXISTS idx_local_id ON " + bibRecordTable
                 + " (local_identifier, library_id)",
-            "CREATE INDEX IF NOT EXISTS idx_bib_record_match_key ON " + bibRecordTable
-                + " (match_key)",
             "CREATE OR REPLACE VIEW " + itemView
-                + " AS SELECT id, local_identifier, library_id, match_key,"
+                + " AS SELECT id, local_identifier, library_id,"
                 + " jsonb_array_elements("
                 + " (jsonb_array_elements((inventory->>'holdingsRecords')::JSONB)->>'items')::JSONB"
-                + ") item FROM " + bibRecordTable
+                + ") item FROM " + bibRecordTable,
+            "CREATE TABLE IF NOT EXISTS " + matchKeyConfigTable
+                + "(id uuid NOT NULL PRIMARY KEY,"
+                + " code VARCHAR, "
+                + " name VARCHAR)",
+            "CREATE UNIQUE INDEX IF NOT EXISTS idx_match_config_code ON " + matchKeyConfigTable
+                + " (code)",
+            "CREATE TABLE IF NOT EXISTS " + matchKeyValueTable
+                + "(bib_record_id uuid NOT NULL,"
+                + " match_key_config_id uuid NOT NULL,"
+                + " match_value VARCHAR NOT NULL,"
+                + " CONSTRAINT match_key_value_fk_bib_record FOREIGN KEY "
+                + "                (bib_record_id) REFERENCES " + bibRecordTable + ", "
+                + " CONSTRAINT match_key_config_fk_type FOREIGN KEY "
+                + "                (match_key_config_id) REFERENCES " + matchKeyConfigTable + ")",
+            "CREATE UNIQUE INDEX IF NOT EXISTS match_key_value_idx ON " + matchKeyValueTable
+                + " (match_key_config_id, match_value, bib_record_id)",
+            "CREATE INDEX IF NOT EXISTS match_key_value_bib_id_idX ON " + matchKeyValueTable
+                + " (bib_record_id)"
         )
     ).mapEmpty();
   }
@@ -77,19 +93,17 @@ public class Storage {
   public Future<Void> upsertBibRecord(
       String localIdentifier,
       String libraryId,
-      String matchKey,
       JsonObject source,
       JsonObject inventory) {
 
     return pool.preparedQuery(
         "INSERT INTO " + bibRecordTable
-            + " (id, local_identifier, library_id, match_key, source, inventory)"
-            + " VALUES ($1, $2, $3, $4, $5, $6)"
+            + " (id, local_identifier, library_id, source, inventory)"
+            + " VALUES ($1, $2, $3, $4, $5)"
             + " ON CONFLICT (local_identifier, library_id) DO UPDATE "
-            + " SET match_key = $4, "
-            + "     source = $5, "
-            + "     inventory = $6").execute(
-        Tuple.of(UUID.randomUUID(), localIdentifier, libraryId, matchKey, source, inventory)
+            + " SET source = $4, "
+            + "     inventory = $5").execute(
+        Tuple.of(UUID.randomUUID(), localIdentifier, libraryId, source, inventory)
     ).mapEmpty();
   }
 
