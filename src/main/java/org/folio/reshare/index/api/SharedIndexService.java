@@ -96,7 +96,7 @@ public class SharedIndexService implements RouterCreator, TenantInitHooks {
           try {
             function.apply(ctx)
                 .onFailure(cause -> failHandler(400, ctx, cause));
-          } catch (Throwable t) {
+          } catch (Exception t) {
             failHandler(400, ctx, t);
           }
         }).failureHandler(SharedIndexService::failHandler);
@@ -106,8 +106,8 @@ public class SharedIndexService implements RouterCreator, TenantInitHooks {
   public Future<Router> createRouter(Vertx vertx) {
     return RouterBuilder.create(vertx, "openapi/shared-index-1.0.yaml")
         .map(routerBuilder -> {
-          add(routerBuilder, "getSharedTitles", ctx -> getSharedTitles(ctx));
-          add(routerBuilder, "putSharedTitle", ctx -> putSharedTitle(ctx));
+          add(routerBuilder, "getSharedTitles", this::getSharedTitles);
+          add(routerBuilder, "putSharedTitle", this::putSharedTitle);
           return routerBuilder.createRouter();
         });
   }

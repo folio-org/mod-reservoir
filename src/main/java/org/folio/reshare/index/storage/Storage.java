@@ -24,7 +24,7 @@ import org.folio.tlib.postgres.TenantPgPool;
 public class Storage {
   private static final Logger log = LogManager.getLogger(Storage.class);
 
-
+  private static final String CREATE_IF_NO_EXISTS = "CREATE TABLE IF NOT EXISTS ";
   TenantPgPool pool;
   String bibRecordTable;
   String matchKeyConfigTable;
@@ -51,7 +51,7 @@ public class Storage {
   public Future<Void> init() {
     return pool.execute(List.of(
             "SET search_path TO " + pool.getSchema(),
-            "CREATE TABLE IF NOT EXISTS " + bibRecordTable
+            CREATE_IF_NO_EXISTS + bibRecordTable
                 + "(id uuid NOT NULL PRIMARY KEY,"
                 + "local_identifier VARCHAR NOT NULL,"
                 + "library_id uuid NOT NULL,"
@@ -65,13 +65,13 @@ public class Storage {
                 + " jsonb_array_elements("
                 + " (jsonb_array_elements((inventory->>'holdingsRecords')::JSONB)->>'items')::JSONB"
                 + ") item FROM " + bibRecordTable,
-            "CREATE TABLE IF NOT EXISTS " + matchKeyConfigTable
+            CREATE_IF_NO_EXISTS + matchKeyConfigTable
                 + "(id uuid NOT NULL PRIMARY KEY,"
                 + " code VARCHAR, "
                 + " name VARCHAR)",
             "CREATE UNIQUE INDEX IF NOT EXISTS idx_match_config_code ON " + matchKeyConfigTable
                 + " (code)",
-            "CREATE TABLE IF NOT EXISTS " + matchKeyValueTable
+            CREATE_IF_NO_EXISTS + matchKeyValueTable
                 + "(bib_record_id uuid NOT NULL,"
                 + " match_key_config_id uuid NOT NULL,"
                 + " match_value VARCHAR NOT NULL,"
@@ -221,14 +221,14 @@ public class Storage {
       RoutingContext ctx, String distinct,
       String from, String orderByClause, String property, Function<Row, JsonObject> handler) {
 
-    return streamResult(ctx, distinct, distinct, List.of(from), Collections.EMPTY_LIST,
+    return streamResult(ctx, distinct, distinct, List.of(from), Collections.emptyList(),
         orderByClause, property, handler);
   }
 
+  @java.lang.SuppressWarnings({"squid:S107"})  // too many arguments
   Future<Void> streamResult(RoutingContext ctx, String distinctMain, String distinctCount,
       List<String> fromList, List<String[]> facets, String orderByClause,
-      String property,
-      Function<Row, JsonObject> handler) {
+      String property, Function<Row, JsonObject> handler) {
 
     RequestParameters params = ctx.get(ValidationHandler.REQUEST_CONTEXT_KEY);
     Integer offset = params.queryParameter("offset").getInteger();
@@ -249,7 +249,7 @@ public class Storage {
           + ") FROM " + from + ") AS cnt" + pos);
       pos++;
     }
-    log.info("cnt={}", countQuery.toString());
+    log.info("cnt={}", countQuery);
     return pool.getConnection()
         .compose(sqlConnection -> streamResult(ctx, sqlConnection, query, countQuery.toString(),
             property, facets, handler)
