@@ -3,9 +3,9 @@
   <groupId>org.folio</groupId>
   <artifactId>mod-shared-index</artifactId>
   <version>0.0.1-SNAPSHOT</version>
-  <packaging>jar</packaging>
+  <packaging>pom</packaging>
 
-  <name>ReShare Index</name>
+  <name>Shared Index</name>
   <url>https://github.com/folio-org/mod-shared-index</url>
   <description>
     module holdings bibliographic records, items and source records for shared titles</description>
@@ -21,6 +21,13 @@
     <tag>HEAD</tag>
   </scm>
 
+  <modules>
+   <module>util</module>
+   <module>client</module>
+   <module>server</module>
+  </modules>
+
+
   <licenses>
     <license>
       <name>Apache License 2.0</name>
@@ -31,6 +38,7 @@
 
   <properties>
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+    <sonar.exclusions>**/MatchKey.java</sonar.exclusions>
   </properties>
 
   <dependencyManagement>
@@ -38,19 +46,19 @@
       <dependency>
         <groupId>io.vertx</groupId>
         <artifactId>vertx-stack-depchain</artifactId>
-        <version>4.2.4</version>
+        <version>4.2.5</version>
         <type>pom</type>
         <scope>import</scope>
       </dependency>
       <dependency>
         <groupId>org.folio</groupId>
         <artifactId>vertx-lib</artifactId>
-        <version>1.0.0</version>
+        <version>1.0.1</version>
       </dependency>
       <dependency>
         <groupId>org.folio</groupId>
         <artifactId>vertx-lib-pg-testing</artifactId>
-        <version>1.0.0</version>
+        <version>1.0.1</version>
       </dependency>
       <dependency>
         <groupId>org.apache.logging.log4j</groupId>
@@ -62,12 +70,17 @@
       <dependency>
         <groupId>org.folio.okapi</groupId>
         <artifactId>okapi-common</artifactId>
-        <version>4.12.0</version>
+        <version>4.13.0</version>
+      </dependency>
+      <dependency>
+        <groupId>org.folio.okapi</groupId>
+        <artifactId>okapi-core</artifactId>
+        <version>4.13.0</version>
       </dependency>
       <dependency>
         <groupId>org.folio.okapi</groupId>
         <artifactId>okapi-testing</artifactId>
-        <version>4.12.0</version>
+        <version>4.13.0</version>
       </dependency>
       <dependency>
         <groupId>org.z3950.zing</groupId>
@@ -75,14 +88,19 @@
         <version>1.13</version>
       </dependency>
       <dependency>
-        <groupId>org.apache.commons</groupId>
-        <artifactId>commons-csv</artifactId>
-        <version>1.9.0</version>
+        <groupId>org.marc4j</groupId>
+        <artifactId>marc4j</artifactId>
+        <version>2.9.2</version>
+      </dependency>
+      <dependency>
+        <groupId>com.jayway.jsonpath</groupId>
+        <artifactId>json-path</artifactId>
+        <version>2.7.0</version>
       </dependency>
       <dependency>
         <groupId>io.rest-assured</groupId>
         <artifactId>rest-assured</artifactId>
-        <version>4.4.0</version>
+        <version>4.5.1</version>
       </dependency>
       <dependency>
         <groupId>org.testcontainers</groupId>
@@ -91,149 +109,66 @@
         <type>pom</type>
         <scope>import</scope>
       </dependency>
+      <dependency>
+        <groupId>junit</groupId>
+        <artifactId>junit</artifactId>
+        <version>4.13.2</version>
+      </dependency>
+      <dependency>
+        <groupId>net.sf.saxon</groupId>
+        <artifactId>Saxon-HE</artifactId>
+        <version>10.7</version>
+      </dependency>
     </dependencies>
+
   </dependencyManagement>
 
-  <dependencies>
-    <dependency>
-      <groupId>io.vertx</groupId>
-      <artifactId>vertx-core</artifactId>
-    </dependency>
-    <dependency>
-      <groupId>io.vertx</groupId>
-      <artifactId>vertx-web</artifactId>
-    </dependency>
-    <dependency>
-      <groupId>io.vertx</groupId>
-      <artifactId>vertx-web-openapi</artifactId>
-    </dependency>
-    <dependency>
-      <groupId>io.vertx</groupId>
-      <artifactId>vertx-rx-java2</artifactId>
-    </dependency>
-    <dependency>
-      <groupId>io.vertx</groupId>
-      <artifactId>vertx-web-api-contract</artifactId>
-    </dependency>
-    <dependency>
-      <groupId>io.vertx</groupId>
-      <artifactId>vertx-pg-client</artifactId>
-    </dependency>
-    <dependency>
-      <groupId>org.folio</groupId>
-      <artifactId>vertx-lib</artifactId>
-    </dependency>
-    <dependency>
-      <groupId>org.apache.logging.log4j</groupId>
-      <artifactId>log4j-api</artifactId>
-    </dependency>
-    <dependency>
-      <groupId>org.apache.logging.log4j</groupId>
-      <artifactId>log4j-core</artifactId>
-    </dependency>
-    <dependency>
-      <groupId>org.folio.okapi</groupId>
-      <artifactId>okapi-common</artifactId>
-    </dependency>
-    <dependency>
-      <groupId>org.apache.commons</groupId>
-      <artifactId>commons-csv</artifactId>
-    </dependency>
-
-    <!-- Test dependencies -->
-    <dependency>
-      <groupId>junit</groupId>
-      <artifactId>junit</artifactId>
-      <version>4.13.2</version>
-      <scope>test</scope>
-    </dependency>
-    <dependency>
-      <groupId>io.vertx</groupId>
-      <artifactId>vertx-unit</artifactId>
-      <scope>test</scope>
-    </dependency>
-    <dependency>
-      <groupId>io.rest-assured</groupId>
-      <artifactId>rest-assured</artifactId>
-      <scope>test</scope>
-    </dependency>
-    <!-- logging see http://www.slf4j.org/legacy.html -->
-    <dependency>
-      <groupId>org.apache.logging.log4j</groupId>
-      <artifactId>log4j-slf4j-impl</artifactId>
-      <scope>test</scope>
-    </dependency>
-    <dependency>
-      <groupId>org.apache.logging.log4j</groupId>
-      <artifactId>log4j-jul</artifactId>
-      <scope>test</scope>
-    </dependency>
-    <dependency>
-      <groupId>org.folio</groupId>
-      <artifactId>vertx-lib-pg-testing</artifactId>
-      <scope>test</scope>
-    </dependency>
-    <dependency>
-      <groupId>org.folio.okapi</groupId>
-      <artifactId>okapi-testing</artifactId>
-      <scope>test</scope>
-    </dependency>
-    <dependency>
-      <groupId>org.mockito</groupId>
-      <artifactId>mockito-core</artifactId>
-      <version>3.11.2</version>
-      <scope>test</scope>
-    </dependency>
-    <dependency>
-      <groupId>org.mock-server</groupId>
-      <artifactId>mockserver-client-java</artifactId>
-      <version>5.11.2</version>
-      <scope>test</scope>
-    </dependency>
-    <dependency>
-      <groupId>org.testcontainers</groupId>
-      <artifactId>mockserver</artifactId>
-      <scope>test</scope>
-    </dependency>
-    <dependency>
-      <groupId>org.testcontainers</groupId>
-      <artifactId>postgresql</artifactId>
-      <scope>test</scope>
-    </dependency>
-  </dependencies>
-
   <build>
-    <plugins>
-      <plugin>
-        <groupId>org.apache.maven.plugins</groupId>
-        <artifactId>maven-shade-plugin</artifactId>
-        <version>3.2.4</version>
-        <executions>
-          <execution>
-            <phase>package</phase>
-            <goals>
-              <goal>shade</goal>
-            </goals>
-            <configuration>
-              <transformers>
-                <transformer implementation="org.apache.maven.plugins.shade.resource.ManifestResourceTransformer">
-                  <manifestEntries>
-                    <Main-Class>io.vertx.core.Launcher</Main-Class>
-                    <Main-Verticle>org.folio.reshare.index.MainVerticle</Main-Verticle>
-                    <Multi-Release>true</Multi-Release>
-                  </manifestEntries>
-                </transformer>
-              </transformers>
-              <artifactSet />
-              <outputFile>${project.build.directory}/${project.artifactId}-fat.jar</outputFile>
-            </configuration>
-          </execution>
-        </executions>
-      </plugin>
+   <pluginManagement>
+      <plugins>
 
+        <plugin>
+          <groupId>org.apache.maven.plugins</groupId>
+          <artifactId>maven-shade-plugin</artifactId>
+          <version>3.2.4</version>
+          <configuration>
+            <filters>
+              <filter>
+                <artifact>*:*</artifact>
+                <excludes>
+                  <exclude>**/Log4j2Plugins.dat</exclude>
+                </excludes>
+              </filter>
+            </filters>
+          </configuration>
+        </plugin>
+
+        <plugin>
+          <groupId>org.apache.maven.plugins</groupId>
+          <artifactId>maven-jar-plugin</artifactId>
+          <version>3.2.0</version>
+        </plugin>
+
+        <plugin>
+           <groupId>org.apache.maven.plugins</groupId>
+           <artifactId>maven-resources-plugin</artifactId>
+           <version>3.2.0</version>
+        </plugin>
+
+        <plugin>
+          <groupId>pl.project13.maven</groupId>
+          <artifactId>git-commit-id-plugin</artifactId>
+          <version>4.9.10</version>
+        </plugin>
+
+      </plugins>
+    </pluginManagement>
+
+    <plugins>
       <plugin>
         <artifactId>maven-resources-plugin</artifactId>
         <version>3.0.1</version>
+        <inherited>false</inherited>
         <executions>
           <execution>
             <id>filter-descriptor-inputs</id>
@@ -259,6 +194,7 @@
         <groupId>com.coderplus.maven.plugins</groupId>
         <artifactId>copy-rename-maven-plugin</artifactId>
         <version>1.0</version>
+        <inherited>false</inherited>
         <executions>
           <execution>
             <id>rename-descriptor-outputs</id>
@@ -287,7 +223,24 @@
         <version>3.8.1</version>
         <configuration>
           <release>11</release>
-          <encoding>UTF-8</encoding>
+	  <encoding>UTF-8</encoding>
+	  <compilerArgument>-Xlint:unchecked</compilerArgument>
+        </configuration>
+      </plugin>
+
+      <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-jdeps-plugin</artifactId>
+        <version>3.1.2</version>
+        <executions>
+          <execution>
+            <goals>
+              <goal>jdkinternals</goal>
+            </goals>
+          </execution>
+        </executions>
+        <configuration>
+          <multiRelease>base</multiRelease>
         </configuration>
       </plugin>
 
@@ -299,21 +252,8 @@
 
       <plugin>
         <groupId>org.apache.maven.plugins</groupId>
-        <artifactId>maven-failsafe-plugin</artifactId>
-        <version>2.22.2</version>
-        <executions>
-          <execution>
-            <goals>
-              <goal>integration-test</goal>
-              <goal>verify</goal>
-            </goals>
-          </execution>
-        </executions>
-      </plugin>
-
-      <plugin>
-        <groupId>org.apache.maven.plugins</groupId>
-        <artifactId>maven-release-plugin</artifactId>
+	<artifactId>maven-release-plugin</artifactId>
+	<version>2.5.3</version>
         <configuration>
           <preparationGoals>clean verify</preparationGoals>
           <tagNameFormat>v@{project.version}</tagNameFormat>

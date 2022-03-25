@@ -1,0 +1,20 @@
+{
+  "description": "Ingest job records request",
+  "type": "object",
+  "properties": {
+    "sourceId": {
+      "type": "string",
+      "description": "Source identifier",
+      "format": "uuid"
+    },
+    "records": {
+      "type": "array",
+      "description" : "Records",
+      "$ref" : "ingestRecordChunk.json"
+    }
+  },
+  "additionalProperties": false,
+  "required": [
+    "sourceId", "records"
+  ]
+}

@@ -1,6 +1,6 @@
 {
   "id": "${artifactId}-${version}",
-  "name": "Share Index Module",
+  "name": "Shared Index Module",
   "provides": [
     {
       "id": "_tenant",
@@ -23,25 +23,85 @@
       ]
     },
     {
-      "id": "shared-index",
+      "id": "shared-index-config-matchkeys",
       "version": "1.0",
       "handlers": [
         {
           "methods": [
+            "POST"
+          ],
+          "pathPattern": "/shared-index/config/matchkeys",
+          "permissionsRequired": [
+            "shared-index-config-matchkeys.item.post"
+          ]
+        },
+        {
+          "methods": [
             "GET"
           ],
-          "pathPattern": "/shared-index/shared-titles",
+          "pathPattern": "/shared-index/config/matchkeys",
           "permissionsRequired": [
-            "shared-index.titles.collection.get"
+            "shared-index-config-matchkeys.collection.get"
+          ]
+        },
+        {
+          "methods": [
+            "GET"
+          ],
+          "pathPattern": "/shared-index/config/matchkeys/{id}",
+          "permissionsRequired": [
+            "shared-index-config-matchkeys.item.get"
+          ]
+        },
+        {
+          "methods": [
+            "DELETE"
+          ],
+          "pathPattern": "/shared-index/config/matchkeys/{id}",
+          "permissionsRequired": [
+            "shared-index-config-matchkeys.item.delete"
           ]
         },
         {
           "methods": [
             "PUT"
           ],
-          "pathPattern": "/shared-index/shared-titles",
+          "pathPattern": "/shared-index/config/matchkeys/{id}/initialize",
           "permissionsRequired": [
-            "shared-index.titles.item.put"
+            "shared-index-config-matchkeys.item.initialize"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "shared-index-records",
+      "version": "1.0",
+      "handlers": [
+        {
+          "methods": [
+            "GET"
+          ],
+          "pathPattern": "/shared-index/records",
+          "permissionsRequired": [
+            "shared-index.records.collection.get"
+          ]
+        },
+        {
+          "methods": [
+            "PUT"
+          ],
+          "pathPattern": "/shared-index/records",
+          "permissionsRequired": [
+            "shared-index-records.put"
+          ]
+        },
+        {
+          "methods": [
+            "GET"
+          ],
+          "pathPattern": "/shared-index/records/{globalId}",
+          "permissionsRequired": [
+            "shared-index-records.item.get"
           ]
         }
       ]
@@ -50,23 +110,44 @@
   "requires": [],
   "permissionSets": [
     {
-      "permissionName": "shared-index.titles.collection.get",
-      "displayName": "shared index - get titles",
-      "description": "lookup shared titles"
+      "permissionName": "shared-index-config-matchkeys.item.post",
+      "displayName": "shared index - create match key configuration",
+      "description": "Create match key configuration"
     },
     {
-      "permissionName": "shared-index.titles.item.put",
-      "displayName": "shared index - upsert title",
-      "description": "update or insert shared title"
+      "permissionName": "shared-index-config-matchkeys.collection.get",
+      "displayName": "shared index - get match key configurations",
+      "description": "Get match key configurations"
     },
     {
-      "permissionName": "shared-index.all",
-      "displayName": "shared index - all permissions",
-      "description": "create, update, retrieve and delete shared titles",
-      "subPermissions": [
-        "shared-index.titles.collection.get",
-        "shared-index.titles.item.put"
-      ]
+      "permissionName": "shared-index-config-matchkeys.item.get",
+      "displayName": "shared index - get match key configuration",
+      "description": "Get match key configuration"
+    },
+    {
+      "permissionName": "shared-index-config-matchkeys.item.delete",
+      "displayName": "shared index - delete match key configuration",
+      "description": "Delete match key configuration"
+    },
+    {
+      "permissionName": "shared-index-config-matchkeys.item.initialize",
+      "displayName": "shared index - initialize match key configuration",
+      "description": "Initialize match key configuration"
+    },
+    {
+      "permissionName": "shared-index-records.collection.get",
+      "displayName": "shared index - get records",
+      "description": "Get records"
+    },
+    {
+      "permissionName": "shared-index-records.put",
+      "displayName": "shared index - ingest records",
+      "description": "Ingest records"
+    },
+    {
+      "permissionName": "shared-index-records.item.get",
+      "displayName": "shared index - get record",
+      "description": "Get record by globalId"
     }
   ],
   "launchDescriptor": {
@@ -108,14 +189,6 @@
       {
         "name": "DB_DATABASE",
         "value": "okapi_modules"
-      },
-      {
-        "name": "DB_QUERYTIMEOUT",
-        "value": "60000"
-      },
-      {
-        "name": "DB_CHARSET",
-        "value": "UTF-8"
       },
       {
         "name": "DB_MAXPOOLSIZE",

@@ -6,7 +6,7 @@ buildMvn {
   doApiLint = true
   doApiDoc = true
   apiTypes = 'OAS'
-  apiDirectories = 'src/main/resources/openapi'
+  apiDirectories = 'server/src/main/resources/openapi'
   apiExcludes = 'headers parameters'
 
   doDocker = {
