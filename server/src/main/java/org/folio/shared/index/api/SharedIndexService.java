@@ -10,6 +10,8 @@ import io.vertx.ext.web.openapi.RouterBuilder;
 import io.vertx.ext.web.validation.RequestParameter;
 import io.vertx.ext.web.validation.RequestParameters;
 import io.vertx.ext.web.validation.ValidationHandler;
+import java.util.Arrays;
+import java.util.List;
 import java.util.function.Function;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -24,14 +26,19 @@ import org.folio.tlib.postgres.PgCqlQuery;
 public class SharedIndexService implements RouterCreator, TenantInitHooks {
 
   private static final Logger log = LogManager.getLogger(SharedIndexService.class);
+  private static final int MATCH_MAX_ITERATIONS = 3;
   final Vertx vertx;
 
   public SharedIndexService(Vertx vertx) {
     this.vertx = vertx;
   }
 
-  static String stringOrNull(RequestParameter requestParameter) {
-    return requestParameter == null ? null : requestParameter.getString();
+  static String getParameterString(RequestParameter parameter) {
+    return parameter == null ? null : parameter.getString();
+  }
+
+  static int getParameterInteger(RequestParameter parameter, int defaultValue) {
+    return parameter == null ? defaultValue : parameter.getInteger();
   }
 
   Future<Void> putSharedRecords(RoutingContext ctx) {
@@ -55,16 +62,32 @@ public class SharedIndexService implements RouterCreator, TenantInitHooks {
         new PgCqlField("source_id", "sourceId", PgCqlField.Type.UUID));
 
     RequestParameters params = ctx.get(ValidationHandler.REQUEST_CONTEXT_KEY);
-    pgCqlQuery.parse(stringOrNull(params.queryParameter("query")));
+    pgCqlQuery.parse(getParameterString(params.queryParameter("query")));
 
+    String m = getParameterString(params.queryParameter("matchkeyid"));
     Storage storage = new Storage(ctx);
+    if (m != null) {
+      int maxIterations = getParameterInteger(params.queryParameter("maxiterations"),
+          MATCH_MAX_ITERATIONS);
+      List<String> matchKeyIds = Arrays.asList(m.split(","));
+      return storage.getCluster(pgCqlQuery.getWhereClause(), matchKeyIds, maxIterations)
+          .map(records -> {
+            JsonArray items = new JsonArray();
+            records.forEach((k, v) -> items.add(v));
+            JsonObject result = new JsonObject();
+            result.put("items", items);
+            result.put("totalRecords", records.size());
+            HttpResponse.responseJson(ctx, 200).end(result.encode());
+            return null;
+          });
+    }
     return storage.getSharedRecords(ctx, pgCqlQuery.getWhereClause(),
         pgCqlQuery.getOrderByClause());
   }
 
   Future<Void> getSharedRecordGlobalId(RoutingContext ctx) {
     RequestParameters params = ctx.get(ValidationHandler.REQUEST_CONTEXT_KEY);
-    String id = stringOrNull(params.pathParameter("globalId"));
+    String id = getParameterString(params.pathParameter("globalId"));
     Storage storage = new Storage(ctx);
     return storage.selectSharedRecord(id)
         .onSuccess(res -> {
@@ -95,9 +118,9 @@ public class SharedIndexService implements RouterCreator, TenantInitHooks {
 
   Future<Void> getMatchKey(RoutingContext ctx) {
     RequestParameters params = ctx.get(ValidationHandler.REQUEST_CONTEXT_KEY);
-    String id = stringOrNull(params.pathParameter("id"));
+    String id = getParameterString(params.pathParameter("id"));
     Storage storage = new Storage(ctx);
-    return storage.selectMatchKey(id).onSuccess(res -> {
+    return storage.selectMatchKeyConfig(id).onSuccess(res -> {
       if (res == null) {
         HttpResponse.responseError(ctx, 404, "MatchKey " + id + " not found");
         return;
@@ -108,9 +131,9 @@ public class SharedIndexService implements RouterCreator, TenantInitHooks {
 
   Future<Void> deleteMatchKey(RoutingContext ctx) {
     RequestParameters params = ctx.get(ValidationHandler.REQUEST_CONTEXT_KEY);
-    String id = stringOrNull(params.pathParameter("id"));
+    String id = getParameterString(params.pathParameter("id"));
     Storage storage = new Storage(ctx);
-    return storage.deleteMatchKey(id).onSuccess(res -> {
+    return storage.deleteMatchKeyConfig(id).onSuccess(res -> {
       if (Boolean.FALSE.equals(res)) {
         HttpResponse.responseError(ctx, 404, "MatchKey " + id + " not found");
         return;
@@ -130,18 +153,18 @@ public class SharedIndexService implements RouterCreator, TenantInitHooks {
         new PgCqlField("method", PgCqlField.Type.TEXT));
 
     RequestParameters params = ctx.get(ValidationHandler.REQUEST_CONTEXT_KEY);
-    pgCqlQuery.parse(stringOrNull(params.queryParameter("query")));
+    pgCqlQuery.parse(getParameterString(params.queryParameter("query")));
 
     Storage storage = new Storage(ctx);
-    return storage.getMatchKeys(ctx, pgCqlQuery.getWhereClause(),
+    return storage.getMatchKeyConfigs(ctx, pgCqlQuery.getWhereClause(),
         pgCqlQuery.getOrderByClause());
   }
 
   Future<Void> initializeMatchKey(RoutingContext ctx) {
     RequestParameters params = ctx.get(ValidationHandler.REQUEST_CONTEXT_KEY);
-    String id = stringOrNull(params.pathParameter("id"));
+    String id = getParameterString(params.pathParameter("id"));
     Storage storage = new Storage(ctx);
-    return storage.initializeMatchKey(id, 2)
+    return storage.initializeMatchKey(id)
         .onSuccess(res -> {
           if (res == null) {
             HttpResponse.responseError(ctx, 404, "MatchKey " + id + " not found");

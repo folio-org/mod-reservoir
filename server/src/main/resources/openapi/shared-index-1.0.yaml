@@ -296,6 +296,8 @@ paths:
       - $ref: headers/okapi-token.yaml
       - $ref: headers/okapi-url.yaml
       - $ref: parameters/limit.yaml
+      - $ref: parameters/matchkeyid.yaml
+      - $ref: parameters/maxiterations.yaml
       - $ref: parameters/query.yaml
       - $ref: parameters/offset.yaml
     get:

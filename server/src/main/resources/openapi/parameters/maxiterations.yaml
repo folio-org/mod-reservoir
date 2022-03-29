@@ -1,0 +1,6 @@
+in: query
+name: maxiterations
+description: Max number of iterations for match key match
+required: false
+schema:
+  type: integer
