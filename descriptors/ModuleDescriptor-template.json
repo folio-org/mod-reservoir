@@ -83,7 +83,7 @@
           ],
           "pathPattern": "/shared-index/records",
           "permissionsRequired": [
-            "shared-index.records.collection.get"
+            "shared-index-records.collection.get"
           ]
         },
         {
@@ -135,6 +135,18 @@
       "description": "Initialize match key configuration"
     },
     {
+      "permissionName": "shared-index-config-matchkeys.all",
+      "displayName": "shared index - all match key configuration",
+      "description": "All match key configuration",
+      "subPermissions": [
+        "shared-index-config-matchkeys.item.post",
+        "shared-index-config-matchkeys.collection.get",
+        "shared-index-config-matchkeys.item.get",
+        "shared-index-config-matchkeys.item.delete",
+        "shared-index-config-matchkeys.item.initialize"
+     ]
+    },
+    {
       "permissionName": "shared-index-records.collection.get",
       "displayName": "shared index - get records",
       "description": "Get records"
@@ -148,6 +160,25 @@
       "permissionName": "shared-index-records.item.get",
       "displayName": "shared index - get record",
       "description": "Get record by globalId"
+    },
+    {
+      "permissionName": "shared-index-records.all",
+      "displayName": "shared index - record management",
+      "description": "Record management",
+      "subPermissions": [
+        "shared-index-records.collection.get",
+        "shared-index-records.put",
+        "shared-index-records.item.get"
+      ]
+    },
+    {
+      "permissionName": "shared-index.all",
+      "displayName": "shared index - all permissions",
+      "description": "All permissions",
+      "subPermissions": [
+        "shared-index-config-matchkeys.all",
+        "shared-index-records.all"
+      ]
     }
   ],
   "launchDescriptor": {
