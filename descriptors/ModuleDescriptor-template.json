@@ -97,6 +97,15 @@
         },
         {
           "methods": [
+            "DELETE"
+          ],
+          "pathPattern": "/shared-index/records",
+          "permissionsRequired": [
+            "shared-index-records.delete"
+          ]
+        },
+        {
+          "methods": [
             "GET"
           ],
           "pathPattern": "/shared-index/records/{globalId}",
@@ -157,6 +166,11 @@
       "description": "Ingest records"
     },
     {
+      "permissionName": "shared-index-records.delete",
+      "displayName": "shared index - delete records",
+      "description": "Delete records"
+    },
+    {
       "permissionName": "shared-index-records.item.get",
       "displayName": "shared index - get record",
       "description": "Get record by globalId"
@@ -168,6 +182,7 @@
       "subPermissions": [
         "shared-index-records.collection.get",
         "shared-index-records.put",
+        "shared-index-records.delete",
         "shared-index-records.item.get"
       ]
     },

@@ -1,6 +1,0 @@
-in: query
-name: format
-description: item format type
-schema:
-  type: string
-  pattern: ^(BOOK|JOURNAL|ALL)$

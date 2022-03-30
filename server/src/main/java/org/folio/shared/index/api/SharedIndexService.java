@@ -50,7 +50,7 @@ public class SharedIndexService implements RouterCreator, TenantInitHooks {
     });
   }
 
-  Future<Void> getSharedRecords(RoutingContext ctx) {
+  static PgCqlQuery getPqCqlQueryForRecords() {
     PgCqlQuery pgCqlQuery = PgCqlQuery.query();
     pgCqlQuery.addField(
         new PgCqlField("cql.allRecords", PgCqlField.Type.ALWAYS_MATCHES));
@@ -60,15 +60,36 @@ public class SharedIndexService implements RouterCreator, TenantInitHooks {
         new PgCqlField("local_id", "localId", PgCqlField.Type.TEXT));
     pgCqlQuery.addField(
         new PgCqlField("source_id", "sourceId", PgCqlField.Type.UUID));
+    return pgCqlQuery;
+  }
 
+  static String getQueryParameter(RequestParameters params) {
+    return getParameterString(params.queryParameter("query"));
+  }
+
+  Future<Void> deleteSharedRecords(RoutingContext ctx) {
+    PgCqlQuery pgCqlQuery = getPqCqlQueryForRecords();
     RequestParameters params = ctx.get(ValidationHandler.REQUEST_CONTEXT_KEY);
-    pgCqlQuery.parse(getParameterString(params.queryParameter("query")));
+    String query = getQueryParameter(params);
+    if (query == null) {
+      failHandler(400, ctx, "Must specify query for delete records");
+      return Future.succeededFuture();
+    }
+    pgCqlQuery.parse(query);
+    Storage storage = new Storage(ctx);
+    return storage.deleteSharedRecords(pgCqlQuery.getWhereClause())
+        .onSuccess(x -> ctx.response().setStatusCode(204).end());
+  }
 
+  Future<Void> getSharedRecords(RoutingContext ctx) {
+    PgCqlQuery pgCqlQuery = getPqCqlQueryForRecords();
+    RequestParameters params = ctx.get(ValidationHandler.REQUEST_CONTEXT_KEY);
+    pgCqlQuery.parse(getQueryParameter(params));
     String m = getParameterString(params.queryParameter("matchkeyid"));
     Storage storage = new Storage(ctx);
     if (m != null) {
-      int maxIterations = getParameterInteger(params.queryParameter("maxiterations"),
-          MATCH_MAX_ITERATIONS);
+      int maxIterations = getParameterInteger(
+          params.queryParameter("maxiterations"), MATCH_MAX_ITERATIONS);
       List<String> matchKeyIds = Arrays.asList(m.split(","));
       return storage.getCluster(pgCqlQuery.getWhereClause(), matchKeyIds, maxIterations)
           .map(records -> {
@@ -105,11 +126,12 @@ public class SharedIndexService implements RouterCreator, TenantInitHooks {
     JsonObject request = ctx.getBodyAsJson();
     String id = request.getString("id");
     String method = request.getString("method");
+    String update = request.getString("update", "ingest");
     if (MatchKeyMethod.get(method) == null) {
       return Future.failedFuture("Non-existing method '" + method + "'");
     }
     JsonObject params = request.getJsonObject("params");
-    return storage.insertMatchKey(id, method, params).onSuccess(res ->
+    return storage.insertMatchKey(id, method, params, update).onSuccess(res ->
         HttpResponse.responseJson(ctx, 201)
             .putHeader("Location", ctx.request().absoluteURI() + "/" + id)
             .end(request.encode())
@@ -153,7 +175,7 @@ public class SharedIndexService implements RouterCreator, TenantInitHooks {
         new PgCqlField("method", PgCqlField.Type.TEXT));
 
     RequestParameters params = ctx.get(ValidationHandler.REQUEST_CONTEXT_KEY);
-    pgCqlQuery.parse(getParameterString(params.queryParameter("query")));
+    pgCqlQuery.parse(getQueryParameter(params));
 
     Storage storage = new Storage(ctx);
     return storage.getMatchKeyConfigs(ctx, pgCqlQuery.getWhereClause(),
@@ -213,6 +235,7 @@ public class SharedIndexService implements RouterCreator, TenantInitHooks {
         .map(routerBuilder -> {
           add(routerBuilder, "putSharedRecords", this::putSharedRecords);
           add(routerBuilder, "getSharedRecords", this::getSharedRecords);
+          add(routerBuilder, "deleteSharedRecords", this::deleteSharedRecords);
           add(routerBuilder, "getSharedRecordGlobalId", this::getSharedRecordGlobalId);
           add(routerBuilder, "postMatchKey", this::postMatchKey);
           add(routerBuilder, "getMatchKey", this::getMatchKey);

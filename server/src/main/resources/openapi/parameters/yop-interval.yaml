@@ -1,9 +1,0 @@
-in: query
-name: yopInterval
-description: a number of months or years for grouping publication dates
-required: false
-
-schema:
-  type: string
-  default: auto
-  pattern: ^(\d+[YM])|(auto)$

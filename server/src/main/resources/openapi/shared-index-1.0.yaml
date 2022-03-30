@@ -334,6 +334,16 @@ paths:
           $ref: "#/components/responses/trait_400"
         "500":
           $ref: "#/components/responses/trait_500"
+    delete:
+      description: Delete shared records.
+      operationId: deleteSharedRecords
+      responses:
+        "204":
+          description: Records deleted
+        "400":
+          $ref: "#/components/responses/trait_400"
+        "500":
+          $ref: "#/components/responses/trait_500"
   /shared-index/records/{globalId}:
     parameters:
       - $ref: headers/okapi-tenant.yaml

@@ -81,13 +81,15 @@ public class Storage {
             CREATE_IF_NO_EXISTS + matchKeyConfigTable
                 + "(id VARCHAR NOT NULL PRIMARY KEY,"
                 + " method VARCHAR, "
+                + " update VARCHAR, "
                 + " params JSONB)",
             CREATE_IF_NO_EXISTS + matchKeyValueTable
                 + "(bib_record_id uuid NOT NULL,"
                 + " match_key_config_id VARCHAR NOT NULL,"
                 + " match_value VARCHAR NOT NULL,"
                 + " CONSTRAINT match_key_value_fk_bib_record FOREIGN KEY "
-                + "                (bib_record_id) REFERENCES " + bibRecordTable + ")",
+                + "    (bib_record_id) REFERENCES " + bibRecordTable + " ON DELETE CASCADE"
+                + ")",
             "CREATE UNIQUE INDEX IF NOT EXISTS match_key_value_idx ON " + matchKeyValueTable
                 + " (match_key_config_id, match_value, bib_record_id)",
             "CREATE INDEX IF NOT EXISTS match_key_value_bib_id_idX ON " + matchKeyValueTable
@@ -96,7 +98,7 @@ public class Storage {
     ).mapEmpty();
   }
 
-  Future<Void> upsertBibRecord(
+  Future<UUID> upsertBibRecord(
       SqlConnection conn,
       String localIdentifier,
       UUID sourceId,
@@ -104,21 +106,68 @@ public class Storage {
       JsonObject inventoryPayload) {
 
     return conn.preparedQuery(
-        "INSERT INTO " + bibRecordTable
-            + " (id, local_id, source_id, marc_payload, inventory_payload)"
-            + " VALUES ($1, $2, $3, $4, $5)"
-            + " ON CONFLICT (local_id, source_id) DO UPDATE "
-            + " SET marc_payload = $4, "
-            + "     inventory_payload = $5").execute(
-        Tuple.of(UUID.randomUUID(), localIdentifier, sourceId, marcPayload, inventoryPayload)
-    ).mapEmpty();
+            "INSERT INTO " + bibRecordTable
+                + " (id, local_id, source_id, marc_payload, inventory_payload)"
+                + " VALUES ($1, $2, $3, $4, $5)"
+                + " ON CONFLICT (local_id, source_id) DO UPDATE "
+                + " SET marc_payload = $4, inventory_payload = $5"
+                + " RETURNING id"
+        )
+        .execute(
+            Tuple.of(UUID.randomUUID(), localIdentifier, sourceId, marcPayload, inventoryPayload)
+        )
+        .map(rowSet -> rowSet.iterator().next().getUUID("id"));
   }
 
-  Future<Void> upsertSharedRecord(SqlConnection conn, UUID sourceId, JsonObject sharedRecord) {
+  Future<Void> upsertSharedRecord(SqlConnection conn, UUID sourceId,
+      JsonObject sharedRecord, JsonArray matchKeyConfigs) {
+
     final String localIdentifier = sharedRecord.getString("localId");
     final JsonObject marcPayload = sharedRecord.getJsonObject("marcPayload");
     final JsonObject inventoryPayload = sharedRecord.getJsonObject("inventoryPayload");
-    return upsertBibRecord(conn, localIdentifier, sourceId, marcPayload, inventoryPayload);
+    return upsertBibRecord(conn, localIdentifier, sourceId, marcPayload, inventoryPayload)
+        .compose(id -> updateMatchKeyValues(conn, id,
+            marcPayload, inventoryPayload, matchKeyConfigs));
+  }
+
+  Future<Void> updateMatchKeyValues(SqlConnection conn, UUID globalId,
+      JsonObject marcPayload, JsonObject inventoryPayload, JsonArray matchKeyConfigs) {
+    Future<Void> future = Future.succeededFuture();
+    for (int i = 0; i < matchKeyConfigs.size(); i++) {
+      JsonObject matchKeyConfig = matchKeyConfigs.getJsonObject(i);
+      future = future.compose(x -> updateMatchKeyValues(conn, globalId,
+          marcPayload, inventoryPayload, matchKeyConfig));
+    }
+    return Future.succeededFuture();
+  }
+
+  Future<Void> updateMatchKeyValues(SqlConnection conn, UUID globalId,
+      JsonObject marcPayload, JsonObject inventoryPayload, JsonObject matchKeyConfig) {
+
+    String update = matchKeyConfig.getString("update");
+    if ("manual".equals(update)) {
+      return Future.succeededFuture();
+    }
+    String methodId = matchKeyConfig.getString("id");
+    String methodName = matchKeyConfig.getString("method");
+    MatchKeyMethod method = MatchKeyMethod.get(methodName);
+    if (method == null) {
+      return Future.failedFuture("Unknown match key method: " + methodName);
+    }
+    method.configure(matchKeyConfig.getJsonObject("params"));
+    return updateMatchKeyValues(conn, globalId, marcPayload, inventoryPayload, methodId, method);
+  }
+
+  Future<Void> updateMatchKeyValues(SqlConnection conn, UUID globalId,
+      JsonObject marcPayload, JsonObject inventoryPayload, String methodId, MatchKeyMethod method) {
+
+    List<String> keys = method.getKeys(marcPayload, inventoryPayload);
+    List<Future<Void>> futures = new ArrayList<>(keys.size());
+    futures.add(deleteMatchKeyValueTable(conn, methodId, globalId));
+    for (String key : keys) {
+      futures.add(upsertMatchKeyValueTable(conn, methodId, globalId, key));
+    }
+    return GenericCompositeFuture.all(futures).mapEmpty();
   }
 
   /**
@@ -129,14 +178,33 @@ public class Storage {
   public Future<Void> upsertSharedRecords(JsonObject request) {
     UUID sourceId = UUID.fromString(request.getString("sourceId"));
     JsonArray records = request.getJsonArray("records");
-    return pool.withConnection(conn -> {
-      Future<Void> future = Future.succeededFuture();
-      for (int i = 0; i < records.size(); i++) {
-        JsonObject sharedRecord = records.getJsonObject(i);
-        future = future.compose(x -> upsertSharedRecord(conn, sourceId, sharedRecord));
-      }
-      return future;
-    });
+
+    return pool.withConnection(conn ->
+        getAvailableMatchConfigs(conn).compose(matchKeyConfigs -> {
+          List<Future<Void>> futures = new ArrayList<>(records.size());
+          for (int i = 0; i < records.size(); i++) {
+            JsonObject sharedRecord = records.getJsonObject(i);
+            futures.add(upsertSharedRecord(conn, sourceId, sharedRecord, matchKeyConfigs));
+          }
+          return GenericCompositeFuture.all(futures).mapEmpty();
+        })
+    );
+  }
+
+  Future<JsonArray> getAvailableMatchConfigs(SqlConnection conn) {
+    return conn.query("SELECT * FROM " + matchKeyConfigTable)
+        .execute()
+        .map(res -> {
+          JsonArray matchConfigs = new JsonArray();
+          res.forEach(row ->
+              matchConfigs.add(new JsonObject()
+                  .put("id", row.getString("id"))
+                  .put("method", row.getString("method"))
+                  .put("params", row.getJsonObject("params"))
+                  .put("update", row.getString("update"))
+              ));
+          return matchConfigs;
+        });
   }
 
   static Future<JsonObject> handleRecord(Row row) {
@@ -167,6 +235,19 @@ public class Storage {
               o.put("matchkeys", matchKeys);
               return o;
             }));
+  }
+
+  /**
+   * Delete shared records and corresponding match value table entries.
+   * @param sqlWhere SQL WHERE clause
+   * @return async result
+   */
+  public Future<Void> deleteSharedRecords(String sqlWhere) {
+    String from = bibRecordTable;
+    if (sqlWhere != null) {
+      from = from + " WHERE " + sqlWhere;
+    }
+    return pool.query("DELETE FROM " + from).execute().mapEmpty();
   }
 
   /**
@@ -291,12 +372,14 @@ public class Storage {
    * @param id match key id (user specified)
    * @param method match key method
    * @param params configuration
+   * @param update strategy
    * @return async result
    */
-  public Future<Void> insertMatchKey(String id, String method, JsonObject params) {
+  public Future<Void> insertMatchKey(String id, String method, JsonObject params, String update) {
     return pool.preparedQuery(
-        "INSERT INTO " + matchKeyConfigTable + " (id, method, params) VALUES ($1, $2, $3)")
-        .execute(Tuple.of(id, method, params))
+        "INSERT INTO " + matchKeyConfigTable + " (id, method, params, update)"
+            + " VALUES ($1, $2, $3, $4)")
+        .execute(Tuple.of(id, method, params, update))
         .mapEmpty();
   }
 
@@ -318,7 +401,8 @@ public class Storage {
           return new JsonObject()
               .put("id", row.getString("id"))
               .put("method", row.getString("method"))
-              .put("params", row.getJsonObject("params"));
+              .put("params", row.getJsonObject("params"))
+              .put("update", row.getString("update"));
         });
   }
 
@@ -358,13 +442,23 @@ public class Storage {
         row -> Future.succeededFuture(new JsonObject()
             .put("id", row.getString("id"))
             .put("method", row.getString("method"))
-            .put("params", row.getJsonObject("params"))));
+            .put("params", row.getJsonObject("params"))
+            .put("update", row.getString("update"))
+        ));
   }
 
   Future<Void> cleanMatchKeyValueTable(SqlConnection connection, String matchKeyMethodId) {
     return connection.preparedQuery("DELETE FROM " + matchKeyValueTable
         + " WHERE match_key_config_id = $1").execute(
         Tuple.of(matchKeyMethodId)).mapEmpty();
+  }
+
+  Future<Void> deleteMatchKeyValueTable(SqlConnection connection, String matchKeyMethodId,
+      UUID globalId) {
+
+    return connection.preparedQuery("DELETE FROM " + matchKeyValueTable
+        + " WHERE match_key_config_id = $1 AND bib_record_id = $2").execute(
+        Tuple.of(matchKeyMethodId, globalId)).mapEmpty();
   }
 
   Future<Void> upsertMatchKeyValueTable(SqlConnection connection, String matchKeyMethodId,
@@ -381,39 +475,32 @@ public class Storage {
 
     String query = "SELECT * FROM " + bibRecordTable;
     AtomicInteger count = new AtomicInteger();
-    return cleanMatchKeyValueTable(connection, matchKeyMethodId)
-        .compose(x -> connection.prepare(query).compose(pq ->
-            connection.begin().compose(tx -> {
-              RowStream<Row> stream = pq.createStream(sqlStreamFetchSize);
-              Promise<JsonObject> promise = Promise.promise();
-              stream.handler(row -> {
-                stream.pause();
-                count.incrementAndGet();
-                List<String> keys =
-                    method.getKeys(row.getJsonObject("marc_payload"),
-                        row.getJsonObject("inventory_payload"));
-                List<Future<Void>> futures = new ArrayList<>();
-                UUID globalId = row.getUUID("id");
-                for (String key : keys) {
-                  futures.add(upsertMatchKeyValueTable(connection, matchKeyMethodId,
-                      globalId, key));
-                }
-                GenericCompositeFuture.all(futures)
-                    .onFailure(e -> log.error(e.getMessage(), e))
-                    .onComplete(e -> stream.resume());
-              });
-              stream.endHandler(end -> {
-                tx.commit();
-                promise.complete(new JsonObject().put("count", count.get()));
-              });
-              stream.exceptionHandler(e -> {
-                log.error(e.getMessage(), e);
-                tx.commit();
-                promise.fail(e);
-              });
-              return promise.future();
-            })
-        ));
+    return connection.prepare(query).compose(pq ->
+        connection.begin().compose(tx -> {
+          RowStream<Row> stream = pq.createStream(sqlStreamFetchSize);
+          Promise<JsonObject> promise = Promise.promise();
+          stream.handler(row -> {
+            stream.pause();
+            count.incrementAndGet();
+
+            UUID globalId = row.getUUID("id");
+            updateMatchKeyValues(connection, globalId, row.getJsonObject("marc_payload"),
+                row.getJsonObject("inventory_payload"), matchKeyMethodId, method)
+                .onFailure(e -> log.error(e.getMessage(), e))
+                .onComplete(e -> stream.resume());
+          });
+          stream.endHandler(end -> {
+            tx.commit();
+            promise.complete(new JsonObject().put("count", count.get()));
+          });
+          stream.exceptionHandler(e -> {
+            log.error(e.getMessage(), e);
+            tx.commit();
+            promise.fail(e);
+          });
+          return promise.future();
+        })
+    );
   }
 
   /**

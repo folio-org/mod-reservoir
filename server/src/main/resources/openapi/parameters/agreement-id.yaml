@@ -1,7 +1,0 @@
-in: query
-name: agreementId
-description: Agreement identifier
-required: true
-schema:
-  type: string
-  format: uuid

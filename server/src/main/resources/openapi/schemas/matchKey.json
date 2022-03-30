@@ -13,6 +13,11 @@
     "params": {
       "type": "object",
       "description": "parameter references"
+    },
+    "update": {
+      "type": "string",
+      "enum": ["ingest", "manual"],
+      "description": "ingest: update when records are ingested, manual: update only when initialize is called"
     }
   },
   "additionalProperties": false,

@@ -1,9 +1,0 @@
-in: query
-name: accessCountPeriod
-description: Group access according to this parameter. May be given in a number of months (nM) or
- in years (nY). The value "auto" makes it group as 1Y if startDate is given as YYYY; otherwise 1M.
-required: false
-schema:
-  type: string
-  default: auto
-  pattern: ^(\d+[YM])|(auto)$

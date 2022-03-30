@@ -1,7 +1,0 @@
-in: query
-name: includeOA
-description: whether to include Open Access material
-required: false
-schema:
-  type: boolean
-  default: false

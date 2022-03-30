@@ -244,7 +244,7 @@ public class MainVerticleTest {
         .put("/shared-index/records")
         .then().statusCode(400)
         .header("Content-Type", is("text/plain"))
-        .body(is("ERROR: relation \"unknowntenant_mod_shared_index.bib_record\" does not exist (42P01)"));
+        .body(containsString(" does not exist (42P01)"));
   }
 
   @Test
@@ -277,7 +277,8 @@ public class MainVerticleTest {
     JsonObject matchKey = new JsonObject()
         .put("id", "10a")
         .put("method", "jsonpath")
-        .put("params",new JsonObject().put("marc", "$.fields.010.subfields[*].a"));
+        .put("params", new JsonObject().put("marc", "$.fields.010.subfields[*].a"))
+        .put("update", "ingest");
 
     RestAssured.given()
         .header(XOkapiHeaders.TENANT, tenant1)
@@ -403,7 +404,7 @@ public class MainVerticleTest {
     String res = RestAssured.given()
         .header(XOkapiHeaders.TENANT, tenant1)
         .header("Content-Type", "application/json")
-        .param("query", "sourceId==" + sourceId)
+        .param("query", "sourceId=" + sourceId)
         .get("/shared-index/records")
         .then().statusCode(200)
         .body("items", hasSize(2))
@@ -430,7 +431,7 @@ public class MainVerticleTest {
     RestAssured.given()
         .header(XOkapiHeaders.TENANT, tenant1)
         .header("Content-Type", "application/json")
-        .param("query", "sourceId==" + UUID.randomUUID())
+        .param("query", "sourceId=" + UUID.randomUUID())
         .get("/shared-index/records")
         .then().statusCode(200)
         .body("items", hasSize(0))
@@ -467,10 +468,99 @@ public class MainVerticleTest {
   }
 
   @Test
-  public void testMatchKeys() {
+  public void testMatchKeysIngest() {
+    JsonObject matchKey = new JsonObject()
+        .put("id", "isbn2")
+        .put("method", "jsonpath")
+        // update = ingest is the default
+        .put("params", new JsonObject().put("inventory", "$.isbn[*]"));
+
+    RestAssured.given()
+        .header(XOkapiHeaders.TENANT, tenant1)
+        .header("Content-Type", "application/json")
+        .body(matchKey.encode())
+        .post("/shared-index/config/matchkeys")
+        .then().statusCode(201)
+        .contentType("application/json")
+        .body(Matchers.is(matchKey.encode()));
+
+    String sourceId1 = UUID.randomUUID().toString();
+    JsonArray records1 = new JsonArray()
+        .add(new JsonObject()
+            .put("localId", "S101")
+            .put("marcPayload", new JsonObject().put("leader", "00914naa  2200337   450 "))
+            .put("inventoryPayload", new JsonObject().put("isbn", new JsonArray().add("1")))
+        )
+        .add(new JsonObject()
+            .put("localId", "S102")
+            .put("marcPayload", new JsonObject().put("leader", "00914naa  2200337   450 "))
+            .put("inventoryPayload", new JsonObject().put("isbn", new JsonArray().add("2").add("3")))
+        );
+    ingestRecords(records1, sourceId1);
+
+    RestAssured.given()
+        .header(XOkapiHeaders.TENANT, tenant1)
+        .header("Content-Type", "application/json")
+        .param("query", "sourceId=" + sourceId1)
+        .get("/shared-index/records")
+        .then().statusCode(200)
+        .contentType("application/json")
+        .body("items", hasSize(2))
+        .body("items[0].matchkeys.isbn2[0]", is("1"))
+        .body("items[1].matchkeys.isbn2[0]", is("2"))
+        .body("items[1].matchkeys.isbn2[1]", is("3"));
+
+    ingestRecords(records1, sourceId1);
+
+    RestAssured.given()
+        .header(XOkapiHeaders.TENANT, tenant1)
+        .header("Content-Type", "application/json")
+        .param("query", "sourceId=" + sourceId1)
+        .get("/shared-index/records")
+        .then().statusCode(200)
+        .contentType("application/json")
+        .body("items", hasSize(2))
+        .body("items[0].matchkeys.isbn2[0]", is("1"))
+        .body("items[1].matchkeys.isbn2[0]", is("2"))
+        .body("items[1].matchkeys.isbn2[1]", is("3"));
+
+    RestAssured.given()
+        .header(XOkapiHeaders.TENANT, tenant1)
+        .header("Content-Type", "application/json")
+        .param("query", "cql.allRecords=true")
+        .delete("/shared-index/records")
+        .then().statusCode(204);
+
+    RestAssured.given()
+        .header(XOkapiHeaders.TENANT, tenant1)
+        .delete("/shared-index/config/matchkeys/" + matchKey.getString("id"))
+        .then().statusCode(204);
+  }
+
+  @Test
+  public void testDeleteSharedRecords() {
+    RestAssured.given()
+        .header(XOkapiHeaders.TENANT, tenant1)
+        .header("Content-Type", "application/json")
+        .param("query", "sourceId=" + UUID.randomUUID())
+        .delete("/shared-index/records")
+        .then().statusCode(204);
+
+    RestAssured.given()
+        .header(XOkapiHeaders.TENANT, tenant1)
+        .header("Content-Type", "application/json")
+        .delete("/shared-index/records")
+        .then().statusCode(400)
+        .contentType("text/plain")
+        .body(is("Must specify query for delete records"));
+  }
+
+  @Test
+  public void testMatchKeysManual() {
     JsonObject matchKey = new JsonObject()
         .put("id", "isbn")
         .put("method", "jsonpath")
+        .put("update", "manual")
         .put("params", new JsonObject().put("inventory", "$.isbn[*]"));
 
     RestAssured.given()
@@ -508,7 +598,7 @@ public class MainVerticleTest {
     RestAssured.given()
         .header(XOkapiHeaders.TENANT, tenant1)
         .header("Content-Type", "application/json")
-        .param("query", "sourceId==\"" + sourceId1 + "\"")
+        .param("query", "sourceId=" + sourceId1)
         .get("/shared-index/records")
         .then().statusCode(200)
         .contentType("application/json")
@@ -629,6 +719,13 @@ public class MainVerticleTest {
         .then().statusCode(404)
         .contentType("text/plain")
         .body(is("MatchKey isbn not found"));
+
+    RestAssured.given()
+        .header(XOkapiHeaders.TENANT, tenant1)
+        .header("Content-Type", "application/json")
+        .param("query", "cql.allRecords=true")
+        .delete("/shared-index/records")
+        .then().statusCode(204);
   }
 
   @Test

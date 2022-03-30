@@ -1,7 +1,0 @@
-in: query
-name: full
-description: whether to return full response or brief (summary) response
-required: false
-schema:
-  type: boolean
-  default: true

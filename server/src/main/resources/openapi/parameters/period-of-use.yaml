@@ -1,7 +1,0 @@
-in: query
-name: periodOfUse
-description: a number of months or years for grouping
-required: true
-schema:
-  type: string
-  pattern: ^\d+[YM]$
