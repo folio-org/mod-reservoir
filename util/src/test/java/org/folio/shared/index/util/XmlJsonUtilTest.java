@@ -4,7 +4,6 @@ import io.vertx.core.json.JsonArray;
 import io.vertx.core.json.JsonObject;
 import java.io.*;
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.List;
 import javax.xml.parsers.ParserConfigurationException;
 import javax.xml.stream.XMLInputFactory;
@@ -271,26 +270,49 @@ public class XmlJsonUtilTest {
     Assert.assertEquals(new JsonObject().put("a", new JsonArray()),
         XmlJsonUtil.inventoryXmlToJson("<a><arr/></a>"));
 
-    Assert.assertEquals(new JsonObject().put("a", new JsonArray().add(new JsonObject().put("t","1"))),
-        XmlJsonUtil.inventoryXmlToJson("<a><arr><t>1</t></arr></a>"));
+    Assert.assertEquals(new JsonObject().put("a", new JsonArray()),
+        XmlJsonUtil.inventoryXmlToJson("<a><arr>1</arr></a>"));
+
+    Assert.assertEquals(new JsonObject().put("a", new JsonArray().add("1")),
+        XmlJsonUtil.inventoryXmlToJson("<a><arr><i>1</i></arr></a>"));
+
+    Assert.assertEquals(new JsonObject().put("a", new JsonArray().add("1")),
+        XmlJsonUtil.inventoryXmlToJson("<a><arr><arr>1</arr></arr></a>"));
+
+    Assert.assertEquals(new JsonObject().put("a", new JsonArray().add(new JsonArray().add("1"))),
+        XmlJsonUtil.inventoryXmlToJson("<a><arr><arr><arr><arr>1</arr></arr></arr></arr></a>"));
+
+    Assert.assertEquals(new JsonObject().put("a", new JsonArray().add(new JsonObject().put("x1","1").put("x2", "2"))),
+        XmlJsonUtil.inventoryXmlToJson("<a><arr><i><x1>1</x1><x2>2</x2></i></arr></a>"));
 
     Assert.assertEquals(new JsonObject().put("a", new JsonArray()
-            .add(new JsonObject().put("t","1"))
-            .add(new JsonObject().put("u","2"))
-            .add(new JsonObject().put("v","3"))),
-        XmlJsonUtil.inventoryXmlToJson("<a><arr><t>1</t><u>2</u><v>3</v></arr></a>"));
+            .add(new JsonObject()
+                .put("t","1")
+                .put("u","2")
+                .put("v","3"))),
+        XmlJsonUtil.inventoryXmlToJson("<a><arr><i><t>1</t><u>2</u><v>3</v></i></arr></a>"));
 
     Assert.assertEquals(new JsonObject().put("a", new JsonArray()
-            .add(new JsonObject().put("t","1"))
-            .add(new JsonObject().put("t","2"))
-            .add(new JsonObject().put("t","3"))),
+            .add(new JsonObject()
+                .put("t","1"))
+            .add(new JsonObject()
+                .put("u","2"))
+            .add(new JsonObject()
+                .put("v","3"))),
+        XmlJsonUtil.inventoryXmlToJson("<a><arr><i><t>1</t></i><i><u>2</u></i><i><v>3</v></i></arr></a>"));
+
+    Assert.assertEquals(new JsonObject().put("a", new JsonArray()
+            .add("1")
+            .add("2")
+            .add("3")),
         XmlJsonUtil.inventoryXmlToJson("<a><arr><t>1</t><t>2</t><t>3</t></arr></a>"));
+
 
     Assert.assertEquals(new JsonObject().put("a", new JsonArray()
             .add(new JsonArray()
                 .add(new JsonObject().put("b", "1"))
                 .add(new JsonObject().put("c", "2")))),
-        XmlJsonUtil.inventoryXmlToJson("<a><arr><arr><b>1</b><c>2</c></arr></arr></a>"));
+        XmlJsonUtil.inventoryXmlToJson("<a><arr><i><arr><i><b>1</b></i><i><c>2</c></i></arr></i></arr></a>"));
 
     Assert.assertEquals(new JsonObject()
             .put("record",
@@ -315,7 +337,7 @@ public class XmlJsonUtilTest {
             + "<record>"
             + "<a>"
             + "<arr>"
-            + "<b>1</b>"
+            + "<i><b>1</b></i>"
             + "</arr>"
             + "</a>"
             + "<c>2</c>"
@@ -332,7 +354,7 @@ public class XmlJsonUtilTest {
             + "<record>"
             + " <a>\n"
             + "   <arr>\n"
-            + "     <b>1</b>\n"
+            + "  <i>   <b>1</b> </i>\n"
             + "   </arr>\n"
             + " </a>\n"
             + " <c>2</c>\n"
@@ -348,14 +370,15 @@ public class XmlJsonUtilTest {
 
     Assert.assertEquals(new JsonObject().put("a", new JsonArray()
             .add(new JsonObject().put("i", null))),
-        XmlJsonUtil.inventoryXmlToJson("<a><arr><i/> </arr> </a>"));
+        XmlJsonUtil.inventoryXmlToJson("<a><arr><i><i/></i> </arr> </a>"));
 
     Assert.assertEquals(new JsonObject().put("a", new JsonArray()
             .add(new JsonObject().put("b", null))
             .add(new JsonObject().put("c", null))
         ),
-        XmlJsonUtil.inventoryXmlToJson("<a><arr><b/><original>x</original><c/></arr></a>"));
+        XmlJsonUtil.inventoryXmlToJson("<a><arr><i><b/></i><original>x</original><i><c/></i></arr></a>"));
   }
+
   @Test
   public void testCreateIngestRecord1() {
     JsonObject marcPayload = new JsonObject()
@@ -402,6 +425,7 @@ public class XmlJsonUtilTest {
   @Test
   public void testCreateIngestRecord10() throws IOException, XMLStreamException,
       TransformerException, ParserConfigurationException, SAXException {
+
     TransformerFactory transformerFactory = TransformerFactory.newInstance();
     Source xslt = new StreamSource("src/test/resources/marc2inventory-instance.xsl");
     List<Transformer> transformers = List.of(transformerFactory.newTransformer(xslt));
