@@ -55,6 +55,15 @@
         },
         {
           "methods": [
+            "PUT"
+          ],
+          "pathPattern": "/shared-index/config/matchkeys/{id}",
+          "permissionsRequired": [
+            "shared-index-config-matchkeys.item.put"
+          ]
+        },
+        {
+          "methods": [
             "DELETE"
           ],
           "pathPattern": "/shared-index/config/matchkeys/{id}",
@@ -134,6 +143,11 @@
       "description": "Get match key configuration"
     },
     {
+      "permissionName": "shared-index-config-matchkeys.item.put",
+      "displayName": "shared index - update match key configuration",
+      "description": "Update match key configuration"
+    },
+    {
       "permissionName": "shared-index-config-matchkeys.item.delete",
       "displayName": "shared index - delete match key configuration",
       "description": "Delete match key configuration"
@@ -151,6 +165,7 @@
         "shared-index-config-matchkeys.item.post",
         "shared-index-config-matchkeys.collection.get",
         "shared-index-config-matchkeys.item.get",
+        "shared-index-config-matchkeys.item.put",
         "shared-index-config-matchkeys.item.delete",
         "shared-index-config-matchkeys.item.initialize"
      ]

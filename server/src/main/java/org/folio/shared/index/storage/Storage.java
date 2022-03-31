@@ -368,19 +368,39 @@ public class Storage {
   }
 
   /**
-   * Insert match key into storage.
+   * Insert match key config into storage.
    * @param id match key id (user specified)
    * @param method match key method
    * @param params configuration
    * @param update strategy
    * @return async result
    */
-  public Future<Void> insertMatchKey(String id, String method, JsonObject params, String update) {
+  public Future<Void> insertMatchKeyConfig(String id, String method, JsonObject params,
+      String update) {
+
     return pool.preparedQuery(
         "INSERT INTO " + matchKeyConfigTable + " (id, method, params, update)"
             + " VALUES ($1, $2, $3, $4)")
         .execute(Tuple.of(id, method, params, update))
         .mapEmpty();
+  }
+
+  /**
+   * Update match key config into storage.
+   * @param id match key id (user specified)
+   * @param method match key method
+   * @param params configuration
+   * @param update strategy
+   * @return async result with TRUE if updated; FALSE if not found
+   */
+  public Future<Boolean> updateMatchKeyConfig(String id, String method, JsonObject params,
+      String update) {
+
+    return pool.preparedQuery(
+            "UPDATE " + matchKeyConfigTable
+                + " SET method = $2, params = $3, update = $4 WHERE id = $1")
+        .execute(Tuple.of(id, method, params, update))
+        .map(res -> res.rowCount() > 0);
   }
 
   /**

@@ -300,6 +300,15 @@ public class MainVerticleTest {
     RestAssured.given()
         .header(XOkapiHeaders.TENANT, tenant1)
         .header("Content-Type", "application/json")
+        .body(matchKey.encode())
+        .post("/shared-index/config/matchkeys")
+        .then().statusCode(400)
+        .contentType("text/plain")
+        .body(containsString("duplicate key value violates unique constraint"));
+
+    RestAssured.given()
+        .header(XOkapiHeaders.TENANT, tenant1)
+        .header("Content-Type", "application/json")
         .get("/shared-index/config/matchkeys/" + matchKey.getString("id"))
         .then().statusCode(200)
         .contentType("application/json")
@@ -313,6 +322,7 @@ public class MainVerticleTest {
         .body("matchKeys", hasSize(1))
         .body("matchKeys[0].id", is(matchKey.getString("id")))
         .body("matchKeys[0].method", is(matchKey.getString("method")))
+        .body("matchKeys[0].update", is(matchKey.getString("update")))
         // should really check that params are same
         .body("resultInfo.totalRecords", is(1));
 
@@ -324,19 +334,34 @@ public class MainVerticleTest {
         .body("matchKeys", hasSize(1))
         .body("matchKeys[0].id", is(matchKey.getString("id")))
         .body("matchKeys[0].method", is(matchKey.getString("method")))
+        .body("matchKeys[0].update", is(matchKey.getString("update")))
         .body("resultInfo.totalRecords", is(1));
 
+    matchKey.put("update", "manual");
     RestAssured.given()
         .header(XOkapiHeaders.TENANT, tenant1)
         .header("Content-Type", "application/json")
         .body(matchKey.encode())
+        .put("/shared-index/config/matchkeys/" + matchKey.getString("id"))
+        .then().statusCode(204);
+
+    RestAssured.given()
+        .header(XOkapiHeaders.TENANT, tenant1)
+        .header("Content-Type", "application/json")
+        .get("/shared-index/config/matchkeys/" + matchKey.getString("id"))
+        .then().statusCode(200)
+        .contentType("application/json")
+        .body(Matchers.is(matchKey.encode()));
+
+    RestAssured.given()
+        .header(XOkapiHeaders.TENANT, tenant1)
+        .header("Content-Type", "application/json")
         .delete("/shared-index/config/matchkeys/" + matchKey.getString("id"))
         .then().statusCode(204);
 
     RestAssured.given()
         .header(XOkapiHeaders.TENANT, tenant1)
         .header("Content-Type", "application/json")
-        .body(matchKey.encode())
         .delete("/shared-index/config/matchkeys/" + matchKey.getString("id"))
         .then().statusCode(404);
 
@@ -344,6 +369,13 @@ public class MainVerticleTest {
         .header(XOkapiHeaders.TENANT, tenant1)
         .header("Content-Type", "application/json")
         .get("/shared-index/config/matchkeys/" + matchKey.getString("id"))
+        .then().statusCode(404);
+
+    RestAssured.given()
+        .header(XOkapiHeaders.TENANT, tenant1)
+        .header("Content-Type", "application/json")
+        .body(matchKey.encode())
+        .put("/shared-index/config/matchkeys/" + matchKey.getString("id"))
         .then().statusCode(404);
   }
 

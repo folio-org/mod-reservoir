@@ -121,51 +121,78 @@ public class SharedIndexService implements RouterCreator, TenantInitHooks {
         .mapEmpty();
   }
 
-  Future<Void> postMatchKey(RoutingContext ctx) {
+  static String getMethod(JsonObject config) {
+    String method = config.getString("method");
+    if (MatchKeyMethod.get(method) == null) {
+      throw new IllegalArgumentException("Non-existing method '" + method + "'");
+    }
+    return method;
+  }
+
+  Future<Void> postConfigMatchKey(RoutingContext ctx) {
     Storage storage = new Storage(ctx);
     JsonObject request = ctx.getBodyAsJson();
     String id = request.getString("id");
-    String method = request.getString("method");
+    String method = getMethod(request);
     String update = request.getString("update", "ingest");
-    if (MatchKeyMethod.get(method) == null) {
-      return Future.failedFuture("Non-existing method '" + method + "'");
-    }
     JsonObject params = request.getJsonObject("params");
-    return storage.insertMatchKey(id, method, params, update).onSuccess(res ->
+    return storage.insertMatchKeyConfig(id, method, params, update).onSuccess(res ->
         HttpResponse.responseJson(ctx, 201)
             .putHeader("Location", ctx.request().absoluteURI() + "/" + id)
             .end(request.encode())
     );
   }
 
-  Future<Void> getMatchKey(RoutingContext ctx) {
+  Future<Void> getConfigMatchKey(RoutingContext ctx) {
     RequestParameters params = ctx.get(ValidationHandler.REQUEST_CONTEXT_KEY);
     String id = getParameterString(params.pathParameter("id"));
     Storage storage = new Storage(ctx);
-    return storage.selectMatchKeyConfig(id).onSuccess(res -> {
-      if (res == null) {
-        HttpResponse.responseError(ctx, 404, "MatchKey " + id + " not found");
-        return;
-      }
-      HttpResponse.responseJson(ctx, 200).end(res.encode());
-    }).mapEmpty();
+    return storage.selectMatchKeyConfig(id)
+        .onSuccess(res -> {
+          if (res == null) {
+            HttpResponse.responseError(ctx, 404, "MatchKey " + id + " not found");
+            return;
+          }
+          HttpResponse.responseJson(ctx, 200).end(res.encode());
+        })
+        .mapEmpty();
   }
 
-  Future<Void> deleteMatchKey(RoutingContext ctx) {
+  Future<Void> putConfigMatchKey(RoutingContext ctx) {
+    Storage storage = new Storage(ctx);
+    JsonObject request = ctx.getBodyAsJson();
+    String id = request.getString("id");
+    String method = getMethod(request);
+    String update = request.getString("update", "ingest");
+    JsonObject params = request.getJsonObject("params");
+    return storage.updateMatchKeyConfig(id, method, params, update)
+        .onSuccess(res -> {
+          if (Boolean.FALSE.equals(res)) {
+            HttpResponse.responseError(ctx, 404, "MatchKey " + id + " not found");
+            return;
+          }
+          ctx.response().setStatusCode(204).end();
+        })
+        .mapEmpty();
+  }
+
+  Future<Void> deleteConfigMatchKey(RoutingContext ctx) {
     RequestParameters params = ctx.get(ValidationHandler.REQUEST_CONTEXT_KEY);
     String id = getParameterString(params.pathParameter("id"));
     Storage storage = new Storage(ctx);
-    return storage.deleteMatchKeyConfig(id).onSuccess(res -> {
-      if (Boolean.FALSE.equals(res)) {
-        HttpResponse.responseError(ctx, 404, "MatchKey " + id + " not found");
-        return;
-      }
-      ctx.response().setStatusCode(204).end();
-    }).mapEmpty();
+    return storage.deleteMatchKeyConfig(id)
+        .onSuccess(res -> {
+          if (Boolean.FALSE.equals(res)) {
+            HttpResponse.responseError(ctx, 404, "MatchKey " + id + " not found");
+            return;
+          }
+          ctx.response().setStatusCode(204).end();
+        })
+        .mapEmpty();
   }
 
 
-  Future<Void> getMatchKeys(RoutingContext ctx) {
+  Future<Void> getConfigMatchKeys(RoutingContext ctx) {
     PgCqlQuery pgCqlQuery = PgCqlQuery.query();
     pgCqlQuery.addField(
         new PgCqlField("cql.allRecords", PgCqlField.Type.ALWAYS_MATCHES));
@@ -237,10 +264,11 @@ public class SharedIndexService implements RouterCreator, TenantInitHooks {
           add(routerBuilder, "getSharedRecords", this::getSharedRecords);
           add(routerBuilder, "deleteSharedRecords", this::deleteSharedRecords);
           add(routerBuilder, "getSharedRecordGlobalId", this::getSharedRecordGlobalId);
-          add(routerBuilder, "postMatchKey", this::postMatchKey);
-          add(routerBuilder, "getMatchKey", this::getMatchKey);
-          add(routerBuilder, "deleteMatchKey", this::deleteMatchKey);
-          add(routerBuilder, "getMatchKeys", this::getMatchKeys);
+          add(routerBuilder, "postConfigMatchKey", this::postConfigMatchKey);
+          add(routerBuilder, "getConfigMatchKey", this::getConfigMatchKey);
+          add(routerBuilder, "putConfigMatchKey", this::putConfigMatchKey);
+          add(routerBuilder, "deleteConfigMatchKey", this::deleteConfigMatchKey);
+          add(routerBuilder, "getConfigMatchKeys", this::getConfigMatchKeys);
           add(routerBuilder, "initializeMatchKey", this::initializeMatchKey);
           return routerBuilder.createRouter();
         });

@@ -10,8 +10,8 @@ paths:
       - $ref: headers/okapi-token.yaml
       - $ref: headers/okapi-url.yaml
     post:
-      description: Create match key.
-      operationId: postMatchKey
+      description: Create match key
+      operationId: postConfigMatchKey
       requestBody:
         content:
           application/json:
@@ -19,7 +19,7 @@ paths:
               $ref: schemas/matchKey.json
       responses:
         "201":
-          description: Created.
+          description: Match key configuration created
           content:
             application/json:
               schema:
@@ -29,8 +29,8 @@ paths:
         "500":
           $ref: "#/components/responses/trait_500"
     get:
-      description: Get match keys.
-      operationId: getMatchKeys
+      description: Get match key configurations
+      operationId: getConfigMatchKeys
       parameters:
         - $ref: parameters/limit.yaml
         - $ref: parameters/query.yaml
@@ -58,11 +58,11 @@ paths:
         schema:
           type: string
     get:
-      description: Get match key.
-      operationId: getMatchKey
+      description: Get match key configuration
+      operationId: getConfigMatchKey
       responses:
         "200":
-          description: Get match key.
+          description: Match key configuration returned
           content:
             application/json:
               schema:
@@ -73,12 +73,29 @@ paths:
           $ref: "#/components/responses/trait_404"
         "500":
           $ref: "#/components/responses/trait_500"
-    delete:
-      description: Delete match key.
-      operationId: deleteMatchKey
+    put:
+      description: Update match key configuration.
+      operationId: putConfigMatchKey
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: schemas/matchKey.json
       responses:
         "204":
-          description: deleted.
+          description: Match Key configuration updated
+        "400":
+          $ref: "#/components/responses/trait_400"
+        "404":
+          $ref: "#/components/responses/trait_404"
+        "500":
+          $ref: "#/components/responses/trait_500"
+    delete:
+      description: Delete match key configuration
+      operationId: deleteConfigMatchKey
+      responses:
+        "204":
+          description: match key configuration deleted
         "400":
           $ref: "#/components/responses/trait_400"
         "404":
