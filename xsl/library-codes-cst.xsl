@@ -12,13 +12,13 @@
        it originated from in context of a shared index setup where the Instance
        represents bib records from multiple libraries.
   -->
-  <xsl:template match="//identifierTypeIdHere">
-    <identifierTypeId>ISIL:US-CSt</identifierTypeId>
+  <xsl:template match="//identifierTypeDerefHere">
+    <identifierTypeDeref>ISIL:US-CSt</identifierTypeDeref>
   </xsl:template>
 
   <!-- Set FOLIO Inventory ID for the institution -->
-  <xsl:template match="//institutionIdHere">
-     <institutionId>US-CSt</institutionId>
+  <xsl:template match="//institutionDerefHere">
+     <institutionDeref>US-CSt</institutionDeref>
   </xsl:template>
 
 </xsl:stylesheet>

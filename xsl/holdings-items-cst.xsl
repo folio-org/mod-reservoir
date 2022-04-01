@@ -40,20 +40,20 @@
           <xsl:if test="not($loc=$preloc)">
             <i>
               <xsl:variable name="loc-clean" select="normalize-space($loc)"/>
-              <permanentLocationId><xsl:value-of select="$loc-clean"/></permanentLocationId>
-              <illPolicyId>
+              <permanentLocationDeref><xsl:value-of select="$loc-clean"/></permanentLocationDeref>
+              <illPolicyDeref>
                 <xsl:choose>
                   <xsl:when test="$loc-clean='xxxx'">Will lend</xsl:when>
                   <xsl:otherwise>Will not lend</xsl:otherwise>
                 </xsl:choose>
-              </illPolicyId>
+              </illPolicyDeref>
               <callNumber><xsl:value-of select="./marc:subfield[@code='a']"/></callNumber>
-              <callNumberTypeId>Library of Congress classification</callNumberTypeId> <!-- LC -->
+              <callNumberTypeDeref>Library of Congress classification</callNumberTypeDeref> <!-- LC -->
               <notes>
                 <arr>
                   <i>
                     <note><xsl:value-of select="concat('Location code: ', $loc-clean)"/></note>
-                    <holdingsNoteTypeId>Note</holdingsNoteTypeId>
+                    <holdingsNoteTypeDeref>Note</holdingsNoteTypeDeref>
                     <staffOnly>true</staffOnly>
                   </i>
                 </arr>
@@ -66,8 +66,8 @@
                     <barcode><xsl:value-of select="./marc:subfield[@code='i']"/></barcode>
                     <copyNumber><xsl:value-of select="./marc:subfield[@code='c']"/></copyNumber>
                     <status><name>Unknown</name></status>
-                    <permanentLoanTypeId>Can circulate</permanentLoanTypeId> 
-                    <materialTypeId>
+                    <permanentLoanTypeDeref>Can circulate</permanentLoanTypeDeref> 
+                    <materialTypeDeref>
                       <!-- Mappings to ReShare specific material types, taken from OCLC table "Type of Record" -->
                       <!-- Mapping from leader position 6 -->
                       <xsl:choose>
@@ -81,7 +81,7 @@
                       <xsl:when test="$mt='p'">MIX - Mixed Materials</xsl:when>            <!-- MIX -->
                       <xsl:otherwise>Unmapped</xsl:otherwise>            <!-- Unmapped -->
                       </xsl:choose>
-                    </materialTypeId>
+                    </materialTypeDeref>
                   </i>
                 </xsl:for-each>
                 </arr>
@@ -92,7 +92,7 @@
       </xsl:if>
       <xsl:if test="not(marc:datafield[@tag='999'])">
         <i>
-          <permanentLocationId>Unmapped</permanentLocationId>
+          <permanentLocationDeref>Unmapped</permanentLocationDeref>
         </i>
       </xsl:if>
       </arr> 

@@ -25,7 +25,7 @@
         </original>
 
         <!-- Information needed for storing source record in union catalog context -->
-        <institutionIdHere/>
+        <institutionDerefHere/>
         <localIdentifier><xsl:value-of select="marc:controlfield[@tag='001']" /></localIdentifier>
 
         <!-- Bibliographic record for FOLIO inventory -->
@@ -33,7 +33,7 @@
             <source>MARC</source>
 
             <!-- Instance type ID (resource type) -->
-            <instanceTypeId>
+            <instanceTypeDeref>
                 <!-- UUIDs for resource types -->
                 <xsl:choose>
                 <xsl:when test="substring(marc:leader,7,1)='a'">txt</xsl:when> <!-- language material : text -->
@@ -52,7 +52,7 @@
                 <xsl:when test="substring(marc:leader,7,1)='t'">txt</xsl:when> <!-- manuscript language material : text -->
                 <xsl:otherwise>xxx</xsl:otherwise>                             <!--  : other -->
                 </xsl:choose>
-            </instanceTypeId>
+            </instanceTypeDeref>
 
             <!-- Identifiers -->
             <xsl:if test="marc:datafield[@tag='010' or @tag='020' or @tag='022' or @tag='024' or @tag='028' or @tag='035' or @tag='074']
@@ -65,7 +65,7 @@
                     <!-- A subsequent library specific transformation (style sheet)
                         must replace this tag with the actual identifierTypeId for
                         the record identifer type of the given library -->
-                    <identifierTypeIdHere/>
+                    <identifierTypeDerefHere/>
                     </i>
                 </xsl:for-each>
                 <xsl:for-each select="marc:datafield[@tag='001' or @tag='010' or @tag='020' or @tag='022' or @tag='024' or @tag='028' or @tag='035' or @tag='074']">
@@ -75,43 +75,43 @@
                         <value>
                             <xsl:value-of select="marc:subfield[@code='a']"/>
                         </value>
-                        <identifierTypeId>LCCN</identifierTypeId> <!-- LCCN -->
+                        <identifierTypeDeref>LCCN</identifierTypeDeref> <!-- LCCN -->
                         </xsl:when>
                         <xsl:when test="current()[@tag='020'] and marc:subfield[@code='a']">
                         <value>
                             <xsl:value-of select="marc:subfield[@code='a']"/>
                         </value>
-                        <identifierTypeId>ISBN</identifierTypeId> <!-- ISBN -->
+                        <identifierTypeDeref>ISBN</identifierTypeDeref> <!-- ISBN -->
                         </xsl:when>
                         <xsl:when test="current()[@tag='022'] and marc:subfield[@code='a']">
                         <value>
                             <xsl:value-of select="marc:subfield[@code='a']"/>
                         </value>
-                        <identifierTypeId>ISSN</identifierTypeId> <!-- ISSN -->
+                        <identifierTypeDeref>ISSN</identifierTypeDeref> <!-- ISSN -->
                         </xsl:when>
                         <xsl:when test="current()[@tag='024'] and marc:subfield[@code='a']">
                         <value>
                             <xsl:value-of select="marc:subfield[@code='a']"/>
                         </value>
-                        <identifierTypeId>Other standard identifier</identifierTypeId> <!-- Other standard identifier -->
+                        <identifierTypeDeref>Other standard identifier</identifierTypeDeref> <!-- Other standard identifier -->
                         </xsl:when>
                         <xsl:when test="current()[@tag='028'] and marc:subfield[@code='a']">
                         <value>
                             <xsl:value-of select="marc:subfield[@code='a']"/>
                         </value>
-                        <identifierTypeId>Publisher or distributor number</identifierTypeId> <!-- Publisher number -->
+                        <identifierTypeDeref>Publisher or distributor number</identifierTypeDeref> <!-- Publisher number -->
                         </xsl:when>
                         <xsl:when test="current()[@tag='035'] and marc:subfield[@code='a']">
                         <value>
                             <xsl:value-of select="marc:subfield[@code='a']"/>
                         </value>
-                        <identifierTypeId>System control number</identifierTypeId> <!-- System control number -->
+                        <identifierTypeDeref>System control number</identifierTypeDeref> <!-- System control number -->
                         </xsl:when>
                         <xsl:when test="current()[@tag='074'] and marc:subfield[@code='a']">
                         <value>
                             <xsl:value-of select="marc:subfield[@code='a']"/>
                         </value>
-                        <identifierTypeId>GPO item number</identifierTypeId> <!-- GPO item number -->
+                        <identifierTypeDeref>GPO item number</identifierTypeDeref> <!-- GPO item number -->
                         </xsl:when>
                     </xsl:choose>
                     </i>
@@ -136,7 +136,7 @@
                             <xsl:value-of select="."/>
                             </xsl:for-each>
                             </classificationNumber>
-                            <classificationTypeId>LC</classificationTypeId> <!-- LC, Library of Congress -->
+                            <classificationTypeDeref>LC</classificationTypeDeref> <!-- LC, Library of Congress -->
                         </xsl:when>
                         <xsl:when test="current()[@tag='082']">
                             <classificationNumber>
@@ -147,13 +147,13 @@
                             <xsl:value-of select="."/>
                             </xsl:for-each>
                             </classificationNumber>
-                            <classificationTypeId>Dewey</classificationTypeId> <!-- Dewey -->
+                            <classificationTypeDeref>Dewey</classificationTypeDeref> <!-- Dewey -->
                         </xsl:when>
                         <xsl:when test="current()[@tag='086']">
                             <classificationNumber>
                             <xsl:value-of select="marc:subfield[@code='a']"/>
                             </classificationNumber>
-                            <classificationTypeId>SUDOC</classificationTypeId> <!-- SUDOC -->
+                            <classificationTypeDeref>SUDOC</classificationTypeDeref> <!-- SUDOC -->
                         </xsl:when>
                         </xsl:choose>
                     </i>
@@ -197,25 +197,25 @@
                         </name>
                         <xsl:choose>
                         <xsl:when test="@tag='100' or @tag='700'">
-                            <contributorNameTypeId>Personal name</contributorNameTypeId> <!-- personal name -->
+                            <contributorNameTypeDeref>Personal name</contributorNameTypeDeref> <!-- personal name -->
                             <xsl:if test="@tag='100'">
                             <primary>true</primary>
                             </xsl:if>
                         </xsl:when>
                         <xsl:when test="@tag='110' or @tag='710'">
-                            <contributorNameTypeId>Corporate name</contributorNameTypeId> <!-- corporate name -->
+                            <contributorNameTypeDeref>Corporate name</contributorNameTypeDeref> <!-- corporate name -->
                         </xsl:when>
                         <xsl:when test="@tag='111' or @tage='711'">
-                            <contributorNameTypeId>Meeting name</contributorNameTypeId> <!-- meeting name -->
+                            <contributorNameTypeDeref>Meeting name</contributorNameTypeDeref> <!-- meeting name -->
                         </xsl:when>
                         <xsl:otherwise>
-                            <contributorNameTypeId>Personal name</contributorNameTypeId> <!-- personal name -->
+                            <contributorNameTypeDeref>Personal name</contributorNameTypeDeref> <!-- personal name -->
                         </xsl:otherwise>
                         </xsl:choose>
                         <xsl:if test="marc:subfield[@code='e' or @code='4']">
-                            <contributorTypeId>
+                            <contributorTypeDeref>
                                 <xsl:value-of select="marc:subfield[@code='e' or @code='4']"/>
-                            </contributorTypeId>
+                            </contributorTypeDeref>
                         </xsl:if>
                     </i>
                     </xsl:for-each>
@@ -317,14 +317,14 @@
                             <note>
                                 <xsl:value-of select="normalize-space(.)"/>
                             </note>
-                            <instanceNoteTypeId>
+                            <instanceNoteTypeDeref>
                                 <xsl:choose>
                                     <xsl:when test='./@tag="504"'>Bibliography note</xsl:when> <!-- biliography -->
                                     <xsl:when test='./@tag="505"'>Formatted Contents Note</xsl:when> <!-- contents -->
                                     <xsl:when test='./@tag="520"'>Summary</xsl:when> <!-- summary -->
                                     <xsl:otherwise>General note</xsl:otherwise> <!-- general -->
                             </xsl:choose>
-                            </instanceNoteTypeId>
+                            </instanceNoteTypeDeref>
                         </i>
                     </xsl:for-each>
                     </arr>
