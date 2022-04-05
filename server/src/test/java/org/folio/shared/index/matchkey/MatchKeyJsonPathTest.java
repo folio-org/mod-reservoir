@@ -1,14 +1,12 @@
 package org.folio.shared.index.matchkey;
 
 import com.jayway.jsonpath.InvalidPathException;
-import io.vertx.core.buffer.Buffer;
 import io.vertx.core.json.JsonArray;
 import io.vertx.core.json.JsonObject;
+import java.util.List;
 import org.folio.shared.index.matchkey.impl.MatchKeyJsonPath;
 import org.junit.Assert;
 import org.junit.Test;
-
-import java.util.List;
 
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.contains;
@@ -106,4 +104,35 @@ public class MatchKeyJsonPathTest {
     keys = matchKeyMethod.getKeys(new JsonObject(), inventory);
     assertThat(keys, is(empty()));
   }
+
+  void matchKeyVerify(String pattern, List<String> expectedKeys, JsonObject inventoryPayload) {
+    MatchKeyMethod matchKeyMethod = new MatchKeyJsonPath();
+    matchKeyMethod.configure(new JsonObject().put("inventory", pattern));
+    List<String> keys = matchKeyMethod.getKeys(new JsonObject(), inventoryPayload);
+    Assert.assertEquals(expectedKeys, keys);
+  }
+
+  @Test
+  public void matchKeyJsonPathExpressions() {
+    JsonObject inventory = new JsonObject()
+        .put("identifiers", new JsonArray()
+            .add(new JsonObject()
+                .put("isbn", "73209629"))
+            .add(new JsonObject()
+                .put("isbn", "73209623"))
+
+        )
+        .put("matchKey", new JsonObject()
+            .put("title", "Panisci fistula")
+            .put("remainder-of-title", " : tre preludi per tre flauti")
+            .put("medium", "[sound recording]")
+        )
+        ;
+
+    matchKeyVerify("$.identifiers[*].isbn", List.of("73209629", "73209623"), inventory);
+    matchKeyVerify("$.matchKey.title", List.of("Panisci fistula"), inventory);
+    matchKeyVerify("$.matchKey", List.of(), inventory);
+    matchKeyVerify("$.matchKey[?(@.title)]", List.of(), inventory);
+  }
+
 }

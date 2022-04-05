@@ -123,6 +123,21 @@
           ]
         }
       ]
+    },
+    {
+      "id": "shared-index-clusters",
+      "version": "1.0",
+      "handlers": [
+        {
+          "methods": [
+            "GET"
+          ],
+          "pathPattern": "/shared-index/clusters",
+          "permissionsRequired": [
+            "shared-index-clusters.collection.get"
+          ]
+        }
+      ]
     }
   ],
   "requires": [],
@@ -202,12 +217,26 @@
       ]
     },
     {
+      "permissionName": "shared-index-clusters.collection.get",
+      "displayName": "shared index - get clusters",
+      "description": "Get clusters"
+    },
+    {
+      "permissionName": "shared-index-clusters.all",
+      "displayName": "shared index - clusters",
+      "description": "Clusters permissions",
+      "subPermissions": [
+        "shared-index-clusters.collection.get"
+      ]
+    },
+    {
       "permissionName": "shared-index.all",
       "displayName": "shared index - all permissions",
       "description": "All permissions",
       "subPermissions": [
         "shared-index-config-matchkeys.all",
-        "shared-index-records.all"
+        "shared-index-records.all",
+        "shared-index-clusters.all"
       ]
     }
   ],

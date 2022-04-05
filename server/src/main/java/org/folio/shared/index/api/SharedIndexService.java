@@ -106,6 +106,16 @@ public class SharedIndexService implements RouterCreator, TenantInitHooks {
         pgCqlQuery.getOrderByClause());
   }
 
+  Future<Void> getClusters(RoutingContext ctx) {
+    PgCqlQuery pgCqlQuery = getPqCqlQueryForRecords();
+    RequestParameters params = ctx.get(ValidationHandler.REQUEST_CONTEXT_KEY);
+    pgCqlQuery.parse(getQueryParameter(params));
+    String matchKeyId = getParameterString(params.queryParameter("matchkeyid"));
+    // must also consider query, offset, limit
+    Storage storage = new Storage(ctx);
+    return storage.getAllClusters(ctx, matchKeyId);
+  }
+
   Future<Void> getSharedRecordGlobalId(RoutingContext ctx) {
     RequestParameters params = ctx.get(ValidationHandler.REQUEST_CONTEXT_KEY);
     String id = getParameterString(params.pathParameter("globalId"));
@@ -270,6 +280,7 @@ public class SharedIndexService implements RouterCreator, TenantInitHooks {
           add(routerBuilder, "deleteConfigMatchKey", this::deleteConfigMatchKey);
           add(routerBuilder, "getConfigMatchKeys", this::getConfigMatchKeys);
           add(routerBuilder, "initializeMatchKey", this::initializeMatchKey);
+          add(routerBuilder, "getClusters", this::getClusters);
           return routerBuilder.createRouter();
         });
   }

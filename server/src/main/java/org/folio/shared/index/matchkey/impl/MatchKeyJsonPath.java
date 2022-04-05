@@ -31,18 +31,28 @@ public class MatchKeyJsonPath implements MatchKeyMethod {
 
   @Override
   public List<String> getKeys(JsonObject marcPayload, JsonObject inventoryPayload) {
+    JsonPath p = jsonPathMarc != null ? jsonPathMarc : jsonPathInventory;
+    JsonObject d = jsonPathMarc != null ? marcPayload : inventoryPayload;
+    if (p == null) {
+      throw new MatchKeyException("Not configured");
+    }
+    ReadContext ctx = JsonPath.parse(d.encode());
     try {
-      if (jsonPathMarc != null) {
-        ReadContext ctx = JsonPath.parse(marcPayload.encode());
-        return ctx.read(jsonPathMarc, List.class);
-      }
-      if (jsonPathInventory != null) {
-        ReadContext ctx = JsonPath.parse(inventoryPayload.encode());
-        return ctx.read(jsonPathInventory, List.class);
+      Object o = ctx.read(p);
+      if (o instanceof String) {
+        return List.of((String) o);
+      } else if (o instanceof List) {
+        for (Object m : (List) o) {
+          if (!(m instanceof String)) {
+            return Collections.emptyList();
+          }
+        }
+        return (List<String>) o;
+      } else {
+        return Collections.emptyList();
       }
     } catch (PathNotFoundException e) {
       return Collections.emptyList();
     }
-    throw new MatchKeyException("Not configured");
   }
 }

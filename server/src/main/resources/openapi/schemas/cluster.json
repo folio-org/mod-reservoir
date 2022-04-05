@@ -1,0 +1,23 @@
+{
+  "description": "cluster",
+  "type": "object",
+  "properties": {
+    "clusterId": {
+      "type": "string",
+      "description": "Cluster identifier",
+      "format" : "uuid"
+    },
+    "records": {
+      "description": "List of records",
+      "type": "array",
+      "items": {
+        "type": "object",
+        "$ref": "sharedIndexTitle.json"
+      }
+    }
+  },
+  "additionalProperties": false,
+  "required": [
+    "clusterId", "records"
+  ]
+}
