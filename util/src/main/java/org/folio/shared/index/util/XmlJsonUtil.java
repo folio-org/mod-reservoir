@@ -338,14 +338,11 @@ public class XmlJsonUtil {
     if (localId == null) {
       throw new IllegalArgumentException("inventory xml: missing record/localIdentifier string");
     }
-    JsonObject instance = inventoryPayload.getJsonObject("instance");
-    if (instance == null) {
-      throw new IllegalArgumentException("inventory xml: missing record/instance object");
-    }
+    inventoryPayload.remove("original");
     return new JsonObject()
         .put("localId", localId)
         .put("marcPayload", marcPayload)
-        .put("inventoryPayload", instance);
+        .put("inventoryPayload", inventoryPayload);
   }
 
   /**

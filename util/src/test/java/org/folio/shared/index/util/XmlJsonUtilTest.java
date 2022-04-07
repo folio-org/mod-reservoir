@@ -397,20 +397,17 @@ public class XmlJsonUtilTest {
       Assert.assertEquals("inventory xml: missing record/localIdentifier string", t.getMessage());
     }
 
-    {
-      JsonObject inventoryPayload = new JsonObject().put("record", new JsonObject().put("localIdentifier", "123"));
-      Throwable t = Assert.assertThrows(IllegalArgumentException.class,
-          () -> XmlJsonUtil.createIngestRecord(marcPayload, inventoryPayload));
-      Assert.assertEquals("inventory xml: missing record/instance object", t.getMessage());
-    }
-
     JsonObject ingest = XmlJsonUtil.createIngestRecord(marcPayload, new JsonObject()
         .put("record", new JsonObject()
+            .put("original", "2")
             .put("localIdentifier", "123")
             .put("instance", new JsonObject().put("a", "b"))));
     Assert.assertEquals(marcPayload, ingest.getJsonObject("marcPayload"));
     Assert.assertEquals("123", ingest.getString("localId"));
-    Assert.assertEquals(new JsonObject().put("a", "b"), ingest.getJsonObject("inventoryPayload"));
+    Assert.assertEquals(new JsonObject()
+            .put("localIdentifier", "123")
+            .put("instance", new JsonObject().put("a", "b")),
+        ingest.getJsonObject("inventoryPayload"));
 
     ingest = XmlJsonUtil.createIngestRecord(marcPayload, new JsonObject()
         .put("collection", new JsonObject()
@@ -419,7 +416,10 @@ public class XmlJsonUtilTest {
                 .put("instance", new JsonObject().put("a", "b")))));
     Assert.assertEquals(marcPayload, ingest.getJsonObject("marcPayload"));
     Assert.assertEquals("123", ingest.getString("localId"));
-    Assert.assertEquals(new JsonObject().put("a", "b"), ingest.getJsonObject("inventoryPayload"));
+    Assert.assertEquals(new JsonObject()
+            .put("localIdentifier", "123")
+            .put("instance", new JsonObject().put("a", "b")),
+        ingest.getJsonObject("inventoryPayload"));
   }
 
   @Test
