@@ -1,5 +1,5 @@
 {
-  "description": "shared index records",
+  "description": "Global records",
   "type": "object",
   "properties": {
     "items": {
@@ -7,7 +7,7 @@
       "type": "array",
       "items": {
         "type": "object",
-        "$ref": "sharedIndexTitle.json"
+        "$ref": "globalRecord.json"
       }
     },
     "resultInfo": {

@@ -136,6 +136,15 @@
           "permissionsRequired": [
             "shared-index-clusters.collection.get"
           ]
+        },
+        {
+          "methods": [
+            "GET"
+          ],
+          "pathPattern": "/shared-index/clusters/{clusterId}",
+          "permissionsRequired": [
+            "shared-index-clusters.item.get"
+          ]
         }
       ]
     }
@@ -222,11 +231,17 @@
       "description": "Get clusters"
     },
     {
+      "permissionName": "shared-index-clusters.item.get",
+      "displayName": "shared index - get cluster",
+      "description": "Get cluster"
+    },
+    {
       "permissionName": "shared-index-clusters.all",
       "displayName": "shared index - clusters",
       "description": "Clusters permissions",
       "subPermissions": [
-        "shared-index-clusters.collection.get"
+        "shared-index-clusters.collection.get",
+        "shared-index-clusters.item.get"
       ]
     },
     {

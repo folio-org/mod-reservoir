@@ -1,5 +1,5 @@
 {
-  "description": "Shared record",
+  "description": "Global record",
   "type": "object",
   "properties": {
     "globalId": {
@@ -16,10 +16,6 @@
       "description": "Source identifier",
       "format" : "uuid"
     },
-    "matchKeys": {
-      "type": "object",
-      "description" : "match keys for this record"
-    },
     "marcPayload": {
       "type": "object",
       "description" : "MARC payload in JSON"
@@ -31,6 +27,6 @@
   },
   "additionalProperties": false,
   "required": [
-    "globalId", "localId", "matchKeys", "payload"
+    "globalId", "localId", "sourceId"
   ]
 }

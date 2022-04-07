@@ -12,7 +12,14 @@
       "type": "array",
       "items": {
         "type": "object",
-        "$ref": "sharedIndexTitle.json"
+        "$ref": "globalRecord.json"
+      }
+    },
+    "matchKeys": {
+      "description" : "Match keys values",
+      "type" : "array",
+      "items": {
+        "type" : "string"
       }
     }
   },

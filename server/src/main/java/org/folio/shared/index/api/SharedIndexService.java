@@ -10,8 +10,7 @@ import io.vertx.ext.web.openapi.RouterBuilder;
 import io.vertx.ext.web.validation.RequestParameter;
 import io.vertx.ext.web.validation.RequestParameters;
 import io.vertx.ext.web.validation.ValidationHandler;
-import java.util.Arrays;
-import java.util.List;
+import java.util.UUID;
 import java.util.function.Function;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -26,7 +25,6 @@ import org.folio.tlib.postgres.PgCqlQuery;
 public class SharedIndexService implements RouterCreator, TenantInitHooks {
 
   private static final Logger log = LogManager.getLogger(SharedIndexService.class);
-  private static final int MATCH_MAX_ITERATIONS = 3;
   final Vertx vertx;
 
   public SharedIndexService(Vertx vertx) {
@@ -37,23 +35,24 @@ public class SharedIndexService implements RouterCreator, TenantInitHooks {
     return parameter == null ? null : parameter.getString();
   }
 
-  static int getParameterInteger(RequestParameter parameter, int defaultValue) {
-    return parameter == null ? defaultValue : parameter.getInteger();
-  }
-
-  Future<Void> putSharedRecords(RoutingContext ctx) {
+  Future<Void> putGlobalRecords(RoutingContext ctx) {
     Storage storage = new Storage(ctx);
-    return storage.upsertSharedRecords(ctx.getBodyAsJson()).onSuccess(res -> {
+    return storage.updateGlobalRecords(ctx.getBodyAsJson()).onSuccess(res -> {
       JsonArray ar = new JsonArray();
       // global ids and match keys here ...
       HttpResponse.responseJson(ctx, 200).end(ar.encode());
     });
   }
 
-  static PgCqlQuery getPqCqlQueryForRecords() {
+  static PgCqlQuery createPgCqlQuery() {
     PgCqlQuery pgCqlQuery = PgCqlQuery.query();
     pgCqlQuery.addField(
         new PgCqlField("cql.allRecords", PgCqlField.Type.ALWAYS_MATCHES));
+    return pgCqlQuery;
+  }
+
+  static PgCqlQuery getPqCqlQueryForRecords() {
+    PgCqlQuery pgCqlQuery = createPgCqlQuery();
     pgCqlQuery.addField(
         new PgCqlField("id", PgCqlField.Type.UUID));
     pgCqlQuery.addField(
@@ -67,7 +66,7 @@ public class SharedIndexService implements RouterCreator, TenantInitHooks {
     return getParameterString(params.queryParameter("query"));
   }
 
-  Future<Void> deleteSharedRecords(RoutingContext ctx) {
+  Future<Void> deleteGlobalRecords(RoutingContext ctx) {
     PgCqlQuery pgCqlQuery = getPqCqlQueryForRecords();
     RequestParameters params = ctx.get(ValidationHandler.REQUEST_CONTEXT_KEY);
     String query = getQueryParameter(params);
@@ -77,50 +76,24 @@ public class SharedIndexService implements RouterCreator, TenantInitHooks {
     }
     pgCqlQuery.parse(query);
     Storage storage = new Storage(ctx);
-    return storage.deleteSharedRecords(pgCqlQuery.getWhereClause())
+    return storage.deleteGlobalRecords(pgCqlQuery.getWhereClause())
         .onSuccess(x -> ctx.response().setStatusCode(204).end());
   }
 
-  Future<Void> getSharedRecords(RoutingContext ctx) {
+  Future<Void> getGlobalRecords(RoutingContext ctx) {
     PgCqlQuery pgCqlQuery = getPqCqlQueryForRecords();
     RequestParameters params = ctx.get(ValidationHandler.REQUEST_CONTEXT_KEY);
     pgCqlQuery.parse(getQueryParameter(params));
-    String m = getParameterString(params.queryParameter("matchkeyid"));
     Storage storage = new Storage(ctx);
-    if (m != null) {
-      int maxIterations = getParameterInteger(
-          params.queryParameter("maxiterations"), MATCH_MAX_ITERATIONS);
-      List<String> matchKeyIds = Arrays.asList(m.split(","));
-      return storage.getCluster(pgCqlQuery.getWhereClause(), matchKeyIds, maxIterations)
-          .map(records -> {
-            JsonArray items = new JsonArray();
-            records.forEach((k, v) -> items.add(v));
-            JsonObject result = new JsonObject();
-            result.put("items", items);
-            result.put("totalRecords", records.size());
-            HttpResponse.responseJson(ctx, 200).end(result.encode());
-            return null;
-          });
-    }
-    return storage.getSharedRecords(ctx, pgCqlQuery.getWhereClause(),
+    return storage.getGlobalRecords(ctx, pgCqlQuery.getWhereClause(),
         pgCqlQuery.getOrderByClause());
   }
 
-  Future<Void> getClusters(RoutingContext ctx) {
-    PgCqlQuery pgCqlQuery = getPqCqlQueryForRecords();
-    RequestParameters params = ctx.get(ValidationHandler.REQUEST_CONTEXT_KEY);
-    pgCqlQuery.parse(getQueryParameter(params));
-    String matchKeyId = getParameterString(params.queryParameter("matchkeyid"));
-    // must also consider query, offset, limit
-    Storage storage = new Storage(ctx);
-    return storage.getAllClusters(ctx, matchKeyId);
-  }
-
-  Future<Void> getSharedRecordGlobalId(RoutingContext ctx) {
+  Future<Void> getGlobalRecord(RoutingContext ctx) {
     RequestParameters params = ctx.get(ValidationHandler.REQUEST_CONTEXT_KEY);
     String id = getParameterString(params.pathParameter("globalId"));
     Storage storage = new Storage(ctx);
-    return storage.selectSharedRecord(id)
+    return storage.getGlobalRecord(id)
         .onSuccess(res -> {
           if (res == null) {
             HttpResponse.responseError(ctx, 404, id);
@@ -130,6 +103,37 @@ public class SharedIndexService implements RouterCreator, TenantInitHooks {
         })
         .mapEmpty();
   }
+
+  Future<Void> getClusters(RoutingContext ctx) {
+    PgCqlQuery pgCqlQuery = createPgCqlQuery();
+    pgCqlQuery.addField(
+        new PgCqlField("match_value", "matchValue", PgCqlField.Type.TEXT));
+    pgCqlQuery.addField(
+        new PgCqlField("cluster_records.cluster_id", "clusterId", PgCqlField.Type.UUID));
+
+    RequestParameters params = ctx.get(ValidationHandler.REQUEST_CONTEXT_KEY);
+    pgCqlQuery.parse(getQueryParameter(params));
+    String matchKeyId = getParameterString(params.queryParameter("matchkeyid"));
+    Storage storage = new Storage(ctx);
+    return storage.getClusters(ctx, matchKeyId,
+        pgCqlQuery.getWhereClause(), pgCqlQuery.getOrderByClause());
+  }
+
+  Future<Void> getCluster(RoutingContext ctx) {
+    RequestParameters params = ctx.get(ValidationHandler.REQUEST_CONTEXT_KEY);
+    String id = getParameterString(params.pathParameter("clusterId"));
+    Storage storage = new Storage(ctx);
+    return storage.getClusterById(UUID.fromString(id))
+        .onSuccess(res -> {
+          if (res.getJsonArray("records").isEmpty()) {
+            HttpResponse.responseError(ctx, 404, id);
+            return;
+          }
+          HttpResponse.responseJson(ctx, 200).end(res.encode());
+        })
+        .mapEmpty();
+  }
+
 
   static String getMethod(JsonObject config) {
     String method = config.getString("method");
@@ -201,11 +205,8 @@ public class SharedIndexService implements RouterCreator, TenantInitHooks {
         .mapEmpty();
   }
 
-
   Future<Void> getConfigMatchKeys(RoutingContext ctx) {
-    PgCqlQuery pgCqlQuery = PgCqlQuery.query();
-    pgCqlQuery.addField(
-        new PgCqlField("cql.allRecords", PgCqlField.Type.ALWAYS_MATCHES));
+    PgCqlQuery pgCqlQuery = createPgCqlQuery();
     pgCqlQuery.addField(
         new PgCqlField("id", PgCqlField.Type.TEXT));
     pgCqlQuery.addField(
@@ -270,10 +271,10 @@ public class SharedIndexService implements RouterCreator, TenantInitHooks {
   public Future<Router> createRouter(Vertx vertx) {
     return RouterBuilder.create(vertx, "openapi/shared-index-1.0.yaml")
         .map(routerBuilder -> {
-          add(routerBuilder, "putSharedRecords", this::putSharedRecords);
-          add(routerBuilder, "getSharedRecords", this::getSharedRecords);
-          add(routerBuilder, "deleteSharedRecords", this::deleteSharedRecords);
-          add(routerBuilder, "getSharedRecordGlobalId", this::getSharedRecordGlobalId);
+          add(routerBuilder, "putGlobalRecords", this::putGlobalRecords);
+          add(routerBuilder, "getGlobalRecords", this::getGlobalRecords);
+          add(routerBuilder, "deleteGlobalRecords", this::deleteGlobalRecords);
+          add(routerBuilder, "getGlobalRecord", this::getGlobalRecord);
           add(routerBuilder, "postConfigMatchKey", this::postConfigMatchKey);
           add(routerBuilder, "getConfigMatchKey", this::getConfigMatchKey);
           add(routerBuilder, "putConfigMatchKey", this::putConfigMatchKey);
@@ -281,6 +282,7 @@ public class SharedIndexService implements RouterCreator, TenantInitHooks {
           add(routerBuilder, "getConfigMatchKeys", this::getConfigMatchKeys);
           add(routerBuilder, "initializeMatchKey", this::initializeMatchKey);
           add(routerBuilder, "getClusters", this::getClusters);
+          add(routerBuilder, "getCluster", this::getCluster);
           return routerBuilder.createRouter();
         });
   }
