@@ -136,6 +136,7 @@ public class Client {
         .put("records", records);
     
     if (echo) {
+      out.println(request);
       Future.<Void>future(x -> sendIso2709Chunk(reader, promise));
       return;
     } else {
@@ -179,7 +180,7 @@ public class Client {
         .put("records", records);
 
     if (echo) {
-      System.out.println(request);
+      out.println(request);
       Future.<Void>future(x -> sendMarcXmlChunk(stream, promise));
     } else {
       webClient.putAbs(headers.get(XOkapiHeaders.URL) + "/shared-index/records")

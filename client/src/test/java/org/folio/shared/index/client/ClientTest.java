@@ -262,10 +262,12 @@ public class ClientTest {
         .onComplete(context.asyncAssertSuccess(res -> {
           context.assertEquals(1, requests.size());
 
-          // first chunk with 1 records
+          // 1 chunk with 2 records
           JsonObject r = requests.getJsonObject(0);
           context.assertEquals(sourceId.toString(), r.getString("sourceId"));
           context.assertEquals(2, r.getJsonArray("records").size());
+          context.assertEquals("a2", r.getJsonArray("records").getJsonObject(0).getString("localId"));
+          context.assertEquals("a3", r.getJsonArray("records").getJsonObject(1).getString("localId"));
         }));
   }
 
