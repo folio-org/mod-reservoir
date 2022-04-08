@@ -1,6 +1,6 @@
 in: query
 name: matchkeyid
-description: Comma separated list of match key config identifiers
-required: false
+description: Match key configuration identifier
+required: true
 schema:
   type: string

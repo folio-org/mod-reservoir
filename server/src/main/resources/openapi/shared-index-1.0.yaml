@@ -313,12 +313,10 @@ paths:
       - $ref: headers/okapi-token.yaml
       - $ref: headers/okapi-url.yaml
       - $ref: parameters/limit.yaml
-      - $ref: parameters/matchkeyid.yaml
       - $ref: parameters/query.yaml
       - $ref: parameters/offset.yaml
     get:
-      description: Get records that satisfy CQL query with fields localId,
-        matchkeyId, matchedWith.
+      description: Get records that satisfy CQL query with fields localId, sourceId, globalId.
       operationId: getGlobalRecords
       responses:
         "200":
@@ -398,7 +396,7 @@ paths:
       - $ref: parameters/query.yaml
       - $ref: parameters/offset.yaml
     get:
-      description: Get clusters with matchkeyid
+      description: Get clusters with matchkeyid. CQL query with matchValue, clusterId fields
       operationId: getClusters
       responses:
         "200":
@@ -409,6 +407,8 @@ paths:
                 $ref: schemas/clusters.json
         "400":
           $ref: "#/components/responses/trait_400"
+        "404":
+          $ref: "#/components/responses/trait_404"
         "500":
           $ref: "#/components/responses/trait_500"
   /shared-index/clusters/{clusterId}:

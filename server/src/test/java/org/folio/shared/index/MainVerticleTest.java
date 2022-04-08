@@ -651,7 +651,38 @@ public class MainVerticleTest {
   }
 
   @Test
+  public void testMatchKeyIdMissing() {
+    RestAssured.given()
+        .header(XOkapiHeaders.TENANT, tenant1)
+        .header("Content-Type", "application/json")
+        .get("/shared-index/clusters")
+        .then().statusCode(400)
+        .contentType("text/plain")
+        .body(containsString("Missing parameter matchkeyid"));
+  }
+
+  @Test
+  public void testMatchKeyIdNotFound() {
+    String id = UUID.randomUUID().toString();
+    RestAssured.given()
+        .header(XOkapiHeaders.TENANT, tenant1)
+        .param("matchkeyid", id)
+        .header("Content-Type", "application/json")
+        .get("/shared-index/clusters")
+        .then().statusCode(404)
+        .contentType("text/plain")
+        .body(is("MatchKey " + id + " not found"));
+  }
+
+  @Test
   public void testClusters() {
+
+    RestAssured.given()
+        .header(XOkapiHeaders.TENANT, tenant1)
+        .header("Content-Type", "application/json")
+        .get("/shared-index/clusters")
+        .then().statusCode(400);
+
     JsonObject matchKey1 = new JsonObject()
         .put("id", "isbn")
         .put("method", "jsonpath")
