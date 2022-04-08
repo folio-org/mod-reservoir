@@ -95,9 +95,7 @@ public class Client {
   }
 
   private boolean belowLimit() {
-    return limit > 0 
-      ? currentOffset < offset + limit
-      : true; 
+    return limit <= 0 || currentOffset < offset + limit;
   }
 
   private void sendIso2709Chunk(MarcStreamReader reader, Promise<Void> promise) {
