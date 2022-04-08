@@ -15,7 +15,7 @@ public class Main {
   public static void main(String[] args) {
     Vertx vertx = Vertx.vertx();
     WebClient webClient = WebClient.create(vertx);
-    Client.exec(webClient, args)
+    Client.exec(vertx, webClient, args)
         .eventually(x -> {
           webClient.close();
           return vertx.close();
