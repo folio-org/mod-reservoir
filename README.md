@@ -71,7 +71,9 @@ To send MARCXML to the same server with defined sourceId:
     export sourceid=`uuidgen`
     java -jar client/target/mod-shared-index-client-fat.jar \
       --source $sourceid \
-      --xsl client/src/test/resources/marc2inventory-instance.xsl \
+      --xsl xsl/marc2inventory-instance.xsl \
+      --xsl xsl/holdings-items-cst.xsl \
+      --xsl xsl/library-codes-cst.xsl \
       client/src/test/resources/record10.xml
 
 The option `--xsl` may be repeated for a sequence of transformations.

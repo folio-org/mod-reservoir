@@ -151,7 +151,7 @@ public class ClientTest {
     String [] args = {
         "--chunk", "2",
         "--source", sourceId.toString(),
-        "--xsl", "src/test/resources/marc2inventory-instance.xsl",
+        "--xsl", "../xsl/marc2inventory-instance.xsl",
         "src/test/resources/marc3.marc"
     };
     Client client = new Client(webClient, "http://localhost:" + PORT, null, "testlib");
@@ -200,7 +200,7 @@ public class ClientTest {
     String [] args = {
         "--chunk", "4",
         "--source", sourceId.toString(),
-        "--xsl", "src/test/resources/marc2inventory-instance.xsl",
+        "--xsl", "../xsl/marc2inventory-instance.xsl",
         "src/test/resources/record10.xml"
     };
     Client client = new Client(webClient, "http://localhost:" + PORT, null, "testlib");

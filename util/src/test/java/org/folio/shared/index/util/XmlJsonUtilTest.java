@@ -148,7 +148,7 @@ public class XmlJsonUtilTest {
           break;
         }
         TransformerFactory transformerFactory = TransformerFactory.newInstance();
-        Source xslt = new StreamSource("src/test/resources/marc2inventory-instance.xsl");
+        Source xslt = new StreamSource("../xsl/marc2inventory-instance.xsl");
         Transformer transformer = transformerFactory.newTransformer(xslt);
         Source source = new StreamSource(new StringReader(doc));
         StreamResult result = new StreamResult(new StringWriter());
@@ -427,8 +427,14 @@ public class XmlJsonUtilTest {
       TransformerException, ParserConfigurationException, SAXException {
 
     TransformerFactory transformerFactory = TransformerFactory.newInstance();
-    Source xslt = new StreamSource("src/test/resources/marc2inventory-instance.xsl");
-    List<Transformer> transformers = List.of(transformerFactory.newTransformer(xslt));
+    Source instanceXslt = new StreamSource("../xsl/marc2inventory-instance.xsl");
+    Source holdingsXslt = new StreamSource("../xsl/holdings-items-cst.xsl");
+    Source librayCodesXstXslt = new StreamSource("../xsl/library-codes-cst.xsl");
+    List<Transformer> transformers = List.of(
+        transformerFactory.newTransformer(instanceXslt),
+        transformerFactory.newTransformer(holdingsXslt),
+        transformerFactory.newTransformer(librayCodesXstXslt)
+    );
 
     InputStream stream = new FileInputStream("src/test/resources/record10.xml");
     XMLInputFactory factory = XMLInputFactory.newInstance();
@@ -445,10 +451,16 @@ public class XmlJsonUtilTest {
         ingestRecords.add(XmlJsonUtil.createIngestRecord(doc, transformers));
       }
     }
-    Assert.assertEquals("a1", ingestRecords.getJsonObject(0).getString("localId"));
-    Assert.assertEquals("a2", ingestRecords.getJsonObject(1).getString("localId"));
-    Assert.assertEquals("a10", ingestRecords.getJsonObject(9).getString("localId"));
     Assert.assertEquals(10, ingestRecords.size());
+    for (int i = 0; i < 10; i++) {
+      Assert.assertEquals("a" + (i + 1), ingestRecords.getJsonObject(i).getString("localId"));
+      JsonObject inventoryPayload =  ingestRecords.getJsonObject(i).getJsonObject("inventoryPayload");
+      if (i == 0) {
+        System.out.println(inventoryPayload.encodePrettily());
+      }
+      Assert.assertTrue(inventoryPayload.encodePrettily(), inventoryPayload.containsKey("instance"));
+      Assert.assertTrue(inventoryPayload.encodePrettily(), inventoryPayload.containsKey("holdingsRecords"));
+      Assert.assertEquals("US-CSt", inventoryPayload.getString("institutionDeref"));
+    }
   }
-
 }
