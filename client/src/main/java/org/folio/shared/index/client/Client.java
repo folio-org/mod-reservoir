@@ -1,5 +1,7 @@
 package org.folio.shared.index.client;
 
+import static java.lang.System.out;
+
 import io.vertx.core.Future;
 import io.vertx.core.MultiMap;
 import io.vertx.core.Promise;
@@ -31,12 +33,17 @@ import org.marc4j.MarcStreamReader;
 import org.marc4j.MarcXmlWriter;
 import org.marc4j.converter.impl.AnselToUnicode;
 
+
 public class Client {
   static final Logger log = LogManager.getLogger(Client.class);
 
   UUID sourceId = UUID.randomUUID();
   MultiMap headers = MultiMap.caseInsensitiveMultiMap();
   int chunkSize = 1;
+  int offset;
+  int currentOffset;
+  int limit;
+  boolean echo = false;
   Integer localSequence = 0;
   WebClient webClient;
   TransformerFactory transformerFactory = TransformerFactory.newInstance();
@@ -68,6 +75,18 @@ public class Client {
     this.chunkSize = chunkSize;
   }
 
+  public void setLimit(int limit) {
+    this.limit = limit;
+  }
+
+  public void setOffset(int offset) {
+    this.offset = offset;
+  }
+
+  public void setEcho() {
+    this.echo = true;;
+  }
+
   private void incrementSequence() {
     ++localSequence;
     if ((localSequence % 1000) == 0) {
@@ -75,11 +94,20 @@ public class Client {
     }
   }
 
+  private boolean belowLimit() {
+    return limit > 0 
+      ? currentOffset < offset + limit
+      : true; 
+  }
+
   private void sendIso2709Chunk(MarcStreamReader reader, Promise<Void> promise) {
     JsonArray records = new JsonArray();
     try {
-      while (reader.hasNext() && records.size() < chunkSize) {
+      while (belowLimit() && reader.hasNext() && records.size() < chunkSize) {
         org.marc4j.marc.Record marcRecord = reader.next();
+        if (currentOffset++ < offset) {
+          continue; //skip to offset
+        }
         char charCodingScheme = marcRecord.getLeader().getCharCodingScheme();
         if (charCodingScheme == ' ') {
           marcRecord.getLeader().setCharCodingScheme('a');
@@ -106,22 +134,30 @@ public class Client {
     JsonObject request = new JsonObject()
         .put("sourceId", sourceId)
         .put("records", records);
-
-    webClient.putAbs(headers.get(XOkapiHeaders.URL) + "/shared-index/records")
-        .putHeaders(headers)
-        .expect(ResponsePredicate.SC_OK)
-        .expect(ResponsePredicate.JSON)
-        .sendJsonObject(request)
-        .onFailure(promise::fail)
-        .onSuccess(x -> sendIso2709Chunk(reader, promise));
+    
+    if (echo) {
+      Future.<Void>future(x -> sendIso2709Chunk(reader, promise));
+      return;
+    } else {
+      webClient.putAbs(headers.get(XOkapiHeaders.URL) + "/shared-index/records")
+          .putHeaders(headers)
+          .expect(ResponsePredicate.SC_OK)
+          .expect(ResponsePredicate.JSON)
+          .sendJsonObject(request)
+          .onFailure(promise::fail)
+          .onSuccess(x -> sendIso2709Chunk(reader, promise));
+    }
   }
 
   private void sendMarcXmlChunk(XMLStreamReader stream, Promise<Void> promise)  {
     JsonArray records = new JsonArray();
     try {
-      while (stream.hasNext() && records.size() < chunkSize) {
+      while (belowLimit() && stream.hasNext() && records.size() < chunkSize) {
         int event = stream.next();
         if (event == XMLStreamConstants.START_ELEMENT && "record".equals(stream.getLocalName())) {
+          if (currentOffset++ < offset) {
+            continue; //skip to offset
+          }
           String marcXml = XmlJsonUtil.getSubDocument(event, stream);
           records.add(XmlJsonUtil.createIngestRecord(marcXml, transformers));
           incrementSequence();
@@ -133,20 +169,27 @@ public class Client {
     }
     if (records.isEmpty()) {
       log.info("{}", localSequence);
+      log.info("Next offset (resume): {}", currentOffset);
       promise.complete();
       return;
     }
+
     JsonObject request = new JsonObject()
         .put("sourceId", sourceId)
         .put("records", records);
 
-    webClient.putAbs(headers.get(XOkapiHeaders.URL) + "/shared-index/records")
-        .putHeaders(headers)
-        .expect(ResponsePredicate.SC_OK)
-        .expect(ResponsePredicate.JSON)
-        .sendJsonObject(request)
-        .onFailure(promise::fail)
-        .onSuccess(x -> sendMarcXmlChunk(stream, promise));
+    if (echo) {
+      System.out.println(request);
+      Future.<Void>future(x -> sendMarcXmlChunk(stream, promise));
+    } else {
+      webClient.putAbs(headers.get(XOkapiHeaders.URL) + "/shared-index/records")
+          .putHeaders(headers)
+          .expect(ResponsePredicate.SC_OK)
+          .expect(ResponsePredicate.JSON)
+          .sendJsonObject(request)
+          .onFailure(promise::fail)
+          .onSuccess(x -> sendMarcXmlChunk(stream, promise));
+    }
   }
 
   /**
@@ -297,12 +340,15 @@ public class Client {
         if (args[i].startsWith("--")) {
           switch (args[i].substring(2)) {
             case "help":
-              log.info("[options] [file..]");
-              log.info(" --source sourceId   (defaults to random UUID)");
-              log.info(" --chunk sz          (defaults to 1)");
-              log.info(" --xsl file          (xslt transform for inventory payload)");
-              log.info(" --init");
-              log.info(" --purge");
+              out.println("[options] [file..]");
+              out.println(" --source sourceId   (defaults to random UUID)");
+              out.println(" --chunk sz          (defaults to 1)");
+              out.println(" --offset int        (defaults to 0)");
+              out.println(" --limit int         (defaults to 0 - no limit)");
+              out.println(" --xsl file          (xslt transform for inventory payload)");
+              out.println(" --echo              (only output result)");
+              out.println(" --init");
+              out.println(" --purge");
               break;
             case "source":
               arg = getArgument(args, ++i);
@@ -311,6 +357,17 @@ public class Client {
             case "chunk":
               arg = getArgument(args, ++i);
               client.setChunkSize(Integer.parseInt(arg));
+              break;
+            case "offset":
+              arg = getArgument(args, ++i);
+              client.setOffset(Integer.parseInt(arg));
+              break;
+            case "limit":
+              arg = getArgument(args, ++i);
+              client.setLimit(Integer.parseInt(arg));
+              break;
+            case "echo":
+              client.setEcho();
               break;
             case "xsl":
               arg = getArgument(args, ++i);
@@ -327,7 +384,10 @@ public class Client {
           }
         } else {
           arg = args[i];
+          log.info("Offset {} Limit {} Chunk {}", client.offset, client.limit, client.chunkSize);
           future = future.compose(x -> client.sendFile(arg));
+          //break here otherwise args that follow will be ignored in the first call to sendChunk
+          break;
         }
         i++;
       }
