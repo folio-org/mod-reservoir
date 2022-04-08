@@ -225,4 +225,88 @@ public class ClientTest {
         }));
   }
 
+  @Test
+  public void offsetLimitMarcXmlRecords(TestContext context) {
+    HttpServerOptions so = new HttpServerOptions()
+        .setHandle100ContinueAutomatically(true);
+
+    JsonArray requests = new JsonArray();
+
+    HttpServer httpServer = vertx.createHttpServer(so);
+    Router router = Router.router(vertx);
+    router.put("/shared-index/records")
+        .handler(BodyHandler.create())
+        .handler(c -> {
+          requests.add(c.getBodyAsJson());
+          c.response().setStatusCode(200);
+          c.response().putHeader("Content-Type", "application/json");
+          c.response().end("{}");
+        });
+
+    httpServer.requestHandler(router);
+    Future<Void> future = httpServer.listen(PORT).mapEmpty();
+
+    UUID sourceId = UUID.randomUUID();
+    String [] args = {
+        "--chunk", "4",
+        "--source", sourceId.toString(),
+        "--xsl", "../xsl/marc2inventory-instance.xsl",
+        "--offset", "1",
+        "--limit", "2",
+        "src/test/resources/record10.xml"
+    };
+    Client client = new Client(webClient, "http://localhost:" + PORT, null, "testlib");
+    future = future.compose(x -> Client.exec(client, args));
+
+    future.eventually(x -> httpServer.close())
+        .onComplete(context.asyncAssertSuccess(res -> {
+          context.assertEquals(1, requests.size());
+
+          // first chunk with 1 records
+          JsonObject r = requests.getJsonObject(0);
+          context.assertEquals(sourceId.toString(), r.getString("sourceId"));
+          context.assertEquals(2, r.getJsonArray("records").size());
+        }));
+  }
+
+  @Test
+  public void echoMarcXmlRecords(TestContext context) {
+    HttpServerOptions so = new HttpServerOptions()
+        .setHandle100ContinueAutomatically(true);
+
+    JsonArray requests = new JsonArray();
+
+    HttpServer httpServer = vertx.createHttpServer(so);
+    Router router = Router.router(vertx);
+    router.put("/shared-index/records")
+        .handler(BodyHandler.create())
+        .handler(c -> {
+          requests.add(c.getBodyAsJson());
+          c.response().setStatusCode(200);
+          c.response().putHeader("Content-Type", "application/json");
+          c.response().end("{}");
+        });
+
+    httpServer.requestHandler(router);
+    Future<Void> future = httpServer.listen(PORT).mapEmpty();
+
+    UUID sourceId = UUID.randomUUID();
+    String [] args = {
+        "--chunk", "4",
+        "--source", sourceId.toString(),
+        "--xsl", "../xsl/marc2inventory-instance.xsl",
+        "--offset", "1",
+        "--limit", "2",
+        "--echo", 
+        "src/test/resources/record10.xml"
+    };
+    Client client = new Client(webClient, "http://localhost:" + PORT, null, "testlib");
+    future = future.compose(x -> Client.exec(client, args));
+
+    future.eventually(x -> httpServer.close())
+        .onComplete(context.asyncAssertSuccess(res -> {
+          context.assertEquals(0, requests.size());
+        }));
+  }
+
 }
