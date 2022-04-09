@@ -23,7 +23,7 @@ You need:
  * Java 11. A later version might very well work
  * Maven 3.6.3 or later
  * `JAVA_HOME` set. Can be set with
-   `export JAVA_HOME=$(readlink -f /usr/bin/java | sed "s:bin/java::")`
+   `export JAVA_HOME=$(readlink -f /usr/bin/javac | sed "s:bin/javac::")`
 
 Install all components with:
 

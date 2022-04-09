@@ -455,10 +455,15 @@ public class XmlJsonUtilTest {
     for (int i = 0; i < 10; i++) {
       Assert.assertEquals("a" + (i + 1), ingestRecords.getJsonObject(i).getString("localId"));
       JsonObject inventoryPayload =  ingestRecords.getJsonObject(i).getJsonObject("inventoryPayload");
+      JsonObject instance = inventoryPayload.getJsonObject("instance");
+      Assert.assertNotNull(inventoryPayload.encodePrettily(), instance);
       if (i == 0) {
-        System.out.println(inventoryPayload.encodePrettily());
+        // test that <xsl:when test="@tag='020' and marc:subfield[@code='a']"> is in effect
+        Assert.assertEquals(new JsonObject()
+            .put("value","   70207870")
+            .put("identifierTypeDeref", "LCCN"),
+            instance.getJsonArray("identifiers").getJsonObject(1));
       }
-      Assert.assertTrue(inventoryPayload.encodePrettily(), inventoryPayload.containsKey("instance"));
       Assert.assertTrue(inventoryPayload.encodePrettily(), inventoryPayload.containsKey("holdingsRecords"));
       Assert.assertEquals("US-CSt", inventoryPayload.getString("institutionDeref"));
     }
