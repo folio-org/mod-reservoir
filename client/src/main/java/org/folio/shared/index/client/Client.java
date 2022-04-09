@@ -5,6 +5,7 @@ import static java.lang.System.out;
 import io.vertx.core.Future;
 import io.vertx.core.MultiMap;
 import io.vertx.core.Promise;
+import io.vertx.core.Vertx;
 import io.vertx.core.json.JsonArray;
 import io.vertx.core.json.JsonObject;
 import io.vertx.ext.web.client.WebClient;
@@ -46,6 +47,7 @@ public class Client {
   boolean echo = false;
   Integer localSequence = 0;
   WebClient webClient;
+  Vertx vertx;
   TransformerFactory transformerFactory = TransformerFactory.newInstance();
   List<Transformer> transformers = new LinkedList<>();
 
@@ -53,15 +55,16 @@ public class Client {
    * Construct client.
    * @param webClient WebClient to use
    */
-  public Client(WebClient webClient) {
+  public Client(Vertx vertx, WebClient webClient) {
     headers.set(XOkapiHeaders.URL, System.getenv("OKAPI_URL"));
     headers.set(XOkapiHeaders.TOKEN, System.getenv("OKAPI_TOKEN"));
     headers.set(XOkapiHeaders.TENANT, System.getenv("OKAPI_TENANT"));
     this.webClient = webClient;
+    this.vertx = vertx;
   }
 
-  Client(WebClient webClient, String url, String token, String tenant) {
-    this(webClient);
+  Client(Vertx vertx, WebClient webClient, String url, String token, String tenant) {
+    this(vertx, webClient);
     headers.set(XOkapiHeaders.URL, url);
     headers.set(XOkapiHeaders.TOKEN, token);
     headers.set(XOkapiHeaders.TENANT, tenant);
@@ -132,11 +135,10 @@ public class Client {
     JsonObject request = new JsonObject()
         .put("sourceId", sourceId)
         .put("records", records);
-    
+
     if (echo) {
       out.println(request);
-      Future.<Void>future(x -> sendIso2709Chunk(reader, promise));
-      return;
+      vertx.runOnContext(x -> sendIso2709Chunk(reader, promise));
     } else {
       webClient.putAbs(headers.get(XOkapiHeaders.URL) + "/shared-index/records")
           .putHeaders(headers)
@@ -179,7 +181,7 @@ public class Client {
 
     if (echo) {
       out.println(request);
-      Future.<Void>future(x -> sendMarcXmlChunk(stream, promise));
+      vertx.runOnContext(x -> sendMarcXmlChunk(stream, promise));
     } else {
       webClient.putAbs(headers.get(XOkapiHeaders.URL) + "/shared-index/records")
           .putHeaders(headers)
@@ -321,12 +323,13 @@ public class Client {
 
   /** Execute command line shared-index client.
    *
+   * @param vertx Vertx. handcle
    * @param webClient web client
    * @param args command line args
    * @return async result
    */
-  public static Future<Void> exec(WebClient webClient, String[] args) {
-    Client client = new Client(webClient);
+  public static Future<Void> exec(Vertx vertx, WebClient webClient, String[] args) {
+    Client client = new Client(vertx, webClient);
     return exec(client, args);
   }
 
