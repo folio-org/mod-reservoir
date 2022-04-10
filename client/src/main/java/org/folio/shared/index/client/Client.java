@@ -1,7 +1,5 @@
 package org.folio.shared.index.client;
 
-import static java.lang.System.out;
-
 import io.vertx.core.Future;
 import io.vertx.core.MultiMap;
 import io.vertx.core.Promise;
@@ -205,7 +203,7 @@ public class Client {
         .put("records", records);
 
     if (echo) {
-      out.println(request);
+      System.out.println(request);
       vertx.runOnContext(x -> sendChunk(reader, promise));
     } else {
       webClient.putAbs(headers.get(XOkapiHeaders.URL) + "/shared-index/records")
@@ -367,15 +365,15 @@ public class Client {
         if (args[i].startsWith("--")) {
           switch (args[i].substring(2)) {
             case "help":
-              out.println("[options] [file..]");
-              out.println(" --source sourceId   (defaults to random UUID)");
-              out.println(" --chunk sz          (defaults to 1)");
-              out.println(" --offset int        (defaults to 0)");
-              out.println(" --limit int         (defaults to 0 - no limit)");
-              out.println(" --xsl file          (xslt transform for inventory payload)");
-              out.println(" --echo              (only output result)");
-              out.println(" --init");
-              out.println(" --purge");
+              System.out.println("[options] [file..]");
+              System.out.println(" --source sourceId   (defaults to random UUID)");
+              System.out.println(" --chunk sz          (defaults to 1)");
+              System.out.println(" --offset int        (defaults to 0)");
+              System.out.println(" --limit int         (defaults to 0 - no limit)");
+              System.out.println(" --xsl file          (xslt transform for inventory payload)");
+              System.out.println(" --echo              (only output result)");
+              System.out.println(" --init");
+              System.out.println(" --purge");
               break;
             case "source":
               arg = getArgument(args, ++i);
