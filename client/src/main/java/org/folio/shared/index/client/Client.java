@@ -100,11 +100,11 @@ public class Client {
   }
   
   private interface ReaderProxy {
-    boolean hasNext() throws Exception;
+    boolean hasNext() throws IOException;
     
-    boolean readNext() throws Exception;
+    boolean readNext() throws IOException;
     
-    String parseNext() throws Exception;
+    String parseNext() throws IOException;
   }
 
   private class MarcReaderProxy implements ReaderProxy {
