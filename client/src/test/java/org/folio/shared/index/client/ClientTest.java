@@ -311,4 +311,44 @@ public class ClientTest {
         }));
   }
 
+  @Test
+  public void echoOffsetMarcRecords(TestContext context) {
+    HttpServerOptions so = new HttpServerOptions()
+        .setHandle100ContinueAutomatically(true);
+
+    JsonArray requests = new JsonArray();
+
+    HttpServer httpServer = vertx.createHttpServer(so);
+    Router router = Router.router(vertx);
+    router.put("/shared-index/records")
+        .handler(BodyHandler.create())
+        .handler(c -> {
+          requests.add(c.getBodyAsJson());
+          c.response().setStatusCode(200);
+          c.response().putHeader("Content-Type", "application/json");
+          c.response().end("{}");
+        });
+
+    httpServer.requestHandler(router);
+    Future<Void> future = httpServer.listen(PORT).mapEmpty();
+
+    UUID sourceId = UUID.randomUUID();
+    String [] args = {
+        "--chunk", "4",
+        "--source", sourceId.toString(),
+        "--xsl", "../xsl/marc2inventory-instance.xsl",
+        "--offset", "1",
+        "--limit", "2",
+        "--echo",
+        "src/test/resources/marc3.marc"
+    };
+    Client client = new Client(vertx, webClient, "http://localhost:" + PORT, null, "testlib");
+    future = future.compose(x -> Client.exec(client, args));
+
+    future.eventually(x -> httpServer.close())
+        .onComplete(context.asyncAssertSuccess(res -> {
+          context.assertEquals(0, requests.size());
+        }));
+  }
+
 }
