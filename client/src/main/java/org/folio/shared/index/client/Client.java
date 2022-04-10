@@ -154,23 +154,35 @@ public class Client {
       xmlReader = reader;
     }
 
-    public boolean hasNext() throws Exception {
-      return xmlReader.hasNext();
-    }
-
-    public boolean readNext() throws Exception {
-      while (xmlReader.hasNext()) {
-        xmlEvent = xmlReader.next();
-        if (xmlEvent == XMLStreamConstants.START_ELEMENT 
-            && "record".equals(xmlReader.getLocalName())) {
-          return true;
-        }
+    public boolean hasNext() throws IOException {
+      try {
+        return xmlReader.hasNext();
+      } catch (XMLStreamException xse) {
+        throw new IOException(xse);
       }
-      return false;
     }
 
-    public String parseNext() throws Exception {
-      return XmlJsonUtil.getSubDocument(xmlEvent, xmlReader);
+    public boolean readNext() throws IOException {
+      try {
+        while (xmlReader.hasNext()) {
+          xmlEvent = xmlReader.next();
+          if (xmlEvent == XMLStreamConstants.START_ELEMENT 
+              && "record".equals(xmlReader.getLocalName())) {
+            return true;
+          }
+        }
+        return false;
+      } catch (XMLStreamException xse) {
+        throw new IOException(xse);
+      }
+    }
+
+    public String parseNext() throws IOException {
+      try {
+        return XmlJsonUtil.getSubDocument(xmlEvent, xmlReader);
+      } catch (XMLStreamException xse) {
+        throw new IOException(xse);
+      }
     }
   }
 
