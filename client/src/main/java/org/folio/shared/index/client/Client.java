@@ -100,70 +100,91 @@ public class Client {
   private boolean belowLimit() {
     return limit <= 0 || currentOffset < offset + limit;
   }
+  
+  private interface ReaderProxy {
+    boolean hasNext() throws Exception;
+    
+    boolean readNext() throws Exception;
+    
+    String parseNext() throws Exception;
+  }
 
-  private void sendIso2709Chunk(MarcStreamReader reader, Promise<Void> promise) {
-    JsonArray records = new JsonArray();
-    try {
-      while (belowLimit() && reader.hasNext() && records.size() < chunkSize) {
-        org.marc4j.marc.Record marcRecord = reader.next();
-        if (currentOffset++ < offset) {
-          continue; //skip to offset
-        }
-        char charCodingScheme = marcRecord.getLeader().getCharCodingScheme();
-        if (charCodingScheme == ' ') {
-          marcRecord.getLeader().setCharCodingScheme('a');
-        }
-        ByteArrayOutputStream out = new ByteArrayOutputStream();
-        MarcXmlWriter writer = new MarcXmlWriter(out);
-        if (charCodingScheme == ' ') {
-          writer.setConverter(new AnselToUnicode());
-        }
-        writer.write(marcRecord);
-        writer.close();
-        records.add(XmlJsonUtil.createIngestRecord(out.toString(), transformers));
-        incrementSequence();
-      }
-    } catch (Exception e) {
-      promise.fail(e);
-      return;
-    }
-    if (records.isEmpty()) {
-      if (!echo) {
-        log.info("{}", localSequence);
-        log.info("Next offset (resume): {}", currentOffset);
-      }
-      promise.complete();
-      return;
-    }
-    JsonObject request = new JsonObject()
-        .put("sourceId", sourceId)
-        .put("records", records);
+  private class MarcReaderProxy implements ReaderProxy {
+    private MarcStreamReader marcReader;
+    private org.marc4j.marc.Record marcRecord;
 
-    if (echo) {
-      out.println(request);
-      vertx.runOnContext(x -> sendIso2709Chunk(reader, promise));
-    } else {
-      webClient.putAbs(headers.get(XOkapiHeaders.URL) + "/shared-index/records")
-          .putHeaders(headers)
-          .expect(ResponsePredicate.SC_OK)
-          .expect(ResponsePredicate.JSON)
-          .sendJsonObject(request)
-          .onFailure(promise::fail)
-          .onSuccess(x -> sendIso2709Chunk(reader, promise));
+    public MarcReaderProxy(MarcStreamReader reader) {
+      if (reader == null) {
+        throw new IllegalArgumentException("Argument reader cannot be null");
+      }
+      marcReader = reader;
+    }
+
+    public boolean hasNext() {
+      return marcReader.hasNext();
+    }
+
+    public boolean readNext() {
+      marcRecord = marcReader.next();
+      return true;
+    }
+
+    public String parseNext() {
+      char charCodingScheme = marcRecord.getLeader().getCharCodingScheme();
+      if (charCodingScheme == ' ') {
+        marcRecord.getLeader().setCharCodingScheme('a');
+      }
+      ByteArrayOutputStream out = new ByteArrayOutputStream();
+      MarcXmlWriter writer = new MarcXmlWriter(out);
+      if (charCodingScheme == ' ') {
+        writer.setConverter(new AnselToUnicode());
+      }
+      writer.write(marcRecord);
+      writer.close();
+      return out.toString();
     }
   }
 
-  private void sendMarcXmlChunk(XMLStreamReader stream, Promise<Void> promise)  {
+  private class XmlReaderProxy implements ReaderProxy {
+    private XMLStreamReader xmlReader;
+    private int xmlEvent;
+
+    public XmlReaderProxy(XMLStreamReader reader) {
+      if (reader == null) {
+        throw new IllegalArgumentException("Argument reader cannot be null");
+      }
+      xmlReader = reader;
+    }
+
+    public boolean hasNext() throws Exception {
+      return xmlReader.hasNext();
+    }
+
+    public boolean readNext() throws Exception {
+      while (xmlReader.hasNext()) {
+        xmlEvent = xmlReader.next();
+        if (xmlEvent == XMLStreamConstants.START_ELEMENT 
+            && "record".equals(xmlReader.getLocalName())) {
+          return true;
+        }
+      }
+      return false;
+    }
+
+    public String parseNext() throws Exception {
+      return XmlJsonUtil.getSubDocument(xmlEvent, xmlReader);
+    }
+  }
+
+  private void sendChunk(ReaderProxy reader, Promise<Void> promise) {
     JsonArray records = new JsonArray();
     try {
-      while (belowLimit() && stream.hasNext() && records.size() < chunkSize) {
-        int event = stream.next();
-        if (event == XMLStreamConstants.START_ELEMENT && "record".equals(stream.getLocalName())) {
+      while (belowLimit() && reader.hasNext() && records.size() < chunkSize) {
+        if (reader.readNext()) {
           if (currentOffset++ < offset) {
             continue; //skip to offset
           }
-          String marcXml = XmlJsonUtil.getSubDocument(event, stream);
-          records.add(XmlJsonUtil.createIngestRecord(marcXml, transformers));
+          records.add(XmlJsonUtil.createIngestRecord(reader.parseNext(), transformers));
           incrementSequence();
         }
       }
@@ -179,14 +200,13 @@ public class Client {
       promise.complete();
       return;
     }
-
     JsonObject request = new JsonObject()
         .put("sourceId", sourceId)
         .put("records", records);
 
     if (echo) {
       out.println(request);
-      vertx.runOnContext(x -> sendMarcXmlChunk(stream, promise));
+      vertx.runOnContext(x -> sendChunk(reader, promise));
     } else {
       webClient.putAbs(headers.get(XOkapiHeaders.URL) + "/shared-index/records")
           .putHeaders(headers)
@@ -194,7 +214,7 @@ public class Client {
           .expect(ResponsePredicate.JSON)
           .sendJsonObject(request)
           .onFailure(promise::fail)
-          .onSuccess(x -> sendMarcXmlChunk(stream, promise));
+          .onSuccess(x -> sendChunk(reader, promise));
     }
   }
 
@@ -254,7 +274,7 @@ public class Client {
   }
 
   Future<Void> sendIso2709(InputStream stream) {
-    return Future.<Void>future(p -> sendIso2709Chunk(new MarcStreamReader(stream), p))
+    return Future.<Void>future(p -> sendChunk(new MarcReaderProxy(new MarcStreamReader(stream)), p))
         .eventually(x -> {
           try {
             stream.close();
@@ -269,7 +289,7 @@ public class Client {
     XMLInputFactory factory = XMLInputFactory.newInstance();
     factory.setProperty(XMLInputFactory.SUPPORT_DTD, false);
     XMLStreamReader xmlStreamReader = factory.createXMLStreamReader(stream);
-    return Future.<Void>future(p -> sendMarcXmlChunk(xmlStreamReader, p))
+    return Future.<Void>future(p -> sendChunk(new XmlReaderProxy(xmlStreamReader), p))
         .eventually(x -> {
           try {
             stream.close();
