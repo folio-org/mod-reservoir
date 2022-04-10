@@ -87,7 +87,7 @@ public class Client {
   }
 
   public void setEcho() {
-    this.echo = true;;
+    this.echo = true;
   }
 
   private void incrementSequence() {
