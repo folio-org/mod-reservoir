@@ -34,7 +34,7 @@ import org.marc4j.MarcStreamReader;
 import org.marc4j.MarcXmlWriter;
 import org.marc4j.converter.impl.AnselToUnicode;
 
-
+@java.lang.SuppressWarnings({"squid:S106"})
 public class Client {
   static final Logger log = LogManager.getLogger(Client.class);
 
