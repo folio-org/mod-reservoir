@@ -128,7 +128,10 @@ public class Client {
       return;
     }
     if (records.isEmpty()) {
-      log.info("{}", localSequence);
+      if (!echo) {
+        log.info("{}", localSequence);
+        log.info("Next offset (resume): {}", currentOffset);
+      }
       promise.complete();
       return;
     }
@@ -169,8 +172,10 @@ public class Client {
       return;
     }
     if (records.isEmpty()) {
-      log.info("{}", localSequence);
-      log.info("Next offset (resume): {}", currentOffset);
+      if (!echo) {
+        log.info("{}", localSequence);
+        log.info("Next offset (resume): {}", currentOffset);
+      }
       promise.complete();
       return;
     }
@@ -386,7 +391,9 @@ public class Client {
           }
         } else {
           arg = args[i];
-          log.info("Offset {} Limit {} Chunk {}", client.offset, client.limit, client.chunkSize);
+          if (!client.echo) {
+            log.info("Offset {} Limit {} Chunk {}", client.offset, client.limit, client.chunkSize);
+          }
           future = future.compose(x -> client.sendFile(arg));
           //break here otherwise args that follow will be ignored in the first call to sendChunk
           break;
