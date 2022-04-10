@@ -3,6 +3,7 @@ package org.folio.shared.index.client;
 import io.vertx.core.Future;
 import io.vertx.core.MultiMap;
 import io.vertx.core.Promise;
+import io.vertx.core.Vertx;
 import io.vertx.core.json.JsonArray;
 import io.vertx.core.json.JsonObject;
 import io.vertx.ext.web.client.WebClient;
@@ -31,14 +32,20 @@ import org.marc4j.MarcStreamReader;
 import org.marc4j.MarcXmlWriter;
 import org.marc4j.converter.impl.AnselToUnicode;
 
+@java.lang.SuppressWarnings({"squid:S106"})
 public class Client {
   static final Logger log = LogManager.getLogger(Client.class);
 
   UUID sourceId = UUID.randomUUID();
   MultiMap headers = MultiMap.caseInsensitiveMultiMap();
   int chunkSize = 1;
+  int offset;
+  int currentOffset;
+  int limit;
+  boolean echo = false;
   Integer localSequence = 0;
   WebClient webClient;
+  Vertx vertx;
   TransformerFactory transformerFactory = TransformerFactory.newInstance();
   List<Transformer> transformers = new LinkedList<>();
 
@@ -46,15 +53,16 @@ public class Client {
    * Construct client.
    * @param webClient WebClient to use
    */
-  public Client(WebClient webClient) {
+  public Client(Vertx vertx, WebClient webClient) {
     headers.set(XOkapiHeaders.URL, System.getenv("OKAPI_URL"));
     headers.set(XOkapiHeaders.TOKEN, System.getenv("OKAPI_TOKEN"));
     headers.set(XOkapiHeaders.TENANT, System.getenv("OKAPI_TENANT"));
     this.webClient = webClient;
+    this.vertx = vertx;
   }
 
-  Client(WebClient webClient, String url, String token, String tenant) {
-    this(webClient);
+  Client(Vertx vertx, WebClient webClient, String url, String token, String tenant) {
+    this(vertx, webClient);
     headers.set(XOkapiHeaders.URL, url);
     headers.set(XOkapiHeaders.TOKEN, token);
     headers.set(XOkapiHeaders.TENANT, tenant);
@@ -68,62 +76,125 @@ public class Client {
     this.chunkSize = chunkSize;
   }
 
+  public void setLimit(int limit) {
+    this.limit = limit;
+  }
+
+  public void setOffset(int offset) {
+    this.offset = offset;
+  }
+
+  public void setEcho() {
+    this.echo = true;
+  }
+
   private void incrementSequence() {
     ++localSequence;
-    if ((localSequence % 1000) == 0) {
+    if (!echo && (localSequence % 1000) == 0) {
       log.info("{}", localSequence);
     }
   }
 
-  private void sendIso2709Chunk(MarcStreamReader reader, Promise<Void> promise) {
-    JsonArray records = new JsonArray();
-    try {
-      while (reader.hasNext() && records.size() < chunkSize) {
-        org.marc4j.marc.Record marcRecord = reader.next();
-        char charCodingScheme = marcRecord.getLeader().getCharCodingScheme();
-        if (charCodingScheme == ' ') {
-          marcRecord.getLeader().setCharCodingScheme('a');
-        }
-        ByteArrayOutputStream out = new ByteArrayOutputStream();
-        MarcXmlWriter writer = new MarcXmlWriter(out);
-        if (charCodingScheme == ' ') {
-          writer.setConverter(new AnselToUnicode());
-        }
-        writer.write(marcRecord);
-        writer.close();
-        records.add(XmlJsonUtil.createIngestRecord(out.toString(), transformers));
-        incrementSequence();
+  private boolean belowLimit() {
+    return limit <= 0 || currentOffset < offset + limit;
+  }
+  
+  private interface ReaderProxy {
+    boolean hasNext() throws IOException;
+    
+    boolean readNext() throws IOException;
+    
+    String parseNext() throws IOException;
+  }
+
+  private class MarcReaderProxy implements ReaderProxy {
+    private MarcStreamReader marcReader;
+    private org.marc4j.marc.Record marcRecord;
+
+    public MarcReaderProxy(MarcStreamReader reader) {
+      if (reader == null) {
+        throw new IllegalArgumentException("Argument reader cannot be null");
       }
-    } catch (Exception e) {
-      promise.fail(e);
-      return;
+      marcReader = reader;
     }
-    if (records.isEmpty()) {
-      log.info("{}", localSequence);
-      promise.complete();
-      return;
-    }
-    JsonObject request = new JsonObject()
-        .put("sourceId", sourceId)
-        .put("records", records);
 
-    webClient.putAbs(headers.get(XOkapiHeaders.URL) + "/shared-index/records")
-        .putHeaders(headers)
-        .expect(ResponsePredicate.SC_OK)
-        .expect(ResponsePredicate.JSON)
-        .sendJsonObject(request)
-        .onFailure(promise::fail)
-        .onSuccess(x -> sendIso2709Chunk(reader, promise));
+    public boolean hasNext() {
+      return marcReader.hasNext();
+    }
+
+    public boolean readNext() {
+      marcRecord = marcReader.next();
+      return true;
+    }
+
+    public String parseNext() {
+      char charCodingScheme = marcRecord.getLeader().getCharCodingScheme();
+      if (charCodingScheme == ' ') {
+        marcRecord.getLeader().setCharCodingScheme('a');
+      }
+      ByteArrayOutputStream out = new ByteArrayOutputStream();
+      MarcXmlWriter writer = new MarcXmlWriter(out);
+      if (charCodingScheme == ' ') {
+        writer.setConverter(new AnselToUnicode());
+      }
+      writer.write(marcRecord);
+      writer.close();
+      return out.toString();
+    }
   }
 
-  private void sendMarcXmlChunk(XMLStreamReader stream, Promise<Void> promise)  {
+  private class XmlReaderProxy implements ReaderProxy {
+    private XMLStreamReader xmlReader;
+    private int xmlEvent;
+
+    public XmlReaderProxy(XMLStreamReader reader) {
+      if (reader == null) {
+        throw new IllegalArgumentException("Argument reader cannot be null");
+      }
+      xmlReader = reader;
+    }
+
+    public boolean hasNext() throws IOException {
+      try {
+        return xmlReader.hasNext();
+      } catch (XMLStreamException xse) {
+        throw new IOException(xse);
+      }
+    }
+
+    public boolean readNext() throws IOException {
+      try {
+        while (xmlReader.hasNext()) {
+          xmlEvent = xmlReader.next();
+          if (xmlEvent == XMLStreamConstants.START_ELEMENT 
+              && "record".equals(xmlReader.getLocalName())) {
+            return true;
+          }
+        }
+        return false;
+      } catch (XMLStreamException xse) {
+        throw new IOException(xse);
+      }
+    }
+
+    public String parseNext() throws IOException {
+      try {
+        return XmlJsonUtil.getSubDocument(xmlEvent, xmlReader);
+      } catch (XMLStreamException xse) {
+        throw new IOException(xse);
+      }
+    }
+  }
+
+  private void sendChunk(ReaderProxy reader, Promise<Void> promise) {
     JsonArray records = new JsonArray();
     try {
-      while (stream.hasNext() && records.size() < chunkSize) {
-        int event = stream.next();
-        if (event == XMLStreamConstants.START_ELEMENT && "record".equals(stream.getLocalName())) {
-          String marcXml = XmlJsonUtil.getSubDocument(event, stream);
-          records.add(XmlJsonUtil.createIngestRecord(marcXml, transformers));
+      while (belowLimit() && reader.hasNext() && records.size() < chunkSize) {
+        if (reader.readNext()) {
+          if (currentOffset++ < offset) {
+            continue; //skip to offset
+          }
+          records.add(XmlJsonUtil.createIngestRecord(reader.parseNext(), transformers));
           incrementSequence();
         }
       }
@@ -132,7 +203,10 @@ public class Client {
       return;
     }
     if (records.isEmpty()) {
-      log.info("{}", localSequence);
+      if (!echo) {
+        log.info("{}", localSequence);
+        log.info("Next offset (resume): {}", currentOffset);
+      }
       promise.complete();
       return;
     }
@@ -140,13 +214,18 @@ public class Client {
         .put("sourceId", sourceId)
         .put("records", records);
 
-    webClient.putAbs(headers.get(XOkapiHeaders.URL) + "/shared-index/records")
-        .putHeaders(headers)
-        .expect(ResponsePredicate.SC_OK)
-        .expect(ResponsePredicate.JSON)
-        .sendJsonObject(request)
-        .onFailure(promise::fail)
-        .onSuccess(x -> sendMarcXmlChunk(stream, promise));
+    if (echo) {
+      System.out.println(request);
+      vertx.runOnContext(x -> sendChunk(reader, promise));
+    } else {
+      webClient.putAbs(headers.get(XOkapiHeaders.URL) + "/shared-index/records")
+          .putHeaders(headers)
+          .expect(ResponsePredicate.SC_OK)
+          .expect(ResponsePredicate.JSON)
+          .sendJsonObject(request)
+          .onFailure(promise::fail)
+          .onSuccess(x -> sendChunk(reader, promise));
+    }
   }
 
   /**
@@ -205,7 +284,7 @@ public class Client {
   }
 
   Future<Void> sendIso2709(InputStream stream) {
-    return Future.<Void>future(p -> sendIso2709Chunk(new MarcStreamReader(stream), p))
+    return Future.<Void>future(p -> sendChunk(new MarcReaderProxy(new MarcStreamReader(stream)), p))
         .eventually(x -> {
           try {
             stream.close();
@@ -220,7 +299,7 @@ public class Client {
     XMLInputFactory factory = XMLInputFactory.newInstance();
     factory.setProperty(XMLInputFactory.SUPPORT_DTD, false);
     XMLStreamReader xmlStreamReader = factory.createXMLStreamReader(stream);
-    return Future.<Void>future(p -> sendMarcXmlChunk(xmlStreamReader, p))
+    return Future.<Void>future(p -> sendChunk(new XmlReaderProxy(xmlStreamReader), p))
         .eventually(x -> {
           try {
             stream.close();
@@ -279,12 +358,13 @@ public class Client {
 
   /** Execute command line shared-index client.
    *
+   * @param vertx Vertx. handcle
    * @param webClient web client
    * @param args command line args
    * @return async result
    */
-  public static Future<Void> exec(WebClient webClient, String[] args) {
-    Client client = new Client(webClient);
+  public static Future<Void> exec(Vertx vertx, WebClient webClient, String[] args) {
+    Client client = new Client(vertx, webClient);
     return exec(client, args);
   }
 
@@ -297,12 +377,15 @@ public class Client {
         if (args[i].startsWith("--")) {
           switch (args[i].substring(2)) {
             case "help":
-              log.info("[options] [file..]");
-              log.info(" --source sourceId   (defaults to random UUID)");
-              log.info(" --chunk sz          (defaults to 1)");
-              log.info(" --xsl file          (xslt transform for inventory payload)");
-              log.info(" --init");
-              log.info(" --purge");
+              System.out.println("[options] [file..]");
+              System.out.println(" --source sourceId   (defaults to random UUID)");
+              System.out.println(" --chunk sz          (defaults to 1)");
+              System.out.println(" --offset int        (defaults to 0)");
+              System.out.println(" --limit int         (defaults to 0 - no limit)");
+              System.out.println(" --xsl file          (xslt transform for inventory payload)");
+              System.out.println(" --echo              (only output result)");
+              System.out.println(" --init");
+              System.out.println(" --purge");
               break;
             case "source":
               arg = getArgument(args, ++i);
@@ -311,6 +394,17 @@ public class Client {
             case "chunk":
               arg = getArgument(args, ++i);
               client.setChunkSize(Integer.parseInt(arg));
+              break;
+            case "offset":
+              arg = getArgument(args, ++i);
+              client.setOffset(Integer.parseInt(arg));
+              break;
+            case "limit":
+              arg = getArgument(args, ++i);
+              client.setLimit(Integer.parseInt(arg));
+              break;
+            case "echo":
+              client.setEcho();
               break;
             case "xsl":
               arg = getArgument(args, ++i);
@@ -327,7 +421,12 @@ public class Client {
           }
         } else {
           arg = args[i];
+          if (!client.echo) {
+            log.info("Offset {} Limit {} Chunk {}", client.offset, client.limit, client.chunkSize);
+          }
           future = future.compose(x -> client.sendFile(arg));
+          //break here otherwise args that follow will be ignored in the first call to sendChunk
+          break;
         }
         i++;
       }
