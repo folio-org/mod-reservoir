@@ -90,7 +90,7 @@ public class Client {
 
   private void incrementSequence() {
     ++localSequence;
-    if ((localSequence % 1000) == 0) {
+    if (!echo && (localSequence % 1000) == 0) {
       log.info("{}", localSequence);
     }
   }
