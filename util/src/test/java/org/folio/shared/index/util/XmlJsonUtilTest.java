@@ -16,28 +16,65 @@ import javax.xml.transform.TransformerException;
 import javax.xml.transform.TransformerFactory;
 import javax.xml.transform.stream.StreamResult;
 import javax.xml.transform.stream.StreamSource;
+
 import org.junit.Assert;
 import org.junit.Test;
 import org.xml.sax.SAXException;
 
 public class XmlJsonUtilTest {
   static final String MARCXML1_SAMPLE =
-      "<record>\n"
-          + " <leader>1234&lt;&gt;&quot;&apos;</leader>\n"
-          + "   <record>abc</record>"
-          + " </record>";
+      "<record xmlns=\"http://www.loc.gov/MARC21/slim\">\n"
+          + "  <leader>1234&lt;&gt;&quot;&apos;</leader>\n"
+          + "</record>";
+
+  static final JsonObject MARCJSON1_SAMPLE = new JsonObject().put("leader", "1234<>\"'");
 
   static final String MARCXML2_SAMPLE =
-      "<record>\n"
-          + " <leader>01010ccm a2200289   4500</leader>\n"
-          + "   <controlfield tag=\"001\">a1</controlfield>\n"
-          + "   <datafield tag=\"010\" ind1=\" \" ind2=\"&amp;\">\n"
-          + "      <subfield code=\"a\">   70207870</subfield>\n"
-          + "   </datafield>\n"
-          + "   <datafield tag=\"245\">\n"
-          + "      <subfield code=\"a\">Title</subfield>\n"
-          + "   </datafield>\n"
-          + " </record>";
+      "<record xmlns=\"http://www.loc.gov/MARC21/slim\">\n"
+          + "  <leader>01010ccm a2200289   4500</leader>\n"
+          + "  <controlfield tag=\"001\">a1</controlfield>\n"
+          + "  <datafield tag=\"010\" ind1=\" \" ind2=\"&amp;\">\n"
+          + "    <subfield code=\"a\">   70207870</subfield>\n"
+          + "  </datafield>\n"
+          + "  <datafield tag=\"245\">\n"
+          + "    <subfield code=\"a\">Titlea</subfield>\n"
+          + "    <subfield code=\"b\">Titleb</subfield>\n"
+          + "  </datafield>\n"
+          + "</record>";
+
+  static final JsonObject MARCJSON2_SAMPLE = new JsonObject()
+      .put("leader", "01010ccm a2200289   4500")
+      .put("fields", new JsonArray()
+          .add(new JsonObject().put("001", "a1"))
+          .add(new JsonObject().put("010", new JsonObject()
+                  .put("ind1", " ")
+                  .put("ind2", "&")
+                  .put("subfields", new JsonArray()
+                      .add(new JsonObject()
+                          .put("a", "   70207870"))
+                  )
+              )
+          )
+          .add(new JsonObject().put("245", new JsonObject()
+                  .put("subfields", new JsonArray()
+                      .add(new JsonObject()
+                          .put("a", "Titlea"))
+                      .add(new JsonObject()
+                          .put("b", "Titleb"))
+                  )
+              )
+          )
+      );
+
+  static final String MARCXML3_SAMPLE =
+      "<record xmlns=\"http://www.loc.gov/MARC21/slim\">\n"
+          + "  <controlfield tag=\"001\">a1</controlfield>\n"
+          + "</record>";
+
+  static final JsonObject MARCJSON3_SAMPLE = new JsonObject()
+      .put("fields", new JsonArray()
+          .add(new JsonObject().put("001", "a1"))
+      );
 
   @Test
   public void testGetSubDocumentNamespace() throws XMLStreamException {
@@ -162,43 +199,65 @@ public class XmlJsonUtilTest {
   }
 
   @Test
+  public void convertJsonToMarcXml1() {
+    String got = XmlJsonUtil.convertJsonToMarcXml(MARCJSON1_SAMPLE);
+    Assert.assertEquals(MARCXML1_SAMPLE, got);
+  }
+
+  @Test
+  public void convertJsonToMarcXml2() {
+    String got = XmlJsonUtil.convertJsonToMarcXml(MARCJSON2_SAMPLE);
+    Assert.assertEquals(MARCXML2_SAMPLE, got);
+  }
+
+  @Test
+  public void convertJsonToMarcXml3() {
+    String got = XmlJsonUtil.convertJsonToMarcXml(MARCJSON3_SAMPLE);
+    Assert.assertEquals(MARCXML3_SAMPLE, got);
+  }
+
+  @Test
   public void convertMarcXmlToJsonRecord1() throws ParserConfigurationException, IOException, SAXException {
     JsonObject got = XmlJsonUtil.convertMarcXmlToJson(MARCXML1_SAMPLE);
-    JsonObject expected = new JsonObject().put("leader","1234<>\"'");
-    Assert.assertEquals(expected, got);
+    Assert.assertEquals(MARCJSON1_SAMPLE, got);
     String collection = "<collection>" + MARCXML1_SAMPLE + "</collection>";
     got = XmlJsonUtil.convertMarcXmlToJson(collection);
-    Assert.assertEquals(expected, got);
+    Assert.assertEquals(MARCJSON1_SAMPLE, got);
+  }
+
+  @Test
+  public void convertMarcXmlToJsonRecord1ignore() throws ParserConfigurationException, IOException, SAXException {
+    String marcXmlExtra =
+        "<record>\n"
+            + "  <leader>1234&lt;&gt;&quot;&apos;</leader>\n"
+            + "  <record>abc</record>\n"
+            + "</record>";
+
+    JsonObject got = XmlJsonUtil.convertMarcXmlToJson(marcXmlExtra);
+    Assert.assertEquals(MARCJSON1_SAMPLE, got);
+    String collection = "<collection>" + marcXmlExtra + "</collection>";
+    got = XmlJsonUtil.convertMarcXmlToJson(collection);
+    Assert.assertEquals(MARCJSON1_SAMPLE, got);
   }
 
   @Test
   public void convertMarcXmlToJsonRecord2() throws ParserConfigurationException, IOException, SAXException {
     JsonObject got = XmlJsonUtil.convertMarcXmlToJson(MARCXML2_SAMPLE);
-    JsonObject expected = new JsonObject()
-        .put("leader", "01010ccm a2200289   4500")
-        .put("fields", new JsonArray()
-            .add(new JsonObject().put("001", "a1"))
-            .add(new JsonObject().put("010", new JsonObject()
-                    .put("ind1", " ")
-                    .put("ind2", "&")
-                    .put("subfields", new JsonArray()
-                        .add(new JsonObject()
-                            .put("a", "   70207870"))
-                    )
-                )
-            )
-            .add(new JsonObject().put("245", new JsonObject()
-                    .put("subfields", new JsonArray()
-                        .add(new JsonObject()
-                            .put("a", "Title"))
-                    )
-                )
-            )
-        );
-    Assert.assertEquals(expected, got);
+    Assert.assertEquals(MARCJSON2_SAMPLE, got);
+
     String collection = "<collection>" + MARCXML2_SAMPLE + "</collection>";
     got = XmlJsonUtil.convertMarcXmlToJson(collection);
-    Assert.assertEquals(expected, got);
+    Assert.assertEquals(MARCJSON2_SAMPLE, got);
+  }
+
+  @Test
+  public void convertMarcXmlToJsonRecord3() throws ParserConfigurationException, IOException, SAXException {
+    JsonObject got = XmlJsonUtil.convertMarcXmlToJson(MARCXML3_SAMPLE);
+    Assert.assertEquals(MARCJSON3_SAMPLE, got);
+
+    String collection = "<collection>" + MARCXML3_SAMPLE + "</collection>";
+    got = XmlJsonUtil.convertMarcXmlToJson(collection);
+    Assert.assertEquals(MARCJSON3_SAMPLE, got);
   }
 
   @Test
@@ -326,7 +385,7 @@ public class XmlJsonUtilTest {
             + " <u>3</u>\n"
             + "</record>"
         ));
-    ;
+
     Assert.assertEquals(new JsonObject()
             .put("record",
                 new JsonObject()
@@ -467,5 +526,74 @@ public class XmlJsonUtilTest {
       Assert.assertTrue(inventoryPayload.encodePrettily(), inventoryPayload.containsKey("holdingsRecords"));
       Assert.assertEquals("US-CSt", inventoryPayload.getString("institutionDeref"));
     }
+  }
+
+  @Test
+  public void removeMarcField1() {
+    JsonObject got = MARCJSON1_SAMPLE.copy();
+    XmlJsonUtil.removeMarcField(got, "999");
+    JsonObject exp = MARCJSON1_SAMPLE.copy();
+    Assert.assertEquals(exp, got);
+  }
+
+  @Test
+  public void removeMarcField2() {
+    JsonObject got = MARCJSON2_SAMPLE.copy();
+    XmlJsonUtil.removeMarcField(got, "300");
+    JsonObject exp = MARCJSON2_SAMPLE.copy();
+    Assert.assertEquals(exp, got);
+  }
+
+  @Test
+  public void removeMarcField3() {
+    JsonObject got = MARCJSON2_SAMPLE.copy();
+    XmlJsonUtil.removeMarcField(got, "245");
+    JsonObject exp = MARCJSON2_SAMPLE.copy();
+    exp.getJsonArray("fields").remove(2);
+    Assert.assertEquals(exp, got);
+  }
+
+  @Test
+  public void createMarcDataField1() {
+    JsonObject got = MARCJSON1_SAMPLE.copy();
+    Assert.assertNull(XmlJsonUtil.lookupMarcDataField(got, "245", "1", "2"));
+    JsonArray ar = XmlJsonUtil.createMarcDataField(got, "245", "1", "2");
+    Assert.assertEquals(ar, XmlJsonUtil.lookupMarcDataField(got, "245", "1", "2"));
+    JsonObject exp = MARCJSON1_SAMPLE.copy();
+    exp.put("fields", new JsonArray().add(new JsonObject()
+        .put("245", new JsonObject()
+            .put("ind1", "1")
+            .put("ind2", "2")
+            .put("subfields", new JsonArray())
+        )));
+    Assert.assertEquals(exp, got);
+  }
+
+  @Test
+  public void createMarcDataField2() {
+    JsonObject got = MARCJSON2_SAMPLE.copy();
+    JsonArray s200 = XmlJsonUtil.createMarcDataField(got, "200", "1", "2");
+    Assert.assertEquals(s200, XmlJsonUtil.lookupMarcDataField(got, "200", "1", "2"));
+    Assert.assertEquals(s200, XmlJsonUtil.lookupMarcDataField(got, "200", null, "2"));
+    Assert.assertEquals(s200, XmlJsonUtil.lookupMarcDataField(got, "200", "1", null));
+    Assert.assertNull(XmlJsonUtil.lookupMarcDataField(got, "200", "2", null));
+    Assert.assertNull(XmlJsonUtil.lookupMarcDataField(got, "200", "1", "3"));
+    Assert.assertNull(XmlJsonUtil.lookupMarcDataField(got, "201", "1", "2"));
+    XmlJsonUtil.createMarcDataField(got, "999", " ", " ");
+    JsonObject exp = MARCJSON2_SAMPLE.copy();
+    exp.getJsonArray("fields")
+        .add(2, new JsonObject()
+            .put("200", new JsonObject()
+                .put("ind1", "1")
+                .put("ind2", "2")
+                .put("subfields", new JsonArray())
+            ))
+        .add(new JsonObject()
+            .put("999", new JsonObject()
+                .put("ind1", " ")
+                .put("ind2", " ")
+                .put("subfields", new JsonArray())
+            ));
+    Assert.assertEquals(exp, got);
   }
 }

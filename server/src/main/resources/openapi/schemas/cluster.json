@@ -7,6 +7,11 @@
       "description": "Cluster identifier",
       "format" : "uuid"
     },
+    "datestamp": {
+      "type": "string",
+      "description": "date time of modification",
+      "format" : "date"
+    },
     "records": {
       "description": "List of records",
       "type": "array",

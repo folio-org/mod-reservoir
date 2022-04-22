@@ -1,7 +1,7 @@
 package org.folio.shared.index.matchkey;
 
 import io.vertx.core.json.JsonObject;
-import java.util.List;
+import java.util.Collection;
 import org.folio.shared.index.matchkey.impl.MatchKeyJsonPath;
 
 public interface MatchKeyMethod {
@@ -20,5 +20,11 @@ public interface MatchKeyMethod {
 
   void configure(JsonObject configuration);
 
-  List<String> getKeys(JsonObject marcPayload, JsonObject inventoryPayload);
+  /**
+   * Generate match keys.
+   * @param marcPayload MARC payload
+   * @param inventoryPayload inventory payload
+   * @param keys resulting keys (unmodified if no keys were generated).
+   */
+  void getKeys(JsonObject marcPayload, JsonObject inventoryPayload, Collection<String> keys);
 }

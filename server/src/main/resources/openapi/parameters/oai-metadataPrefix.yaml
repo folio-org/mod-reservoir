@@ -1,0 +1,6 @@
+in: query
+name: metadataPrefix
+description: OAI metadataPrefix. Required for verb=ListRecords|GetRecord
+required: false
+schema:
+  type: string

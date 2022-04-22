@@ -4,7 +4,7 @@ import com.jayway.jsonpath.JsonPath;
 import com.jayway.jsonpath.PathNotFoundException;
 import com.jayway.jsonpath.ReadContext;
 import io.vertx.core.json.JsonObject;
-import java.util.Collections;
+import java.util.Collection;
 import java.util.List;
 import org.folio.shared.index.matchkey.MatchKeyException;
 import org.folio.shared.index.matchkey.MatchKeyMethod;
@@ -30,7 +30,8 @@ public class MatchKeyJsonPath implements MatchKeyMethod {
   }
 
   @Override
-  public List<String> getKeys(JsonObject marcPayload, JsonObject inventoryPayload) {
+  public void getKeys(JsonObject marcPayload, JsonObject inventoryPayload,
+      Collection<String> keys) {
     JsonPath p = jsonPathMarc != null ? jsonPathMarc : jsonPathInventory;
     JsonObject d = jsonPathMarc != null ? marcPayload : inventoryPayload;
     if (p == null) {
@@ -40,19 +41,17 @@ public class MatchKeyJsonPath implements MatchKeyMethod {
     try {
       Object o = ctx.read(p);
       if (o instanceof String) {
-        return List.of((String) o);
+        keys.add((String) o);
       } else if (o instanceof List) {
         for (Object m : (List) o) {
           if (!(m instanceof String)) {
-            return Collections.emptyList();
+            return;
           }
         }
-        return (List<String>) o;
-      } else {
-        return Collections.emptyList();
+        keys.addAll((List<String>) o);
       }
     } catch (PathNotFoundException e) {
-      return Collections.emptyList();
+      // ignored.. no keys added
     }
   }
 }

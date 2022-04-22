@@ -1,0 +1,6 @@
+in: query
+name: set
+description: OAI set. Required for verb=ListRecords
+required: false
+schema:
+  type: string

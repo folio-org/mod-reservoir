@@ -33,7 +33,6 @@ import org.xml.sax.SAXException;
 
 public class XmlJsonUtil {
   private static final Logger LOGGER = LogManager.getLogger(XmlJsonUtil.class);
-
   private static final String COLLECTION_LABEL = "collection";
   private static final String RECORD_LABEL = "record";
   private static final String LEADER_LABEL = "leader";
@@ -41,9 +40,68 @@ public class XmlJsonUtil {
   private static final String CONTROLFIELD_LABEL = "controlfield";
   private static final String TAG_LABEL = "tag";
   private static final String SUBFIELD_LABEL = "subfield";
+  private static final String SUBFIELDS_LABEL = "subfields";
   private static final String CODE_LABEL = "code";
 
+  private static final String FIELDS_LABEL = "fields";
+
   private XmlJsonUtil() { }
+
+  /** Convert MARC-in-JSON to MARCXML.
+   *
+   * @param obj MARC-in-JSON object
+   * @return XML with record root element
+   */
+  public static String convertJsonToMarcXml(JsonObject obj) {
+    StringBuilder s = new StringBuilder();
+    s.append("<" + RECORD_LABEL + " xmlns=\"http://www.loc.gov/MARC21/slim\">\n");
+    String leader = obj.getString(LEADER_LABEL);
+    if (leader != null) {
+      s.append("  <" + LEADER_LABEL + ">" + encodeXmlText(leader) + "</" + LEADER_LABEL + ">\n");
+    }
+    JsonArray fields = obj.getJsonArray(FIELDS_LABEL);
+    if (fields !=  null) {
+      for (int i = 0; i < fields.size(); i++) {
+        JsonObject control = fields.getJsonObject(i);
+        control.fieldNames().forEach(f -> {
+          Object fieldValue = control.getValue(f);
+          if (fieldValue instanceof String) {
+            s.append("  <" + CONTROLFIELD_LABEL + " tag=\"");
+            s.append(encodeXmlText(f));
+            s.append("\">");
+            s.append(encodeXmlText((String) fieldValue));
+            s.append("</controlfield>\n");
+          }
+          if (fieldValue instanceof JsonObject) {
+            JsonObject fieldObject = (JsonObject) fieldValue;
+            s.append("  <datafield tag=\"");
+            s.append(encodeXmlText(f));
+            for (int j = 1; j <= 9; j++) { // ISO 2709 allows more than 2 indicators
+              String indicatorValue = fieldObject.getString("ind" + j);
+              if (indicatorValue != null) {
+                s.append("\" ind" + j + "=\"");
+                s.append(encodeXmlText(indicatorValue));
+              }
+            }
+            s.append("\">\n");
+            JsonArray subfields = fieldObject.getJsonArray(SUBFIELDS_LABEL);
+            for (int j = 0; j < subfields.size(); j++) {
+              JsonObject subfieldObject = subfields.getJsonObject(j);
+              subfieldObject.fieldNames().forEach(sub -> {
+                s.append("    <" + SUBFIELD_LABEL);
+                s.append(" code=\"" + encodeXmlText(sub) + "\">");
+                s.append(subfieldObject.getString(sub));
+                s.append("</" + SUBFIELD_LABEL + ">\n");
+              });
+            }
+            s.append("  </datafield>\n");
+          }
+        });
+      }
+    }
+    s.append("</record>");
+    return s.toString();
+  }
 
   /**
    * Convert MARCXML to MARC-in-JSON.
@@ -107,7 +165,7 @@ public class XmlJsonUtil {
           fieldContent.put("ind2", childElement.getAttribute("ind2"));
         }
         JsonArray subfields = new JsonArray();
-        fieldContent.put("subfields", subfields);
+        fieldContent.put(SUBFIELDS_LABEL, subfields);
         NodeList nodeList = childElement.getElementsByTagNameNS("*", SUBFIELD_LABEL);
         for (int i = 0; i < nodeList.getLength(); i++) {
           Element subField = (Element) nodeList.item(i);
@@ -124,7 +182,7 @@ public class XmlJsonUtil {
       }
     }
     if (!fields.isEmpty()) {
-      marcJson.put("fields", fields);
+      marcJson.put(FIELDS_LABEL, fields);
     }
     return marcJson;
   }
@@ -244,7 +302,12 @@ public class XmlJsonUtil {
     throw new IllegalArgumentException("xmlToJsonObject not returning JsonObject");
   }
 
-  private static String encodeXmlText(String s) {
+  /**
+   * Encode encode XML string.
+   * @param s string
+   * @return encoded string
+   */
+  public static String encodeXmlText(String s) {
     StringBuilder res = new StringBuilder();
     for (int i = 0; i < s.length(); i++) {
       char c = s.charAt(i);
@@ -370,4 +433,101 @@ public class XmlJsonUtil {
     return createIngestRecord(XmlJsonUtil.convertMarcXmlToJson(marcXml),
         XmlJsonUtil.inventoryXmlToJson(inventory));
   }
+
+  /**
+   * Create MARC tag with indicators given.
+   * @param marc MARC-in-JSON object
+   * @param tag marc tag, such as "245"
+   * @param ind1 indicator 1
+   * @param ind2 indicator 2
+   * @return fields array
+   */
+  public static JsonArray createMarcDataField(JsonObject marc, String tag,
+      String ind1, String ind2) {
+
+    JsonArray fields = marc.getJsonArray(FIELDS_LABEL);
+    if (fields == null) {
+      fields = new JsonArray();
+      marc.put(FIELDS_LABEL, fields);
+    }
+    int i;
+    for (i = 0; i < fields.size(); i++) {
+      JsonObject field = fields.getJsonObject(i);
+      int cmp = 1;
+      for (String f : field.fieldNames()) {
+        cmp = tag.compareTo(f);
+        if (cmp <= 0) {
+          break;
+        }
+      }
+      if (cmp <= 0) {
+        break;
+      }
+    }
+    JsonObject field = new JsonObject();
+    fields.add(i, new JsonObject().put(tag, field));
+    field.put("ind1", ind1);
+    field.put("ind2", ind2);
+    JsonArray subfields = new JsonArray();
+    field.put(SUBFIELDS_LABEL, subfields);
+    return subfields;
+  }
+
+  /**
+   * Lookup marc field.
+   * @param marc MARC-in-JSON object
+   * @param tag marc tag, such as "245"
+   * @param ind1 indicator1 in match ; null for any
+   * @param ind2 indicator2 in match; null for any
+   * @return subfields array if found; null otherwise
+   */
+  public static JsonArray lookupMarcDataField(JsonObject marc, String tag,
+      String ind1, String ind2) {
+    JsonArray fields = marc.getJsonArray(FIELDS_LABEL);
+    if (fields == null) {
+      return null;
+    }
+    for (int i = 0; i < fields.size(); i++) {
+      JsonObject field = fields.getJsonObject(i);
+      for (String f : field.fieldNames()) {
+        if (f.equals(tag)) {
+          JsonObject field2 = field.getJsonObject(tag);
+          if ((ind1 == null || ind1.equals(field2.getString("ind1")))
+              && (ind2 == null || ind2.equals(field2.getString("ind2")))) {
+            return field2.getJsonArray(SUBFIELDS_LABEL);
+          }
+        }
+      }
+    }
+    return null;
+  }
+
+  /**
+   * Remove tag from record.
+   * @param marc MARC-in-JSON object
+   * @param tag fields with this tag are removed
+   */
+  public static void removeMarcField(JsonObject marc, String tag) {
+    JsonArray fields = marc.getJsonArray(FIELDS_LABEL);
+    if (fields == null) {
+      return;
+    }
+    int i = 0;
+    while (i < fields.size()) {
+      JsonObject field = fields.getJsonObject(i);
+      int cmp = 1;
+      for (String f : field.fieldNames()) {
+        cmp = tag.compareTo(f);
+        if (cmp == 0) {
+          break;
+        }
+      }
+      if (cmp == 0) {
+        fields.remove(i);
+      } else {
+        i++;
+      }
+    }
+  }
+
 }

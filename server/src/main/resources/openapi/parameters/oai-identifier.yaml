@@ -1,0 +1,6 @@
+in: query
+name: identifier
+description: OAI identifier. Required for verb=GetRecord
+required: false
+schema:
+  type: string

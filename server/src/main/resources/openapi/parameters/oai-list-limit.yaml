@@ -1,0 +1,8 @@
+in: query
+name: list-limit
+description: OAI list records/identifiers returns resumptionToken if this is met
+required: false
+schema:
+  type: integer
+  default: 1000
+  minimum: 1

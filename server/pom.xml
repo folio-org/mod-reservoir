@@ -10,6 +10,11 @@
 
   <dependencies>
     <dependency>
+      <groupId>org.folio</groupId>
+      <artifactId>mod-shared-index-util</artifactId>
+      <version>${project.version}</version>
+    </dependency>
+    <dependency>
       <groupId>io.vertx</groupId>
       <artifactId>vertx-core</artifactId>
     </dependency>
@@ -159,7 +164,17 @@
                 </transformer>
               </transformers>
               <artifactSet />
-              <outputFile>${project.build.directory}/${project.artifactId}-fat.jar</outputFile>
+	      <outputFile>${project.build.directory}/${project.artifactId}-fat.jar</outputFile>
+	        <filters>
+                <filter>
+                  <artifact>*:*</artifact>
+                  <excludes>
+                   <exclude>META-INF/*.SF</exclude>
+                   <exclude>META-INF/*.DSA</exclude>
+                   <exclude>META-INF/*.RSA</exclude>
+                 </excludes>
+               </filter>
+              </filters>
             </configuration>
           </execution>
         </executions>

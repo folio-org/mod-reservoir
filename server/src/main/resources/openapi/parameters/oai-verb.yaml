@@ -1,0 +1,6 @@
+in: query
+name: verb
+description: OAI verb
+required: false
+schema:
+  type: string

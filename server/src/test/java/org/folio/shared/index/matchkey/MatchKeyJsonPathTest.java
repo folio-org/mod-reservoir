@@ -3,13 +3,15 @@ package org.folio.shared.index.matchkey;
 import com.jayway.jsonpath.InvalidPathException;
 import io.vertx.core.json.JsonArray;
 import io.vertx.core.json.JsonObject;
-import java.util.List;
+import java.util.HashSet;
+import java.util.Set;
 import org.folio.shared.index.matchkey.impl.MatchKeyJsonPath;
 import org.junit.Assert;
 import org.junit.Test;
 
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.contains;
+import static org.hamcrest.Matchers.containsInAnyOrder;
 import static org.hamcrest.Matchers.empty;
 import static org.hamcrest.Matchers.is;
 
@@ -19,9 +21,10 @@ public class MatchKeyJsonPathTest {
   public void matchKeyJsonPathNonConfigured() {
     MatchKeyMethod matchKeyMethod = new MatchKeyJsonPath();
     JsonObject payload = new JsonObject();
+    Set<String> keys = new HashSet<>();
     Exception e = Assert.assertThrows(
         MatchKeyException.class,
-        () -> matchKeyMethod.getKeys(payload, payload));
+        () -> matchKeyMethod.getKeys(payload, payload, keys));
     assertThat(e.getMessage(), is("Not configured"));
   }
 
@@ -64,7 +67,8 @@ public class MatchKeyJsonPathTest {
                 )
             )
         );
-    List<String> keys = matchKeyMethod.getKeys(marc, new JsonObject());
+    Set<String> keys = new HashSet<>();
+    matchKeyMethod.getKeys(marc, new JsonObject(), keys);
     assertThat(keys, is(empty()));
 
     marc = new JsonObject()
@@ -84,8 +88,9 @@ public class MatchKeyJsonPathTest {
                 )
             )
         );
-    keys = matchKeyMethod.getKeys(marc, new JsonObject());
-    assertThat(keys, contains("73209622", "73209623"));
+    keys.clear();
+    matchKeyMethod.getKeys(marc, new JsonObject(), keys);
+    assertThat(keys, containsInAnyOrder("73209622", "73209623"));
   }
 
   @Test
@@ -95,20 +100,23 @@ public class MatchKeyJsonPathTest {
     JsonObject inventory = new JsonObject()
         .put("inventory", new JsonObject()
             .put("isbn", new JsonArray().add("73209622")));
-    List<String> keys = matchKeyMethod.getKeys(new JsonObject(), inventory);
+    Set<String> keys = new HashSet<>();
+    matchKeyMethod.getKeys(new JsonObject(), inventory, keys);
     assertThat(keys, contains("73209622"));
 
     inventory = new JsonObject()
         .put("inventory", new JsonObject()
             .put("issn", new JsonArray().add("73209622")));
-    keys = matchKeyMethod.getKeys(new JsonObject(), inventory);
+    keys.clear();
+    matchKeyMethod.getKeys(new JsonObject(), inventory, keys);
     assertThat(keys, is(empty()));
   }
 
-  void matchKeyVerify(String pattern, List<String> expectedKeys, JsonObject inventoryPayload) {
+  void matchKeyVerify(String pattern, Set<String> expectedKeys, JsonObject inventoryPayload) {
     MatchKeyMethod matchKeyMethod = new MatchKeyJsonPath();
     matchKeyMethod.configure(new JsonObject().put("inventory", pattern));
-    List<String> keys = matchKeyMethod.getKeys(new JsonObject(), inventoryPayload);
+    Set<String> keys = new HashSet<>();
+    matchKeyMethod.getKeys(new JsonObject(), inventoryPayload, keys);
     Assert.assertEquals(expectedKeys, keys);
   }
 
@@ -129,10 +137,10 @@ public class MatchKeyJsonPathTest {
         )
         ;
 
-    matchKeyVerify("$.identifiers[*].isbn", List.of("73209629", "73209623"), inventory);
-    matchKeyVerify("$.matchKey.title", List.of("Panisci fistula"), inventory);
-    matchKeyVerify("$.matchKey", List.of(), inventory);
-    matchKeyVerify("$.matchKey[?(@.title)]", List.of(), inventory);
+    matchKeyVerify("$.identifiers[*].isbn", Set.of("73209629", "73209623"), inventory);
+    matchKeyVerify("$.matchKey.title", Set.of("Panisci fistula"), inventory);
+    matchKeyVerify("$.matchKey", Set.of(), inventory);
+    matchKeyVerify("$.matchKey[?(@.title)]", Set.of(), inventory);
   }
 
 }

@@ -1,0 +1,6 @@
+in: query
+name: until
+description: For verb=ListRecords limit to this "until" date-time.
+required: false
+schema:
+  type: string

@@ -1,0 +1,6 @@
+in: query
+name: resumptionToken
+description: For verb=ListRecords, use this resumption token
+required: false
+schema:
+  type: string

@@ -1,0 +1,6 @@
+in: query
+name: from
+description: For verb=ListRecords limit to this "from" date-time.
+required: false
+schema:
+  type: string

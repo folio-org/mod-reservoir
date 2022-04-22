@@ -147,6 +147,19 @@
           ]
         }
       ]
+    },
+    {
+      "id": "shared-index-oai",
+      "version": "1.0",
+      "handlers": [
+        {
+          "methods": [
+            "GET"
+          ],
+          "pathPattern": "/shared-index/oai",
+          "permissionsRequired": [ ]
+        }
+      ]
     }
   ],
   "requires": [],
