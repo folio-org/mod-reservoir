@@ -1676,10 +1676,15 @@ public class MainVerticleTest {
             )
             .put("inventoryPayload", new JsonObject()
                 .put("isbn", new JsonArray().add("1"))
-                .put("holdingsRecords", new JsonArray().add(new JsonObject()
-                        .put("permanentLocationDeref", "S101")
-                    )
-                )
+            )
+        )
+        .add(new JsonObject()
+            .put("localId", "S102")
+            .put("marcPayload", new JsonObject()
+                .put("leader", "00914naa  2200337   450 ")
+            )
+            .put("inventoryPayload", new JsonObject()
+                .put("isbn", new JsonArray().add("2"))
             )
         );
     ingestRecords(records1, sourceId1);
@@ -1697,7 +1702,7 @@ public class MainVerticleTest {
         .then().statusCode(200)
         .contentType("text/xml")
         .extract().body().asString();
-    verifyOaiResponse(s, "ListRecords", identifiers, 1);
+    verifyOaiResponse(s, "ListRecords", identifiers, 2);
 
     s = RestAssured.given()
         .header(XOkapiHeaders.TENANT, tenant1)
@@ -1731,7 +1736,7 @@ public class MainVerticleTest {
         .then().statusCode(200)
         .contentType("text/xml")
         .extract().body().asString();
-    verifyOaiResponse(s, "ListRecords", identifiers, 1);
+    verifyOaiResponse(s, "ListRecords", identifiers, 2);
 
     RestAssured.given()
         .header(XOkapiHeaders.TENANT, tenant1)
@@ -1745,6 +1750,28 @@ public class MainVerticleTest {
 
     TimeUnit.SECONDS.sleep(1);
     String time4 = Instant.now(Clock.systemUTC()).truncatedTo(ChronoUnit.SECONDS).toString();
+
+    JsonArray records2 = new JsonArray()
+        .add(new JsonObject()
+            .put("localId", "S102")
+            .put("delete", true)
+        );
+    ingestRecords(records2, sourceId1);
+
+    s = RestAssured.given()
+        .header(XOkapiHeaders.TENANT, tenant1)
+        .param("verb", "ListRecords")
+        .param("from", time4)
+        .param("metadataPrefix", "marcxml")
+        .get("/shared-index/oai")
+        .then().statusCode(200)
+        .contentType("text/xml")
+        .extract().body().asString();
+    verifyOaiResponse(s, "ListRecords", identifiers, 1);
+
+    TimeUnit.SECONDS.sleep(1);
+    String time5 = Instant.now(Clock.systemUTC()).truncatedTo(ChronoUnit.SECONDS).toString();
+
     RestAssured.given()
         .header(XOkapiHeaders.TENANT, tenant1)
         .header("Content-Type", "application/json")
@@ -1755,7 +1782,7 @@ public class MainVerticleTest {
     s = RestAssured.given()
         .header(XOkapiHeaders.TENANT, tenant1)
         .param("verb", "ListRecords")
-        .param("from", time4)
+        .param("from", time5)
         .param("metadataPrefix", "marcxml")
         .get("/shared-index/oai")
         .then().statusCode(200)
@@ -1770,7 +1797,7 @@ public class MainVerticleTest {
   }
 
   @Test
-  public void testOaiResumptionToken() throws XMLStreamException, InterruptedException, IOException, SAXException {
+  public void testOaiResumptionToken() throws XMLStreamException, IOException, SAXException {
     JsonObject matchKey1 = new JsonObject()
         .put("id", "isbn")
         .put("method", "jsonpath")
@@ -1792,7 +1819,8 @@ public class MainVerticleTest {
           .add(new JsonObject()
               .put("localId", "S" + i)
               .put("marcPayload", new JsonObject().put("leader", "00914naa  0101   450 "))
-              .put("inventoryPayload", new JsonObject().put("isbn", new JsonArray().add(Integer.toString(i))))
+              .put("inventoryPayload", new JsonObject()
+                  .put("isbn", new JsonArray().add(Integer.toString(i))))
           );
       ingestRecords(records1, sourceId1);
     }

@@ -114,7 +114,7 @@ paths:
         schema:
           type: string
     put:
-      description: Recalculdate match key across all records.
+      description: Recalculate match key across all records.
       operationId: initializeMatchKey
       responses:
         "200":

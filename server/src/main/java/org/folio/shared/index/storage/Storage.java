@@ -140,12 +140,13 @@ public class Storage {
     ).mapEmpty();
   }
 
-  Future<UUID> upsertBibRecord(
+  Future<Void> upsertBibRecord(
       SqlConnection conn,
       String localIdentifier,
       UUID sourceId,
       JsonObject marcPayload,
-      JsonObject inventoryPayload) {
+      JsonObject inventoryPayload,
+      JsonArray matchKeyConfigs) {
 
     return conn.preparedQuery(
             "INSERT INTO " + bibRecordTable
@@ -158,18 +159,37 @@ public class Storage {
         .execute(
             Tuple.of(UUID.randomUUID(), localIdentifier, sourceId, marcPayload, inventoryPayload)
         )
-        .map(rowSet -> rowSet.iterator().next().getUUID("id"));
+        .map(rowSet -> rowSet.iterator().next().getUUID("id"))
+        .compose(id -> updateMatchKeyValues(conn, id, marcPayload, inventoryPayload,
+            matchKeyConfigs))
+        .mapEmpty();
+  }
+
+  Future<Void> deleteBibRecord(SqlConnection conn, String localIdentifier, UUID sourceId) {
+    String q = "UPDATE " + clusterMetaTable + " AS m"
+        + " SET datestamp = $3"
+        + " FROM " + bibRecordTable + ", " + clusterRecordTable + " AS r"
+        + " WHERE m.cluster_id = r.cluster_id AND r.record_id = id"
+        + " AND local_id = $1 AND source_id = $2";
+    return conn.preparedQuery(q)
+        .execute(Tuple.of(localIdentifier, sourceId, LocalDateTime.now(ZoneOffset.UTC)))
+        .compose(x -> conn.preparedQuery("DELETE FROM " + bibRecordTable
+                + " WHERE local_id = $1 AND source_id = $2")
+        .execute(Tuple.of(localIdentifier, sourceId))
+        .mapEmpty());
   }
 
   Future<Void> upsertGlobalRecord(SqlConnection conn, UUID sourceId,
       JsonObject globalRecord, JsonArray matchKeyConfigs) {
 
     final String localIdentifier = globalRecord.getString("localId");
+    if (Boolean.TRUE.equals(globalRecord.getBoolean("delete"))) {
+      return deleteBibRecord(conn, localIdentifier, sourceId);
+    }
     final JsonObject marcPayload = globalRecord.getJsonObject("marcPayload");
     final JsonObject inventoryPayload = globalRecord.getJsonObject("inventoryPayload");
-    return upsertBibRecord(conn, localIdentifier, sourceId, marcPayload, inventoryPayload)
-        .compose(id -> updateMatchKeyValues(conn, id,
-            marcPayload, inventoryPayload, matchKeyConfigs));
+    return upsertBibRecord(conn, localIdentifier, sourceId, marcPayload, inventoryPayload,
+        matchKeyConfigs);
   }
 
   Future<Void> updateMatchKeyValues(SqlConnection conn, UUID globalId,

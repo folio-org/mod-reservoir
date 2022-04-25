@@ -8,6 +8,10 @@
         "type": "string",
         "description": "Local identifier"
       },
+      "delete": {
+        "type": "boolean",
+        "description": "If true, record is deleted. Default: false"
+      },
       "marcPayload": {
         "type": "object"
       },
