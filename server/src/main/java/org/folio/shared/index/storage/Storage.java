@@ -179,6 +179,19 @@ public class Storage {
         .mapEmpty());
   }
 
+  Future<Void> upsertGlobalRecord(UUID sourceId, JsonObject globalRecord,
+      JsonArray matchKeyConfigs) {
+
+    return pool.withTransaction(conn ->
+            upsertGlobalRecord(conn, sourceId, globalRecord, matchKeyConfigs))
+        // addValuesToCluster may fail if for same new match key for parallel operations
+        // we recover just once for that. 2nd will find the new value for the one that
+        // succeeded.
+        .recover(x ->
+            pool.withTransaction(conn ->
+                upsertGlobalRecord(conn, sourceId, globalRecord, matchKeyConfigs)));
+  }
+
   Future<Void> upsertGlobalRecord(SqlConnection conn, UUID sourceId,
       JsonObject globalRecord, JsonArray matchKeyConfigs) {
 
@@ -228,7 +241,7 @@ public class Storage {
     return updateClusterForRecord(conn, globalId, matchKeyConfigId, keys);
   }
 
-  Future<Set<UUID>> updateClusterValues(SqlConnection conn, int iterations, UUID newClusterId,
+  Future<Set<UUID>> updateClusterValues(SqlConnection conn, UUID newClusterId,
       String matchKeyConfigId, Collection<String> keys) {
 
     Set<UUID> clustersFound = new HashSet<>();
@@ -265,24 +278,14 @@ public class Storage {
         .compose(clusterId ->
             addValuesToCluster(conn, clusterId, matchKeyConfigId, keys, foundKeys)
         )
-        .map(clustersFound)
-        .recover(
-            e -> {
-              if (iterations >= 3) {
-                log.error("addValuesToCluster fails 3 times {}", e.getMessage(), e);
-                return Future.failedFuture("addValuesToCluster fails 3 times: " + e.getMessage());
-              }
-              log.warn("addValuesToCluster iter={} {}", iterations, e.getMessage(), e);
-              return updateClusterValues(conn,  iterations + 1, newClusterId, matchKeyConfigId,
-                  keys);
-            });
+        .map(clustersFound);
   }
 
   Future<Void> updateClusterForRecord(SqlConnection conn, UUID globalId,
       String matchKeyConfigId, Collection<String> keys) {
 
     UUID newClusterId = UUID.randomUUID();
-    return updateClusterValues(conn, 0, newClusterId, matchKeyConfigId, keys)
+    return updateClusterValues(conn, newClusterId, matchKeyConfigId, keys)
         .compose(clustersFound -> {
           Iterator<UUID> iterator = clustersFound.iterator();
           if (!iterator.hasNext()) {
@@ -382,7 +385,7 @@ public class Storage {
               List<Future<Void>> futures = new ArrayList<>(records.size());
               for (int i = 0; i < records.size(); i++) {
                 JsonObject globalRecord = records.getJsonObject(i);
-                futures.add(upsertGlobalRecord(conn, sourceId, globalRecord, matchKeyConfigs));
+                futures.add(upsertGlobalRecord(sourceId, globalRecord, matchKeyConfigs));
               }
               return GenericCompositeFuture.all(futures).mapEmpty();
             }
