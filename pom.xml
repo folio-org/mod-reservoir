@@ -6,18 +6,17 @@
   <packaging>pom</packaging>
 
   <name>Shared Index</name>
-  <url>https://github.com/folio-org/mod-shared-index</url>
-  <description>
-    module holdings bibliographic records, items and source records for shared metadata</description>
+  <url>https://github.com/folio-org/mod-meta-storage</url>
+  <description>Module for shared meta data</description>
   <inceptionYear>2021</inceptionYear>
   <organization>
     <name>The Open Library Foundation</name>
     <url>https://dev.folio.org/</url>
   </organization>
   <scm>
-    <url>https://github.com/folio-org/mod-shared-index</url>
-    <connection>scm:git:git://github.com/folio-org/mod-shared-index.git</connection>
-    <developerConnection>scm:git:git@github.com:folio-org/mod-shared-index.git</developerConnection>
+    <url>https://github.com/folio-org/mod-meta-storage</url>
+    <connection>scm:git:git://github.com/folio-org/mod-meta-storage.git</connection>
+    <developerConnection>scm:git:git@github.com:folio-org/mod-meta-storage.git</developerConnection>
     <tag>HEAD</tag>
   </scm>
 

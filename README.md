@@ -102,7 +102,7 @@ API descriptions:
  * [OpenAPI](server/src/main/resources/openapi/)
  * [Schemas](server/src/main/resources/openapi/schemas/)
 
-Generated [API documentation](https://dev.folio.org/reference/api/#mod-shared-index).
+Generated [API documentation](https://dev.folio.org/reference/api/#mod-meta-storage).
 
 ### Code analysis
 
