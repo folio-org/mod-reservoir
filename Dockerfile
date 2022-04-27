@@ -1,6 +1,6 @@
 FROM folioci/alpine-jre-openjdk11:latest
 
-ENV VERTICLE_FILE mod-shared-index-server-fat.jar
+ENV VERTICLE_FILE mod-meta-storage-server-fat.jar
 
 # Set the location of the verticles
 ENV VERTICLE_HOME /usr/verticles

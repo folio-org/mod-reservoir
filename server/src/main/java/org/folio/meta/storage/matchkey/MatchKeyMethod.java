@@ -2,7 +2,6 @@ package org.folio.meta.storage.matchkey;
 
 import io.vertx.core.json.JsonObject;
 import java.util.Collection;
-
 import org.folio.meta.storage.matchkey.impl.MatchKeyJsonPath;
 
 public interface MatchKeyMethod {

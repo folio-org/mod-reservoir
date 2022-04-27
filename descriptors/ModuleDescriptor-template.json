@@ -1,6 +1,6 @@
 {
   "id": "${artifactId}-${version}",
-  "name": "Shared Index Module",
+  "name": "Meta storage",
   "provides": [
     {
       "id": "_tenant",

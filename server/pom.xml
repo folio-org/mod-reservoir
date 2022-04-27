@@ -2,16 +2,15 @@
   <modelVersion>4.0.0</modelVersion>
   <parent>
     <groupId>org.folio</groupId>
-    <artifactId>mod-shared-index</artifactId>
+    <artifactId>mod-meta-storage</artifactId>
     <version>0.0.1-SNAPSHOT</version>
   </parent>
-  <artifactId>mod-shared-index-server</artifactId>
-  <name>Shared Index module</name>
-
+  <artifactId>mod-meta-storage-server</artifactId>
+  <name>Meta storage server module</name>
   <dependencies>
     <dependency>
       <groupId>org.folio</groupId>
-      <artifactId>mod-shared-index-util</artifactId>
+      <artifactId>mod-meta-storage-util</artifactId>
       <version>${project.version}</version>
     </dependency>
     <dependency>
@@ -139,7 +138,7 @@
         <configuration>
           <archive>
             <manifestEntries>
-              <Automatic-Module-Name>org.folio.shared.index</Automatic-Module-Name>
+              <Automatic-Module-Name>org.folio.meta.storage.server</Automatic-Module-Name>
             </manifestEntries>
           </archive>
         </configuration>

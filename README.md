@@ -1,4 +1,4 @@
-# mod-shared-index
+# mod-meta-storage
 
 Copyright (C) 2021-2022 The Open Library Foundation
 
@@ -13,7 +13,7 @@ The index is made as simple as possible in order to be optimized for fast loadin
 This projects has three sub projects:
 
  * util: a library with utilities to normalize MARC to Inventory.
- * server: The shared index server. This is FOLIO module: mod-shared-index.
+ * server: The meta storage server. This is FOLIO module: mod-meta-storage
  * client: A client for sending ISO2709/MARCXML records to the server.
 
 ### Compilation
@@ -33,7 +33,7 @@ Install all components with:
 
 Start the server with
 
-    java -Dport=8081 -jar server/target/mod-shared-index-server-fat.jar
+    java -Dport=8081 -jar server/target/mod-meta-storage-server-fat.jar
 
 The module is configured by setting environment variables:
 `DB_HOST`, `DB_PORT`, `DB_USERNAME`, `DB_DATABASE`, `DB_MAXPOOLSIZE`, `DB_SERVER_PEM`.
@@ -42,7 +42,7 @@ The module is configured by setting environment variables:
 
 Run the client with
 
-    java -jar client/target/mod-shared-index-client-fat.jar [options] [files...]
+    java -jar client/target/mod-meta-storage-client-fat.jar [options] [files...]
 
 To see list options use `--help`. The client uses environment variables
 `OKAPI_URL`, `OKAPI_TENANT`, `OKAPI_TOKEN` for Okapi URL, tenant and
@@ -50,26 +50,26 @@ token respectively.
 
 Before you can push record, you'll want to prepare the database for the
 tenant. If Okapi is used, then the install command will do it, but if you
-are running mod-shared-index module on its own, you must do that manually.
+are running mod-meta-storage module on its own, you must do that manually.
 
 For example, to prepare database for tenant `diku` on server running on localhost:8081, use:
 
     export OKAPI_TENANT=diku
     export OKAPI_URL=http://localhost:8081
-    java -jar client/target/mod-shared-index-client-fat.jar --init
+    java -jar client/target/mod-meta-storage-client-fat.jar --init
 
 Should you want to purge the data, use:
 
     export OKAPI_TENANT=diku
     export OKAPI_URL=http://localhost:8081
-    java -jar client/target/mod-shared-index-client-fat.jar --purge
+    java -jar client/target/mod-meta-storage-client-fat.jar --purge
 
 To send MARCXML to the same server with defined sourceId:
 
     export OKAPI_TENANT=diku
     export OKAPI_URL=http://localhost:8081
     export sourceid=`uuidgen`
-    java -jar client/target/mod-shared-index-client-fat.jar \
+    java -jar client/target/mod-meta-storage-client-fat.jar \
       --source $sourceid \
       --xsl xsl/marc2inventory-instance.xsl \
       --xsl xsl/holdings-items-cst.xsl \
