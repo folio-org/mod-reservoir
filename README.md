@@ -82,7 +82,7 @@ The option `--xsl` may be repeated for a sequence of transformations.
 
 ### Issue tracker
 
-See project [MODSI](https://issues.folio.org/browse/MODSI)
+See project [MODMS](https://issues.folio.org/browse/MODMS)
 at the [FOLIO issue tracker](https://dev.folio.org/guidelines/issue-tracker).
 
 ### Code of Conduct
