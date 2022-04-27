@@ -21,12 +21,12 @@ import org.folio.tlib.TenantInitHooks;
 import org.folio.tlib.postgres.PgCqlField;
 import org.folio.tlib.postgres.PgCqlQuery;
 
-public class SharedIndexService implements RouterCreator, TenantInitHooks {
+public class MetaStorageService implements RouterCreator, TenantInitHooks {
 
-  private static final Logger log = LogManager.getLogger(SharedIndexService.class);
+  private static final Logger log = LogManager.getLogger(MetaStorageService.class);
   final Vertx vertx;
 
-  public SharedIndexService(Vertx vertx) {
+  public MetaStorageService(Vertx vertx) {
     this.vertx = vertx;
   }
 
@@ -274,12 +274,12 @@ public class SharedIndexService implements RouterCreator, TenantInitHooks {
           } catch (Exception t) {
             failHandler(400, ctx, t);
           }
-        }).failureHandler(SharedIndexService::failHandler);
+        }).failureHandler(MetaStorageService::failHandler);
   }
 
   @Override
   public Future<Router> createRouter(Vertx vertx) {
-    return RouterBuilder.create(vertx, "openapi/shared-index-1.0.yaml")
+    return RouterBuilder.create(vertx, "openapi/meta-storage-1.0.yaml")
         .map(routerBuilder -> {
           add(routerBuilder, "putGlobalRecords", this::putGlobalRecords);
           add(routerBuilder, "getGlobalRecords", this::getGlobalRecords);

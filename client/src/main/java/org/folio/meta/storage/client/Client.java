@@ -218,7 +218,7 @@ public class Client {
       System.out.println(request);
       vertx.runOnContext(x -> sendChunk(reader, promise));
     } else {
-      webClient.putAbs(headers.get(XOkapiHeaders.URL) + "/shared-index/records")
+      webClient.putAbs(headers.get(XOkapiHeaders.URL) + "/meta-storage/records")
           .putHeaders(headers)
           .expect(ResponsePredicate.SC_OK)
           .expect(ResponsePredicate.JSON)
@@ -234,7 +234,7 @@ public class Client {
    */
   public Future<Void> init() {
     JsonObject request = new JsonObject()
-        .put("module_to", "mod-shared-index-1.0.0");
+        .put("module_to", "mod-meta-storage-1.0.0");
     return tenantOp(request);
   }
 

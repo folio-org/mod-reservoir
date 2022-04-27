@@ -23,140 +23,140 @@
       ]
     },
     {
-      "id": "shared-index-config-matchkeys",
+      "id": "meta-storage-config-matchkeys",
       "version": "1.0",
       "handlers": [
         {
           "methods": [
             "POST"
           ],
-          "pathPattern": "/shared-index/config/matchkeys",
+          "pathPattern": "/meta-storage/config/matchkeys",
           "permissionsRequired": [
-            "shared-index-config-matchkeys.item.post"
+            "meta-storage-config-matchkeys.item.post"
           ]
         },
         {
           "methods": [
             "GET"
           ],
-          "pathPattern": "/shared-index/config/matchkeys",
+          "pathPattern": "/meta-storage/config/matchkeys",
           "permissionsRequired": [
-            "shared-index-config-matchkeys.collection.get"
+            "meta-storage-config-matchkeys.collection.get"
           ]
         },
         {
           "methods": [
             "GET"
           ],
-          "pathPattern": "/shared-index/config/matchkeys/{id}",
+          "pathPattern": "/meta-storage/config/matchkeys/{id}",
           "permissionsRequired": [
-            "shared-index-config-matchkeys.item.get"
+            "meta-storage-config-matchkeys.item.get"
           ]
         },
         {
           "methods": [
             "PUT"
           ],
-          "pathPattern": "/shared-index/config/matchkeys/{id}",
+          "pathPattern": "/meta-storage/config/matchkeys/{id}",
           "permissionsRequired": [
-            "shared-index-config-matchkeys.item.put"
+            "meta-storage-config-matchkeys.item.put"
           ]
         },
         {
           "methods": [
             "DELETE"
           ],
-          "pathPattern": "/shared-index/config/matchkeys/{id}",
+          "pathPattern": "/meta-storage/config/matchkeys/{id}",
           "permissionsRequired": [
-            "shared-index-config-matchkeys.item.delete"
+            "meta-storage-config-matchkeys.item.delete"
           ]
         },
         {
           "methods": [
             "PUT"
           ],
-          "pathPattern": "/shared-index/config/matchkeys/{id}/initialize",
+          "pathPattern": "/meta-storage/config/matchkeys/{id}/initialize",
           "permissionsRequired": [
-            "shared-index-config-matchkeys.item.initialize"
+            "meta-storage-config-matchkeys.item.initialize"
           ]
         }
       ]
     },
     {
-      "id": "shared-index-records",
+      "id": "meta-storage-records",
       "version": "1.0",
       "handlers": [
         {
           "methods": [
             "GET"
           ],
-          "pathPattern": "/shared-index/records",
+          "pathPattern": "/meta-storage/records",
           "permissionsRequired": [
-            "shared-index-records.collection.get"
+            "meta-storage-records.collection.get"
           ]
         },
         {
           "methods": [
             "PUT"
           ],
-          "pathPattern": "/shared-index/records",
+          "pathPattern": "/meta-storage/records",
           "permissionsRequired": [
-            "shared-index-records.put"
+            "meta-storage-records.put"
           ]
         },
         {
           "methods": [
             "DELETE"
           ],
-          "pathPattern": "/shared-index/records",
+          "pathPattern": "/meta-storage/records",
           "permissionsRequired": [
-            "shared-index-records.delete"
+            "meta-storage-records.delete"
           ]
         },
         {
           "methods": [
             "GET"
           ],
-          "pathPattern": "/shared-index/records/{globalId}",
+          "pathPattern": "/meta-storage/records/{globalId}",
           "permissionsRequired": [
-            "shared-index-records.item.get"
+            "meta-storage-records.item.get"
           ]
         }
       ]
     },
     {
-      "id": "shared-index-clusters",
+      "id": "meta-storage-clusters",
       "version": "1.0",
       "handlers": [
         {
           "methods": [
             "GET"
           ],
-          "pathPattern": "/shared-index/clusters",
+          "pathPattern": "/meta-storage/clusters",
           "permissionsRequired": [
-            "shared-index-clusters.collection.get"
+            "meta-storage-clusters.collection.get"
           ]
         },
         {
           "methods": [
             "GET"
           ],
-          "pathPattern": "/shared-index/clusters/{clusterId}",
+          "pathPattern": "/meta-storage/clusters/{clusterId}",
           "permissionsRequired": [
-            "shared-index-clusters.item.get"
+            "meta-storage-clusters.item.get"
           ]
         }
       ]
     },
     {
-      "id": "shared-index-oai",
+      "id": "meta-storage-oai",
       "version": "1.0",
       "handlers": [
         {
           "methods": [
             "GET"
           ],
-          "pathPattern": "/shared-index/oai",
+          "pathPattern": "/meta-storage/oai",
           "permissionsRequired": [ ]
         }
       ]
@@ -165,106 +165,106 @@
   "requires": [],
   "permissionSets": [
     {
-      "permissionName": "shared-index-config-matchkeys.item.post",
-      "displayName": "shared index - create match key configuration",
+      "permissionName": "meta-storage-config-matchkeys.item.post",
+      "displayName": "meta storage - create match key configuration",
       "description": "Create match key configuration"
     },
     {
-      "permissionName": "shared-index-config-matchkeys.collection.get",
-      "displayName": "shared index - get match key configurations",
+      "permissionName": "meta-storage-config-matchkeys.collection.get",
+      "displayName": "meta storage - get match key configurations",
       "description": "Get match key configurations"
     },
     {
-      "permissionName": "shared-index-config-matchkeys.item.get",
-      "displayName": "shared index - get match key configuration",
+      "permissionName": "meta-storage-config-matchkeys.item.get",
+      "displayName": "meta storage - get match key configuration",
       "description": "Get match key configuration"
     },
     {
-      "permissionName": "shared-index-config-matchkeys.item.put",
-      "displayName": "shared index - update match key configuration",
+      "permissionName": "meta-storage-config-matchkeys.item.put",
+      "displayName": "meta storage - update match key configuration",
       "description": "Update match key configuration"
     },
     {
-      "permissionName": "shared-index-config-matchkeys.item.delete",
-      "displayName": "shared index - delete match key configuration",
+      "permissionName": "meta-storage-config-matchkeys.item.delete",
+      "displayName": "meta storage - delete match key configuration",
       "description": "Delete match key configuration"
     },
     {
-      "permissionName": "shared-index-config-matchkeys.item.initialize",
-      "displayName": "shared index - initialize match key configuration",
+      "permissionName": "meta-storage-config-matchkeys.item.initialize",
+      "displayName": "meta storage - initialize match key configuration",
       "description": "Initialize match key configuration"
     },
     {
-      "permissionName": "shared-index-config-matchkeys.all",
-      "displayName": "shared index - all match key configuration",
+      "permissionName": "meta-storage-config-matchkeys.all",
+      "displayName": "meta storage - all match key configuration",
       "description": "All match key configuration",
       "subPermissions": [
-        "shared-index-config-matchkeys.item.post",
-        "shared-index-config-matchkeys.collection.get",
-        "shared-index-config-matchkeys.item.get",
-        "shared-index-config-matchkeys.item.put",
-        "shared-index-config-matchkeys.item.delete",
-        "shared-index-config-matchkeys.item.initialize"
+        "meta-storage-config-matchkeys.item.post",
+        "meta-storage-config-matchkeys.collection.get",
+        "meta-storage-config-matchkeys.item.get",
+        "meta-storage-config-matchkeys.item.put",
+        "meta-storage-config-matchkeys.item.delete",
+        "meta-storage-config-matchkeys.item.initialize"
      ]
     },
     {
-      "permissionName": "shared-index-records.collection.get",
-      "displayName": "shared index - get records",
+      "permissionName": "meta-storage-records.collection.get",
+      "displayName": "meta storage - get records",
       "description": "Get records"
     },
     {
-      "permissionName": "shared-index-records.put",
-      "displayName": "shared index - ingest records",
+      "permissionName": "meta-storage-records.put",
+      "displayName": "meta storage - ingest records",
       "description": "Ingest records"
     },
     {
-      "permissionName": "shared-index-records.delete",
-      "displayName": "shared index - delete records",
+      "permissionName": "meta-storage-records.delete",
+      "displayName": "meta storage - delete records",
       "description": "Delete records"
     },
     {
-      "permissionName": "shared-index-records.item.get",
-      "displayName": "shared index - get record",
+      "permissionName": "meta-storage-records.item.get",
+      "displayName": "meta storage - get record",
       "description": "Get record by globalId"
     },
     {
-      "permissionName": "shared-index-records.all",
-      "displayName": "shared index - record management",
+      "permissionName": "meta-storage-records.all",
+      "displayName": "meta storage - record management",
       "description": "Record management",
       "subPermissions": [
-        "shared-index-records.collection.get",
-        "shared-index-records.put",
-        "shared-index-records.delete",
-        "shared-index-records.item.get"
+        "meta-storage-records.collection.get",
+        "meta-storage-records.put",
+        "meta-storage-records.delete",
+        "meta-storage-records.item.get"
       ]
     },
     {
-      "permissionName": "shared-index-clusters.collection.get",
-      "displayName": "shared index - get clusters",
+      "permissionName": "meta-storage-clusters.collection.get",
+      "displayName": "meta storage - get clusters",
       "description": "Get clusters"
     },
     {
-      "permissionName": "shared-index-clusters.item.get",
-      "displayName": "shared index - get cluster",
+      "permissionName": "meta-storage-clusters.item.get",
+      "displayName": "meta storage - get cluster",
       "description": "Get cluster"
     },
     {
-      "permissionName": "shared-index-clusters.all",
-      "displayName": "shared index - clusters",
+      "permissionName": "meta-storage-clusters.all",
+      "displayName": "meta storage - clusters",
       "description": "Clusters permissions",
       "subPermissions": [
-        "shared-index-clusters.collection.get",
-        "shared-index-clusters.item.get"
+        "meta-storage-clusters.collection.get",
+        "meta-storage-clusters.item.get"
       ]
     },
     {
-      "permissionName": "shared-index.all",
-      "displayName": "shared index - all permissions",
+      "permissionName": "meta-storage.all",
+      "displayName": "meta storage - all permissions",
       "description": "All permissions",
       "subPermissions": [
-        "shared-index-config-matchkeys.all",
-        "shared-index-records.all",
-        "shared-index-clusters.all"
+        "meta-storage-config-matchkeys.all",
+        "meta-storage-records.all",
+        "meta-storage-clusters.all"
       ]
     }
   ],

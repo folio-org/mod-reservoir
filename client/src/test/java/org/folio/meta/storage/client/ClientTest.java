@@ -135,7 +135,7 @@ public class ClientTest {
 
     HttpServer httpServer = vertx.createHttpServer(so);
     Router router = Router.router(vertx);
-    router.put("/shared-index/records")
+    router.put("/meta-storage/records")
         .handler(BodyHandler.create())
         .handler(c -> {
           requests.add(c.getBodyAsJson());
@@ -184,7 +184,7 @@ public class ClientTest {
 
     HttpServer httpServer = vertx.createHttpServer(so);
     Router router = Router.router(vertx);
-    router.put("/shared-index/records")
+    router.put("/meta-storage/records")
         .handler(BodyHandler.create())
         .handler(c -> {
           requests.add(c.getBodyAsJson());
@@ -234,7 +234,7 @@ public class ClientTest {
 
     HttpServer httpServer = vertx.createHttpServer(so);
     Router router = Router.router(vertx);
-    router.put("/shared-index/records")
+    router.put("/meta-storage/records")
         .handler(BodyHandler.create())
         .handler(c -> {
           requests.add(c.getBodyAsJson());
@@ -280,7 +280,7 @@ public class ClientTest {
 
     HttpServer httpServer = vertx.createHttpServer(so);
     Router router = Router.router(vertx);
-    router.put("/shared-index/records")
+    router.put("/meta-storage/records")
         .handler(BodyHandler.create())
         .handler(c -> {
           requests.add(c.getBodyAsJson());
@@ -320,7 +320,7 @@ public class ClientTest {
 
     HttpServer httpServer = vertx.createHttpServer(so);
     Router router = Router.router(vertx);
-    router.put("/shared-index/records")
+    router.put("/meta-storage/records")
         .handler(BodyHandler.create())
         .handler(c -> {
           requests.add(c.getBodyAsJson());

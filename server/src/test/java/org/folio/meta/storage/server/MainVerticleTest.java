@@ -210,10 +210,10 @@ public class MainVerticleTest {
     RestAssured.given()
         .baseUri(MODULE_URL)
         .header(XOkapiHeaders.TENANT, tenant)
-        .get("/shared-index/records")
+        .get("/meta-storage/records")
         .then().statusCode(400)
         .header("Content-Type", is("text/plain"))
-        .body(is("ERROR: relation \"unknowntenant_mod_shared_index.bib_record\" does not exist (42P01)"));
+        .body(is("ERROR: relation \"unknowntenant_mod_meta_storage.bib_record\" does not exist (42P01)"));
   }
 
   @Test
@@ -221,7 +221,7 @@ public class MainVerticleTest {
     RestAssured.given()
         .header(XOkapiHeaders.TENANT, tenant1)
         .param("query","foo=bar" )
-        .get("/shared-index/records")
+        .get("/meta-storage/records")
         .then().statusCode(400)
         .header("Content-Type", is("text/plain"))
         .body(is("Unsupported CQL index: foo"));
@@ -247,7 +247,7 @@ public class MainVerticleTest {
         .header(XOkapiHeaders.TENANT, tenant)
         .header("Content-Type", "application/json")
         .body(request.encode())
-        .put("/shared-index/records")
+        .put("/meta-storage/records")
         .then().statusCode(400)
         .header("Content-Type", is("text/plain"))
         .body(containsString("X-Okapi-Tenant header must match"));
@@ -271,7 +271,7 @@ public class MainVerticleTest {
         .baseUri(MODULE_URL)
         .header("Content-Type", "application/json")
         .body(request.encode())
-        .put("/shared-index/records")
+        .put("/meta-storage/records")
         .then().statusCode(400)
         .header("Content-Type", is("text/plain"))
         .body(containsString(" does not exist (42P01)"));
@@ -288,7 +288,7 @@ public class MainVerticleTest {
         .header(XOkapiHeaders.TENANT, tenant1)
         .header("Content-Type", "application/json")
         .body(matchKey.encode())
-        .post("/shared-index/config/matchkeys")
+        .post("/meta-storage/config/matchkeys")
         .then().statusCode(400)
         .contentType("text/plain")
         .body(Matchers.is("Non-existing method 'other'"));
@@ -298,7 +298,7 @@ public class MainVerticleTest {
   public void matchKeysOK() {
     RestAssured.given()
         .header(XOkapiHeaders.TENANT, tenant1)
-        .get("/shared-index/config/matchkeys")
+        .get("/meta-storage/config/matchkeys")
         .then().statusCode(200)
         .contentType("application/json")
         .body("matchKeys", is(empty()))
@@ -313,7 +313,7 @@ public class MainVerticleTest {
     RestAssured.given()
         .header(XOkapiHeaders.TENANT, tenant1)
         .header("Content-Type", "application/json")
-        .get("/shared-index/config/matchkeys/" + matchKey.getString("id"))
+        .get("/meta-storage/config/matchkeys/" + matchKey.getString("id"))
         .then().statusCode(404)
         .contentType("text/plain")
         .body(Matchers.is("MatchKey " + matchKey.getString("id") + " not found"));
@@ -322,7 +322,7 @@ public class MainVerticleTest {
         .header(XOkapiHeaders.TENANT, tenant1)
         .header("Content-Type", "application/json")
         .body(matchKey.encode())
-        .post("/shared-index/config/matchkeys")
+        .post("/meta-storage/config/matchkeys")
         .then().statusCode(201)
         .contentType("application/json")
         .body(Matchers.is(matchKey.encode()));
@@ -331,7 +331,7 @@ public class MainVerticleTest {
         .header(XOkapiHeaders.TENANT, tenant1)
         .header("Content-Type", "application/json")
         .body(matchKey.encode())
-        .post("/shared-index/config/matchkeys")
+        .post("/meta-storage/config/matchkeys")
         .then().statusCode(400)
         .contentType("text/plain")
         .body(containsString("duplicate key value violates unique constraint"));
@@ -339,14 +339,14 @@ public class MainVerticleTest {
     RestAssured.given()
         .header(XOkapiHeaders.TENANT, tenant1)
         .header("Content-Type", "application/json")
-        .get("/shared-index/config/matchkeys/" + matchKey.getString("id"))
+        .get("/meta-storage/config/matchkeys/" + matchKey.getString("id"))
         .then().statusCode(200)
         .contentType("application/json")
         .body(Matchers.is(matchKey.encode()));
 
     RestAssured.given()
         .header(XOkapiHeaders.TENANT, tenant1)
-        .get("/shared-index/config/matchkeys")
+        .get("/meta-storage/config/matchkeys")
         .then().statusCode(200)
         .contentType("application/json")
         .body("matchKeys", hasSize(1))
@@ -358,7 +358,7 @@ public class MainVerticleTest {
 
     RestAssured.given()
         .header(XOkapiHeaders.TENANT, tenant1)
-        .get("/shared-index/config/matchkeys?query=method=" + matchKey.getString("method"))
+        .get("/meta-storage/config/matchkeys?query=method=" + matchKey.getString("method"))
         .then().statusCode(200)
         .contentType("application/json")
         .body("matchKeys", hasSize(1))
@@ -372,13 +372,13 @@ public class MainVerticleTest {
         .header(XOkapiHeaders.TENANT, tenant1)
         .header("Content-Type", "application/json")
         .body(matchKey.encode())
-        .put("/shared-index/config/matchkeys/" + matchKey.getString("id"))
+        .put("/meta-storage/config/matchkeys/" + matchKey.getString("id"))
         .then().statusCode(204);
 
     RestAssured.given()
         .header(XOkapiHeaders.TENANT, tenant1)
         .header("Content-Type", "application/json")
-        .get("/shared-index/config/matchkeys/" + matchKey.getString("id"))
+        .get("/meta-storage/config/matchkeys/" + matchKey.getString("id"))
         .then().statusCode(200)
         .contentType("application/json")
         .body(Matchers.is(matchKey.encode()));
@@ -386,26 +386,26 @@ public class MainVerticleTest {
     RestAssured.given()
         .header(XOkapiHeaders.TENANT, tenant1)
         .header("Content-Type", "application/json")
-        .delete("/shared-index/config/matchkeys/" + matchKey.getString("id"))
+        .delete("/meta-storage/config/matchkeys/" + matchKey.getString("id"))
         .then().statusCode(204);
 
     RestAssured.given()
         .header(XOkapiHeaders.TENANT, tenant1)
         .header("Content-Type", "application/json")
-        .delete("/shared-index/config/matchkeys/" + matchKey.getString("id"))
+        .delete("/meta-storage/config/matchkeys/" + matchKey.getString("id"))
         .then().statusCode(404);
 
     RestAssured.given()
         .header(XOkapiHeaders.TENANT, tenant1)
         .header("Content-Type", "application/json")
-        .get("/shared-index/config/matchkeys/" + matchKey.getString("id"))
+        .get("/meta-storage/config/matchkeys/" + matchKey.getString("id"))
         .then().statusCode(404);
 
     RestAssured.given()
         .header(XOkapiHeaders.TENANT, tenant1)
         .header("Content-Type", "application/json")
         .body(matchKey.encode())
-        .put("/shared-index/config/matchkeys/" + matchKey.getString("id"))
+        .put("/meta-storage/config/matchkeys/" + matchKey.getString("id"))
         .then().statusCode(404);
   }
 
@@ -426,7 +426,7 @@ public class MainVerticleTest {
         .header(XOkapiHeaders.TENANT, tenant1)
         .header("Content-Type", "application/json")
         .body(request.encode())
-        .put("/shared-index/records")
+        .put("/meta-storage/records")
         .then().statusCode(400)
         .body(containsString("Validation error for body application/json: input don't match type OBJECT"));
   }
@@ -453,13 +453,13 @@ public class MainVerticleTest {
         .header(XOkapiHeaders.TENANT, tenant1)
         .header("Content-Type", "application/json")
         .body(request.encode())
-        .put("/shared-index/records")
+        .put("/meta-storage/records")
         .then().statusCode(200);
 
     RestAssured.given()
         .header(XOkapiHeaders.TENANT, tenant1)
         .header("Content-Type", "application/json")
-        .get("/shared-index/records")
+        .get("/meta-storage/records")
         .then().statusCode(200)
         .body("resultInfo.totalRecords", is(2));
 
@@ -467,7 +467,7 @@ public class MainVerticleTest {
         .header(XOkapiHeaders.TENANT, tenant1)
         .header("Content-Type", "application/json")
         .param("query", "sourceId=" + sourceId)
-        .get("/shared-index/records")
+        .get("/meta-storage/records")
         .then().statusCode(200)
         .body("items", hasSize(2))
         .body("items[0].sourceId", is(sourceId))
@@ -480,21 +480,21 @@ public class MainVerticleTest {
     RestAssured.given()
         .header(XOkapiHeaders.TENANT, tenant1)
         .header("Content-Type", "application/json")
-        .get("/shared-index/records/" + globalId)
+        .get("/meta-storage/records/" + globalId)
         .then().statusCode(200)
         .body("sourceId", is(sourceId));
 
     RestAssured.given()
         .header(XOkapiHeaders.TENANT, tenant1)
         .header("Content-Type", "application/json")
-        .get("/shared-index/records/" + UUID.randomUUID())
+        .get("/meta-storage/records/" + UUID.randomUUID())
         .then().statusCode(404);
 
     RestAssured.given()
         .header(XOkapiHeaders.TENANT, tenant1)
         .header("Content-Type", "application/json")
         .param("query", "sourceId=" + UUID.randomUUID())
-        .get("/shared-index/records")
+        .get("/meta-storage/records")
         .then().statusCode(200)
         .body("items", hasSize(0))
         .body("resultInfo.totalRecords", is(0));
@@ -505,7 +505,7 @@ public class MainVerticleTest {
           .header(XOkapiHeaders.TENANT, tenant1)
           .header("Content-Type", "application/json")
           .param("query", "localId==" + sharedRecord.getString("localId"))
-          .get("/shared-index/records")
+          .get("/meta-storage/records")
           .then().statusCode(200)
           .body("items", hasSize(1))
           .body("items[0].localId", is(sharedRecord.getString("localId")))
@@ -614,7 +614,7 @@ public class MainVerticleTest {
         .header(XOkapiHeaders.TENANT, tenant1)
         .header("Content-Type", "application/json")
         .body(request.encode())
-        .put("/shared-index/records")
+        .put("/meta-storage/records")
         .then().statusCode(200);
   }
 
@@ -630,7 +630,7 @@ public class MainVerticleTest {
         .header(XOkapiHeaders.TENANT, tenant1)
         .header("Content-Type", "application/json")
         .body(matchKey.encode())
-        .post("/shared-index/config/matchkeys")
+        .post("/meta-storage/config/matchkeys")
         .then().statusCode(201)
         .contentType("application/json")
         .body(Matchers.is(matchKey.encode()));
@@ -653,7 +653,7 @@ public class MainVerticleTest {
         .header(XOkapiHeaders.TENANT, tenant1)
         .header("Content-Type", "application/json")
         .param("query", "sourceId=" + sourceId1)
-        .get("/shared-index/records")
+        .get("/meta-storage/records")
         .then().statusCode(200)
         .contentType("application/json")
         .body("items", hasSize(2));
@@ -662,7 +662,7 @@ public class MainVerticleTest {
         .header(XOkapiHeaders.TENANT, tenant1)
         .header("Content-Type", "application/json")
         .param("query", "sourceId=" + sourceId1)
-        .get("/shared-index/records")
+        .get("/meta-storage/records")
         .then().statusCode(200)
         .contentType("application/json")
         .body("items", hasSize(2));
@@ -671,7 +671,7 @@ public class MainVerticleTest {
         .header(XOkapiHeaders.TENANT, tenant1)
         .header("Content-Type", "application/json")
         .param("matchkeyid", "isbn2")
-        .get("/shared-index/clusters")
+        .get("/meta-storage/clusters")
         .then().statusCode(200)
         .contentType("application/json")
         .body("items", hasSize(2))
@@ -685,7 +685,7 @@ public class MainVerticleTest {
         .header("Content-Type", "application/json")
         .param("query", "matchValue=3")
         .param("matchkeyid", "isbn2")
-        .get("/shared-index/clusters")
+        .get("/meta-storage/clusters")
         .then().statusCode(200)
         .contentType("application/json")
         .body("items", hasSize(1))
@@ -699,7 +699,7 @@ public class MainVerticleTest {
         .header(XOkapiHeaders.TENANT, tenant1)
         .header("Content-Type", "application/json")
         .param("query", "sourceId=" + sourceId1)
-        .get("/shared-index/records")
+        .get("/meta-storage/records")
         .then().statusCode(200)
         .contentType("application/json")
         .body("items", hasSize(2));
@@ -708,7 +708,7 @@ public class MainVerticleTest {
         .header(XOkapiHeaders.TENANT, tenant1)
         .header("Content-Type", "application/json")
         .param("matchkeyid", "isbn2")
-        .get("/shared-index/clusters")
+        .get("/meta-storage/clusters")
         .then().statusCode(200)
         .contentType("application/json")
         .body("items", hasSize(2))
@@ -721,12 +721,12 @@ public class MainVerticleTest {
         .header(XOkapiHeaders.TENANT, tenant1)
         .header("Content-Type", "application/json")
         .param("query", "cql.allRecords=true")
-        .delete("/shared-index/records")
+        .delete("/meta-storage/records")
         .then().statusCode(204);
 
     RestAssured.given()
         .header(XOkapiHeaders.TENANT, tenant1)
-        .delete("/shared-index/config/matchkeys/" + matchKey.getString("id"))
+        .delete("/meta-storage/config/matchkeys/" + matchKey.getString("id"))
         .then().statusCode(204);
   }
 
@@ -735,7 +735,7 @@ public class MainVerticleTest {
     RestAssured.given()
         .header(XOkapiHeaders.TENANT, tenant1)
         .header("Content-Type", "application/json")
-        .get("/shared-index/clusters")
+        .get("/meta-storage/clusters")
         .then().statusCode(400)
         .contentType("text/plain")
         .body(containsString("Missing parameter matchkeyid"));
@@ -748,7 +748,7 @@ public class MainVerticleTest {
         .header(XOkapiHeaders.TENANT, tenant1)
         .param("matchkeyid", id)
         .header("Content-Type", "application/json")
-        .get("/shared-index/clusters")
+        .get("/meta-storage/clusters")
         .then().statusCode(404)
         .contentType("text/plain")
         .body(is("MatchKey " + id + " not found"));
@@ -766,7 +766,7 @@ public class MainVerticleTest {
         .header(XOkapiHeaders.TENANT, tenant1)
         .header("Content-Type", "application/json")
         .body(matchKey.encode())
-        .post("/shared-index/config/matchkeys")
+        .post("/meta-storage/config/matchkeys")
         .then().statusCode(201)
         .contentType("application/json")
         .body(Matchers.is(matchKey.encode()));
@@ -800,7 +800,7 @@ public class MainVerticleTest {
         .header(XOkapiHeaders.TENANT, tenant1)
         .header("Content-Type", "application/json")
         .param("matchkeyid", "issn")
-        .get("/shared-index/clusters")
+        .get("/meta-storage/clusters")
         .then().statusCode(200)
         .contentType("application/json")
         .body("items", hasSize(1))
@@ -811,12 +811,12 @@ public class MainVerticleTest {
         .header(XOkapiHeaders.TENANT, tenant1)
         .header("Content-Type", "application/json")
         .param("query", "cql.allRecords=true")
-        .delete("/shared-index/records")
+        .delete("/meta-storage/records")
         .then().statusCode(204);
 
     RestAssured.given()
         .header(XOkapiHeaders.TENANT, tenant1)
-        .delete("/shared-index/config/matchkeys/issn")
+        .delete("/meta-storage/config/matchkeys/issn")
         .then().statusCode(204);
   }
 
@@ -826,7 +826,7 @@ public class MainVerticleTest {
     RestAssured.given()
         .header(XOkapiHeaders.TENANT, tenant1)
         .header("Content-Type", "application/json")
-        .get("/shared-index/clusters")
+        .get("/meta-storage/clusters")
         .then().statusCode(400);
 
     JsonObject matchKey1 = new JsonObject()
@@ -839,7 +839,7 @@ public class MainVerticleTest {
         .header(XOkapiHeaders.TENANT, tenant1)
         .header("Content-Type", "application/json")
         .body(matchKey1.encode())
-        .post("/shared-index/config/matchkeys")
+        .post("/meta-storage/config/matchkeys")
         .then().statusCode(201)
         .contentType("application/json")
         .body(Matchers.is(matchKey1.encode()));
@@ -854,7 +854,7 @@ public class MainVerticleTest {
         .header(XOkapiHeaders.TENANT, tenant1)
         .header("Content-Type", "application/json")
         .body(matchKey2.encode())
-        .post("/shared-index/config/matchkeys")
+        .post("/meta-storage/config/matchkeys")
         .then().statusCode(201)
         .contentType("application/json")
         .body(Matchers.is(matchKey2.encode()));
@@ -884,7 +884,7 @@ public class MainVerticleTest {
         .header(XOkapiHeaders.TENANT, tenant1)
         .header("Content-Type", "application/json")
         .param("matchkeyid", "issn")
-        .get("/shared-index/clusters")
+        .get("/meta-storage/clusters")
         .then().statusCode(200)
         .contentType("application/json")
         .body("items", hasSize(1))
@@ -896,7 +896,7 @@ public class MainVerticleTest {
         .header(XOkapiHeaders.TENANT, tenant1)
         .header("Content-Type", "application/json")
         .param("matchkeyid", "isbn")
-        .get("/shared-index/clusters")
+        .get("/meta-storage/clusters")
         .then().statusCode(200)
         .contentType("application/json")
         .body("items", hasSize(2))
@@ -914,7 +914,7 @@ public class MainVerticleTest {
         .header("Content-Type", "application/json")
         .param("query", "clusterId=" + clusterId)
         .param("matchkeyid", "isbn")
-        .get("/shared-index/clusters")
+        .get("/meta-storage/clusters")
         .then().statusCode(200)
         .contentType("application/json")
         .body("items", hasSize(1))
@@ -925,7 +925,7 @@ public class MainVerticleTest {
     RestAssured.given()
         .header(XOkapiHeaders.TENANT, tenant1)
         .header("Content-Type", "application/json")
-        .get("/shared-index/clusters/" + clusterId)
+        .get("/meta-storage/clusters/" + clusterId)
         .then().statusCode(200)
         .contentType("application/json")
         .body("records", hasSize(1))
@@ -934,7 +934,7 @@ public class MainVerticleTest {
     RestAssured.given()
         .header(XOkapiHeaders.TENANT, tenant1)
         .header("Content-Type", "application/json")
-        .get("/shared-index/clusters/" + UUID.randomUUID())
+        .get("/meta-storage/clusters/" + UUID.randomUUID())
         .then().statusCode(404);
 
     log.info("phase 2: S101 from 1 to 4");
@@ -950,7 +950,7 @@ public class MainVerticleTest {
         .header(XOkapiHeaders.TENANT, tenant1)
         .header("Content-Type", "application/json")
         .param("matchkeyid", "issn")
-        .get("/shared-index/clusters")
+        .get("/meta-storage/clusters")
         .then().statusCode(200)
         .contentType("application/json")
         .body("items", hasSize(2))
@@ -963,7 +963,7 @@ public class MainVerticleTest {
         .header(XOkapiHeaders.TENANT, tenant1)
         .header("Content-Type", "application/json")
         .param("matchkeyid", "isbn")
-        .get("/shared-index/clusters")
+        .get("/meta-storage/clusters")
         .then().statusCode(200)
         .contentType("application/json")
         .body("items", hasSize(2))
@@ -983,7 +983,7 @@ public class MainVerticleTest {
         .header(XOkapiHeaders.TENANT, tenant1)
         .header("Content-Type", "application/json")
         .param("matchkeyid", "isbn")
-        .get("/shared-index/clusters")
+        .get("/meta-storage/clusters")
         .then().statusCode(200)
         .contentType("application/json")
         .body("items", hasSize(1))
@@ -994,16 +994,16 @@ public class MainVerticleTest {
         .header(XOkapiHeaders.TENANT, tenant1)
         .header("Content-Type", "application/json")
         .param("query", "cql.allRecords=true")
-        .delete("/shared-index/records")
+        .delete("/meta-storage/records")
         .then().statusCode(204);
 
     RestAssured.given()
         .header(XOkapiHeaders.TENANT, tenant1)
-        .delete("/shared-index/config/matchkeys/isbn")
+        .delete("/meta-storage/config/matchkeys/isbn")
         .then().statusCode(204);
     RestAssured.given()
         .header(XOkapiHeaders.TENANT, tenant1)
-        .delete("/shared-index/config/matchkeys/issn")
+        .delete("/meta-storage/config/matchkeys/issn")
         .then().statusCode(204);
   }
 
@@ -1013,13 +1013,13 @@ public class MainVerticleTest {
         .header(XOkapiHeaders.TENANT, tenant1)
         .header("Content-Type", "application/json")
         .param("query", "sourceId=" + UUID.randomUUID())
-        .delete("/shared-index/records")
+        .delete("/meta-storage/records")
         .then().statusCode(204);
 
     RestAssured.given()
         .header(XOkapiHeaders.TENANT, tenant1)
         .header("Content-Type", "application/json")
-        .delete("/shared-index/records")
+        .delete("/meta-storage/records")
         .then().statusCode(400)
         .contentType("text/plain")
         .body(is("Must specify query for delete records"));
@@ -1033,7 +1033,7 @@ public class MainVerticleTest {
         .header(XOkapiHeaders.TENANT, tenant1)
         .header("Content-Type", "application/json")
         .body(matchKey.encode())
-        .post("/shared-index/config/matchkeys")
+        .post("/meta-storage/config/matchkeys")
         .then().statusCode(201)
         .contentType("application/json")
         .body(Matchers.is(matchKey.encode()));
@@ -1055,7 +1055,7 @@ public class MainVerticleTest {
     RestAssured.given()
         .header(XOkapiHeaders.TENANT, tenant1)
         .header("Content-Type", "application/json")
-        .get("/shared-index/records")
+        .get("/meta-storage/records")
         .then().statusCode(200)
         .body("resultInfo.totalRecords", is(2));
 
@@ -1063,7 +1063,7 @@ public class MainVerticleTest {
         .header(XOkapiHeaders.TENANT, tenant1)
         .header("Content-Type", "application/json")
         .param("matchkeyid", "isbn")
-        .get("/shared-index/clusters")
+        .get("/meta-storage/clusters")
         .then().statusCode(200)
         .contentType("application/json")
         .body("items", hasSize(2))
@@ -1074,13 +1074,13 @@ public class MainVerticleTest {
         .header(XOkapiHeaders.TENANT, tenant1)
         .header("Content-Type", "application/json")
         .param("query", "localId=S102")
-        .delete("/shared-index/records")
+        .delete("/meta-storage/records")
         .then().statusCode(204);
 
     RestAssured.given()
         .header(XOkapiHeaders.TENANT, tenant1)
         .header("Content-Type", "application/json")
-        .get("/shared-index/records")
+        .get("/meta-storage/records")
         .then().statusCode(200)
         .body("resultInfo.totalRecords", is(1));
 
@@ -1088,7 +1088,7 @@ public class MainVerticleTest {
         .header(XOkapiHeaders.TENANT, tenant1)
         .header("Content-Type", "application/json")
         .param("matchkeyid", "isbn")
-        .get("/shared-index/clusters")
+        .get("/meta-storage/clusters")
         .then().statusCode(200)
         .contentType("application/json")
         .body("items", hasSize(1))
@@ -1099,13 +1099,13 @@ public class MainVerticleTest {
         .header(XOkapiHeaders.TENANT, tenant1)
         .header("Content-Type", "application/json")
         .param("query", "localId=S101")
-        .delete("/shared-index/records")
+        .delete("/meta-storage/records")
         .then().statusCode(204);
 
     RestAssured.given()
         .header(XOkapiHeaders.TENANT, tenant1)
         .header("Content-Type", "application/json")
-        .get("/shared-index/records")
+        .get("/meta-storage/records")
         .then().statusCode(200)
         .body("resultInfo.totalRecords", is(0));
 
@@ -1113,14 +1113,14 @@ public class MainVerticleTest {
         .header(XOkapiHeaders.TENANT, tenant1)
         .header("Content-Type", "application/json")
         .param("matchkeyid", "isbn")
-        .get("/shared-index/clusters")
+        .get("/meta-storage/clusters")
         .then().statusCode(200)
         .contentType("application/json")
         .body("items", hasSize(0));
 
     RestAssured.given()
         .header(XOkapiHeaders.TENANT, tenant1)
-        .delete("/shared-index/config/matchkeys/" + matchKey.getString("id"))
+        .delete("/meta-storage/config/matchkeys/" + matchKey.getString("id"))
         .then().statusCode(204);
   }
 
@@ -1135,7 +1135,7 @@ public class MainVerticleTest {
         .header(XOkapiHeaders.TENANT, tenant1)
         .header("Content-Type", "application/json")
         .body(matchKey.encode())
-        .post("/shared-index/config/matchkeys")
+        .post("/meta-storage/config/matchkeys")
         .then().statusCode(201)
         .contentType("application/json")
         .body(Matchers.is(matchKey.encode()));
@@ -1162,7 +1162,7 @@ public class MainVerticleTest {
     RestAssured.given()
         .header(XOkapiHeaders.TENANT, tenant1)
         .header("Content-Type", "application/json")
-        .get("/shared-index/records")
+        .get("/meta-storage/records")
         .then().statusCode(200)
         .body("resultInfo.totalRecords", is(3));
 
@@ -1170,7 +1170,7 @@ public class MainVerticleTest {
         .header(XOkapiHeaders.TENANT, tenant1)
         .header("Content-Type", "application/json")
         .param("matchkeyid", "isbn")
-        .get("/shared-index/clusters")
+        .get("/meta-storage/clusters")
         .then().statusCode(200)
         .contentType("application/json")
         .body("items", hasSize(3))
@@ -1188,7 +1188,7 @@ public class MainVerticleTest {
         .header(XOkapiHeaders.TENANT, tenant1)
         .header("Content-Type", "application/json")
         .param("matchkeyid", "isbn")
-        .get("/shared-index/clusters")
+        .get("/meta-storage/clusters")
         .then().statusCode(200)
         .contentType("application/json")
         .body("items", hasSize(2))
@@ -1199,12 +1199,12 @@ public class MainVerticleTest {
         .header(XOkapiHeaders.TENANT, tenant1)
         .header("Content-Type", "application/json")
         .param("query", "cql.allRecords=true")
-        .delete("/shared-index/records")
+        .delete("/meta-storage/records")
         .then().statusCode(204);
 
     RestAssured.given()
         .header(XOkapiHeaders.TENANT, tenant1)
-        .delete("/shared-index/config/matchkeys/" + matchKey.getString("id"))
+        .delete("/meta-storage/config/matchkeys/" + matchKey.getString("id"))
         .then().statusCode(204);
   }
 
@@ -1220,7 +1220,7 @@ public class MainVerticleTest {
         .header(XOkapiHeaders.TENANT, tenant1)
         .header("Content-Type", "application/json")
         .body(matchKey.encode())
-        .post("/shared-index/config/matchkeys")
+        .post("/meta-storage/config/matchkeys")
         .then().statusCode(201)
         .contentType("application/json")
         .body(Matchers.is(matchKey.encode()));
@@ -1244,7 +1244,7 @@ public class MainVerticleTest {
         .header(XOkapiHeaders.TENANT, tenant1)
         .header("Content-Type", "application/json")
         .body(matchKey.encode())
-        .put("/shared-index/config/matchkeys/" + matchKey.getString("id") + "/initialize")
+        .put("/meta-storage/config/matchkeys/" + matchKey.getString("id") + "/initialize")
         .then().statusCode(200)
         .contentType("application/json");
 
@@ -1252,7 +1252,7 @@ public class MainVerticleTest {
         .header(XOkapiHeaders.TENANT, tenant1)
         .header("Content-Type", "application/json")
         .param("query", "sourceId=" + sourceId1)
-        .get("/shared-index/records")
+        .get("/meta-storage/records")
         .then().statusCode(200)
         .contentType("application/json")
         .body("items", hasSize(2));
@@ -1261,7 +1261,7 @@ public class MainVerticleTest {
         .header(XOkapiHeaders.TENANT, tenant1)
         .header("Content-Type", "application/json")
         .param("matchkeyid", "isbn")
-        .get("/shared-index/clusters")
+        .get("/meta-storage/clusters")
         .then().statusCode(200)
         .contentType("application/json")
         .body("items", hasSize(2))
@@ -1304,7 +1304,7 @@ public class MainVerticleTest {
         .header(XOkapiHeaders.TENANT, tenant1)
         .header("Content-Type", "application/json")
         .body(matchKey.encode())
-        .put("/shared-index/config/matchkeys/" + matchKey.getString("id") + "/initialize")
+        .put("/meta-storage/config/matchkeys/" + matchKey.getString("id") + "/initialize")
         .then().statusCode(200)
         .contentType("application/json");
 
@@ -1312,7 +1312,7 @@ public class MainVerticleTest {
         .header(XOkapiHeaders.TENANT, tenant1)
         .header("Content-Type", "application/json")
         .param("matchkeyid", "isbn")
-        .get("/shared-index/clusters")
+        .get("/meta-storage/clusters")
         .then().statusCode(200)
         .contentType("application/json")
         .body("items", hasSize(2))
@@ -1324,7 +1324,7 @@ public class MainVerticleTest {
         .header(XOkapiHeaders.TENANT, tenant1)
         .header("Content-Type", "application/json")
         .param("query", "localId=S101 and sourceId=" + sourceId1)
-        .get("/shared-index/records")
+        .get("/meta-storage/records")
         .then().statusCode(200)
         .contentType("application/json")
         .body("items", hasSize(1));
@@ -1333,26 +1333,26 @@ public class MainVerticleTest {
         .header(XOkapiHeaders.TENANT, tenant1)
         .header("Content-Type", "application/json")
         .param("query", "localId==notfound")
-        .get("/shared-index/records")
+        .get("/meta-storage/records")
         .then().statusCode(200)
         .contentType("application/json")
         .body("items", hasSize(0));
 
     RestAssured.given()
         .header(XOkapiHeaders.TENANT, tenant1)
-        .delete("/shared-index/config/matchkeys/" + matchKey.getString("id"))
+        .delete("/meta-storage/config/matchkeys/" + matchKey.getString("id"))
         .then().statusCode(204);
 
     RestAssured.given()
         .header(XOkapiHeaders.TENANT, tenant1)
-        .delete("/shared-index/config/matchkeys/" + matchKey.getString("id"))
+        .delete("/meta-storage/config/matchkeys/" + matchKey.getString("id"))
         .then().statusCode(404);
 
     RestAssured.given()
         .header(XOkapiHeaders.TENANT, tenant1)
         .header("Content-Type", "application/json")
         .body(matchKey.encode())
-        .put("/shared-index/config/matchkeys/" + matchKey.getString("id") + "/initialize")
+        .put("/meta-storage/config/matchkeys/" + matchKey.getString("id") + "/initialize")
         .then().statusCode(404)
         .contentType("text/plain")
         .body(is("MatchKey isbn not found"));
@@ -1360,7 +1360,7 @@ public class MainVerticleTest {
     RestAssured.given()
         .header(XOkapiHeaders.TENANT, tenant1)
         .param("query", "cql.allRecords=true")
-        .delete("/shared-index/records")
+        .delete("/meta-storage/records")
         .then().statusCode(204);
   }
 
@@ -1368,7 +1368,7 @@ public class MainVerticleTest {
   public void testOaiDiagnostics(TestContext context) {
     RestAssured.given()
         .header(XOkapiHeaders.TENANT, tenant1)
-        .get("/shared-index/oai")
+        .get("/meta-storage/oai")
         .then().statusCode(200)
         .contentType("text/xml")
         .body(containsString("<error code=\"badVerb\">missing verb</error>"));
@@ -1378,7 +1378,7 @@ public class MainVerticleTest {
         .param("set", "isbn")
         .param("verb", "noop")
         .param("metadataPrefix", "marcxml")
-        .get("/shared-index/oai")
+        .get("/meta-storage/oai")
         .then().statusCode(200)
         .contentType("text/xml")
         .body(containsString("<error code=\"badVerb\">noop</error>"));
@@ -1387,7 +1387,7 @@ public class MainVerticleTest {
         .header(XOkapiHeaders.TENANT, tenant1)
         .param("verb", "GetRecord")
         .param("metadataPrefix", "marcxml")
-        .get("/shared-index/oai")
+        .get("/meta-storage/oai")
         .then().statusCode(200)
         .contentType("text/xml")
         .body(containsString("error code=\"badArgument\">missing identifier</error>"));
@@ -1397,7 +1397,7 @@ public class MainVerticleTest {
         .param("set", "isbn")
         .param("verb", "ListRecords")
         .param("metadataPrefix", "badmetadataprefix")
-        .get("/shared-index/oai")
+        .get("/meta-storage/oai")
         .then().statusCode(200)
         .contentType("text/xml")
         .body(containsString("<error code=\"cannotDisseminateFormat\">only metadataPrefix &quot;marcxml&quot; supported</error>"));
@@ -1406,7 +1406,7 @@ public class MainVerticleTest {
         .header(XOkapiHeaders.TENANT, tenant1)
         .param("verb", "ListRecords")
         .param("metadataPrefix", "marcxml")
-        .get("/shared-index/oai")
+        .get("/meta-storage/oai")
         .then().statusCode(200)
         .contentType("text/xml")
         .body(containsString("<error code=\"badArgument\">set &quot;null&quot; not found</error>"));
@@ -1416,7 +1416,7 @@ public class MainVerticleTest {
         .param("set", "isbn")
         .param("verb", "ListRecords")
         .param("metadataPrefix", "marcxml")
-        .get("/shared-index/oai")
+        .get("/meta-storage/oai")
         .then().statusCode(200)
         .contentType("text/xml")
         .body(containsString("<error code=\"badArgument\">set &quot;isbn&quot; not found</error>"));
@@ -1429,7 +1429,7 @@ public class MainVerticleTest {
     String s = RestAssured.given()
         .header(XOkapiHeaders.TENANT, tenant1)
         .param("verb", "Identify")
-        .get("/shared-index/oai")
+        .get("/meta-storage/oai")
         .then().statusCode(200)
         .contentType("text/xml")
         .extract().body().asString();
@@ -1448,7 +1448,7 @@ public class MainVerticleTest {
         .header(XOkapiHeaders.TENANT, tenant1)
         .header("Content-Type", "application/json")
         .body(matchKey1.encode())
-        .post("/shared-index/config/matchkeys")
+        .post("/meta-storage/config/matchkeys")
         .then().statusCode(201)
         .contentType("application/json")
         .body(Matchers.is(matchKey1.encode()));
@@ -1459,7 +1459,7 @@ public class MainVerticleTest {
         .param("set", "isbn")
         .param("verb", "ListRecords")
         .param("metadataPrefix", "marcxml")
-        .get("/shared-index/oai")
+        .get("/meta-storage/oai")
         .then().statusCode(200)
         .contentType("text/xml")
         .extract().body().asString();
@@ -1475,7 +1475,7 @@ public class MainVerticleTest {
         .header(XOkapiHeaders.TENANT, tenant1)
         .header("Content-Type", "application/json")
         .body(matchKey2.encode())
-        .post("/shared-index/config/matchkeys")
+        .post("/meta-storage/config/matchkeys")
         .then().statusCode(201)
         .contentType("application/json")
         .body(Matchers.is(matchKey2.encode()));
@@ -1537,7 +1537,7 @@ public class MainVerticleTest {
         .param("set", "issn")
         .param("verb", "ListRecords")
         .param("metadataPrefix", "marcxml")
-        .get("/shared-index/oai")
+        .get("/meta-storage/oai")
         .then().statusCode(200)
         .contentType("text/xml")
         .extract().body().asString();
@@ -1548,7 +1548,7 @@ public class MainVerticleTest {
         .param("set", "issn")
         .param("verb", "ListIdentifiers")
         .param("metadataPrefix", "marcxml")
-        .get("/shared-index/oai")
+        .get("/meta-storage/oai")
         .then().statusCode(200)
         .contentType("text/xml")
         .extract().body().asString();
@@ -1559,7 +1559,7 @@ public class MainVerticleTest {
         .param("verb", "GetRecord")
         .param("metadataPrefix", "marcxml")
         .param("identifier", identifiers.get(0))
-        .get("/shared-index/oai")
+        .get("/meta-storage/oai")
         .then().statusCode(200)
         .contentType("text/xml")
         .extract().body().asString();
@@ -1570,7 +1570,7 @@ public class MainVerticleTest {
         .param("verb", "GetRecord")
         .param("metadataPrefix", "marcxml")
         .param("identifier", UUID.randomUUID().toString())
-        .get("/shared-index/oai")
+        .get("/meta-storage/oai")
         .then().statusCode(200)
         .contentType("text/xml")
         .body(containsString("idDoesNotExist"));
@@ -1580,7 +1580,7 @@ public class MainVerticleTest {
         .param("set", "isbn")
         .param("verb", "ListRecords")
         .param("metadataPrefix", "marcxml")
-        .get("/shared-index/oai")
+        .get("/meta-storage/oai")
         .then().statusCode(200)
         .contentType("text/xml")
         .extract().body().asString();
@@ -1608,7 +1608,7 @@ public class MainVerticleTest {
         .param("set", "isbn")
         .param("verb", "ListRecords")
         .param("metadataPrefix", "marcxml")
-        .get("/shared-index/oai")
+        .get("/meta-storage/oai")
         .then().statusCode(200)
         .contentType("text/xml")
         .extract().body().asString();
@@ -1619,7 +1619,7 @@ public class MainVerticleTest {
         .param("set", "isbn")
         .param("verb", "ListIdentifiers")
         .param("metadataPrefix", "marcxml")
-        .get("/shared-index/oai")
+        .get("/meta-storage/oai")
         .then().statusCode(200)
         .contentType("text/xml")
         .extract().body().asString();
@@ -1629,16 +1629,16 @@ public class MainVerticleTest {
         .header(XOkapiHeaders.TENANT, tenant1)
         .header("Content-Type", "application/json")
         .param("query", "cql.allRecords=true")
-        .delete("/shared-index/records")
+        .delete("/meta-storage/records")
         .then().statusCode(204);
 
     RestAssured.given()
         .header(XOkapiHeaders.TENANT, tenant1)
-        .delete("/shared-index/config/matchkeys/isbn")
+        .delete("/meta-storage/config/matchkeys/isbn")
         .then().statusCode(204);
     RestAssured.given()
         .header(XOkapiHeaders.TENANT, tenant1)
-        .delete("/shared-index/config/matchkeys/issn")
+        .delete("/meta-storage/config/matchkeys/issn")
         .then().statusCode(204);
   }
 
@@ -1657,7 +1657,7 @@ public class MainVerticleTest {
         .header(XOkapiHeaders.TENANT, tenant1)
         .header("Content-Type", "application/json")
         .body(matchKey1.encode())
-        .post("/shared-index/config/matchkeys")
+        .post("/meta-storage/config/matchkeys")
         .then().statusCode(201)
         .contentType("application/json")
         .body(Matchers.is(matchKey1.encode()));
@@ -1696,7 +1696,7 @@ public class MainVerticleTest {
         .param("from", time1)
         .param("until", time2)
         .param("metadataPrefix", "marcxml")
-        .get("/shared-index/oai")
+        .get("/meta-storage/oai")
         .then().statusCode(200)
         .contentType("text/xml")
         .extract().body().asString();
@@ -1707,7 +1707,7 @@ public class MainVerticleTest {
         .param("verb", "ListRecords")
         .param("until", time0)
         .param("metadataPrefix", "marcxml")
-        .get("/shared-index/oai")
+        .get("/meta-storage/oai")
         .then().statusCode(200)
         .contentType("text/xml")
         .extract().body().asString();
@@ -1718,7 +1718,7 @@ public class MainVerticleTest {
         .param("verb", "ListRecords")
         .param("from", time3)
         .param("metadataPrefix", "marcxml")
-        .get("/shared-index/oai")
+        .get("/meta-storage/oai")
         .then().statusCode(200)
         .contentType("text/xml")
         .extract().body().asString();
@@ -1730,7 +1730,7 @@ public class MainVerticleTest {
         .param("verb", "ListRecords")
         .param("from", time3)
         .param("metadataPrefix", "marcxml")
-        .get("/shared-index/oai")
+        .get("/meta-storage/oai")
         .then().statusCode(200)
         .contentType("text/xml")
         .extract().body().asString();
@@ -1741,7 +1741,7 @@ public class MainVerticleTest {
         .param("verb", "ListRecords")
         .param("from", "xxxx")
         .param("metadataPrefix", "marcxml")
-        .get("/shared-index/oai")
+        .get("/meta-storage/oai")
         .then().statusCode(200)
         .contentType("text/xml")
         .body(containsString("error code=\"badArgument\">bad from"));
@@ -1761,7 +1761,7 @@ public class MainVerticleTest {
         .param("verb", "ListRecords")
         .param("from", time4)
         .param("metadataPrefix", "marcxml")
-        .get("/shared-index/oai")
+        .get("/meta-storage/oai")
         .then().statusCode(200)
         .contentType("text/xml")
         .extract().body().asString();
@@ -1774,7 +1774,7 @@ public class MainVerticleTest {
         .header(XOkapiHeaders.TENANT, tenant1)
         .header("Content-Type", "application/json")
         .param("query", "cql.allRecords=true")
-        .delete("/shared-index/records")
+        .delete("/meta-storage/records")
         .then().statusCode(204);
 
     s = RestAssured.given()
@@ -1782,7 +1782,7 @@ public class MainVerticleTest {
         .param("verb", "ListRecords")
         .param("from", time5)
         .param("metadataPrefix", "marcxml")
-        .get("/shared-index/oai")
+        .get("/meta-storage/oai")
         .then().statusCode(200)
         .contentType("text/xml")
         .extract().body().asString();
@@ -1790,7 +1790,7 @@ public class MainVerticleTest {
 
     RestAssured.given()
         .header(XOkapiHeaders.TENANT, tenant1)
-        .delete("/shared-index/config/matchkeys/isbn")
+        .delete("/meta-storage/config/matchkeys/isbn")
         .then().statusCode(204);
   }
 
@@ -1806,7 +1806,7 @@ public class MainVerticleTest {
         .header(XOkapiHeaders.TENANT, tenant1)
         .header("Content-Type", "application/json")
         .body(matchKey1.encode())
-        .post("/shared-index/config/matchkeys")
+        .post("/meta-storage/config/matchkeys")
         .then().statusCode(201)
         .contentType("application/json")
         .body(Matchers.is(matchKey1.encode()));
@@ -1828,7 +1828,7 @@ public class MainVerticleTest {
         .header(XOkapiHeaders.TENANT, tenant1)
         .param("verb", "ListRecords")
         .param("list-limit", "2")
-        .get("/shared-index/oai")
+        .get("/meta-storage/oai")
         .then().statusCode(200)
         .contentType("text/xml")
         .extract().body().asString();
@@ -1845,7 +1845,7 @@ public class MainVerticleTest {
           .param("verb", "ListRecords")
           .param("list-limit", "2")
           .param("resumptionToken", token)
-          .get("/shared-index/oai")
+          .get("/meta-storage/oai")
           .then().statusCode(200)
           .contentType("text/xml")
           .extract().body().asString();
@@ -1857,12 +1857,12 @@ public class MainVerticleTest {
         .header(XOkapiHeaders.TENANT, tenant1)
         .header("Content-Type", "application/json")
         .param("query", "cql.allRecords=true")
-        .delete("/shared-index/records")
+        .delete("/meta-storage/records")
         .then().statusCode(204);
 
     RestAssured.given()
         .header(XOkapiHeaders.TENANT, tenant1)
-        .delete("/shared-index/config/matchkeys/isbn")
+        .delete("/meta-storage/config/matchkeys/isbn")
         .then().statusCode(204);
 
   }

@@ -17,15 +17,15 @@ public class MainVerticle extends AbstractVerticle {
 
   @Override
   public void start(Promise<Void> promise) {
-    TenantPgPool.setModule("mod-shared-index");
-    ModuleVersionReporter m = new ModuleVersionReporter("org.folio/mod-shared-index-server");
+    TenantPgPool.setModule("mod-meta-storage");
+    ModuleVersionReporter m = new ModuleVersionReporter("org.folio/mod-meta-storage-server");
     log.info("Starting {} {} {}", m.getModule(), m.getVersion(), m.getCommitId());
 
     final int port = Integer.parseInt(
         Config.getSysConf("http.port", "port", "8081", config()));
     log.info("Listening on port {}", port);
 
-    SharedIndexService sharedIndexService = new SharedIndexService(vertx);
+    MetaStorageService sharedIndexService = new MetaStorageService(vertx);
 
     RouterCreator[] routerCreators = {
         sharedIndexService,

@@ -1,10 +1,10 @@
 openapi: 3.0.0
 info:
-  title: Shared Index
+  title: Meta Storage
   version: v1
 paths:
   # Configuration
-  /shared-index/config/matchkeys:
+  /meta-storage/config/matchkeys:
     parameters:
       - $ref: headers/okapi-tenant.yaml
       - $ref: headers/okapi-token.yaml
@@ -46,7 +46,7 @@ paths:
           $ref: "#/components/responses/trait_400"
         "500":
           $ref: "#/components/responses/trait_500"
-  /shared-index/config/matchkeys/{id}:
+  /meta-storage/config/matchkeys/{id}:
     parameters:
       - $ref: headers/okapi-tenant.yaml
       - $ref: headers/okapi-token.yaml
@@ -102,7 +102,7 @@ paths:
           $ref: "#/components/responses/trait_404"
         "500":
           $ref: "#/components/responses/trait_500"
-  /shared-index/config/matchkeys/{id}/initialize:
+  /meta-storage/config/matchkeys/{id}/initialize:
     parameters:
       - $ref: headers/okapi-tenant.yaml
       - $ref: headers/okapi-token.yaml
@@ -130,7 +130,7 @@ paths:
         "500":
           $ref: "#/components/responses/trait_500"
   # Sources
-  /shared-index/sources:
+  /meta-storage/sources:
     parameters:
       - $ref: headers/okapi-tenant.yaml
       - $ref: headers/okapi-token.yaml
@@ -172,7 +172,7 @@ paths:
           $ref: "#/components/responses/trait_400"
         "500":
           $ref: "#/components/responses/trait_500"
-  /shared-index/config/sources/{id}:
+  /meta-storage/config/sources/{id}:
     parameters:
       - $ref: headers/okapi-tenant.yaml
       - $ref: headers/okapi-token.yaml
@@ -213,7 +213,7 @@ paths:
         "500":
           $ref: "#/components/responses/trait_500"
   # Ingest
-  /shared-index/shared-index/ingest-jobs:
+  /meta-storage/ingest-jobs:
     parameters:
       - $ref: headers/okapi-tenant.yaml
       - $ref: headers/okapi-token.yaml
@@ -237,7 +237,7 @@ paths:
           $ref: "#/components/responses/trait_400"
         "500":
           $ref: "#/components/responses/trait_500"
-  /shared-index/shared-index/ingest-jobs/{id}:
+  /meta-storage/ingest-jobs/{id}:
     parameters:
       - $ref: headers/okapi-tenant.yaml
       - $ref: headers/okapi-token.yaml
@@ -307,7 +307,7 @@ paths:
         "500":
           $ref: "#/components/responses/trait_500"
   # Shared Records retrieval and simple ingest
-  /shared-index/records:
+  /meta-storage/records:
     parameters:
       - $ref: headers/okapi-tenant.yaml
       - $ref: headers/okapi-token.yaml
@@ -358,7 +358,7 @@ paths:
           $ref: "#/components/responses/trait_400"
         "500":
           $ref: "#/components/responses/trait_500"
-  /shared-index/records/{globalId}:
+  /meta-storage/records/{globalId}:
     parameters:
       - $ref: headers/okapi-tenant.yaml
       - $ref: headers/okapi-token.yaml
@@ -386,7 +386,7 @@ paths:
           $ref: "#/components/responses/trait_404"
         "500":
           $ref: "#/components/responses/trait_500"
-  /shared-index/clusters:
+  /meta-storage/clusters:
     parameters:
       - $ref: headers/okapi-tenant.yaml
       - $ref: headers/okapi-token.yaml
@@ -411,7 +411,7 @@ paths:
           $ref: "#/components/responses/trait_404"
         "500":
           $ref: "#/components/responses/trait_500"
-  /shared-index/clusters/{clusterId}:
+  /meta-storage/clusters/{clusterId}:
     parameters:
       - $ref: headers/okapi-tenant.yaml
       - $ref: headers/okapi-token.yaml
@@ -439,7 +439,7 @@ paths:
           $ref: "#/components/responses/trait_404"
         "500":
           $ref: "#/components/responses/trait_500"
-  /shared-index/oai:
+  /meta-storage/oai:
     parameters:
       - $ref: headers/okapi-tenant.yaml
       - $ref: headers/okapi-token.yaml
