@@ -7,8 +7,7 @@ Version 2.0. See the file "[LICENSE](LICENSE)" for more information.
 
 ## Introduction
 
-A service that generates an index of bibliographic records and items for the purpose of consortial re-sharing.
-The index is made as simple as possible in order to be optimized for fast loading.
+A service that provides a clustering storage of metadata for the purpose of consortial re-sharing. Optimized for fast storage and retrieval performance.
 
 This projects has three sub projects:
 
