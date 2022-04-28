@@ -4,9 +4,11 @@ import io.vertx.core.Future;
 import io.vertx.core.MultiMap;
 import io.vertx.core.Promise;
 import io.vertx.core.Vertx;
+import io.vertx.core.http.HttpVersion;
 import io.vertx.core.json.JsonArray;
 import io.vertx.core.json.JsonObject;
 import io.vertx.ext.web.client.WebClient;
+import io.vertx.ext.web.client.WebClientOptions;
 import io.vertx.ext.web.client.predicate.ResponsePredicate;
 import java.io.ByteArrayOutputStream;
 import java.io.FileInputStream;
@@ -359,13 +361,16 @@ public class Client {
   /** Execute command line shared-index client.
    *
    * @param vertx Vertx. handcle
-   * @param webClient web client
    * @param args command line args
    * @return async result
    */
-  public static Future<Void> exec(Vertx vertx, WebClient webClient, String[] args) {
+  public static Future<Void> exec(Vertx vertx, String[] args) {
+    WebClientOptions webClientOptions = new WebClientOptions()
+        .setProtocolVersion(HttpVersion.HTTP_2);
+    WebClient webClient = WebClient.create(vertx, webClientOptions);
     Client client = new Client(vertx, webClient);
-    return exec(client, args);
+    return exec(client, args)
+        .onComplete(x -> webClient.close());
   }
 
   static Future<Void> exec(Client client, String[] args) {

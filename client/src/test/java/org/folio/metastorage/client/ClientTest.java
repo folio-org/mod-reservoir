@@ -40,13 +40,13 @@ public class ClientTest {
   public void noArgs(TestContext context) {
     String [] args = {};
     Main.main(args);
-    Client.exec(vertx, webClient, args).onComplete(context.asyncAssertSuccess());
+    Client.exec(vertx, args).onComplete(context.asyncAssertSuccess());
   }
 
   @Test
   public void fileNotFound(TestContext context) {
     String [] args = { "unknownfile" };
-    Client.exec(vertx, webClient, args).onComplete(context.asyncAssertFailure(x -> {
+    Client.exec(vertx, args).onComplete(context.asyncAssertFailure(x -> {
       context.assertEquals("unknownfile (No such file or directory)", x.getMessage());
     }));
   }
@@ -54,7 +54,7 @@ public class ClientTest {
   @Test
   public void badArgs(TestContext context) {
     String [] args = { "--bad", "value" };
-    Client.exec(vertx, webClient, args).onComplete(context.asyncAssertFailure(x -> {
+    Client.exec(vertx, args).onComplete(context.asyncAssertFailure(x -> {
       context.assertEquals("Unsupported option: '--bad'", x.getMessage());
     }));
   }
@@ -62,7 +62,7 @@ public class ClientTest {
   @Test
   public void missingArgs(TestContext context) {
     String [] args = { "--chunk" };
-    Client.exec(vertx, webClient, args).onComplete(context.asyncAssertFailure(x -> {
+    Client.exec(vertx, args).onComplete(context.asyncAssertFailure(x -> {
       context.assertEquals("Missing argument for option '--chunk'", x.getMessage());
     }));
   }
@@ -70,7 +70,7 @@ public class ClientTest {
   @Test
   public void help(TestContext context) {
     String [] args = { "--help" };
-    Client.exec(vertx, webClient, args).onComplete(context.asyncAssertSuccess());
+    Client.exec(vertx, args).onComplete(context.asyncAssertSuccess());
   }
 
   @Test

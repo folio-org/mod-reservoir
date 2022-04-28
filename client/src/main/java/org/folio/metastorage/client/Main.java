@@ -1,7 +1,6 @@
 package org.folio.metastorage.client;
 
 import io.vertx.core.Vertx;
-import io.vertx.ext.web.client.WebClient;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
@@ -14,12 +13,8 @@ public class Main {
    */
   public static void main(String[] args) {
     Vertx vertx = Vertx.vertx();
-    WebClient webClient = WebClient.create(vertx);
-    Client.exec(vertx, webClient, args)
-        .eventually(x -> {
-          webClient.close();
-          return vertx.close();
-        })
+    Client.exec(vertx, args)
+        .eventually(x -> vertx.close())
         .onFailure(e -> {
           log.error(e.getMessage(), e);
           System.exit(1);
