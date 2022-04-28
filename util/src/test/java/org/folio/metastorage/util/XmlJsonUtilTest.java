@@ -11,6 +11,7 @@ import javax.xml.stream.XMLStreamConstants;
 import javax.xml.stream.XMLStreamException;
 import javax.xml.stream.XMLStreamReader;
 import javax.xml.transform.Source;
+import javax.xml.transform.Templates;
 import javax.xml.transform.Transformer;
 import javax.xml.transform.TransformerException;
 import javax.xml.transform.TransformerFactory;
@@ -489,10 +490,10 @@ public class XmlJsonUtilTest {
     Source instanceXslt = new StreamSource("../xsl/marc2inventory-instance.xsl");
     Source holdingsXslt = new StreamSource("../xsl/holdings-items-cst.xsl");
     Source librayCodesXstXslt = new StreamSource("../xsl/library-codes-cst.xsl");
-    List<Transformer> transformers = List.of(
-        transformerFactory.newTransformer(instanceXslt),
-        transformerFactory.newTransformer(holdingsXslt),
-        transformerFactory.newTransformer(librayCodesXstXslt)
+    List<Templates> templates = List.of(
+        transformerFactory.newTemplates(instanceXslt),
+        transformerFactory.newTemplates(holdingsXslt),
+        transformerFactory.newTemplates(librayCodesXstXslt)
     );
 
     InputStream stream = new FileInputStream("src/test/resources/record10.xml");
@@ -507,7 +508,7 @@ public class XmlJsonUtilTest {
         if (doc == null) {
           break;
         }
-        ingestRecords.add(XmlJsonUtil.createIngestRecord(doc, transformers));
+        ingestRecords.add(XmlJsonUtil.createIngestRecord(doc, templates));
       }
     }
     Assert.assertEquals(10, ingestRecords.size());

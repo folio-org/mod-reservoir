@@ -14,6 +14,7 @@ import java.io.ByteArrayOutputStream;
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.util.ArrayList;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.UUID;
@@ -22,13 +23,14 @@ import javax.xml.stream.XMLStreamConstants;
 import javax.xml.stream.XMLStreamException;
 import javax.xml.stream.XMLStreamReader;
 import javax.xml.transform.Source;
-import javax.xml.transform.Transformer;
+import javax.xml.transform.Templates;
 import javax.xml.transform.TransformerConfigurationException;
 import javax.xml.transform.TransformerFactory;
 import javax.xml.transform.stream.StreamSource;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.folio.metastorage.util.XmlJsonUtil;
+import org.folio.okapi.common.GenericCompositeFuture;
 import org.folio.okapi.common.XOkapiHeaders;
 import org.marc4j.MarcStreamReader;
 import org.marc4j.MarcXmlWriter;
@@ -49,7 +51,8 @@ public class Client {
   WebClient webClient;
   Vertx vertx;
   TransformerFactory transformerFactory = TransformerFactory.newInstance();
-  List<Transformer> transformers = new LinkedList<>();
+
+  List<Templates> templates = new LinkedList<>();
 
   /**
    * Construct client.
@@ -145,6 +148,16 @@ public class Client {
     }
   }
 
+  Future<JsonObject> createIngestRecordT(String marcXml, List<Templates> templates) {
+    return vertx.executeBlocking(x -> {
+      try {
+        x.complete(XmlJsonUtil.createIngestRecord(marcXml, templates));
+      } catch (Exception e) {
+        x.fail(e);
+      }
+    }, false);
+  }
+
   private class XmlReaderProxy implements ReaderProxy {
     private XMLStreamReader xmlReader;
     private int xmlEvent;
@@ -189,14 +202,15 @@ public class Client {
   }
 
   private void sendChunk(ReaderProxy reader, Promise<Void> promise) {
-    JsonArray records = new JsonArray();
+    List<Future<JsonObject>> futures = new ArrayList<>(chunkSize);
     try {
-      while (belowLimit() && reader.hasNext() && records.size() < chunkSize) {
+      while (belowLimit() && reader.hasNext() && futures.size() < chunkSize) {
         if (reader.readNext()) {
           if (currentOffset++ < offset) {
             continue; //skip to offset
           }
-          records.add(XmlJsonUtil.createIngestRecord(reader.parseNext(), transformers));
+          String rec = reader.parseNext();
+          futures.add(createIngestRecordT(rec, templates));
           incrementSequence();
         }
       }
@@ -204,30 +218,40 @@ public class Client {
       promise.fail(e);
       return;
     }
-    if (records.isEmpty()) {
-      if (!echo) {
-        log.info("{}", localSequence);
-        log.info("Next offset (resume): {}", currentOffset);
-      }
-      promise.complete();
-      return;
-    }
-    JsonObject request = new JsonObject()
-        .put("sourceId", sourceId)
-        .put("records", records);
+    GenericCompositeFuture.all(futures)
+        .onFailure(e -> {
+          log.error(e.getMessage(), e);
+          promise.complete();
+        })
+        .onSuccess(resultingRecords -> {
+          JsonArray records = new JsonArray();
+          List<JsonObject> list = resultingRecords.list();
+          list.forEach(records::add);
+          JsonObject request = new JsonObject()
+              .put("sourceId", sourceId)
+              .put("records", records);
 
-    if (echo) {
-      System.out.println(request);
-      vertx.runOnContext(x -> sendChunk(reader, promise));
-    } else {
-      webClient.putAbs(headers.get(XOkapiHeaders.URL) + "/meta-storage/records")
-          .putHeaders(headers)
-          .expect(ResponsePredicate.SC_OK)
-          .expect(ResponsePredicate.JSON)
-          .sendJsonObject(request)
-          .onFailure(promise::fail)
-          .onSuccess(x -> sendChunk(reader, promise));
-    }
+          if (futures.isEmpty()) {
+            if (!echo) {
+              log.info("{}", localSequence);
+              log.info("Next offset (resume): {}", currentOffset);
+            }
+            promise.complete();
+            return;
+          }
+          if (echo) {
+            System.out.println(request);
+            vertx.runOnContext(x -> sendChunk(reader, promise));
+          } else {
+            webClient.putAbs(headers.get(XOkapiHeaders.URL) + "/meta-storage/records")
+                .putHeaders(headers)
+                .expect(ResponsePredicate.SC_OK)
+                .expect(ResponsePredicate.JSON)
+                .sendJsonObject(request)
+                .onFailure(promise::fail)
+                .onSuccess(x -> sendChunk(reader, promise));
+          }
+        });
   }
 
   /**
@@ -344,7 +368,7 @@ public class Client {
   public Future<Void> setXslt(String fname) {
     try {
       Source xslt = new StreamSource(fname);
-      transformers.add(transformerFactory.newTransformer(xslt));
+      templates.add(transformerFactory.newTemplates(xslt));
       return Future.succeededFuture();
     } catch (TransformerConfigurationException e) {
       return Future.failedFuture(e);

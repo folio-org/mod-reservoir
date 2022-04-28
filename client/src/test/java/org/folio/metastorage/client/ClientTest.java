@@ -266,6 +266,7 @@ public class ClientTest {
           JsonObject r = requests.getJsonObject(0);
           context.assertEquals(sourceId.toString(), r.getString("sourceId"));
           context.assertEquals(2, r.getJsonArray("records").size());
+
           context.assertEquals("a2", r.getJsonArray("records").getJsonObject(0).getString("localId"));
           context.assertEquals("a3", r.getJsonArray("records").getJsonObject(1).getString("localId"));
         }));
