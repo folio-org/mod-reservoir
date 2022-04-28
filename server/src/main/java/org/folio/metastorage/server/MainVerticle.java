@@ -36,6 +36,7 @@ public class MainVerticle extends AbstractVerticle {
     RouterCreator.mountAll(vertx, routerCreators)
         .compose(router -> {
           HttpServerOptions so = new HttpServerOptions()
+              .setCompressionSupported(true)
               .setHandle100ContinueAutomatically(true);
           return vertx.createHttpServer(so)
               .requestHandler(router)
