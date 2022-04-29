@@ -755,7 +755,7 @@ public class MainVerticleTest {
   }
 
   @Test
-  public void testClustersSameKey() throws XMLStreamException {
+  public void testClustersSameKey()  {
     JsonObject matchKey = new JsonObject()
         .put("id", "issn")
         .put("method", "jsonpath")
@@ -806,6 +806,58 @@ public class MainVerticleTest {
         .body("items", hasSize(1))
         .extract().body().asString();
     verifyClusterResponse(s, List.of("S101", "S102", "S103"));
+
+    RestAssured.given()
+        .header(XOkapiHeaders.TENANT, tenant1)
+        .header("Content-Type", "application/json")
+        .param("query", "cql.allRecords=true")
+        .delete("/meta-storage/records")
+        .then().statusCode(204);
+
+    RestAssured.given()
+        .header(XOkapiHeaders.TENANT, tenant1)
+        .delete("/meta-storage/config/matchkeys/issn")
+        .then().statusCode(204);
+  }
+
+  @Test
+  public void testClustersLargeKey() {
+    JsonObject matchKey = new JsonObject()
+        .put("id", "issn")
+        .put("method", "jsonpath")
+        // update = ingest is the default
+        .put("params", new JsonObject().put("inventory", "$.issn[*]"));
+
+    RestAssured.given()
+        .header(XOkapiHeaders.TENANT, tenant1)
+        .header("Content-Type", "application/json")
+        .body(matchKey.encode())
+        .post("/meta-storage/config/matchkeys")
+        .then().statusCode(201)
+        .contentType("application/json")
+        .body(Matchers.is(matchKey.encode()));
+
+    String sourceId1 = UUID.randomUUID().toString();
+    JsonArray records1 = new JsonArray()
+        .add(new JsonObject()
+            .put("localId", "S101")
+            .put("marcPayload", new JsonObject().put("leader", "00914naa  2200337   450 "))
+            .put("inventoryPayload", new JsonObject()
+                .put("issn", new JsonArray().add("1".repeat(3600)))
+            )
+        );
+    ingestRecords(records1, sourceId1);
+
+    String s = RestAssured.given()
+        .header(XOkapiHeaders.TENANT, tenant1)
+        .header("Content-Type", "application/json")
+        .param("matchkeyid", "issn")
+        .get("/meta-storage/clusters")
+        .then().statusCode(200)
+        .contentType("application/json")
+        .body("items", hasSize(1))
+        .extract().body().asString();
+    verifyClusterResponse(s, List.of("S101"));
 
     RestAssured.given()
         .header(XOkapiHeaders.TENANT, tenant1)
