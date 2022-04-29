@@ -252,20 +252,16 @@ public class Client {
           } else {
             if (compress) {
               AsyncCodec.compress(vertx, request.toBuffer())
-                  .onFailure(e -> {
-                    log.error(e.getMessage(), e);
-                    promise.complete();
-                  })
-                  .onSuccess(b -> 
-                    webClient.putAbs(headers.get(XOkapiHeaders.URL) + "/meta-storage/records")
-                        .putHeaders(headers)
-                        .putHeader(HttpHeaders.CONTENT_ENCODING.toString(), "gzip")
-                        .expect(ResponsePredicate.SC_OK)
-                        .expect(ResponsePredicate.JSON)
-                        .sendBuffer(b)
-                        .onFailure(promise::fail)
-                        .onSuccess(x -> sendChunk(reader, promise))
-                  );
+                  .compose(b ->
+                      webClient.putAbs(headers.get(XOkapiHeaders.URL) + "/meta-storage/records")
+                          .putHeaders(headers)
+                          .putHeader(HttpHeaders.CONTENT_TYPE.toString(), "application/json")
+                          .putHeader(HttpHeaders.CONTENT_ENCODING.toString(), "gzip")
+                          .expect(ResponsePredicate.SC_OK)
+                          .expect(ResponsePredicate.JSON)
+                          .sendBuffer(b))
+                  .onFailure(promise::fail)
+                  .onSuccess(x -> sendChunk(reader, promise));
             } else {
               webClient.putAbs(headers.get(XOkapiHeaders.URL) + "/meta-storage/records")
                   .putHeaders(headers)
