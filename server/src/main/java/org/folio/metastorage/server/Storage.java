@@ -40,6 +40,8 @@ public class Storage {
   private static final Logger log = LogManager.getLogger(Storage.class);
 
   private static final String CREATE_IF_NO_EXISTS = "CREATE TABLE IF NOT EXISTS ";
+
+  private static final int MATCHVALUE_MAX_LENGTH = 600; // < 2704 / 4
   final TenantPgPool pool;
   final String bibRecordTable;
   final String matchKeyConfigTable;
@@ -238,7 +240,11 @@ public class Storage {
   Future<Void> updateMatchKeyValues(SqlConnection conn, UUID globalId,
       String matchKeyConfigId, Collection<String> keys) {
 
-    return updateClusterForRecord(conn, globalId, matchKeyConfigId, keys);
+    Set<String> truncatedKeys = new HashSet<>();
+    keys.forEach(k -> truncatedKeys.add(k.length() > MATCHVALUE_MAX_LENGTH
+          ? k.substring(0, MATCHVALUE_MAX_LENGTH) : k));
+
+    return updateClusterForRecord(conn, globalId, matchKeyConfigId, truncatedKeys);
   }
 
   Future<Set<UUID>> updateClusterValues(SqlConnection conn, UUID newClusterId,
