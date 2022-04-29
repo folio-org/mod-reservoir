@@ -18,6 +18,7 @@ import javax.xml.transform.TransformerFactory;
 import javax.xml.transform.stream.StreamResult;
 import javax.xml.transform.stream.StreamSource;
 
+import org.folio.okapi.testing.UtilityClassTester;
 import org.junit.Assert;
 import org.junit.Test;
 import org.xml.sax.SAXException;
@@ -597,4 +598,10 @@ public class XmlJsonUtilTest {
             ));
     Assert.assertEquals(exp, got);
   }
+
+  @Test
+  public void isUtilityClass() {
+    UtilityClassTester.assertUtilityClass(XmlJsonUtil.class);
+  }
+
 }
