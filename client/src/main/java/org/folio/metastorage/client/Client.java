@@ -4,6 +4,7 @@ import io.vertx.core.Future;
 import io.vertx.core.MultiMap;
 import io.vertx.core.Promise;
 import io.vertx.core.Vertx;
+import io.vertx.core.http.HttpHeaders;
 import io.vertx.core.http.HttpVersion;
 import io.vertx.core.json.JsonArray;
 import io.vertx.core.json.JsonObject;
@@ -29,6 +30,7 @@ import javax.xml.transform.TransformerFactory;
 import javax.xml.transform.stream.StreamSource;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.folio.metastorage.util.AsyncCodec;
 import org.folio.metastorage.util.XmlJsonUtil;
 import org.folio.okapi.common.GenericCompositeFuture;
 import org.folio.okapi.common.XOkapiHeaders;
@@ -47,6 +49,7 @@ public class Client {
   int currentOffset;
   int limit;
   boolean echo = false;
+  boolean compress = false;
   Integer localSequence = 0;
   WebClient webClient;
   Vertx vertx;
@@ -91,6 +94,10 @@ public class Client {
 
   public void setEcho() {
     this.echo = true;
+  }
+
+  public void setCompress() {
+    this.compress = true;
   }
 
   private void incrementSequence() {
@@ -243,13 +250,27 @@ public class Client {
             System.out.println(request);
             vertx.runOnContext(x -> sendChunk(reader, promise));
           } else {
-            webClient.putAbs(headers.get(XOkapiHeaders.URL) + "/meta-storage/records")
-                .putHeaders(headers)
-                .expect(ResponsePredicate.SC_OK)
-                .expect(ResponsePredicate.JSON)
-                .sendJsonObject(request)
-                .onFailure(promise::fail)
-                .onSuccess(x -> sendChunk(reader, promise));
+            if (compress) {
+              AsyncCodec.compress(vertx, request.toBuffer())
+                  .compose(b ->
+                      webClient.putAbs(headers.get(XOkapiHeaders.URL) + "/meta-storage/records")
+                          .putHeaders(headers)
+                          .putHeader(HttpHeaders.CONTENT_TYPE.toString(), "application/json")
+                          .putHeader(HttpHeaders.CONTENT_ENCODING.toString(), "gzip")
+                          .expect(ResponsePredicate.SC_OK)
+                          .expect(ResponsePredicate.JSON)
+                          .sendBuffer(b))
+                  .onFailure(promise::fail)
+                  .onSuccess(x -> sendChunk(reader, promise));
+            } else {
+              webClient.putAbs(headers.get(XOkapiHeaders.URL) + "/meta-storage/records")
+                  .putHeaders(headers)
+                  .expect(ResponsePredicate.SC_OK)
+                  .expect(ResponsePredicate.JSON)
+                  .sendJsonObject(request)
+                  .onFailure(promise::fail)
+                  .onSuccess(x -> sendChunk(reader, promise));
+            }
           }
         });
   }
@@ -413,6 +434,7 @@ public class Client {
               System.out.println(" --limit int         (defaults to 0 - no limit)");
               System.out.println(" --xsl file          (xslt transform for inventory payload)");
               System.out.println(" --echo              (only output result)");
+              System.out.println(" --compress          (compress requests with gzip)");
               System.out.println(" --init");
               System.out.println(" --purge");
               break;
@@ -434,6 +456,9 @@ public class Client {
               break;
             case "echo":
               client.setEcho();
+              break;
+            case "compress":
+              client.setCompress();
               break;
             case "xsl":
               arg = getArgument(args, ++i);
