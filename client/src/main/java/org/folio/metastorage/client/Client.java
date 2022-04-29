@@ -251,7 +251,6 @@ public class Client {
             vertx.runOnContext(x -> sendChunk(reader, promise));
           } else {
             if (compress) {
-            if (compress) {
               AsyncCodec.compress(vertx, request.toBuffer())
                   .compose(b ->
                       webClient.putAbs(headers.get(XOkapiHeaders.URL) + "/meta-storage/records")
@@ -262,8 +261,7 @@ public class Client {
                           .expect(ResponsePredicate.JSON)
                           .sendBuffer(b))
                   .onFailure(promise::fail)
-                  .onSuccess(x -> sendChunk(reader, promise));;    
-                  });
+                  .onSuccess(x -> sendChunk(reader, promise));
             } else {
               webClient.putAbs(headers.get(XOkapiHeaders.URL) + "/meta-storage/records")
                   .putHeaders(headers)
