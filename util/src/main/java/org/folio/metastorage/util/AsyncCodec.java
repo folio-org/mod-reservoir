@@ -11,6 +11,8 @@ import java.util.zip.GZIPOutputStream;
 
 public class AsyncCodec {
 
+  private AsyncCodec() {}
+
   /**
    * Compress buffer with gzip.
    * @param vertx context
@@ -18,15 +20,15 @@ public class AsyncCodec {
    * @return future compressed buffer
    */
   public static Future<Buffer> compress(Vertx vertx, Buffer in) {
-    return vertx.executeBlocking(fut -> {
+    return vertx.executeBlocking(prom -> {
       ByteArrayOutputStream baos = new ByteArrayOutputStream();
       try (GZIPOutputStream gzos = new GZIPOutputStream(baos)) {
         gzos.write(in.getBytes());
-        gzos.close();
-        fut.complete(Buffer.buffer(baos.toByteArray()));
       } catch (IOException ioe) {
-        fut.fail(ioe);
+        prom.fail(ioe);
+        return;
       }
+      prom.complete(Buffer.buffer(baos.toByteArray()));
     }, false);
   }
   
@@ -37,7 +39,7 @@ public class AsyncCodec {
    * @return future uncompressed buffer
    */
   public static Future<Buffer> decompress(Vertx vertx, Buffer in) {
-    return vertx.executeBlocking(fut -> {
+    return vertx.executeBlocking(prom -> {
       byte[] buffer = new byte[1024];
       ByteArrayOutputStream baos = new ByteArrayOutputStream();
       try (ByteArrayInputStream bis = new ByteArrayInputStream(in.getBytes());
@@ -46,12 +48,11 @@ public class AsyncCodec {
         while ((bytesRead = gzis.read(buffer)) > 0) {
           baos.write(buffer, 0, bytesRead);
         }
-        gzis.close();
-        baos.close();
-        fut.complete(Buffer.buffer(baos.toByteArray()));
       } catch (IOException ioe) {
-        fut.fail(ioe.getMessage());
+        prom.fail(ioe);
+        return;
       }
+      prom.complete(Buffer.buffer(baos.toByteArray()));
     }, false);
   }
   

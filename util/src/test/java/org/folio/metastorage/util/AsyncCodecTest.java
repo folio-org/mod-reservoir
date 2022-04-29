@@ -37,4 +37,16 @@ public class AsyncCodecTest {
       context.assertEquals(s, bd.toString());
     }));
   }
+
+  @Test
+  public void compressAndDecompressFail(TestContext context){
+    String s = null;
+    Future<Buffer> f = AsyncCodec.compress(vertx, Buffer.buffer(s));
+    f = f.compose(bc -> {
+        return AsyncCodec.decompress(vertx, bc);
+    });
+    f.onComplete(context.asyncAssertSuccess(bd -> {
+      context.assertEquals(s, bd.toString());
+    }));
+  }
 }

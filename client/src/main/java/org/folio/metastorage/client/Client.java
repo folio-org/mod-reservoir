@@ -256,7 +256,7 @@ public class Client {
                     log.error(e.getMessage(), e);
                     promise.complete();
                   })
-                  .onSuccess(b -> {
+                  .onSuccess(b -> 
                     webClient.putAbs(headers.get(XOkapiHeaders.URL) + "/meta-storage/records")
                         .putHeaders(headers)
                         .putHeader(HttpHeaders.CONTENT_ENCODING.toString(), "gzip")
@@ -264,8 +264,8 @@ public class Client {
                         .expect(ResponsePredicate.JSON)
                         .sendBuffer(b)
                         .onFailure(promise::fail)
-                        .onSuccess(x -> sendChunk(reader, promise));
-                  });
+                        .onSuccess(x -> sendChunk(reader, promise))
+                  );
             } else {
               webClient.putAbs(headers.get(XOkapiHeaders.URL) + "/meta-storage/records")
                   .putHeaders(headers)
