@@ -1,15 +1,19 @@
 package org.folio.metastorage.client;
 
+import io.netty.handler.codec.http.HttpResponseStatus;
 import io.vertx.core.Future;
 import io.vertx.core.MultiMap;
 import io.vertx.core.Promise;
 import io.vertx.core.Vertx;
+import io.vertx.core.buffer.Buffer;
 import io.vertx.core.http.HttpHeaders;
 import io.vertx.core.http.HttpVersion;
 import io.vertx.core.json.JsonArray;
 import io.vertx.core.json.JsonObject;
+import io.vertx.ext.web.client.HttpResponse;
 import io.vertx.ext.web.client.WebClient;
 import io.vertx.ext.web.client.WebClientOptions;
+import io.vertx.ext.web.client.predicate.ErrorConverter;
 import io.vertx.ext.web.client.predicate.ResponsePredicate;
 import java.io.ByteArrayOutputStream;
 import java.io.FileInputStream;
@@ -56,6 +60,16 @@ public class Client {
   TransformerFactory transformerFactory = TransformerFactory.newInstance();
 
   List<Templates> templates = new LinkedList<>();
+
+
+  ErrorConverter converter = ErrorConverter.createFullBody(result -> {
+    HttpResponse<Buffer> response = result.response();
+    return new IOException(
+      String.format("%1d %2s", response.statusCode(), response.bodyAsString()));
+  });
+  
+  ResponsePredicate errorPredicate = ResponsePredicate
+      .create(ResponsePredicate.SC_SUCCESS, converter);
 
   /**
    * Construct client.
@@ -257,7 +271,7 @@ public class Client {
                           .putHeaders(headers)
                           .putHeader(HttpHeaders.CONTENT_TYPE.toString(), "application/json")
                           .putHeader(HttpHeaders.CONTENT_ENCODING.toString(), "gzip")
-                          .expect(ResponsePredicate.SC_OK)
+                          .expect(errorPredicate)
                           .expect(ResponsePredicate.JSON)
                           .sendBuffer(b))
                   .onFailure(promise::fail)
@@ -265,7 +279,7 @@ public class Client {
             } else {
               webClient.putAbs(headers.get(XOkapiHeaders.URL) + "/meta-storage/records")
                   .putHeaders(headers)
-                  .expect(ResponsePredicate.SC_OK)
+                  .expect(errorPredicate)
                   .expect(ResponsePredicate.JSON)
                   .sendJsonObject(request)
                   .onFailure(promise::fail)
