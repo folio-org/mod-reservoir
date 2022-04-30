@@ -1,6 +1,5 @@
 package org.folio.metastorage.client;
 
-import io.netty.handler.codec.http.HttpResponseStatus;
 import io.vertx.core.Future;
 import io.vertx.core.MultiMap;
 import io.vertx.core.Promise;
