@@ -72,22 +72,38 @@ public class Client {
       .create(ResponsePredicate.SC_SUCCESS, converter);
 
   /**
-   * Construct client.
-   * @param webClient WebClient to use
+   * Construct the client.
    */
-  public Client(Vertx vertx, WebClient webClient) {
+  public Client(Vertx vertx) {
+    this.vertx = vertx;
+    initWebClient(HttpVersion.HTTP_1_1);
     headers.set(XOkapiHeaders.URL, System.getenv("OKAPI_URL"));
     headers.set(XOkapiHeaders.TOKEN, System.getenv("OKAPI_TOKEN"));
     headers.set(XOkapiHeaders.TENANT, System.getenv("OKAPI_TENANT"));
-    this.webClient = webClient;
-    this.vertx = vertx;
   }
 
-  Client(Vertx vertx, WebClient webClient, String url, String token, String tenant) {
-    this(vertx, webClient);
+  Client(Vertx vertx, String url, String token, String tenant) {
+    this(vertx);
     headers.set(XOkapiHeaders.URL, url);
     headers.set(XOkapiHeaders.TOKEN, token);
     headers.set(XOkapiHeaders.TENANT, tenant);
+  }
+
+  private void initWebClient(HttpVersion version) {
+    WebClientOptions webClientOptions = new WebClientOptions()
+        .setProtocolVersion(version);
+    webClient = WebClient.create(vertx, webClientOptions);
+  }
+
+  /**
+   * Reconfigures underlying WebClient instance.
+   * instance with HTTP/2
+   * @return this client instance for fluency
+   */
+  public Client asHttp2Client() {
+    close();
+    initWebClient(HttpVersion.HTTP_2);
+    return this;
   }
 
   public void setSourceId(UUID sourceId) {
@@ -417,6 +433,13 @@ public class Client {
     return args[i];
   }
 
+  /**
+   * Close underlying WebClient instance.
+   */
+  public void close() {
+    webClient.close();
+  }
+
   /** Execute command line shared-index client.
    *
    * @param vertx Vertx. handcle
@@ -424,12 +447,9 @@ public class Client {
    * @return async result
    */
   public static Future<Void> exec(Vertx vertx, String[] args) {
-    WebClientOptions webClientOptions = new WebClientOptions()
-        .setProtocolVersion(HttpVersion.HTTP_2);
-    WebClient webClient = WebClient.create(vertx, webClientOptions);
-    Client client = new Client(vertx, webClient);
+    Client client = new Client(vertx);
     return exec(client, args)
-        .onComplete(x -> webClient.close());
+        .onComplete(x -> client.close());
   }
 
   static Future<Void> exec(Client client, String[] args) {
@@ -449,6 +469,7 @@ public class Client {
               System.out.println(" --xsl file          (xslt transform for inventory payload)");
               System.out.println(" --echo              (only output result)");
               System.out.println(" --compress          (compress requests with gzip)");
+              System.out.println(" --http2             (use HTTP/2)");
               System.out.println(" --init");
               System.out.println(" --purge");
               break;
@@ -473,6 +494,9 @@ public class Client {
               break;
             case "compress":
               client.setCompress();
+              break;
+            case "http2":
+              client.asHttp2Client();
               break;
             case "xsl":
               arg = getArgument(args, ++i);
