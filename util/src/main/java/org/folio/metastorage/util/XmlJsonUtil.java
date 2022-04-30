@@ -32,7 +32,7 @@ import org.w3c.dom.NodeList;
 import org.xml.sax.InputSource;
 import org.xml.sax.SAXException;
 
-public class XmlJsonUtil {
+public final class XmlJsonUtil {
   private static final Logger LOGGER = LogManager.getLogger(XmlJsonUtil.class);
   private static final String COLLECTION_LABEL = "collection";
   private static final String RECORD_LABEL = "record";
@@ -46,7 +46,9 @@ public class XmlJsonUtil {
 
   private static final String FIELDS_LABEL = "fields";
 
-  private XmlJsonUtil() { }
+  private XmlJsonUtil() {
+    throw new UnsupportedOperationException("XmlJsonUtil");
+  }
 
   /** Convert MARC-in-JSON to MARCXML.
    *
