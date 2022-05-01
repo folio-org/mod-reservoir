@@ -4,12 +4,15 @@ import io.vertx.core.Future;
 import io.vertx.core.MultiMap;
 import io.vertx.core.Promise;
 import io.vertx.core.Vertx;
+import io.vertx.core.buffer.Buffer;
 import io.vertx.core.http.HttpHeaders;
 import io.vertx.core.http.HttpVersion;
 import io.vertx.core.json.JsonArray;
 import io.vertx.core.json.JsonObject;
+import io.vertx.ext.web.client.HttpResponse;
 import io.vertx.ext.web.client.WebClient;
 import io.vertx.ext.web.client.WebClientOptions;
+import io.vertx.ext.web.client.predicate.ErrorConverter;
 import io.vertx.ext.web.client.predicate.ResponsePredicate;
 import java.io.ByteArrayOutputStream;
 import java.io.FileInputStream;
@@ -57,23 +60,49 @@ public class Client {
 
   List<Templates> templates = new LinkedList<>();
 
+
+  ErrorConverter converter = ErrorConverter.createFullBody(result -> {
+    HttpResponse<Buffer> response = result.response();
+    return new IOException(
+      String.format("%1d %2s", response.statusCode(), response.bodyAsString()));
+  });
+  
+  ResponsePredicate errorPredicate = ResponsePredicate
+      .create(ResponsePredicate.SC_SUCCESS, converter);
+
   /**
-   * Construct client.
-   * @param webClient WebClient to use
+   * Construct the client.
    */
-  public Client(Vertx vertx, WebClient webClient) {
+  public Client(Vertx vertx) {
+    this.vertx = vertx;
+    initWebClient(HttpVersion.HTTP_1_1);
     headers.set(XOkapiHeaders.URL, System.getenv("OKAPI_URL"));
     headers.set(XOkapiHeaders.TOKEN, System.getenv("OKAPI_TOKEN"));
     headers.set(XOkapiHeaders.TENANT, System.getenv("OKAPI_TENANT"));
-    this.webClient = webClient;
-    this.vertx = vertx;
   }
 
-  Client(Vertx vertx, WebClient webClient, String url, String token, String tenant) {
-    this(vertx, webClient);
+  Client(Vertx vertx, String url, String token, String tenant) {
+    this(vertx);
     headers.set(XOkapiHeaders.URL, url);
     headers.set(XOkapiHeaders.TOKEN, token);
     headers.set(XOkapiHeaders.TENANT, tenant);
+  }
+
+  private void initWebClient(HttpVersion version) {
+    WebClientOptions webClientOptions = new WebClientOptions()
+        .setProtocolVersion(version);
+    webClient = WebClient.create(vertx, webClientOptions);
+  }
+
+  /**
+   * Reconfigures underlying WebClient instance.
+   * instance with HTTP/2
+   * @return this client instance for fluency
+   */
+  public Client asHttp2Client() {
+    close();
+    initWebClient(HttpVersion.HTTP_2);
+    return this;
   }
 
   public void setSourceId(UUID sourceId) {
@@ -257,7 +286,7 @@ public class Client {
                           .putHeaders(headers)
                           .putHeader(HttpHeaders.CONTENT_TYPE.toString(), "application/json")
                           .putHeader(HttpHeaders.CONTENT_ENCODING.toString(), "gzip")
-                          .expect(ResponsePredicate.SC_OK)
+                          .expect(errorPredicate)
                           .expect(ResponsePredicate.JSON)
                           .sendBuffer(b))
                   .onFailure(promise::fail)
@@ -265,7 +294,7 @@ public class Client {
             } else {
               webClient.putAbs(headers.get(XOkapiHeaders.URL) + "/meta-storage/records")
                   .putHeaders(headers)
-                  .expect(ResponsePredicate.SC_OK)
+                  .expect(errorPredicate)
                   .expect(ResponsePredicate.JSON)
                   .sendJsonObject(request)
                   .onFailure(promise::fail)
@@ -403,6 +432,13 @@ public class Client {
     return args[i];
   }
 
+  /**
+   * Close underlying WebClient instance.
+   */
+  public void close() {
+    webClient.close();
+  }
+
   /** Execute command line shared-index client.
    *
    * @param vertx Vertx. handcle
@@ -410,12 +446,9 @@ public class Client {
    * @return async result
    */
   public static Future<Void> exec(Vertx vertx, String[] args) {
-    WebClientOptions webClientOptions = new WebClientOptions()
-        .setProtocolVersion(HttpVersion.HTTP_2);
-    WebClient webClient = WebClient.create(vertx, webClientOptions);
-    Client client = new Client(vertx, webClient);
+    Client client = new Client(vertx);
     return exec(client, args)
-        .onComplete(x -> webClient.close());
+        .onComplete(x -> client.close());
   }
 
   static Future<Void> exec(Client client, String[] args) {
@@ -435,6 +468,7 @@ public class Client {
               System.out.println(" --xsl file          (xslt transform for inventory payload)");
               System.out.println(" --echo              (only output result)");
               System.out.println(" --compress          (compress requests with gzip)");
+              System.out.println(" --http2             (use HTTP/2)");
               System.out.println(" --init");
               System.out.println(" --purge");
               break;
@@ -459,6 +493,9 @@ public class Client {
               break;
             case "compress":
               client.setCompress();
+              break;
+            case "http2":
+              client.asHttp2Client();
               break;
             case "xsl":
               arg = getArgument(args, ++i);
