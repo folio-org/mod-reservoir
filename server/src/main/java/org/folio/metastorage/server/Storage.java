@@ -1,5 +1,6 @@
 package org.folio.metastorage.server;
 
+import io.vertx.core.CompositeFuture;
 import io.vertx.core.Future;
 import io.vertx.core.Promise;
 import io.vertx.core.Vertx;
@@ -30,6 +31,7 @@ import java.util.function.Function;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.folio.metastorage.matchkey.MatchKeyMethod;
+import org.folio.metastorage.util.LargeJsonReadStream;
 import org.folio.okapi.common.GenericCompositeFuture;
 import org.folio.tlib.postgres.TenantPgPool;
 import org.folio.tlib.util.TenantUtil;
@@ -382,20 +384,21 @@ public class Storage {
    * @param request ingest record request
    * @return async result
    */
-  public Future<Void> updateGlobalRecords(JsonObject request) {
-    UUID sourceId = UUID.fromString(request.getString("sourceId"));
-    JsonArray records = request.getJsonArray("records");
-
+  public Future<Void> updateGlobalRecords(LargeJsonReadStream request) {   
     return pool.withConnection(conn ->
         getAvailableMatchConfigs(conn).compose(matchKeyConfigs -> {
-              List<Future<Void>> futures = new ArrayList<>(records.size());
-              for (int i = 0; i < records.size(); i++) {
-                JsonObject globalRecord = records.getJsonObject(i);
-                futures.add(upsertGlobalRecord(sourceId, globalRecord, matchKeyConfigs));
-              }
-              return GenericCompositeFuture.all(futures).mapEmpty();
-            }
-        ));
+          Promise<Void> p = Promise.promise();
+          List<Future<Void>> l = new ArrayList<>();
+          l.add(p.future());
+          request  
+              .handler(r -> {
+                UUID sourceId = UUID.fromString(request.topLevelObject().getString("sourceId"));
+                l.add(upsertGlobalRecord(sourceId, r, matchKeyConfigs));
+              })
+              .endHandler(p::complete)
+              .exceptionHandler(p::fail);
+          return GenericCompositeFuture.all(l).mapEmpty();
+        }));
   }
 
   Future<JsonArray> getAvailableMatchConfigs(SqlConnection conn) {

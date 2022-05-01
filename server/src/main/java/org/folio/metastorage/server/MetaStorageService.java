@@ -15,6 +15,7 @@ import java.util.function.Function;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.folio.metastorage.matchkey.MatchKeyMethod;
+import org.folio.metastorage.util.LargeJsonReadStream;
 import org.folio.okapi.common.HttpResponse;
 import org.folio.tlib.RouterCreator;
 import org.folio.tlib.TenantInitHooks;
@@ -32,7 +33,7 @@ public class MetaStorageService implements RouterCreator, TenantInitHooks {
 
   Future<Void> putGlobalRecords(RoutingContext ctx) {
     Storage storage = new Storage(ctx);
-    return storage.updateGlobalRecords(ctx.getBodyAsJson()).onSuccess(res -> {
+    return storage.updateGlobalRecords(new LargeJsonReadStream(ctx.request())).onSuccess(res -> {
       JsonArray ar = new JsonArray();
       // global ids and match keys here ...
       HttpResponse.responseJson(ctx, 200).end(ar.encode());
