@@ -31,6 +31,7 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.folio.metastorage.matchkey.MatchKeyMethod;
 import org.folio.metastorage.util.LargeJsonReadStream;
+import org.folio.metastorage.util.ReadStreamConsumer;
 import org.folio.okapi.common.GenericCompositeFuture;
 import org.folio.tlib.postgres.TenantPgPool;
 import org.folio.tlib.util.TenantUtil;
@@ -396,30 +397,11 @@ public class Storage {
   public Future<Void> updateGlobalRecords(LargeJsonReadStream request) {
     return pool.withConnection(conn ->
         getAvailableMatchConfigs(conn).compose(matchKeyConfigs -> {
-          Promise<Void> p = Promise.promise();
-          List<String> errors = new ArrayList<>();
-          AtomicInteger ongoing = new AtomicInteger();
-          AtomicBoolean completed = new AtomicBoolean();
-          request
-              .handler(r -> {
-                UUID sourceId = UUID.fromString(request.topLevelObject().getString("sourceId"));
-                ongoing.incrementAndGet();
-                upsertGlobalRecord(sourceId, r, matchKeyConfigs)
-                    .onComplete(x -> {
-                      ongoing.decrementAndGet();
-                      if (x.failed() && errors.isEmpty()) {
-                        errors.add(x.cause().getMessage());
-                      }
-                      finish(p, errors, completed.get(), ongoing.get());
-                    });
-              })
-              .endHandler(e -> {
-                completed.set(Boolean.TRUE);
-                finish(p, errors, completed.get(), ongoing.get());
-              })
-              .exceptionHandler(p::fail)
-              .resume();
-          return p.future();
+          return new ReadStreamConsumer<JsonObject, Void>()
+          .consume(request, r -> 
+            upsertGlobalRecord(
+              UUID.fromString(request.topLevelObject().getString("sourceId")), 
+              r, matchKeyConfigs));
         }));
   }
 
