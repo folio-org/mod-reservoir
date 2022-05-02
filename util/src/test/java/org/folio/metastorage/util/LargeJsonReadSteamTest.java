@@ -40,38 +40,37 @@ public class LargeJsonReadSteamTest {
 
   @Test
   public void parse(TestContext context){
-    Future<AsyncFile> fut = vertx.fileSystem().open("records-in.json", new OpenOptions());
     List<JsonObject> topLevel = new LinkedList<>();
     List<JsonObject> objects = new LinkedList<>();
     AtomicInteger total = new AtomicInteger();
-    Promise<Void> p = Promise.promise();
-    CompositeFuture cf = CompositeFuture.all(fut, p.future());
-    fut.onSuccess(asyncFile -> {
-      LargeJsonReadStream jors = new LargeJsonReadStream(asyncFile);
-      jors
-        .handler(jo -> {
-          objects.add(jo);
+    vertx.fileSystem().open("records-in.json", new OpenOptions())
+        .compose(asyncFile -> {
+          Promise<Void> p = Promise.promise();
+          LargeJsonReadStream jors = new LargeJsonReadStream(asyncFile);
+          jors
+              .handler(jo -> {
+                objects.add(jo);
+              })
+              .endHandler(x -> {
+                total.set(jors.totalCount());
+                topLevel.add(jors.topLevelObject());
+                asyncFile.close();
+                p.complete();
+              })
+              .exceptionHandler(e -> {
+                asyncFile.close();
+                p.fail(e);
+              });
+          return p.future();
         })
-        .endHandler(x -> {
-          total.set(jors.totalCount());
-          topLevel.add(jors.topLevelObject());
-          asyncFile.close();
-          p.complete();
-        })
-        .exceptionHandler(e -> {
-          asyncFile.close();
-          p.fail(e);
-        });
-    });
-    cf.onComplete(context.asyncAssertSuccess(x ->{
-      context.assertEquals(10, total.get());
-      context.assertEquals(10, objects.size());
-      context.assertEquals("d0166b80-1587-433c-b909-40ccbb1449f6", 
-          topLevel.get(0).getString("sourceId"));
-      for (int i = 0; i < objects.size(); i++) {
-        context.assertEquals("a"+(i+1), objects.get(i).getString("localId"));
-      }
-    }));
+        .onComplete(context.asyncAssertSuccess(x ->{
+          context.assertEquals(10, total.get());
+          context.assertEquals(10, objects.size());
+          context.assertEquals("d0166b80-1587-433c-b909-40ccbb1449f6",
+              topLevel.get(0).getString("sourceId"));
+          for (int i = 0; i < objects.size(); i++) {
+            context.assertEquals("a"+(i+1), objects.get(i).getString("localId"));
+          }
+        }));
   }
-
 }

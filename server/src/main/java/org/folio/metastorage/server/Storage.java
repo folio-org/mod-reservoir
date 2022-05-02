@@ -384,20 +384,34 @@ public class Storage {
    * @param request ingest record request
    * @return async result
    */
-  public Future<Void> updateGlobalRecords(LargeJsonReadStream request) {   
+  public Future<Void> updateGlobalRecords(LargeJsonReadStream request) {
     return pool.withConnection(conn ->
         getAvailableMatchConfigs(conn).compose(matchKeyConfigs -> {
           Promise<Void> p = Promise.promise();
-          List<Future<Void>> l = new ArrayList<>();
-          l.add(p.future());
-          request  
+          List<String> errors = new ArrayList<>();
+          request
               .handler(r -> {
                 UUID sourceId = UUID.fromString(request.topLevelObject().getString("sourceId"));
-                l.add(upsertGlobalRecord(sourceId, r, matchKeyConfigs));
+                request.pause();
+                upsertGlobalRecord(sourceId, r, matchKeyConfigs)
+                    .onSuccess(x -> request.resume())
+                    .onFailure(x -> {
+                      if (errors.isEmpty()) {
+                        errors.add(x.getMessage());
+                      }
+                      request.resume();
+                    });
               })
-              .endHandler(p::complete)
-              .exceptionHandler(p::fail);
-          return GenericCompositeFuture.all(l).mapEmpty();
+              .endHandler(e -> {
+                if (errors.isEmpty()) {
+                  p.complete();
+                } else {
+                  p.fail(errors.get(0));
+                }
+              })
+              .exceptionHandler(p::fail)
+              .resume();
+          return p.future();
         }));
   }
 
