@@ -378,6 +378,16 @@ public class Storage {
     // clusterMetaTable entries not removed. These are "delete items"
   }
 
+  static void finish(Promise<Void> promise, List<String> errors, boolean completed, int ongoing) {
+    if (completed && ongoing == 0) {
+      if (errors.isEmpty()) {
+        promise.complete();
+      } else {
+        promise.fail(errors.get(0));
+      }
+    }
+  }
+
   /**
    * Update/insert set of global records.
    * @param request ingest record request
@@ -388,25 +398,24 @@ public class Storage {
         getAvailableMatchConfigs(conn).compose(matchKeyConfigs -> {
           Promise<Void> p = Promise.promise();
           List<String> errors = new ArrayList<>();
+          AtomicInteger ongoing = new AtomicInteger();
+          AtomicBoolean completed = new AtomicBoolean();
           request
               .handler(r -> {
                 UUID sourceId = UUID.fromString(request.topLevelObject().getString("sourceId"));
-                request.pause();
+                ongoing.incrementAndGet();
                 upsertGlobalRecord(sourceId, r, matchKeyConfigs)
-                    .onSuccess(x -> request.resume())
-                    .onFailure(x -> {
-                      if (errors.isEmpty()) {
-                        errors.add(x.getMessage());
+                    .onComplete(x -> {
+                      ongoing.decrementAndGet();
+                      if (x.failed() && errors.isEmpty()) {
+                        errors.add(x.cause().getMessage());
                       }
-                      request.resume();
+                      finish(p, errors, completed.get(), ongoing.get());
                     });
               })
               .endHandler(e -> {
-                if (errors.isEmpty()) {
-                  p.complete();
-                } else {
-                  p.fail(errors.get(0));
-                }
+                completed.set(Boolean.TRUE);
+                finish(p, errors, completed.get(), ongoing.get());
               })
               .exceptionHandler(p::fail)
               .resume();
