@@ -1,5 +1,6 @@
 package org.folio.metastorage.util;
 
+import io.vertx.core.Future;
 import io.vertx.core.Promise;
 import io.vertx.core.Vertx;
 import io.vertx.core.buffer.Buffer;
@@ -60,6 +61,31 @@ public class LargeJsonReadSteamTest {
         })
         .onComplete(context.asyncAssertSuccess(x ->{
           context.assertEquals(10, total.get());
+          context.assertEquals(10, objects.size());
+          context.assertEquals("d0166b80-1587-433c-b909-40ccbb1449f6",
+              topLevel.get(0).getString("sourceId"));
+          for (int i = 0; i < objects.size(); i++) {
+            context.assertEquals("a"+(i+1), objects.get(i).getString("localId"));
+          }
+        }));
+  }
+
+  @Test
+  public void parseViaConsumer(TestContext context) {
+    List<JsonObject> topLevel = new LinkedList<>();
+    List<JsonObject> objects = new LinkedList<>();
+    vertx.fileSystem().open("records-in.json", new OpenOptions())
+        .compose(asyncFile -> {
+          LargeJsonReadStream jors = new LargeJsonReadStream(asyncFile);
+          return new ReadStreamConsumer<JsonObject, Void>()
+              .consume(jors, jo -> {
+                topLevel.add(jors.topLevelObject());
+                objects.add(jo);
+                return Future.succeededFuture();
+              })
+              .compose(x -> asyncFile.close());
+        })
+        .onComplete(context.asyncAssertSuccess(x ->{
           context.assertEquals(10, objects.size());
           context.assertEquals("d0166b80-1587-433c-b909-40ccbb1449f6",
               topLevel.get(0).getString("sourceId"));

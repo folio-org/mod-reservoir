@@ -379,16 +379,6 @@ public class Storage {
     // clusterMetaTable entries not removed. These are "delete items"
   }
 
-  static void finish(Promise<Void> promise, List<String> errors, boolean completed, int ongoing) {
-    if (completed && ongoing == 0) {
-      if (errors.isEmpty()) {
-        promise.complete();
-      } else {
-        promise.fail(errors.get(0));
-      }
-    }
-  }
-
   /**
    * Update/insert set of global records.
    * @param request ingest record request
@@ -396,13 +386,13 @@ public class Storage {
    */
   public Future<Void> updateGlobalRecords(LargeJsonReadStream request) {
     return pool.withConnection(conn ->
-        getAvailableMatchConfigs(conn).compose(matchKeyConfigs -> {
-          return new ReadStreamConsumer<JsonObject, Void>()
+        getAvailableMatchConfigs(conn).compose(matchKeyConfigs ->
+          new ReadStreamConsumer<JsonObject, Void>()
           .consume(request, r -> 
             upsertGlobalRecord(
               UUID.fromString(request.topLevelObject().getString("sourceId")), 
-              r, matchKeyConfigs));
-        }));
+              r, matchKeyConfigs))
+        ));
   }
 
   Future<JsonArray> getAvailableMatchConfigs(SqlConnection conn) {
