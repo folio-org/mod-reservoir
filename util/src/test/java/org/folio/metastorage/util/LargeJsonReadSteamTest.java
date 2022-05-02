@@ -1,26 +1,21 @@
 package org.folio.metastorage.util;
 
-import io.vertx.core.CompositeFuture;
-import io.vertx.core.Future;
 import io.vertx.core.Promise;
 import io.vertx.core.Vertx;
-import io.vertx.core.file.AsyncFile;
+import io.vertx.core.buffer.Buffer;
 import io.vertx.core.file.OpenOptions;
 import io.vertx.core.json.JsonObject;
 import io.vertx.ext.unit.TestContext;
 import io.vertx.ext.unit.junit.VertxUnitRunner;
-
+import java.util.LinkedList;
+import java.util.List;
+import java.util.concurrent.atomic.AtomicInteger;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
-
-import java.util.LinkedList;
-import java.util.List;
-import java.util.concurrent.atomic.AtomicInteger;
-
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
 
 @RunWith(VertxUnitRunner.class)
 public class LargeJsonReadSteamTest {
@@ -39,7 +34,7 @@ public class LargeJsonReadSteamTest {
 
 
   @Test
-  public void parse(TestContext context){
+  public void parse(TestContext context) {
     List<JsonObject> topLevel = new LinkedList<>();
     List<JsonObject> objects = new LinkedList<>();
     AtomicInteger total = new AtomicInteger();
@@ -72,5 +67,36 @@ public class LargeJsonReadSteamTest {
             context.assertEquals("a"+(i+1), objects.get(i).getString("localId"));
           }
         }));
+  }
+
+  @Test
+  public void large(TestContext context) {
+    List<JsonObject> topLevel = new LinkedList<>();
+    AtomicInteger total = new AtomicInteger();
+    int number = 1000000; // 1 million
+    Buffer preBuffer = Buffer.buffer("{ \"sourceId\": \"d0166b80-1587-433c-b909-40ccbb1449f6\", \"records\" : [");
+    Buffer repeatBuffer = Buffer.buffer(new JsonObject()
+        .put("localId", "1234")
+        .put("payload", new JsonObject().put("leader", "01010ccm a2200289   4500")).encode());
+
+    Buffer sepBuffer = Buffer.buffer(",");
+    Buffer postBuffer = Buffer.buffer("]}");
+    MemoryReadStream s = new MemoryReadStream(preBuffer, repeatBuffer, sepBuffer, postBuffer, number, vertx);
+    Promise<Void> p = Promise.promise();
+    LargeJsonReadStream jors = new LargeJsonReadStream(s);
+    jors
+        .handler(jo -> context.assertEquals("1234", jo.getString("localId")))
+        .endHandler(x -> {
+          total.set(jors.totalCount());
+          topLevel.add(jors.topLevelObject());
+          p.complete();
+        })
+        .exceptionHandler(p::fail);
+    s.run();
+    p.future().onComplete(context.asyncAssertSuccess(x ->{
+      context.assertEquals(number, total.get());
+      context.assertEquals("d0166b80-1587-433c-b909-40ccbb1449f6",
+          topLevel.get(0).getString("sourceId"));
+    }));
   }
 }
