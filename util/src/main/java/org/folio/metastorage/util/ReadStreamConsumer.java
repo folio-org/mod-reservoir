@@ -15,6 +15,8 @@ public class ReadStreamConsumer<T, U> {
   private AtomicInteger ongoing = new AtomicInteger();
   private AtomicBoolean completed = new AtomicBoolean();
 
+  private int maxConcurrent = 5;
+
   /**
    * Consumes provided ReadStream via the consumer function.
    * @param stream input stream
@@ -25,10 +27,14 @@ public class ReadStreamConsumer<T, U> {
     stream
         .pause()
         .handler(r -> {
-          ongoing.incrementAndGet();
+          if (ongoing.incrementAndGet() == maxConcurrent) {
+            stream.pause();
+          }
           consumer.apply(r)
               .onComplete(x -> {
-                ongoing.decrementAndGet();
+                if (ongoing.getAndDecrement() == maxConcurrent) {
+                  stream.resume();
+                }
                 if (x.failed() && errors.isEmpty()) {
                   errors.add(x.cause());
                 }
@@ -53,5 +59,5 @@ public class ReadStreamConsumer<T, U> {
       }
     }
   }
-    
+
 }
