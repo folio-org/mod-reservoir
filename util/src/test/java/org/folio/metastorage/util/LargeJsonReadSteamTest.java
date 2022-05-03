@@ -77,7 +77,7 @@ public class LargeJsonReadSteamTest {
     vertx.fileSystem().open("records-in.json", new OpenOptions())
         .compose(asyncFile -> {
           LargeJsonReadStream jors = new LargeJsonReadStream(asyncFile);
-          return new ReadStreamConsumer<JsonObject, Void>()
+          return new ReadStreamConsumer<JsonObject, Void>(2)
               .consume(jors, jo -> {
                 topLevel.add(jors.topLevelObject());
                 objects.add(jo);

@@ -14,8 +14,15 @@ public class ReadStreamConsumer<T, U> {
   private List<Throwable> errors = new ArrayList<>();
   private AtomicInteger ongoing = new AtomicInteger();
   private AtomicBoolean completed = new AtomicBoolean();
+  private final int maxConcurrent;
 
-  private int maxConcurrent = 5;
+  public ReadStreamConsumer(int maxConcurrent) {
+    this.maxConcurrent = maxConcurrent;
+  }
+
+  public ReadStreamConsumer() {
+    this.maxConcurrent = 5;
+  }
 
   /**
    * Consumes provided ReadStream via the consumer function.
