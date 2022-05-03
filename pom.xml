@@ -122,6 +122,27 @@
 
   </dependencyManagement>
 
+  <profiles>
+    <profile>
+      <id>apple-silicon</id>
+      <activation>
+        <os>
+          <family>mac</family>
+          <arch>aarch64</arch>
+        </os>
+      </activation>
+      <dependencies>
+        <dependency>
+          <groupId>io.netty</groupId>
+          <artifactId>netty-resolver-dns-native-macos</artifactId>
+          <classifier>osx-aarch_64</classifier>
+          <!--<version>align with Vert.x netty version</version>-->
+          <!--see https://github.com/eclipse-vertx/vert.x/blob/master/src/main/asciidoc/override/hostname-resolution.adoc -->
+        </dependency>
+      </dependencies>
+    </profile>
+  </profiles>
+
   <build>
    <pluginManagement>
       <plugins>
