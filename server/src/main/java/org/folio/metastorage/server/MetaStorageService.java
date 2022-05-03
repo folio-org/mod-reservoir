@@ -2,6 +2,7 @@ package org.folio.metastorage.server;
 
 import io.vertx.core.Future;
 import io.vertx.core.Vertx;
+import io.vertx.core.http.HttpServerRequest;
 import io.vertx.core.http.HttpServerResponse;
 import io.vertx.core.json.JsonArray;
 import io.vertx.core.json.JsonObject;
@@ -15,6 +16,7 @@ import java.util.function.Function;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.folio.metastorage.matchkey.MatchKeyMethod;
+import org.folio.metastorage.util.LargeJsonReadStream;
 import org.folio.okapi.common.HttpResponse;
 import org.folio.tlib.RouterCreator;
 import org.folio.tlib.TenantInitHooks;
@@ -31,12 +33,18 @@ public class MetaStorageService implements RouterCreator, TenantInitHooks {
   }
 
   Future<Void> putGlobalRecords(RoutingContext ctx) {
-    Storage storage = new Storage(ctx);
-    return storage.updateGlobalRecords(ctx.getBodyAsJson()).onSuccess(res -> {
-      JsonArray ar = new JsonArray();
-      // global ids and match keys here ...
-      HttpResponse.responseJson(ctx, 200).end(ar.encode());
-    });
+    try {
+      Storage storage = new Storage(ctx);
+      HttpServerRequest request = ctx.request();
+      request.pause();
+      return storage.updateGlobalRecords(new LargeJsonReadStream(request)).onSuccess(res -> {
+        JsonArray ar = new JsonArray();
+        // global ids and match keys here ...
+        HttpResponse.responseJson(ctx, 200).end(ar.encode());
+      });
+    } catch (Exception e) {
+      return Future.failedFuture(e);
+    }
   }
 
   static PgCqlQuery createPgCqlQuery() {
@@ -281,7 +289,6 @@ public class MetaStorageService implements RouterCreator, TenantInitHooks {
   public Future<Router> createRouter(Vertx vertx) {
     return RouterBuilder.create(vertx, "openapi/meta-storage-1.0.yaml")
         .map(routerBuilder -> {
-          add(routerBuilder, "putGlobalRecords", this::putGlobalRecords);
           add(routerBuilder, "getGlobalRecords", this::getGlobalRecords);
           add(routerBuilder, "deleteGlobalRecords", this::deleteGlobalRecords);
           add(routerBuilder, "getGlobalRecord", this::getGlobalRecord);
@@ -294,7 +301,12 @@ public class MetaStorageService implements RouterCreator, TenantInitHooks {
           add(routerBuilder, "getClusters", this::getClusters);
           add(routerBuilder, "getCluster", this::getCluster);
           add(routerBuilder, "oaiService", OaiService::get);
-          return routerBuilder.createRouter();
+          Router router = Router.router(vertx);
+          // this endpoint is streaming and we handle it without OpenAPI and validation
+          router.put("/meta-storage/records").handler(ctx ->
+              putGlobalRecords(ctx).onFailure(cause -> failHandler(400, ctx, cause)));
+          router.mountSubRouter("/", routerBuilder.createRouter());
+          return router;
         });
   }
 

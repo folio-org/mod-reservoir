@@ -428,7 +428,7 @@ public class MainVerticleTest {
         .body(request.encode())
         .put("/meta-storage/records")
         .then().statusCode(400)
-        .body(containsString("Validation error for body application/json: input don't match type OBJECT"));
+        .body(containsString("class java.util.ArrayList cannot be cast to class io.vertx.core.json.JsonObject"));
   }
 
   @Test

@@ -1,0 +1,4085 @@
+{
+  "sourceId": "d0166b80-1587-433c-b909-40ccbb1449f6",
+  "records": [
+    {
+      "localId": "a1",
+      "marcPayload": {
+        "leader": "01010ccm a2200289   4500",
+        "fields": [
+          {
+            "001": "a1"
+          },
+          {
+            "003": "SIRSI"
+          },
+          {
+            "005": "20211009050004.0"
+          },
+          {
+            "008": "790321s1967    nyusyz         n  | zxx d"
+          },
+          {
+            "010": {
+              "ind1": " ",
+              "ind2": " ",
+              "subfields": [
+                {
+                  "a": "   70207870"
+                }
+              ]
+            }
+          },
+          {
+            "035": {
+              "ind1": " ",
+              "ind2": " ",
+              "subfields": [
+                {
+                  "a": "(OCoLC-M)272290"
+                }
+              ]
+            }
+          },
+          {
+            "035": {
+              "ind1": " ",
+              "ind2": " ",
+              "subfields": [
+                {
+                  "a": "(OCoLC-I)268803709"
+                }
+              ]
+            }
+          },
+          {
+            "040": {
+              "ind1": " ",
+              "ind2": " ",
+              "subfields": [
+                {
+                  "c": "CSt"
+                },
+                {
+                  "d": "CSt"
+                },
+                {
+                  "d": "OrLoB"
+                },
+                {
+                  "d": "CSt"
+                }
+              ]
+            }
+          },
+          {
+            "048": {
+              "ind1": " ",
+              "ind2": " ",
+              "subfields": [
+                {
+                  "a": "oa"
+                }
+              ]
+            }
+          },
+          {
+            "100": {
+              "ind1": "1",
+              "ind2": " ",
+              "subfields": [
+                {
+                  "a": "Schumann, Robert,"
+                },
+                {
+                  "d": "1810-1856."
+                },
+                {
+                  "=": "^A378117"
+                }
+              ]
+            }
+          },
+          {
+            "240": {
+              "ind1": "1",
+              "ind2": "0",
+              "subfields": [
+                {
+                  "a": "Symphonies,"
+                },
+                {
+                  "n": "no. 1, op. 38,"
+                },
+                {
+                  "r": "B♭ major"
+                },
+                {
+                  "=": "^A378117"
+                }
+              ]
+            }
+          },
+          {
+            "245": {
+              "ind1": "0",
+              "ind2": "0",
+              "subfields": [
+                {
+                  "a": "Symphony, op. 38"
+                }
+              ]
+            }
+          },
+          {
+            "260": {
+              "ind1": " ",
+              "ind2": " ",
+              "subfields": [
+                {
+                  "a": "[New York,"
+                },
+                {
+                  "b": "Robert Owen Lehman Foundation,"
+                },
+                {
+                  "c": "1967]"
+                }
+              ]
+            }
+          },
+          {
+            "300": {
+              "ind1": " ",
+              "ind2": " ",
+              "subfields": [
+                {
+                  "a": "score (xxvi, 196 p.)"
+                },
+                {
+                  "c": "32 cm."
+                }
+              ]
+            }
+          },
+          {
+            "500": {
+              "ind1": " ",
+              "ind2": " ",
+              "subfields": [
+                {
+                  "a": "Facsim. of holograph in the Library of Congress."
+                }
+              ]
+            }
+          },
+          {
+            "596": {
+              "ind1": " ",
+              "ind2": " ",
+              "subfields": [
+                {
+                  "a": "31"
+                }
+              ]
+            }
+          },
+          {
+            "600": {
+              "ind1": "1",
+              "ind2": "0",
+              "subfields": [
+                {
+                  "a": "Schumann, Robert,"
+                },
+                {
+                  "d": "1810-1856"
+                },
+                {
+                  "v": "Manuscripts"
+                },
+                {
+                  "v": "Facsimiles."
+                },
+                {
+                  "=": "^A437"
+                }
+              ]
+            }
+          },
+          {
+            "650": {
+              "ind1": " ",
+              "ind2": "0",
+              "subfields": [
+                {
+                  "a": "Symphonies"
+                },
+                {
+                  "v": "Scores."
+                },
+                {
+                  "=": "^A1066583"
+                }
+              ]
+            }
+          },
+          {
+            "916": {
+              "ind1": " ",
+              "ind2": " ",
+              "subfields": [
+                {
+                  "a": "DATE CATALOGED"
+                },
+                {
+                  "b": "19921209"
+                }
+              ]
+            }
+          },
+          {
+            "999": {
+              "ind1": " ",
+              "ind2": " ",
+              "subfields": [
+                {
+                  "a": "ML96.5 .S392 NO.1"
+                },
+                {
+                  "w": "LC"
+                },
+                {
+                  "c": "1"
+                },
+                {
+                  "i": "36105041839973"
+                },
+                {
+                  "d": "12/20/2016"
+                },
+                {
+                  "l": "STACKS"
+                },
+                {
+                  "m": "SAL3"
+                },
+                {
+                  "r": "Y"
+                },
+                {
+                  "s": "Y"
+                },
+                {
+                  "t": "SCORE"
+                },
+                {
+                  "u": "3/21/1979"
+                }
+              ]
+            }
+          },
+          {
+            "900": {
+              "ind1": " ",
+              "ind2": " ",
+              "subfields": [
+                {
+                  "5": "POD"
+                },
+                {
+                  "b": "CSt"
+                }
+              ]
+            }
+          },
+          {
+            "998": {
+              "ind1": " ",
+              "ind2": " ",
+              "subfields": [
+                {
+                  "5": "POD"
+                },
+                {
+                  "8": "999.0\\p"
+                },
+                {
+                  "a": "ML96.5 .S392 NO.1"
+                },
+                {
+                  "i": "36105041839973"
+                },
+                {
+                  "m": "SAL3"
+                }
+              ]
+            }
+          }
+        ]
+      },
+      "inventoryPayload": {
+        "institutionDeref": "US-CSt",
+        "localIdentifier": "a1",
+        "instance": {
+          "source": "MARC",
+          "instanceTypeDeref": "ntm",
+          "identifiers": [
+            {
+              "value": "a1",
+              "identifierTypeDeref": "ISIL:US-CSt"
+            },
+            {
+              "value": "   70207870",
+              "identifierTypeDeref": "LCCN"
+            },
+            {
+              "value": "(OCoLC-M)272290",
+              "identifierTypeDeref": "System control number"
+            },
+            {
+              "value": "(OCoLC-I)268803709",
+              "identifierTypeDeref": "System control number"
+            }
+          ],
+          "title": "Symphony, op. 38",
+          "contributors": [
+            {
+              "name": "Schumann, Robert, 1810-1856",
+              "contributorNameTypeDeref": "Personal name",
+              "primary": "true"
+            }
+          ],
+          "publication": [
+            {
+              "publisher": "Robert Owen Lehman Foundation,",
+              "place": "[New York,",
+              "dateOfPublication": "1967]"
+            }
+          ],
+          "physicalDescriptions": [
+            "score (xxvi, 196 p.)"
+          ],
+          "subjects": [
+            "Schumann, Robert--1810-1856--Manuscripts--Facsimiles",
+            "Symphonies--Scores"
+          ],
+          "notes": [
+            {
+              "note": "Facsim. of holograph in the Library of Congress.",
+              "instanceNoteTypeDeref": "General note"
+            }
+          ],
+          "matchKey": {
+            "title": "Symphony, op. 38",
+            "remainder-of-title": " : ",
+            "medium": null,
+            "name-of-part-section-of-work": null,
+            "number-of-part-section-of-work": null,
+            "inclusive-dates": null
+          }
+        },
+        "holdingsRecords": [
+          {
+            "permanentLocationDeref": "STACKS",
+            "illPolicyDeref": "Will not lend",
+            "callNumber": "ML96.5 .S392 NO.1",
+            "callNumberTypeDeref": "Library of Congress classification",
+            "notes": [
+              {
+                "note": "Location code: STACKS",
+                "holdingsNoteTypeDeref": "Note",
+                "staffOnly": "true"
+              }
+            ],
+            "items": [
+              {
+                "itemIdentifier": "36105041839973",
+                "barcode": "36105041839973",
+                "copyNumber": "1",
+                "status": {
+                  "name": "Unknown"
+                },
+                "permanentLoanTypeDeref": "Can circulate",
+                "materialTypeDeref": "SCO - Scores"
+              }
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "localId": "a2",
+      "marcPayload": {
+        "leader": "01497ccm a2200349   4500",
+        "fields": [
+          {
+            "001": "a2"
+          },
+          {
+            "003": "SIRSI"
+          },
+          {
+            "005": "20211009050004.0"
+          },
+          {
+            "008": "790321|||||||||enk           ||| | eng  "
+          },
+          {
+            "010": {
+              "ind1": " ",
+              "ind2": " ",
+              "subfields": [
+                {
+                  "a": "m  59000416"
+                }
+              ]
+            }
+          },
+          {
+            "035": {
+              "ind1": " ",
+              "ind2": " ",
+              "subfields": [
+                {
+                  "a": "(OCoLC-M)413408"
+                }
+              ]
+            }
+          },
+          {
+            "035": {
+              "ind1": " ",
+              "ind2": " ",
+              "subfields": [
+                {
+                  "a": "(OCoLC-I)268816922"
+                }
+              ]
+            }
+          },
+          {
+            "040": {
+              "ind1": " ",
+              "ind2": " ",
+              "subfields": [
+                {
+                  "c": "CSt"
+                },
+                {
+                  "d": "CSt"
+                },
+                {
+                  "d": "OrLoB"
+                }
+              ]
+            }
+          },
+          {
+            "100": {
+              "ind1": "1",
+              "ind2": " ",
+              "subfields": [
+                {
+                  "a": "Boulez, Pierre,"
+                },
+                {
+                  "d": "1925-2016."
+                },
+                {
+                  "?": "UNAUTHORIZED"
+                }
+              ]
+            }
+          },
+          {
+            "240": {
+              "ind1": "1",
+              "ind2": "0",
+              "subfields": [
+                {
+                  "a": "Pli selon pli."
+                },
+                {
+                  "p": "Improvisation sur Mallarmé,"
+                },
+                {
+                  "n": "no. 2"
+                },
+                {
+                  "?": "UNAUTHORIZED"
+                }
+              ]
+            }
+          },
+          {
+            "245": {
+              "ind1": "1",
+              "ind2": "0",
+              "subfields": [
+                {
+                  "a": "Improvisation sur Mallarme: Une dentelle s'abolit."
+                },
+                {
+                  "b": "Pour soprano et 9 instrumentistes."
+                }
+              ]
+            }
+          },
+          {
+            "260": {
+              "ind1": " ",
+              "ind2": " ",
+              "subfields": [
+                {
+                  "a": "London, Universal Edition"
+                },
+                {
+                  "c": "[1958]"
+                }
+              ]
+            }
+          },
+          {
+            "300": {
+              "ind1": " ",
+              "ind2": " ",
+              "subfields": [
+                {
+                  "a": "score (64 p.)"
+                },
+                {
+                  "c": "25 cm."
+                }
+              ]
+            }
+          },
+          {
+            "490": {
+              "ind1": "0",
+              "ind2": " ",
+              "subfields": [
+                {
+                  "a": "Universal Edition, Nr. 12857"
+                }
+              ]
+            }
+          },
+          {
+            "500": {
+              "ind1": " ",
+              "ind2": " ",
+              "subfields": [
+                {
+                  "a": "For soprano, harp, bells, vibraphone, piano, celesta and percussion (4 players)"
+                }
+              ]
+            }
+          },
+          {
+            "596": {
+              "ind1": " ",
+              "ind2": " ",
+              "subfields": [
+                {
+                  "a": "18 31"
+                }
+              ]
+            }
+          },
+          {
+            "650": {
+              "ind1": " ",
+              "ind2": "0",
+              "subfields": [
+                {
+                  "a": "Songs (High voice) with instrumental ensemble."
+                },
+                {
+                  "=": "^A1062841"
+                }
+              ]
+            }
+          },
+          {
+            "700": {
+              "ind1": "1",
+              "ind2": " ",
+              "subfields": [
+                {
+                  "a": "Mallarmé, Stéphane,"
+                },
+                {
+                  "d": "1842-1898."
+                },
+                {
+                  "=": "^A100473"
+                }
+              ]
+            }
+          },
+          {
+            "740": {
+              "ind1": "4",
+              "ind2": " ",
+              "subfields": [
+                {
+                  "a": "Une dentelle s'abolit."
+                }
+              ]
+            }
+          },
+          {
+            "740": {
+              "ind1": "0",
+              "ind2": " ",
+              "subfields": [
+                {
+                  "a": "Improvisation sur Mallarme, no. 2."
+                }
+              ]
+            }
+          },
+          {
+            "916": {
+              "ind1": " ",
+              "ind2": " ",
+              "subfields": [
+                {
+                  "a": "DATE CATALOGED"
+                },
+                {
+                  "b": "19930201"
+                }
+              ]
+            }
+          },
+          {
+            "919": {
+              "ind1": " ",
+              "ind2": " ",
+              "subfields": [
+                {
+                  "a": "exclude from BorrowDirect"
+                },
+                {
+                  "b": "HathiTrust ETAS"
+                }
+              ]
+            }
+          },
+          {
+            "999": {
+              "ind1": " ",
+              "ind2": " ",
+              "subfields": [
+                {
+                  "a": "M1613.3 .B76 I32"
+                },
+                {
+                  "w": "LC"
+                },
+                {
+                  "c": "1"
+                },
+                {
+                  "i": "36105041839981"
+                },
+                {
+                  "d": "4/26/2016"
+                },
+                {
+                  "e": "1/28/2016"
+                },
+                {
+                  "l": "SCORES"
+                },
+                {
+                  "m": "MUSIC"
+                },
+                {
+                  "n": "7"
+                },
+                {
+                  "q": "2"
+                },
+                {
+                  "r": "Y"
+                },
+                {
+                  "s": "Y"
+                },
+                {
+                  "t": "SCORE"
+                },
+                {
+                  "u": "3/21/1979"
+                }
+              ]
+            }
+          },
+          {
+            "999": {
+              "ind1": " ",
+              "ind2": " ",
+              "subfields": [
+                {
+                  "a": "M1613.3 .B76 I32"
+                },
+                {
+                  "w": "LC"
+                },
+                {
+                  "c": "3"
+                },
+                {
+                  "i": "36105041840005"
+                },
+                {
+                  "d": "5/17/2012"
+                },
+                {
+                  "e": "11/29/2011"
+                },
+                {
+                  "l": "STACKS"
+                },
+                {
+                  "m": "SAL3"
+                },
+                {
+                  "n": "10"
+                },
+                {
+                  "q": "2"
+                },
+                {
+                  "r": "Y"
+                },
+                {
+                  "s": "Y"
+                },
+                {
+                  "t": "SCORE"
+                },
+                {
+                  "u": "3/21/1979"
+                }
+              ]
+            }
+          },
+          {
+            "900": {
+              "ind1": " ",
+              "ind2": " ",
+              "subfields": [
+                {
+                  "5": "POD"
+                },
+                {
+                  "b": "CSt"
+                }
+              ]
+            }
+          },
+          {
+            "998": {
+              "ind1": " ",
+              "ind2": " ",
+              "subfields": [
+                {
+                  "5": "POD"
+                },
+                {
+                  "8": "999.0\\p"
+                },
+                {
+                  "a": "M1613.3 .B76 I32"
+                },
+                {
+                  "i": "36105041839981"
+                },
+                {
+                  "m": "MUSIC"
+                }
+              ]
+            }
+          },
+          {
+            "998": {
+              "ind1": " ",
+              "ind2": " ",
+              "subfields": [
+                {
+                  "5": "POD"
+                },
+                {
+                  "8": "999.1\\p"
+                },
+                {
+                  "a": "M1613.3 .B76 I32"
+                },
+                {
+                  "i": "36105041840005"
+                },
+                {
+                  "m": "SAL3"
+                }
+              ]
+            }
+          }
+        ]
+      },
+      "inventoryPayload": {
+        "institutionDeref": "US-CSt",
+        "localIdentifier": "a2",
+        "instance": {
+          "source": "MARC",
+          "instanceTypeDeref": "ntm",
+          "identifiers": [
+            {
+              "value": "a2",
+              "identifierTypeDeref": "ISIL:US-CSt"
+            },
+            {
+              "value": "m  59000416",
+              "identifierTypeDeref": "LCCN"
+            },
+            {
+              "value": "(OCoLC-M)413408",
+              "identifierTypeDeref": "System control number"
+            },
+            {
+              "value": "(OCoLC-I)268816922",
+              "identifierTypeDeref": "System control number"
+            }
+          ],
+          "title": "Improvisation sur Mallarme: Une dentelle s'abolit. Pour soprano et 9 instrumentistes",
+          "contributors": [
+            {
+              "name": "Boulez, Pierre, 1925-2016",
+              "contributorNameTypeDeref": "Personal name",
+              "primary": "true"
+            },
+            {
+              "name": "Mallarmé, Stéphane, 1842-1898",
+              "contributorNameTypeDeref": "Personal name"
+            }
+          ],
+          "publication": [
+            {
+              "publisher": null,
+              "place": "London, Universal Edition",
+              "dateOfPublication": "[1958]"
+            }
+          ],
+          "physicalDescriptions": [
+            "score (64 p.)"
+          ],
+          "subjects": [
+            "Songs (High voice) with instrumental ensemble"
+          ],
+          "notes": [
+            {
+              "note": "For soprano, harp, bells, vibraphone, piano, celesta and percussion (4 players)",
+              "instanceNoteTypeDeref": "General note"
+            }
+          ],
+          "matchKey": {
+            "title": "Improvisation sur Mallarme: Une dentelle s'abolit",
+            "remainder-of-title": " : Pour soprano et 9 instrumentistes",
+            "medium": null,
+            "name-of-part-section-of-work": null,
+            "number-of-part-section-of-work": null,
+            "inclusive-dates": null
+          }
+        },
+        "holdingsRecords": [
+          {
+            "permanentLocationDeref": "SCORES",
+            "illPolicyDeref": "Will not lend",
+            "callNumber": "M1613.3 .B76 I32",
+            "callNumberTypeDeref": "Library of Congress classification",
+            "notes": [
+              {
+                "note": "Location code: SCORES",
+                "holdingsNoteTypeDeref": "Note",
+                "staffOnly": "true"
+              }
+            ],
+            "items": [
+              {
+                "itemIdentifier": "36105041839981",
+                "barcode": "36105041839981",
+                "copyNumber": "1",
+                "status": {
+                  "name": "Unknown"
+                },
+                "permanentLoanTypeDeref": "Can circulate",
+                "materialTypeDeref": "SCO - Scores"
+              }
+            ]
+          },
+          {
+            "permanentLocationDeref": "STACKS",
+            "illPolicyDeref": "Will not lend",
+            "callNumber": "M1613.3 .B76 I32",
+            "callNumberTypeDeref": "Library of Congress classification",
+            "notes": [
+              {
+                "note": "Location code: STACKS",
+                "holdingsNoteTypeDeref": "Note",
+                "staffOnly": "true"
+              }
+            ],
+            "items": [
+              {
+                "itemIdentifier": "36105041840005",
+                "barcode": "36105041840005",
+                "copyNumber": "3",
+                "status": {
+                  "name": "Unknown"
+                },
+                "permanentLoanTypeDeref": "Can circulate",
+                "materialTypeDeref": "SCO - Scores"
+              }
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "localId": "a3",
+      "marcPayload": {
+        "leader": "01533cjm a2200385   4500",
+        "fields": [
+          {
+            "001": "a3"
+          },
+          {
+            "003": "SIRSI"
+          },
+          {
+            "005": "20211009050004.0"
+          },
+          {
+            "007": "sd|bsmennmplne"
+          },
+          {
+            "008": "741105s1969    nyuopn   d        | ita  "
+          },
+          {
+            "010": {
+              "ind1": " ",
+              "ind2": " ",
+              "subfields": [
+                {
+                  "a": "   77750270"
+                }
+              ]
+            }
+          },
+          {
+            "028": {
+              "ind1": "0",
+              "ind2": "2",
+              "subfields": [
+                {
+                  "a": "VIC 6027"
+                },
+                {
+                  "b": "RCA Victor"
+                }
+              ]
+            }
+          },
+          {
+            "035": {
+              "ind1": " ",
+              "ind2": " ",
+              "subfields": [
+                {
+                  "a": "(OCoLC-M)3417945"
+                }
+              ]
+            }
+          },
+          {
+            "035": {
+              "ind1": " ",
+              "ind2": " ",
+              "subfields": [
+                {
+                  "a": "(OCoLC-I)268829524"
+                }
+              ]
+            }
+          },
+          {
+            "040": {
+              "ind1": " ",
+              "ind2": " ",
+              "subfields": [
+                {
+                  "d": "OrLoB"
+                }
+              ]
+            }
+          },
+          {
+            "100": {
+              "ind1": "1",
+              "ind2": " ",
+              "subfields": [
+                {
+                  "a": "Puccini, Giacomo,"
+                },
+                {
+                  "d": "1858-1924."
+                },
+                {
+                  "=": "^A1299487"
+                }
+              ]
+            }
+          },
+          {
+            "240": {
+              "ind1": "1",
+              "ind2": "0",
+              "subfields": [
+                {
+                  "a": "Manon Lescaut"
+                },
+                {
+                  "=": "^A1299487"
+                }
+              ]
+            }
+          },
+          {
+            "245": {
+              "ind1": "1",
+              "ind2": "0",
+              "subfields": [
+                {
+                  "a": "Manon Lescaut."
+                },
+                {
+                  "c": "[Lyric drama in four acts]"
+                },
+                {
+                  "h": "[sound recording]"
+                }
+              ]
+            }
+          },
+          {
+            "260": {
+              "ind1": " ",
+              "ind2": " ",
+              "subfields": [
+                {
+                  "a": "RCA Victor."
+                },
+                {
+                  "c": "[1969]"
+                }
+              ]
+            }
+          },
+          {
+            "300": {
+              "ind1": " ",
+              "ind2": " ",
+              "subfields": [
+                {
+                  "a": "4s.  12in.  33.3rpm."
+                },
+                {
+                  "b": "microgroove."
+                }
+              ]
+            }
+          },
+          {
+            "500": {
+              "ind1": " ",
+              "ind2": " ",
+              "subfields": [
+                {
+                  "a": "Licia Albanese, soprano; Jussi Bjoerling, tenor; Robert Merrill, baritone, with supporting soloists; Rome Opera House Orchestra and Chorus; Jonel Perlea, conductor."
+                }
+              ]
+            }
+          },
+          {
+            "500": {
+              "ind1": " ",
+              "ind2": " ",
+              "subfields": [
+                {
+                  "a": "\"Recorded in the Rome Opera House, July 1954.\""
+                }
+              ]
+            }
+          },
+          {
+            "500": {
+              "ind1": " ",
+              "ind2": " ",
+              "subfields": [
+                {
+                  "a": "Duration: 1 hr., 55 min., 29 sec."
+                }
+              ]
+            }
+          },
+          {
+            "500": {
+              "ind1": " ",
+              "ind2": " ",
+              "subfields": [
+                {
+                  "a": "Synopsis and libretto, with English translation laid in container."
+                }
+              ]
+            }
+          },
+          {
+            "596": {
+              "ind1": " ",
+              "ind2": " ",
+              "subfields": [
+                {
+                  "a": "5"
+                }
+              ]
+            }
+          },
+          {
+            "650": {
+              "ind1": " ",
+              "ind2": "0",
+              "subfields": [
+                {
+                  "a": "Operas."
+                },
+                {
+                  "=": "^A1045267"
+                }
+              ]
+            }
+          },
+          {
+            "700": {
+              "ind1": "1",
+              "ind2": " ",
+              "subfields": [
+                {
+                  "a": "Albanese, Licia"
+                },
+                {
+                  "4": "prf"
+                },
+                {
+                  "=": "^A379038"
+                }
+              ]
+            }
+          },
+          {
+            "700": {
+              "ind1": "1",
+              "ind2": " ",
+              "subfields": [
+                {
+                  "a": "Björling, Jussi,"
+                },
+                {
+                  "d": "1911-1960"
+                },
+                {
+                  "4": "prf."
+                },
+                {
+                  "=": "^A14076"
+                }
+              ]
+            }
+          },
+          {
+            "700": {
+              "ind1": "1",
+              "ind2": " ",
+              "subfields": [
+                {
+                  "a": "Merrill, Robert,"
+                },
+                {
+                  "d": "1917-2004"
+                },
+                {
+                  "4": "prf"
+                },
+                {
+                  "=": "^A849529"
+                }
+              ]
+            }
+          },
+          {
+            "700": {
+              "ind1": "1",
+              "ind2": " ",
+              "subfields": [
+                {
+                  "a": "Perlea, Jonel,"
+                },
+                {
+                  "d": "1900-1970"
+                },
+                {
+                  "4": "cnd."
+                },
+                {
+                  "=": "^A515857"
+                }
+              ]
+            }
+          },
+          {
+            "710": {
+              "ind1": "2",
+              "ind2": " ",
+              "subfields": [
+                {
+                  "a": "Teatro dell'opera (Rome, Italy)"
+                },
+                {
+                  "4": "prf"
+                },
+                {
+                  "=": "^A128877"
+                }
+              ]
+            }
+          },
+          {
+            "916": {
+              "ind1": " ",
+              "ind2": " ",
+              "subfields": [
+                {
+                  "a": "DATE CATALOGED"
+                },
+                {
+                  "b": "19921219"
+                }
+              ]
+            }
+          },
+          {
+            "999": {
+              "ind1": " ",
+              "ind2": " ",
+              "subfields": [
+                {
+                  "a": "UNCLAAA0003"
+                },
+                {
+                  "w": "ASIS"
+                },
+                {
+                  "c": "1"
+                },
+                {
+                  "i": "001AAA0003"
+                },
+                {
+                  "d": "8/5/1996"
+                },
+                {
+                  "l": "RECORDINGS"
+                },
+                {
+                  "m": "ARS"
+                },
+                {
+                  "r": "Y"
+                },
+                {
+                  "s": "Y"
+                },
+                {
+                  "t": "NH-RCORDNG"
+                },
+                {
+                  "u": "11/5/1974"
+                }
+              ]
+            }
+          },
+          {
+            "900": {
+              "ind1": " ",
+              "ind2": " ",
+              "subfields": [
+                {
+                  "5": "POD"
+                },
+                {
+                  "b": "CSt"
+                }
+              ]
+            }
+          },
+          {
+            "998": {
+              "ind1": " ",
+              "ind2": " ",
+              "subfields": [
+                {
+                  "5": "POD"
+                },
+                {
+                  "8": "999.0\\p"
+                },
+                {
+                  "a": "UNCLAAA0003"
+                },
+                {
+                  "i": "001AAA0003"
+                },
+                {
+                  "m": "ARS"
+                }
+              ]
+            }
+          }
+        ]
+      },
+      "inventoryPayload": {
+        "institutionDeref": "US-CSt",
+        "localIdentifier": "a3",
+        "instance": {
+          "source": "MARC",
+          "instanceTypeDeref": "prm",
+          "identifiers": [
+            {
+              "value": "a3",
+              "identifierTypeDeref": "ISIL:US-CSt"
+            },
+            {
+              "value": "   77750270",
+              "identifierTypeDeref": "LCCN"
+            },
+            {
+              "value": "VIC 6027",
+              "identifierTypeDeref": "Publisher or distributor number"
+            },
+            {
+              "value": "(OCoLC-M)3417945",
+              "identifierTypeDeref": "System control number"
+            },
+            {
+              "value": "(OCoLC-I)268829524",
+              "identifierTypeDeref": "System control number"
+            }
+          ],
+          "title": "Manon Lescaut. [sound recording]",
+          "contributors": [
+            {
+              "name": "Puccini, Giacomo, 1858-1924",
+              "contributorNameTypeDeref": "Personal name",
+              "primary": "true"
+            },
+            {
+              "name": "Albanese, Licia",
+              "contributorNameTypeDeref": "Personal name",
+              "contributorTypeDeref": "prf"
+            },
+            {
+              "name": "Björling, Jussi, 1911-1960",
+              "contributorNameTypeDeref": "Personal name",
+              "contributorTypeDeref": "prf."
+            },
+            {
+              "name": "Merrill, Robert, 1917-2004",
+              "contributorNameTypeDeref": "Personal name",
+              "contributorTypeDeref": "prf"
+            },
+            {
+              "name": "Perlea, Jonel, 1900-1970",
+              "contributorNameTypeDeref": "Personal name",
+              "contributorTypeDeref": "cnd."
+            },
+            {
+              "name": "Teatro dell'opera (Rome, Italy)",
+              "contributorNameTypeDeref": "Corporate name",
+              "contributorTypeDeref": "prf"
+            }
+          ],
+          "publication": [
+            {
+              "publisher": null,
+              "place": "RCA Victor.",
+              "dateOfPublication": "[1969]"
+            }
+          ],
+          "physicalDescriptions": [
+            "4s.  12in.  33.3rpm"
+          ],
+          "subjects": [
+            "Operas"
+          ],
+          "notes": [
+            {
+              "note": "Licia Albanese, soprano; Jussi Bjoerling, tenor; Robert Merrill, baritone, with supporting soloists; Rome Opera House Orchestra and Chorus; Jonel Perlea, conductor.",
+              "instanceNoteTypeDeref": "General note"
+            },
+            {
+              "note": "\"Recorded in the Rome Opera House, July 1954.\"",
+              "instanceNoteTypeDeref": "General note"
+            },
+            {
+              "note": "Duration: 1 hr., 55 min., 29 sec.",
+              "instanceNoteTypeDeref": "General note"
+            },
+            {
+              "note": "Synopsis and libretto, with English translation laid in container.",
+              "instanceNoteTypeDeref": "General note"
+            }
+          ],
+          "matchKey": {
+            "title": "Manon Lescaut",
+            "remainder-of-title": " : ",
+            "medium": "[sound recording]",
+            "name-of-part-section-of-work": null,
+            "number-of-part-section-of-work": null,
+            "inclusive-dates": null
+          }
+        },
+        "holdingsRecords": [
+          {
+            "permanentLocationDeref": "RECORDINGS",
+            "illPolicyDeref": "Will not lend",
+            "callNumber": "UNCLAAA0003",
+            "callNumberTypeDeref": "Library of Congress classification",
+            "notes": [
+              {
+                "note": "Location code: RECORDINGS",
+                "holdingsNoteTypeDeref": "Note",
+                "staffOnly": "true"
+              }
+            ],
+            "items": [
+              {
+                "itemIdentifier": "001AAA0003",
+                "barcode": "001AAA0003",
+                "copyNumber": "1",
+                "status": {
+                  "name": "Unknown"
+                },
+                "permanentLoanTypeDeref": "Can circulate",
+                "materialTypeDeref": "REC - Sound Recordings"
+              }
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "localId": "a4",
+      "marcPayload": {
+        "leader": "01125ccm a2200289   4500",
+        "fields": [
+          {
+            "001": "a4"
+          },
+          {
+            "003": "SIRSI"
+          },
+          {
+            "005": "20211009050004.0"
+          },
+          {
+            "008": "741105s1973    gw cta         n  | ger  "
+          },
+          {
+            "028": {
+              "ind1": "3",
+              "ind2": "2",
+              "subfields": [
+                {
+                  "a": "Breitkopf und Härtels Partiturbibliothek Nr. 4691"
+                },
+                {
+                  "b": "Breitkopf und Härtel"
+                }
+              ]
+            }
+          },
+          {
+            "035": {
+              "ind1": " ",
+              "ind2": " ",
+              "subfields": [
+                {
+                  "a": "(OCoLC-M)84446006"
+                }
+              ]
+            }
+          },
+          {
+            "035": {
+              "ind1": " ",
+              "ind2": " ",
+              "subfields": [
+                {
+                  "a": "(OCoLC-I)268842353"
+                }
+              ]
+            }
+          },
+          {
+            "040": {
+              "ind1": " ",
+              "ind2": " ",
+              "subfields": [
+                {
+                  "d": "OrLoB"
+                },
+                {
+                  "d": "CSt"
+                }
+              ]
+            }
+          },
+          {
+            "100": {
+              "ind1": "1",
+              "ind2": " ",
+              "subfields": [
+                {
+                  "a": "Bach, Johann Sebastian,"
+                },
+                {
+                  "d": "1685-1750."
+                },
+                {
+                  "=": "^A368392"
+                }
+              ]
+            }
+          },
+          {
+            "240": {
+              "ind1": "1",
+              "ind2": "0",
+              "subfields": [
+                {
+                  "a": "Gloria in excelsis Deo (Cantata)"
+                },
+                {
+                  "=": "^A368392"
+                }
+              ]
+            }
+          },
+          {
+            "245": {
+              "ind1": " ",
+              "ind2": "0",
+              "subfields": [
+                {
+                  "a": "Kantate Nr. 191"
+                },
+                {
+                  "c": "[am ersten Weihnachtstag] Gloria in excelsis Deo (BWV 191)  Urtextausg."
+                }
+              ]
+            }
+          },
+          {
+            "260": {
+              "ind1": " ",
+              "ind2": " ",
+              "subfields": [
+                {
+                  "a": "Wiesbaden,"
+                },
+                {
+                  "b": "Breitkopf & Härtel"
+                },
+                {
+                  "c": "[1973]"
+                }
+              ]
+            }
+          },
+          {
+            "300": {
+              "ind1": " ",
+              "ind2": " ",
+              "subfields": [
+                {
+                  "a": "score (62 p.)"
+                },
+                {
+                  "c": "31cm."
+                }
+              ]
+            }
+          },
+          {
+            "500": {
+              "ind1": " ",
+              "ind2": " ",
+              "subfields": [
+                {
+                  "a": "Caption title."
+                }
+              ]
+            }
+          },
+          {
+            "596": {
+              "ind1": " ",
+              "ind2": " ",
+              "subfields": [
+                {
+                  "a": "31"
+                }
+              ]
+            }
+          },
+          {
+            "650": {
+              "ind1": " ",
+              "ind2": "0",
+              "subfields": [
+                {
+                  "a": "Cantatas, Sacred"
+                },
+                {
+                  "v": "Scores."
+                },
+                {
+                  "=": "^A2095993"
+                }
+              ]
+            }
+          },
+          {
+            "650": {
+              "ind1": " ",
+              "ind2": "0",
+              "subfields": [
+                {
+                  "a": "Christmas music."
+                },
+                {
+                  "=": "^A1004175"
+                }
+              ]
+            }
+          },
+          {
+            "650": {
+              "ind1": " ",
+              "ind2": "0",
+              "subfields": [
+                {
+                  "a": "Gloria in excelsis Deo (Music)"
+                },
+                {
+                  "=": "^A1022109"
+                }
+              ]
+            }
+          },
+          {
+            "916": {
+              "ind1": " ",
+              "ind2": " ",
+              "subfields": [
+                {
+                  "a": "DATE CATALOGED"
+                },
+                {
+                  "b": "19920630"
+                }
+              ]
+            }
+          },
+          {
+            "999": {
+              "ind1": " ",
+              "ind2": " ",
+              "subfields": [
+                {
+                  "a": "M2020 .B11 G5 1973"
+                },
+                {
+                  "w": "LC"
+                },
+                {
+                  "c": "1"
+                },
+                {
+                  "i": "36105041840013"
+                },
+                {
+                  "d": "12/17/2013"
+                },
+                {
+                  "e": "10/10/2013"
+                },
+                {
+                  "l": "STACKS"
+                },
+                {
+                  "m": "SAL3"
+                },
+                {
+                  "n": "3"
+                },
+                {
+                  "q": "6"
+                },
+                {
+                  "r": "Y"
+                },
+                {
+                  "s": "Y"
+                },
+                {
+                  "t": "SCORE"
+                },
+                {
+                  "u": "11/5/1974"
+                },
+                {
+                  "z": "DIGI-SCAN"
+                }
+              ]
+            }
+          },
+          {
+            "900": {
+              "ind1": " ",
+              "ind2": " ",
+              "subfields": [
+                {
+                  "5": "POD"
+                },
+                {
+                  "b": "CSt"
+                }
+              ]
+            }
+          },
+          {
+            "998": {
+              "ind1": " ",
+              "ind2": " ",
+              "subfields": [
+                {
+                  "5": "POD"
+                },
+                {
+                  "8": "999.0\\p"
+                },
+                {
+                  "a": "M2020 .B11 G5 1973"
+                },
+                {
+                  "i": "36105041840013"
+                },
+                {
+                  "m": "SAL3"
+                }
+              ]
+            }
+          }
+        ]
+      },
+      "inventoryPayload": {
+        "institutionDeref": "US-CSt",
+        "localIdentifier": "a4",
+        "instance": {
+          "source": "MARC",
+          "instanceTypeDeref": "ntm",
+          "identifiers": [
+            {
+              "value": "a4",
+              "identifierTypeDeref": "ISIL:US-CSt"
+            },
+            {
+              "value": "Breitkopf und Härtels Partiturbibliothek Nr. 4691",
+              "identifierTypeDeref": "Publisher or distributor number"
+            },
+            {
+              "value": "(OCoLC-M)84446006",
+              "identifierTypeDeref": "System control number"
+            },
+            {
+              "value": "(OCoLC-I)268842353",
+              "identifierTypeDeref": "System control number"
+            }
+          ],
+          "title": "Kantate Nr. 191",
+          "contributors": [
+            {
+              "name": "Bach, Johann Sebastian, 1685-1750",
+              "contributorNameTypeDeref": "Personal name",
+              "primary": "true"
+            }
+          ],
+          "publication": [
+            {
+              "publisher": "Breitkopf & Härtel",
+              "place": "Wiesbaden,",
+              "dateOfPublication": "[1973]"
+            }
+          ],
+          "physicalDescriptions": [
+            "score (62 p.)"
+          ],
+          "subjects": [
+            "Cantatas, Sacred--Scores",
+            "Christmas music",
+            "Gloria in excelsis Deo (Music)"
+          ],
+          "notes": [
+            {
+              "note": "Caption title.",
+              "instanceNoteTypeDeref": "General note"
+            }
+          ],
+          "matchKey": {
+            "title": "Kantate Nr. 191",
+            "remainder-of-title": " : ",
+            "medium": null,
+            "name-of-part-section-of-work": null,
+            "number-of-part-section-of-work": null,
+            "inclusive-dates": null
+          }
+        },
+        "holdingsRecords": [
+          {
+            "permanentLocationDeref": "STACKS",
+            "illPolicyDeref": "Will not lend",
+            "callNumber": "M2020 .B11 G5 1973",
+            "callNumberTypeDeref": "Library of Congress classification",
+            "notes": [
+              {
+                "note": "Location code: STACKS",
+                "holdingsNoteTypeDeref": "Note",
+                "staffOnly": "true"
+              }
+            ],
+            "items": [
+              {
+                "itemIdentifier": "36105041840013",
+                "barcode": "36105041840013",
+                "copyNumber": "1",
+                "status": {
+                  "name": "Unknown"
+                },
+                "permanentLoanTypeDeref": "Can circulate",
+                "materialTypeDeref": "SCO - Scores"
+              }
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "localId": "a5",
+      "marcPayload": {
+        "leader": "00957ccm a2200265   4500",
+        "fields": [
+          {
+            "001": "a5"
+          },
+          {
+            "003": "SIRSI"
+          },
+          {
+            "005": "20211009050004.0"
+          },
+          {
+            "008": "741105s1974    au            ||| | ger  "
+          },
+          {
+            "035": {
+              "ind1": " ",
+              "ind2": " ",
+              "subfields": [
+                {
+                  "a": "(OCoLC-M)82277344"
+                }
+              ]
+            }
+          },
+          {
+            "035": {
+              "ind1": " ",
+              "ind2": " ",
+              "subfields": [
+                {
+                  "a": "(OCoLC-I)268854847"
+                }
+              ]
+            }
+          },
+          {
+            "040": {
+              "ind1": " ",
+              "ind2": " ",
+              "subfields": [
+                {
+                  "d": "CSt"
+                },
+                {
+                  "d": "OrLoB"
+                }
+              ]
+            }
+          },
+          {
+            "100": {
+              "ind1": "1",
+              "ind2": " ",
+              "subfields": [
+                {
+                  "a": "Kropfreiter, Augustinus Franz."
+                },
+                {
+                  "=": "^A2916624"
+                }
+              ]
+            }
+          },
+          {
+            "240": {
+              "ind1": "1",
+              "ind2": "0",
+              "subfields": [
+                {
+                  "a": "Quintets,"
+                },
+                {
+                  "m": "flute, oboe, clarinet, horn, bassoon"
+                },
+                {
+                  "=": "^A2916624"
+                }
+              ]
+            }
+          },
+          {
+            "245": {
+              "ind1": "0",
+              "ind2": "0",
+              "subfields": [
+                {
+                  "a": "Bläserquintett, 1968."
+                }
+              ]
+            }
+          },
+          {
+            "260": {
+              "ind1": " ",
+              "ind2": " ",
+              "subfields": [
+                {
+                  "a": "[Wien]"
+                },
+                {
+                  "b": "Verlag Doblinger"
+                },
+                {
+                  "c": "[1974]"
+                }
+              ]
+            }
+          },
+          {
+            "300": {
+              "ind1": " ",
+              "ind2": " ",
+              "subfields": [
+                {
+                  "a": "5 pts."
+                },
+                {
+                  "c": "30cm."
+                }
+              ]
+            }
+          },
+          {
+            "500": {
+              "ind1": " ",
+              "ind2": " ",
+              "subfields": [
+                {
+                  "a": "For flute, oboe, clarinet, horn, and bassoon."
+                }
+              ]
+            }
+          },
+          {
+            "500": {
+              "ind1": " ",
+              "ind2": " ",
+              "subfields": [
+                {
+                  "a": "Duration: about 8 min."
+                }
+              ]
+            }
+          },
+          {
+            "596": {
+              "ind1": " ",
+              "ind2": " ",
+              "subfields": [
+                {
+                  "a": "31"
+                }
+              ]
+            }
+          },
+          {
+            "650": {
+              "ind1": " ",
+              "ind2": "0",
+              "subfields": [
+                {
+                  "a": "Wind quintets (Bassoon, clarinet, flute, horn, oboe)"
+                },
+                {
+                  "x": "Parts."
+                },
+                {
+                  "=": "^A1075272"
+                }
+              ]
+            }
+          },
+          {
+            "916": {
+              "ind1": " ",
+              "ind2": " ",
+              "subfields": [
+                {
+                  "a": "DATE CATALOGED"
+                },
+                {
+                  "b": "19950710"
+                }
+              ]
+            }
+          },
+          {
+            "999": {
+              "ind1": " ",
+              "ind2": " ",
+              "subfields": [
+                {
+                  "a": "M557 .K935 B6"
+                },
+                {
+                  "w": "LC"
+                },
+                {
+                  "c": "1"
+                },
+                {
+                  "i": "36105041840021"
+                },
+                {
+                  "d": "9/2/2010"
+                },
+                {
+                  "e": "8/25/2010"
+                },
+                {
+                  "j": "6"
+                },
+                {
+                  "l": "STACKS"
+                },
+                {
+                  "m": "SAL3"
+                },
+                {
+                  "q": "1"
+                },
+                {
+                  "r": "Y"
+                },
+                {
+                  "s": "Y"
+                },
+                {
+                  "t": "SCORE"
+                },
+                {
+                  "u": "11/5/1974"
+                },
+                {
+                  "z": "DIGI-SENT"
+                }
+              ]
+            }
+          },
+          {
+            "900": {
+              "ind1": " ",
+              "ind2": " ",
+              "subfields": [
+                {
+                  "5": "POD"
+                },
+                {
+                  "b": "CSt"
+                }
+              ]
+            }
+          },
+          {
+            "998": {
+              "ind1": " ",
+              "ind2": " ",
+              "subfields": [
+                {
+                  "5": "POD"
+                },
+                {
+                  "8": "999.0\\p"
+                },
+                {
+                  "a": "M557 .K935 B6"
+                },
+                {
+                  "i": "36105041840021"
+                },
+                {
+                  "m": "SAL3"
+                }
+              ]
+            }
+          }
+        ]
+      },
+      "inventoryPayload": {
+        "institutionDeref": "US-CSt",
+        "localIdentifier": "a5",
+        "instance": {
+          "source": "MARC",
+          "instanceTypeDeref": "ntm",
+          "identifiers": [
+            {
+              "value": "a5",
+              "identifierTypeDeref": "ISIL:US-CSt"
+            },
+            {
+              "value": "(OCoLC-M)82277344",
+              "identifierTypeDeref": "System control number"
+            },
+            {
+              "value": "(OCoLC-I)268854847",
+              "identifierTypeDeref": "System control number"
+            }
+          ],
+          "title": "Bläserquintett, 1968",
+          "contributors": [
+            {
+              "name": "Kropfreiter, Augustinus Franz",
+              "contributorNameTypeDeref": "Personal name",
+              "primary": "true"
+            }
+          ],
+          "publication": [
+            {
+              "publisher": "Verlag Doblinger",
+              "place": "[Wien]",
+              "dateOfPublication": "[1974]"
+            }
+          ],
+          "physicalDescriptions": [
+            "5 pts"
+          ],
+          "subjects": [
+            "Wind quintets (Bassoon, clarinet, flute, horn, oboe)--Parts"
+          ],
+          "notes": [
+            {
+              "note": "For flute, oboe, clarinet, horn, and bassoon.",
+              "instanceNoteTypeDeref": "General note"
+            },
+            {
+              "note": "Duration: about 8 min.",
+              "instanceNoteTypeDeref": "General note"
+            }
+          ],
+          "matchKey": {
+            "title": "Bläserquintett, 1968",
+            "remainder-of-title": " : ",
+            "medium": null,
+            "name-of-part-section-of-work": null,
+            "number-of-part-section-of-work": null,
+            "inclusive-dates": null
+          }
+        },
+        "holdingsRecords": [
+          {
+            "permanentLocationDeref": "STACKS",
+            "illPolicyDeref": "Will not lend",
+            "callNumber": "M557 .K935 B6",
+            "callNumberTypeDeref": "Library of Congress classification",
+            "notes": [
+              {
+                "note": "Location code: STACKS",
+                "holdingsNoteTypeDeref": "Note",
+                "staffOnly": "true"
+              }
+            ],
+            "items": [
+              {
+                "itemIdentifier": "36105041840021",
+                "barcode": "36105041840021",
+                "copyNumber": "1",
+                "status": {
+                  "name": "Unknown"
+                },
+                "permanentLoanTypeDeref": "Can circulate",
+                "materialTypeDeref": "SCO - Scores"
+              }
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "localId": "a6",
+      "marcPayload": {
+        "leader": "01119ccm a2200289   4500",
+        "fields": [
+          {
+            "001": "a6"
+          },
+          {
+            "003": "SIRSI"
+          },
+          {
+            "005": "20211009050004.0"
+          },
+          {
+            "008": "741105s1973    gw cya         n  | ger  "
+          },
+          {
+            "028": {
+              "ind1": "3",
+              "ind2": "2",
+              "subfields": [
+                {
+                  "a": "Breitkopf und Härtels Partiturbibliothek Nr. 4535"
+                },
+                {
+                  "b": "Breitkopf und Härtel"
+                }
+              ]
+            }
+          },
+          {
+            "035": {
+              "ind1": " ",
+              "ind2": " ",
+              "subfields": [
+                {
+                  "a": "(OCoLC-M)83053990"
+                }
+              ]
+            }
+          },
+          {
+            "035": {
+              "ind1": " ",
+              "ind2": " ",
+              "subfields": [
+                {
+                  "a": "(OCoLC-I)268867792"
+                }
+              ]
+            }
+          },
+          {
+            "040": {
+              "ind1": " ",
+              "ind2": " ",
+              "subfields": [
+                {
+                  "d": "OrLoB"
+                }
+              ]
+            }
+          },
+          {
+            "100": {
+              "ind1": "1",
+              "ind2": " ",
+              "subfields": [
+                {
+                  "a": "Bach, Johann Sebastian,"
+                },
+                {
+                  "d": "1685-1750."
+                },
+                {
+                  "=": "^A378018"
+                }
+              ]
+            }
+          },
+          {
+            "240": {
+              "ind1": "1",
+              "ind2": "0",
+              "subfields": [
+                {
+                  "a": "Geist und Seele wird verwirret"
+                },
+                {
+                  "=": "^A378018"
+                }
+              ]
+            }
+          },
+          {
+            "245": {
+              "ind1": "0",
+              "ind2": "0",
+              "subfields": [
+                {
+                  "a": "Kantate Nr. 35"
+                },
+                {
+                  "c": "[am zwölften Sonntag nach Trinitatis] Geist und Seele wird verwirret (BWV 35).  Urtextausg."
+                }
+              ]
+            }
+          },
+          {
+            "260": {
+              "ind1": " ",
+              "ind2": " ",
+              "subfields": [
+                {
+                  "a": "Wiesbaden,"
+                },
+                {
+                  "b": "Breitkopf & Härtel"
+                },
+                {
+                  "c": "[1973]"
+                }
+              ]
+            }
+          },
+          {
+            "300": {
+              "ind1": " ",
+              "ind2": " ",
+              "subfields": [
+                {
+                  "a": "score (48 p.)"
+                },
+                {
+                  "c": "31cm."
+                }
+              ]
+            }
+          },
+          {
+            "500": {
+              "ind1": " ",
+              "ind2": " ",
+              "subfields": [
+                {
+                  "a": "Caption title."
+                }
+              ]
+            }
+          },
+          {
+            "500": {
+              "ind1": " ",
+              "ind2": " ",
+              "subfields": [
+                {
+                  "a": "For alto and orchestra."
+                }
+              ]
+            }
+          },
+          {
+            "596": {
+              "ind1": " ",
+              "ind2": " ",
+              "subfields": [
+                {
+                  "a": "31"
+                }
+              ]
+            }
+          },
+          {
+            "650": {
+              "ind1": " ",
+              "ind2": "0",
+              "subfields": [
+                {
+                  "a": "Solo cantatas, Sacred (Medium voice)"
+                },
+                {
+                  "=": "^A1062543"
+                }
+              ]
+            }
+          },
+          {
+            "740": {
+              "ind1": "0",
+              "ind2": " ",
+              "subfields": [
+                {
+                  "a": "Geist und Seele wird verwirret."
+                }
+              ]
+            }
+          },
+          {
+            "916": {
+              "ind1": " ",
+              "ind2": " ",
+              "subfields": [
+                {
+                  "a": "DATE CATALOGED"
+                },
+                {
+                  "b": "19920831"
+                }
+              ]
+            }
+          },
+          {
+            "999": {
+              "ind1": " ",
+              "ind2": " ",
+              "subfields": [
+                {
+                  "a": "M2103 .B118 G3"
+                },
+                {
+                  "w": "LC"
+                },
+                {
+                  "c": "1"
+                },
+                {
+                  "i": "36105041840039"
+                },
+                {
+                  "d": "10/4/2010"
+                },
+                {
+                  "e": "9/24/2010"
+                },
+                {
+                  "l": "STACKS"
+                },
+                {
+                  "m": "SAL3"
+                },
+                {
+                  "r": "Y"
+                },
+                {
+                  "s": "Y"
+                },
+                {
+                  "t": "SCORE"
+                },
+                {
+                  "u": "11/5/1974"
+                },
+                {
+                  "z": "DIGI-SCAN"
+                }
+              ]
+            }
+          },
+          {
+            "900": {
+              "ind1": " ",
+              "ind2": " ",
+              "subfields": [
+                {
+                  "5": "POD"
+                },
+                {
+                  "b": "CSt"
+                }
+              ]
+            }
+          },
+          {
+            "998": {
+              "ind1": " ",
+              "ind2": " ",
+              "subfields": [
+                {
+                  "5": "POD"
+                },
+                {
+                  "8": "999.0\\p"
+                },
+                {
+                  "a": "M2103 .B118 G3"
+                },
+                {
+                  "i": "36105041840039"
+                },
+                {
+                  "m": "SAL3"
+                }
+              ]
+            }
+          }
+        ]
+      },
+      "inventoryPayload": {
+        "institutionDeref": "US-CSt",
+        "localIdentifier": "a6",
+        "instance": {
+          "source": "MARC",
+          "instanceTypeDeref": "ntm",
+          "identifiers": [
+            {
+              "value": "a6",
+              "identifierTypeDeref": "ISIL:US-CSt"
+            },
+            {
+              "value": "Breitkopf und Härtels Partiturbibliothek Nr. 4535",
+              "identifierTypeDeref": "Publisher or distributor number"
+            },
+            {
+              "value": "(OCoLC-M)83053990",
+              "identifierTypeDeref": "System control number"
+            },
+            {
+              "value": "(OCoLC-I)268867792",
+              "identifierTypeDeref": "System control number"
+            }
+          ],
+          "title": "Kantate Nr. 35",
+          "contributors": [
+            {
+              "name": "Bach, Johann Sebastian, 1685-1750",
+              "contributorNameTypeDeref": "Personal name",
+              "primary": "true"
+            }
+          ],
+          "publication": [
+            {
+              "publisher": "Breitkopf & Härtel",
+              "place": "Wiesbaden,",
+              "dateOfPublication": "[1973]"
+            }
+          ],
+          "physicalDescriptions": [
+            "score (48 p.)"
+          ],
+          "subjects": [
+            "Solo cantatas, Sacred (Medium voice)"
+          ],
+          "notes": [
+            {
+              "note": "Caption title.",
+              "instanceNoteTypeDeref": "General note"
+            },
+            {
+              "note": "For alto and orchestra.",
+              "instanceNoteTypeDeref": "General note"
+            }
+          ],
+          "matchKey": {
+            "title": "Kantate Nr. 35",
+            "remainder-of-title": " : ",
+            "medium": null,
+            "name-of-part-section-of-work": null,
+            "number-of-part-section-of-work": null,
+            "inclusive-dates": null
+          }
+        },
+        "holdingsRecords": [
+          {
+            "permanentLocationDeref": "STACKS",
+            "illPolicyDeref": "Will not lend",
+            "callNumber": "M2103 .B118 G3",
+            "callNumberTypeDeref": "Library of Congress classification",
+            "notes": [
+              {
+                "note": "Location code: STACKS",
+                "holdingsNoteTypeDeref": "Note",
+                "staffOnly": "true"
+              }
+            ],
+            "items": [
+              {
+                "itemIdentifier": "36105041840039",
+                "barcode": "36105041840039",
+                "copyNumber": "1",
+                "status": {
+                  "name": "Unknown"
+                },
+                "permanentLoanTypeDeref": "Can circulate",
+                "materialTypeDeref": "SCO - Scores"
+              }
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "localId": "a7",
+      "marcPayload": {
+        "leader": "00784ccm a2200241   4500",
+        "fields": [
+          {
+            "001": "a7"
+          },
+          {
+            "003": "SIRSI"
+          },
+          {
+            "005": "20211009050004.0"
+          },
+          {
+            "008": "741105s1973    it vrz            | ita  "
+          },
+          {
+            "010": {
+              "ind1": " ",
+              "ind2": " ",
+              "subfields": [
+                {
+                  "a": "   74227179"
+                }
+              ]
+            }
+          },
+          {
+            "035": {
+              "ind1": " ",
+              "ind2": " ",
+              "subfields": [
+                {
+                  "a": "(OCoLC-M)1614612"
+                }
+              ]
+            }
+          },
+          {
+            "035": {
+              "ind1": " ",
+              "ind2": " ",
+              "subfields": [
+                {
+                  "a": "(OCoLC-I)268880900"
+                }
+              ]
+            }
+          },
+          {
+            "040": {
+              "ind1": " ",
+              "ind2": " ",
+              "subfields": [
+                {
+                  "d": "OrLoB"
+                }
+              ]
+            }
+          },
+          {
+            "100": {
+              "ind1": "1",
+              "ind2": " ",
+              "subfields": [
+                {
+                  "a": "Vlad, Roman,"
+                },
+                {
+                  "d": "1919-2013"
+                },
+                {
+                  "=": "^A441404"
+                }
+              ]
+            }
+          },
+          {
+            "245": {
+              "ind1": "1",
+              "ind2": "0",
+              "subfields": [
+                {
+                  "a": "Sognando il sogno;"
+                },
+                {
+                  "b": "variazioni su di una variazione per pianoforte."
+                }
+              ]
+            }
+          },
+          {
+            "260": {
+              "ind1": " ",
+              "ind2": " ",
+              "subfields": [
+                {
+                  "a": "[Milano]"
+                },
+                {
+                  "b": "Ricordi"
+                },
+                {
+                  "c": "[c1973]"
+                }
+              ]
+            }
+          },
+          {
+            "300": {
+              "ind1": " ",
+              "ind2": " ",
+              "subfields": [
+                {
+                  "a": "22 p."
+                },
+                {
+                  "c": "32cm."
+                }
+              ]
+            }
+          },
+          {
+            "596": {
+              "ind1": " ",
+              "ind2": " ",
+              "subfields": [
+                {
+                  "a": "31"
+                }
+              ]
+            }
+          },
+          {
+            "650": {
+              "ind1": " ",
+              "ind2": "0",
+              "subfields": [
+                {
+                  "a": "Variations (Piano)"
+                },
+                {
+                  "=": "^A1072635"
+                }
+              ]
+            }
+          },
+          {
+            "916": {
+              "ind1": " ",
+              "ind2": " ",
+              "subfields": [
+                {
+                  "a": "DATE CATALOGED"
+                },
+                {
+                  "b": "19901127"
+                }
+              ]
+            }
+          },
+          {
+            "999": {
+              "ind1": " ",
+              "ind2": " ",
+              "subfields": [
+                {
+                  "a": "M27 .V865 S6"
+                },
+                {
+                  "w": "LC"
+                },
+                {
+                  "c": "1"
+                },
+                {
+                  "i": "36105041840047"
+                },
+                {
+                  "d": "9/21/2010"
+                },
+                {
+                  "e": "9/10/2010"
+                },
+                {
+                  "l": "STACKS"
+                },
+                {
+                  "m": "SAL3"
+                },
+                {
+                  "r": "Y"
+                },
+                {
+                  "s": "Y"
+                },
+                {
+                  "t": "SCORE"
+                },
+                {
+                  "u": "11/5/1974"
+                },
+                {
+                  "z": "DIGI-SCAN"
+                }
+              ]
+            }
+          },
+          {
+            "900": {
+              "ind1": " ",
+              "ind2": " ",
+              "subfields": [
+                {
+                  "5": "POD"
+                },
+                {
+                  "b": "CSt"
+                }
+              ]
+            }
+          },
+          {
+            "998": {
+              "ind1": " ",
+              "ind2": " ",
+              "subfields": [
+                {
+                  "5": "POD"
+                },
+                {
+                  "8": "999.0\\p"
+                },
+                {
+                  "a": "M27 .V865 S6"
+                },
+                {
+                  "i": "36105041840047"
+                },
+                {
+                  "m": "SAL3"
+                }
+              ]
+            }
+          }
+        ]
+      },
+      "inventoryPayload": {
+        "institutionDeref": "US-CSt",
+        "localIdentifier": "a7",
+        "instance": {
+          "source": "MARC",
+          "instanceTypeDeref": "ntm",
+          "identifiers": [
+            {
+              "value": "a7",
+              "identifierTypeDeref": "ISIL:US-CSt"
+            },
+            {
+              "value": "   74227179",
+              "identifierTypeDeref": "LCCN"
+            },
+            {
+              "value": "(OCoLC-M)1614612",
+              "identifierTypeDeref": "System control number"
+            },
+            {
+              "value": "(OCoLC-I)268880900",
+              "identifierTypeDeref": "System control number"
+            }
+          ],
+          "title": "Sognando il sogno; variazioni su di una variazione per pianoforte",
+          "contributors": [
+            {
+              "name": "Vlad, Roman, 1919-2013",
+              "contributorNameTypeDeref": "Personal name",
+              "primary": "true"
+            }
+          ],
+          "publication": [
+            {
+              "publisher": "Ricordi",
+              "place": "[Milano]",
+              "dateOfPublication": "[c1973]"
+            }
+          ],
+          "physicalDescriptions": [
+            "22 p"
+          ],
+          "subjects": [
+            "Variations (Piano)"
+          ],
+          "matchKey": {
+            "title": "Sognando il sogno",
+            "remainder-of-title": " : variazioni su di una variazione per pianoforte",
+            "medium": null,
+            "name-of-part-section-of-work": null,
+            "number-of-part-section-of-work": null,
+            "inclusive-dates": null
+          }
+        },
+        "holdingsRecords": [
+          {
+            "permanentLocationDeref": "STACKS",
+            "illPolicyDeref": "Will not lend",
+            "callNumber": "M27 .V865 S6",
+            "callNumberTypeDeref": "Library of Congress classification",
+            "notes": [
+              {
+                "note": "Location code: STACKS",
+                "holdingsNoteTypeDeref": "Note",
+                "staffOnly": "true"
+              }
+            ],
+            "items": [
+              {
+                "itemIdentifier": "36105041840047",
+                "barcode": "36105041840047",
+                "copyNumber": "1",
+                "status": {
+                  "name": "Unknown"
+                },
+                "permanentLoanTypeDeref": "Can circulate",
+                "materialTypeDeref": "SCO - Scores"
+              }
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "localId": "a8",
+      "marcPayload": {
+        "leader": "00874ccm a2200253   4500",
+        "fields": [
+          {
+            "001": "a8"
+          },
+          {
+            "003": "SIRSI"
+          },
+          {
+            "005": "20211009050004.0"
+          },
+          {
+            "008": "741105s1962    fr            ||| | fre  "
+          },
+          {
+            "035": {
+              "ind1": " ",
+              "ind2": " ",
+              "subfields": [
+                {
+                  "a": "(OCoLC-M)78620694"
+                }
+              ]
+            }
+          },
+          {
+            "035": {
+              "ind1": " ",
+              "ind2": " ",
+              "subfields": [
+                {
+                  "a": "(OCoLC-I)268894011"
+                }
+              ]
+            }
+          },
+          {
+            "040": {
+              "ind1": " ",
+              "ind2": " ",
+              "subfields": [
+                {
+                  "d": "CSt"
+                },
+                {
+                  "d": "OrLoB"
+                }
+              ]
+            }
+          },
+          {
+            "100": {
+              "ind1": "1",
+              "ind2": " ",
+              "subfields": [
+                {
+                  "a": "Takemitsu, Tōru."
+                },
+                {
+                  "=": "^A431123"
+                }
+              ]
+            }
+          },
+          {
+            "240": {
+              "ind1": "1",
+              "ind2": "0",
+              "subfields": [
+                {
+                  "a": "Saegirarenai kyūsoku"
+                },
+                {
+                  "=": "^A431123"
+                }
+              ]
+            }
+          },
+          {
+            "245": {
+              "ind1": "1",
+              "ind2": "0",
+              "subfields": [
+                {
+                  "a": "Pause ininterrompue"
+                },
+                {
+                  "b": "(Uninterrupted rests) pour piano [d'apres un poeme de Shuzo Takiguchi]"
+                }
+              ]
+            }
+          },
+          {
+            "260": {
+              "ind1": " ",
+              "ind2": " ",
+              "subfields": [
+                {
+                  "a": "Paris, New York, Salabert"
+                },
+                {
+                  "c": "[c1962]"
+                }
+              ]
+            }
+          },
+          {
+            "300": {
+              "ind1": " ",
+              "ind2": " ",
+              "subfields": [
+                {
+                  "a": "5 p."
+                },
+                {
+                  "c": "32cm."
+                }
+              ]
+            }
+          },
+          {
+            "596": {
+              "ind1": " ",
+              "ind2": " ",
+              "subfields": [
+                {
+                  "a": "18"
+                }
+              ]
+            }
+          },
+          {
+            "650": {
+              "ind1": " ",
+              "ind2": "0",
+              "subfields": [
+                {
+                  "a": "Piano music."
+                },
+                {
+                  "=": "^A1049172"
+                }
+              ]
+            }
+          },
+          {
+            "740": {
+              "ind1": "0",
+              "ind2": " ",
+              "subfields": [
+                {
+                  "a": "Uninterrupted rests."
+                }
+              ]
+            }
+          },
+          {
+            "916": {
+              "ind1": " ",
+              "ind2": " ",
+              "subfields": [
+                {
+                  "a": "DATE CATALOGED"
+                },
+                {
+                  "b": "19950531"
+                }
+              ]
+            }
+          },
+          {
+            "999": {
+              "ind1": " ",
+              "ind2": " ",
+              "subfields": [
+                {
+                  "a": "M25 .T137 P3"
+                },
+                {
+                  "w": "LC"
+                },
+                {
+                  "c": "1"
+                },
+                {
+                  "i": "36105041840054"
+                },
+                {
+                  "d": "11/3/2011"
+                },
+                {
+                  "e": "10/6/2011"
+                },
+                {
+                  "l": "SCORES"
+                },
+                {
+                  "m": "MUSIC"
+                },
+                {
+                  "n": "3"
+                },
+                {
+                  "q": "2"
+                },
+                {
+                  "r": "Y"
+                },
+                {
+                  "s": "Y"
+                },
+                {
+                  "t": "SCORE"
+                },
+                {
+                  "u": "11/5/1974"
+                },
+                {
+                  "z": "DIGI-SCAN"
+                }
+              ]
+            }
+          },
+          {
+            "900": {
+              "ind1": " ",
+              "ind2": " ",
+              "subfields": [
+                {
+                  "5": "POD"
+                },
+                {
+                  "b": "CSt"
+                }
+              ]
+            }
+          },
+          {
+            "998": {
+              "ind1": " ",
+              "ind2": " ",
+              "subfields": [
+                {
+                  "5": "POD"
+                },
+                {
+                  "8": "999.0\\p"
+                },
+                {
+                  "a": "M25 .T137 P3"
+                },
+                {
+                  "i": "36105041840054"
+                },
+                {
+                  "m": "MUSIC"
+                }
+              ]
+            }
+          }
+        ]
+      },
+      "inventoryPayload": {
+        "institutionDeref": "US-CSt",
+        "localIdentifier": "a8",
+        "instance": {
+          "source": "MARC",
+          "instanceTypeDeref": "ntm",
+          "identifiers": [
+            {
+              "value": "a8",
+              "identifierTypeDeref": "ISIL:US-CSt"
+            },
+            {
+              "value": "(OCoLC-M)78620694",
+              "identifierTypeDeref": "System control number"
+            },
+            {
+              "value": "(OCoLC-I)268894011",
+              "identifierTypeDeref": "System control number"
+            }
+          ],
+          "title": "Pause ininterrompue (Uninterrupted rests) pour piano [d'apres un poeme de Shuzo Takiguchi]",
+          "contributors": [
+            {
+              "name": "Takemitsu, Tōru",
+              "contributorNameTypeDeref": "Personal name",
+              "primary": "true"
+            }
+          ],
+          "publication": [
+            {
+              "publisher": null,
+              "place": "Paris, New York, Salabert",
+              "dateOfPublication": "[c1962]"
+            }
+          ],
+          "physicalDescriptions": [
+            "5 p"
+          ],
+          "subjects": [
+            "Piano music"
+          ],
+          "matchKey": {
+            "title": "Pause ininterrompue",
+            "remainder-of-title": " : (Uninterrupted rests) pour piano [d'apres un poeme de Shuzo Takiguchi]",
+            "medium": null,
+            "name-of-part-section-of-work": null,
+            "number-of-part-section-of-work": null,
+            "inclusive-dates": null
+          }
+        },
+        "holdingsRecords": [
+          {
+            "permanentLocationDeref": "SCORES",
+            "illPolicyDeref": "Will not lend",
+            "callNumber": "M25 .T137 P3",
+            "callNumberTypeDeref": "Library of Congress classification",
+            "notes": [
+              {
+                "note": "Location code: SCORES",
+                "holdingsNoteTypeDeref": "Note",
+                "staffOnly": "true"
+              }
+            ],
+            "items": [
+              {
+                "itemIdentifier": "36105041840054",
+                "barcode": "36105041840054",
+                "copyNumber": "1",
+                "status": {
+                  "name": "Unknown"
+                },
+                "permanentLoanTypeDeref": "Can circulate",
+                "materialTypeDeref": "SCO - Scores"
+              }
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "localId": "a9",
+      "marcPayload": {
+        "leader": "00888ncm a2200265   4500",
+        "fields": [
+          {
+            "001": "a9"
+          },
+          {
+            "003": "SIRSI"
+          },
+          {
+            "005": "20211009050004.0"
+          },
+          {
+            "008": "741105s1973    hu zzz        |n  | eng d"
+          },
+          {
+            "035": {
+              "ind1": " ",
+              "ind2": " ",
+              "subfields": [
+                {
+                  "a": "(CSt)notisAAA0009"
+                }
+              ]
+            }
+          },
+          {
+            "035": {
+              "ind1": " ",
+              "ind2": " ",
+              "subfields": [
+                {
+                  "a": "(OCoLC-M)8924081"
+                }
+              ]
+            }
+          },
+          {
+            "035": {
+              "ind1": " ",
+              "ind2": " ",
+              "subfields": [
+                {
+                  "a": "(OCoLC-I)268906725"
+                }
+              ]
+            }
+          },
+          {
+            "040": {
+              "ind1": " ",
+              "ind2": " ",
+              "subfields": [
+                {
+                  "d": "CSt"
+                },
+                {
+                  "d": "OrLoB"
+                }
+              ]
+            }
+          },
+          {
+            "100": {
+              "ind1": "1",
+              "ind2": " ",
+              "subfields": [
+                {
+                  "a": "Soproni, József."
+                },
+                {
+                  "?": "UNAUTHORIZED"
+                }
+              ]
+            }
+          },
+          {
+            "240": {
+              "ind1": "1",
+              "ind2": "0",
+              "subfields": [
+                {
+                  "a": "Kis négykezes"
+                },
+                {
+                  "?": "UNAUTHORIZED"
+                }
+              ]
+            }
+          },
+          {
+            "245": {
+              "ind1": "1",
+              "ind2": "0",
+              "subfields": [
+                {
+                  "a": "Öt kis négykezes;"
+                },
+                {
+                  "b": "zongoradarab. Five small pieces; for piano duet."
+                }
+              ]
+            }
+          },
+          {
+            "260": {
+              "ind1": " ",
+              "ind2": " ",
+              "subfields": [
+                {
+                  "a": "Budapest,"
+                },
+                {
+                  "b": "Editio Musica"
+                },
+                {
+                  "c": "[c1973]"
+                }
+              ]
+            }
+          },
+          {
+            "300": {
+              "ind1": " ",
+              "ind2": " ",
+              "subfields": [
+                {
+                  "a": "11 p."
+                },
+                {
+                  "c": "23x31cm."
+                }
+              ]
+            }
+          },
+          {
+            "596": {
+              "ind1": " ",
+              "ind2": " ",
+              "subfields": [
+                {
+                  "a": "31"
+                }
+              ]
+            }
+          },
+          {
+            "650": {
+              "ind1": " ",
+              "ind2": "0",
+              "subfields": [
+                {
+                  "a": "Piano music (4 hands)"
+                },
+                {
+                  "=": "^A1049184"
+                }
+              ]
+            }
+          },
+          {
+            "740": {
+              "ind1": "0",
+              "ind2": " ",
+              "subfields": [
+                {
+                  "a": "Small pieces."
+                }
+              ]
+            }
+          },
+          {
+            "916": {
+              "ind1": " ",
+              "ind2": " ",
+              "subfields": [
+                {
+                  "a": "DATE CATALOGED"
+                },
+                {
+                  "b": "19960506"
+                }
+              ]
+            }
+          },
+          {
+            "999": {
+              "ind1": " ",
+              "ind2": " ",
+              "subfields": [
+                {
+                  "a": "M204 .S712 S6"
+                },
+                {
+                  "w": "LC"
+                },
+                {
+                  "c": "1"
+                },
+                {
+                  "i": "36105041840062"
+                },
+                {
+                  "d": "9/22/2010"
+                },
+                {
+                  "e": "9/14/2010"
+                },
+                {
+                  "l": "STACKS"
+                },
+                {
+                  "m": "SAL3"
+                },
+                {
+                  "q": "1"
+                },
+                {
+                  "r": "Y"
+                },
+                {
+                  "s": "Y"
+                },
+                {
+                  "t": "SCORE"
+                },
+                {
+                  "u": "11/5/1974"
+                },
+                {
+                  "z": "DIGI-SENT"
+                }
+              ]
+            }
+          },
+          {
+            "900": {
+              "ind1": " ",
+              "ind2": " ",
+              "subfields": [
+                {
+                  "5": "POD"
+                },
+                {
+                  "b": "CSt"
+                }
+              ]
+            }
+          },
+          {
+            "998": {
+              "ind1": " ",
+              "ind2": " ",
+              "subfields": [
+                {
+                  "5": "POD"
+                },
+                {
+                  "8": "999.0\\p"
+                },
+                {
+                  "a": "M204 .S712 S6"
+                },
+                {
+                  "i": "36105041840062"
+                },
+                {
+                  "m": "SAL3"
+                }
+              ]
+            }
+          }
+        ]
+      },
+      "inventoryPayload": {
+        "institutionDeref": "US-CSt",
+        "localIdentifier": "a9",
+        "instance": {
+          "source": "MARC",
+          "instanceTypeDeref": "ntm",
+          "identifiers": [
+            {
+              "value": "a9",
+              "identifierTypeDeref": "ISIL:US-CSt"
+            },
+            {
+              "value": "(CSt)notisAAA0009",
+              "identifierTypeDeref": "System control number"
+            },
+            {
+              "value": "(OCoLC-M)8924081",
+              "identifierTypeDeref": "System control number"
+            },
+            {
+              "value": "(OCoLC-I)268906725",
+              "identifierTypeDeref": "System control number"
+            }
+          ],
+          "title": "Öt kis négykezes; zongoradarab. Five small pieces; for piano duet",
+          "contributors": [
+            {
+              "name": "Soproni, József",
+              "contributorNameTypeDeref": "Personal name",
+              "primary": "true"
+            }
+          ],
+          "publication": [
+            {
+              "publisher": "Editio Musica",
+              "place": "Budapest,",
+              "dateOfPublication": "[c1973]"
+            }
+          ],
+          "physicalDescriptions": [
+            "11 p"
+          ],
+          "subjects": [
+            "Piano music (4 hands)"
+          ],
+          "matchKey": {
+            "title": "Öt kis négykezes",
+            "remainder-of-title": " : zongoradarab. Five small pieces; for piano duet",
+            "medium": null,
+            "name-of-part-section-of-work": null,
+            "number-of-part-section-of-work": null,
+            "inclusive-dates": null
+          }
+        },
+        "holdingsRecords": [
+          {
+            "permanentLocationDeref": "STACKS",
+            "illPolicyDeref": "Will not lend",
+            "callNumber": "M204 .S712 S6",
+            "callNumberTypeDeref": "Library of Congress classification",
+            "notes": [
+              {
+                "note": "Location code: STACKS",
+                "holdingsNoteTypeDeref": "Note",
+                "staffOnly": "true"
+              }
+            ],
+            "items": [
+              {
+                "itemIdentifier": "36105041840062",
+                "barcode": "36105041840062",
+                "copyNumber": "1",
+                "status": {
+                  "name": "Unknown"
+                },
+                "permanentLoanTypeDeref": "Can circulate",
+                "materialTypeDeref": "SCO - Scores"
+              }
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "localId": "a10",
+      "marcPayload": {
+        "leader": "00962ccm a2200289   4500",
+        "fields": [
+          {
+            "001": "a10"
+          },
+          {
+            "003": "SIRSI"
+          },
+          {
+            "005": "20211009050004.0"
+          },
+          {
+            "008": "741105s1973    it            ||| | ita  "
+          },
+          {
+            "035": {
+              "ind1": " ",
+              "ind2": " ",
+              "subfields": [
+                {
+                  "a": "(OCoLC-M)22015783"
+                }
+              ]
+            }
+          },
+          {
+            "035": {
+              "ind1": " ",
+              "ind2": " ",
+              "subfields": [
+                {
+                  "a": "(OCoLC-I)268803711"
+                }
+              ]
+            }
+          },
+          {
+            "040": {
+              "ind1": " ",
+              "ind2": " ",
+              "subfields": [
+                {
+                  "d": "CSt"
+                },
+                {
+                  "d": "OrLoB"
+                }
+              ]
+            }
+          },
+          {
+            "100": {
+              "ind1": "1",
+              "ind2": " ",
+              "subfields": [
+                {
+                  "a": "Novák, Jan,"
+                },
+                {
+                  "d": "1921-1984"
+                },
+                {
+                  "?": "UNAUTHORIZED"
+                }
+              ]
+            }
+          },
+          {
+            "240": {
+              "ind1": "1",
+              "ind2": "0",
+              "subfields": [
+                {
+                  "a": "Panisci fistula"
+                },
+                {
+                  "?": "UNAUTHORIZED"
+                }
+              ]
+            }
+          },
+          {
+            "245": {
+              "ind1": "1",
+              "ind2": "0",
+              "subfields": [
+                {
+                  "a": "Panisci fistula;"
+                },
+                {
+                  "b": "tre preludi per tre flauti."
+                }
+              ]
+            }
+          },
+          {
+            "260": {
+              "ind1": " ",
+              "ind2": " ",
+              "subfields": [
+                {
+                  "a": "Padova, G.Zanibon,"
+                },
+                {
+                  "c": "c1973."
+                }
+              ]
+            }
+          },
+          {
+            "300": {
+              "ind1": " ",
+              "ind2": " ",
+              "subfields": [
+                {
+                  "a": "score (7 p.)"
+                },
+                {
+                  "c": "33cm."
+                }
+              ]
+            }
+          },
+          {
+            "490": {
+              "ind1": "1",
+              "ind2": " ",
+              "subfields": [
+                {
+                  "a": "Il bucranio"
+                }
+              ]
+            }
+          },
+          {
+            "500": {
+              "ind1": " ",
+              "ind2": " ",
+              "subfields": [
+                {
+                  "a": "Caption title."
+                }
+              ]
+            }
+          },
+          {
+            "500": {
+              "ind1": " ",
+              "ind2": " ",
+              "subfields": [
+                {
+                  "a": "Duration: 4 min., 30 sec."
+                }
+              ]
+            }
+          },
+          {
+            "596": {
+              "ind1": " ",
+              "ind2": " ",
+              "subfields": [
+                {
+                  "a": "31"
+                }
+              ]
+            }
+          },
+          {
+            "650": {
+              "ind1": " ",
+              "ind2": "0",
+              "subfields": [
+                {
+                  "a": "Woodwind trios (Flutes (3))"
+                },
+                {
+                  "x": "Scores."
+                },
+                {
+                  "=": "^A1076023"
+                }
+              ]
+            }
+          },
+          {
+            "830": {
+              "ind1": " ",
+              "ind2": "0",
+              "subfields": [
+                {
+                  "a": "Bucranio."
+                },
+                {
+                  "=": "^A1120435"
+                }
+              ]
+            }
+          },
+          {
+            "916": {
+              "ind1": " ",
+              "ind2": " ",
+              "subfields": [
+                {
+                  "a": "DATE CATALOGED"
+                },
+                {
+                  "b": "19950817"
+                }
+              ]
+            }
+          },
+          {
+            "999": {
+              "ind1": " ",
+              "ind2": " ",
+              "subfields": [
+                {
+                  "a": "M357.2 .N935 P19"
+                },
+                {
+                  "w": "LC"
+                },
+                {
+                  "c": "1"
+                },
+                {
+                  "i": "36105041840070"
+                },
+                {
+                  "d": "8/30/2010"
+                },
+                {
+                  "e": "8/20/2010"
+                },
+                {
+                  "l": "STACKS"
+                },
+                {
+                  "m": "SAL3"
+                },
+                {
+                  "r": "Y"
+                },
+                {
+                  "s": "Y"
+                },
+                {
+                  "t": "SCORE"
+                },
+                {
+                  "u": "11/5/1974"
+                },
+                {
+                  "z": "DIGI-SCAN"
+                }
+              ]
+            }
+          },
+          {
+            "900": {
+              "ind1": " ",
+              "ind2": " ",
+              "subfields": [
+                {
+                  "5": "POD"
+                },
+                {
+                  "b": "CSt"
+                }
+              ]
+            }
+          },
+          {
+            "998": {
+              "ind1": " ",
+              "ind2": " ",
+              "subfields": [
+                {
+                  "5": "POD"
+                },
+                {
+                  "8": "999.0\\p"
+                },
+                {
+                  "a": "M357.2 .N935 P19"
+                },
+                {
+                  "i": "36105041840070"
+                },
+                {
+                  "m": "SAL3"
+                }
+              ]
+            }
+          }
+        ]
+      },
+      "inventoryPayload": {
+        "institutionDeref": "US-CSt",
+        "localIdentifier": "a10",
+        "instance": {
+          "source": "MARC",
+          "instanceTypeDeref": "ntm",
+          "identifiers": [
+            {
+              "value": "a10",
+              "identifierTypeDeref": "ISIL:US-CSt"
+            },
+            {
+              "value": "(OCoLC-M)22015783",
+              "identifierTypeDeref": "System control number"
+            },
+            {
+              "value": "(OCoLC-I)268803711",
+              "identifierTypeDeref": "System control number"
+            }
+          ],
+          "title": "Panisci fistula; tre preludi per tre flauti",
+          "contributors": [
+            {
+              "name": "Novák, Jan, 1921-1984",
+              "contributorNameTypeDeref": "Personal name",
+              "primary": "true"
+            }
+          ],
+          "publication": [
+            {
+              "publisher": null,
+              "place": "Padova, G.Zanibon,",
+              "dateOfPublication": "c1973."
+            }
+          ],
+          "physicalDescriptions": [
+            "score (7 p.)"
+          ],
+          "subjects": [
+            "Woodwind trios (Flutes (3))--Scores"
+          ],
+          "notes": [
+            {
+              "note": "Caption title.",
+              "instanceNoteTypeDeref": "General note"
+            },
+            {
+              "note": "Duration: 4 min., 30 sec.",
+              "instanceNoteTypeDeref": "General note"
+            }
+          ],
+          "matchKey": {
+            "title": "Panisci fistula",
+            "remainder-of-title": " : tre preludi per tre flauti",
+            "medium": null,
+            "name-of-part-section-of-work": null,
+            "number-of-part-section-of-work": null,
+            "inclusive-dates": null
+          }
+        },
+        "holdingsRecords": [
+          {
+            "permanentLocationDeref": "STACKS",
+            "illPolicyDeref": "Will not lend",
+            "callNumber": "M357.2 .N935 P19",
+            "callNumberTypeDeref": "Library of Congress classification",
+            "notes": [
+              {
+                "note": "Location code: STACKS",
+                "holdingsNoteTypeDeref": "Note",
+                "staffOnly": "true"
+              }
+            ],
+            "items": [
+              {
+                "itemIdentifier": "36105041840070",
+                "barcode": "36105041840070",
+                "copyNumber": "1",
+                "status": {
+                  "name": "Unknown"
+                },
+                "permanentLoanTypeDeref": "Can circulate",
+                "materialTypeDeref": "SCO - Scores"
+              }
+            ]
+          }
+        ]
+      }
+    }
+  ]
+}
