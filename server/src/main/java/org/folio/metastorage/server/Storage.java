@@ -387,12 +387,13 @@ public class Storage {
   public Future<Void> updateGlobalRecords(LargeJsonReadStream request) {
     return pool.withConnection(conn ->
         getAvailableMatchConfigs(conn).compose(matchKeyConfigs ->
-          new ReadStreamConsumer<JsonObject, Void>()
-          .consume(request, r -> 
-            upsertGlobalRecord(
-              UUID.fromString(request.topLevelObject().getString("sourceId")), 
-              r, matchKeyConfigs))
-        ));
+          conn.close().compose(v ->
+            new ReadStreamConsumer<JsonObject, Void>()
+              .consume(request, r -> 
+                upsertGlobalRecord(
+                    UUID.fromString(request.topLevelObject().getString("sourceId")), 
+                    r, matchKeyConfigs))
+        )));
   }
 
   Future<JsonArray> getAvailableMatchConfigs(SqlConnection conn) {
