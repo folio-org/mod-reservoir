@@ -45,7 +45,7 @@ public class Storage {
 
   private static final int MATCHVALUE_MAX_LENGTH = 600; // < 2704 / 4
   final TenantPgPool pool;
-  final String bibRecordTable;
+  final String globalRecordTable;
   final String matchKeyConfigTable;
   final String clusterRecordTable;
   final String clusterValueTable;
@@ -59,7 +59,7 @@ public class Storage {
    */
   public Storage(Vertx vertx, String tenant) {
     this.pool = TenantPgPool.pool(vertx, tenant);
-    this.bibRecordTable = pool.getSchema() + ".bib_record";
+    this.globalRecordTable = pool.getSchema() + ".global_records";
     this.matchKeyConfigTable = pool.getSchema() + ".match_key_config";
     this.clusterRecordTable = pool.getSchema() + ".cluster_records";
     this.clusterValueTable = pool.getSchema() + ".cluster_values";
@@ -78,8 +78,8 @@ public class Storage {
     return clusterMetaTable;
   }
 
-  public String getBibRecordTable() {
-    return bibRecordTable;
+  public String getGlobalRecordTable() {
+    return globalRecordTable;
   }
 
   public String getClusterRecordTable() {
@@ -97,14 +97,13 @@ public class Storage {
   public Future<Void> init() {
     return pool.execute(List.of(
             "SET search_path TO " + pool.getSchema(),
-            CREATE_IF_NO_EXISTS + bibRecordTable
+            CREATE_IF_NO_EXISTS + globalRecordTable
                 + "(id uuid NOT NULL PRIMARY KEY,"
                 + " local_id VARCHAR NOT NULL,"
                 + " source_id uuid NOT NULL,"
-                + " marc_payload JSONB NOT NULL,"
-                + " inventory_payload JSONB"
+                + " payload JSONB NOT NULL"
                 + ")",
-            "CREATE UNIQUE INDEX IF NOT EXISTS idx_local_id ON " + bibRecordTable
+            "CREATE UNIQUE INDEX IF NOT EXISTS idx_local_id ON " + globalRecordTable
                 + " (local_id, source_id)",
             CREATE_IF_NO_EXISTS + matchKeyConfigTable
                 + "(id VARCHAR NOT NULL PRIMARY KEY,"
@@ -125,7 +124,7 @@ public class Storage {
                 + " cluster_id uuid NOT NULL,"
                 + " FOREIGN KEY(match_key_config_id) REFERENCES " + matchKeyConfigTable
                 + " ON DELETE CASCADE,"
-                + " FOREIGN KEY(record_id) REFERENCES " + bibRecordTable + " ON DELETE CASCADE)",
+                + " FOREIGN KEY(record_id) REFERENCES " + globalRecordTable + " ON DELETE CASCADE)",
             "CREATE UNIQUE INDEX IF NOT EXISTS cluster_record_record_matchkey_idx ON "
                 + clusterRecordTable + "(record_id, match_key_config_id)",
             "CREATE INDEX IF NOT EXISTS cluster_record_cluster_idx ON "
@@ -144,84 +143,85 @@ public class Storage {
     ).mapEmpty();
   }
 
-  Future<Void> upsertBibRecord(
+  Future<Void> upsertGlobalRecord(
       SqlConnection conn,
       String localIdentifier,
       UUID sourceId,
-      JsonObject marcPayload,
-      JsonObject inventoryPayload,
+      JsonObject payload,
       JsonArray matchKeyConfigs) {
 
     return conn.preparedQuery(
-            "INSERT INTO " + bibRecordTable
-                + " (id, local_id, source_id, marc_payload, inventory_payload)"
-                + " VALUES ($1, $2, $3, $4, $5)"
+            "INSERT INTO " + globalRecordTable
+                + " (id, local_id, source_id, payload)"
+                + " VALUES ($1, $2, $3, $4)"
                 + " ON CONFLICT (local_id, source_id) DO UPDATE "
-                + " SET marc_payload = $4, inventory_payload = $5"
+                + " SET payload = $4"
                 + " RETURNING id"
         )
         .execute(
-            Tuple.of(UUID.randomUUID(), localIdentifier, sourceId, marcPayload, inventoryPayload)
+            Tuple.of(UUID.randomUUID(), localIdentifier, sourceId, payload)
         )
         .map(rowSet -> rowSet.iterator().next().getUUID("id"))
-        .compose(id -> updateMatchKeyValues(conn, id, marcPayload, inventoryPayload,
-            matchKeyConfigs))
+        .compose(id -> updateMatchKeyValues(conn, id, payload, matchKeyConfigs))
         .mapEmpty();
   }
 
-  Future<Void> deleteBibRecord(SqlConnection conn, String localIdentifier, UUID sourceId) {
+  Future<Void> deleteGlobalRecord(SqlConnection conn, String localIdentifier, UUID sourceId) {
     String q = "UPDATE " + clusterMetaTable + " AS m"
         + " SET datestamp = $3"
-        + " FROM " + bibRecordTable + ", " + clusterRecordTable + " AS r"
+        + " FROM " + globalRecordTable + ", " + clusterRecordTable + " AS r"
         + " WHERE m.cluster_id = r.cluster_id AND r.record_id = id"
         + " AND local_id = $1 AND source_id = $2";
     return conn.preparedQuery(q)
         .execute(Tuple.of(localIdentifier, sourceId, LocalDateTime.now(ZoneOffset.UTC)))
-        .compose(x -> conn.preparedQuery("DELETE FROM " + bibRecordTable
+        .compose(x -> conn.preparedQuery("DELETE FROM " + globalRecordTable
                 + " WHERE local_id = $1 AND source_id = $2")
         .execute(Tuple.of(localIdentifier, sourceId))
         .mapEmpty());
   }
 
-  Future<Void> upsertGlobalRecord(UUID sourceId, JsonObject globalRecord,
+  Future<Void> ingestGlobalRecord(UUID sourceId, JsonObject globalRecord,
       JsonArray matchKeyConfigs) {
 
     return pool.withTransaction(conn ->
-            upsertGlobalRecord(conn, sourceId, globalRecord, matchKeyConfigs))
+            ingestGlobalRecord(conn, sourceId, globalRecord, matchKeyConfigs))
         // addValuesToCluster may fail if for same new match key for parallel operations
         // we recover just once for that. 2nd will find the new value for the one that
         // succeeded.
         .recover(x ->
             pool.withTransaction(conn ->
-                upsertGlobalRecord(conn, sourceId, globalRecord, matchKeyConfigs)));
+                ingestGlobalRecord(conn, sourceId, globalRecord, matchKeyConfigs)));
   }
 
-  Future<Void> upsertGlobalRecord(SqlConnection conn, UUID sourceId,
+  Future<Void> ingestGlobalRecord(SqlConnection conn, UUID sourceId,
       JsonObject globalRecord, JsonArray matchKeyConfigs) {
 
     final String localIdentifier = globalRecord.getString("localId");
-    if (Boolean.TRUE.equals(globalRecord.getBoolean("delete"))) {
-      return deleteBibRecord(conn, localIdentifier, sourceId);
+    if (localIdentifier == null) {
+      return Future.failedFuture("localId required");
     }
-    final JsonObject marcPayload = globalRecord.getJsonObject("marcPayload");
-    final JsonObject inventoryPayload = globalRecord.getJsonObject("inventoryPayload");
-    return upsertBibRecord(conn, localIdentifier, sourceId, marcPayload, inventoryPayload,
-        matchKeyConfigs);
+    if (Boolean.TRUE.equals(globalRecord.getBoolean("delete"))) {
+      return deleteGlobalRecord(conn, localIdentifier, sourceId);
+    }
+    final JsonObject payload = globalRecord.getJsonObject("payload");
+    if (payload == null) {
+      return Future.failedFuture("payload required");
+    }
+    return upsertGlobalRecord(conn, localIdentifier, sourceId, payload, matchKeyConfigs);
   }
 
   Future<Void> updateMatchKeyValues(SqlConnection conn, UUID globalId,
-      JsonObject marcPayload, JsonObject inventoryPayload, JsonArray matchKeyConfigs) {
+      JsonObject payload, JsonArray matchKeyConfigs) {
     List<Future<Void>> futures = new ArrayList<>(matchKeyConfigs.size());
     for (int i = 0; i < matchKeyConfigs.size(); i++) {
       JsonObject matchKeyConfig = matchKeyConfigs.getJsonObject(i);
-      futures.add(updateMatchKeyValues(conn, globalId, marcPayload,
-          inventoryPayload, matchKeyConfig));
+      futures.add(updateMatchKeyValues(conn, globalId, payload, matchKeyConfig));
     }
     return GenericCompositeFuture.all(futures).mapEmpty();
   }
 
   Future<Void> updateMatchKeyValues(SqlConnection conn, UUID globalId,
-      JsonObject marcPayload, JsonObject inventoryPayload, JsonObject matchKeyConfig) {
+      JsonObject payload, JsonObject matchKeyConfig) {
 
     String update = matchKeyConfig.getString("update");
     if ("manual".equals(update)) {
@@ -234,7 +234,7 @@ public class Storage {
     }
     method.configure(matchKeyConfig.getJsonObject("params"));
     Set<String> keys = new HashSet<>();
-    method.getKeys(marcPayload, inventoryPayload, keys);
+    method.getKeys(payload, keys);
     String matchKeyConfigId = matchKeyConfig.getString("id");
     return updateMatchKeyValues(conn, globalId, matchKeyConfigId, keys);
   }
@@ -387,9 +387,9 @@ public class Storage {
   public Future<Void> updateGlobalRecords(LargeJsonReadStream request) {
     return pool.withConnection(this::getAvailableMatchConfigs).compose(matchKeyConfigs ->
             new ReadStreamConsumer<JsonObject, Void>()
-              .consume(request, r -> 
-                upsertGlobalRecord(
-                    UUID.fromString(request.topLevelObject().getString("sourceId")), 
+              .consume(request, r ->
+                ingestGlobalRecord(
+                    UUID.fromString(request.topLevelObject().getString("sourceId")),
                     r, matchKeyConfigs)));
   }
 
@@ -414,8 +414,7 @@ public class Storage {
         .put("globalId", row.getUUID("id"))
         .put("localId", row.getString("local_id"))
         .put("sourceId", row.getUUID("source_id"))
-        .put("inventoryPayload", row.getJsonObject("inventory_payload"))
-        .put("marcPayload", row.getJsonObject("marc_payload"));
+        .put("payload", row.getJsonObject("payload"));
   }
 
   /**
@@ -426,7 +425,7 @@ public class Storage {
   public Future<Void> deleteGlobalRecords(String sqlWhere) {
     String q = "UPDATE " + clusterMetaTable + " AS m"
         + " SET datestamp = $1"
-        + " FROM " + bibRecordTable + ", " + clusterRecordTable + " AS r"
+        + " FROM " + globalRecordTable + ", " + clusterRecordTable + " AS r"
         + " WHERE m.cluster_id = r.cluster_id AND r.record_id = id";
     if (sqlWhere != null) {
       q = q + " AND " + sqlWhere;
@@ -434,7 +433,7 @@ public class Storage {
     return pool.preparedQuery(q)
         .execute(Tuple.of(LocalDateTime.now(ZoneOffset.UTC)))
         .compose(x -> {
-          String from = bibRecordTable;
+          String from = globalRecordTable;
           if (sqlWhere != null) {
             from = from + " WHERE " + sqlWhere;
           }
@@ -451,7 +450,7 @@ public class Storage {
    * @return async result
    */
   public Future<Void> getGlobalRecords(RoutingContext ctx, String sqlWhere, String sqlOrderBy) {
-    String from = bibRecordTable;
+    String from = globalRecordTable;
     if (sqlWhere != null) {
       from = from + " WHERE " + sqlWhere;
     }
@@ -470,7 +469,7 @@ public class Storage {
 
   Future<JsonObject> getClusterById(SqlConnection connection, UUID clusterId) {
     // get all records part of cluster and join with cluster_meta to get datestamp
-    return connection.preparedQuery("SELECT * FROM " + bibRecordTable
+    return connection.preparedQuery("SELECT * FROM " + globalRecordTable
             + " LEFT JOIN " + clusterRecordTable + " ON id = record_id"
             + " LEFT JOIN " + clusterMetaTable + " ON "
             + clusterMetaTable + ".cluster_id = " + clusterRecordTable + ".cluster_id"
@@ -526,7 +525,7 @@ public class Storage {
    */
   public Future<JsonObject> getGlobalRecord(String id) {
     return pool.preparedQuery(
-            "SELECT * FROM " + bibRecordTable + " WHERE id = $1")
+            "SELECT * FROM " + globalRecordTable + " WHERE id = $1")
         .execute(Tuple.of(id))
         .map(res -> {
           RowIterator<Row> iterator = res.iterator();
@@ -638,7 +637,7 @@ public class Storage {
   Future<JsonObject> recalculateMatchKeyValueTable(SqlConnection connection, MatchKeyMethod method,
       String matchKeyConfigId) {
 
-    String query = "SELECT * FROM " + bibRecordTable;
+    String query = "SELECT * FROM " + globalRecordTable;
     AtomicInteger count = new AtomicInteger();
     return connection.prepare(query).compose(pq ->
         connection.begin().compose(tx -> {
@@ -650,8 +649,7 @@ public class Storage {
 
             UUID globalId = row.getUUID("id");
             Set<String> keys = new HashSet<>();
-            method.getKeys(row.getJsonObject("marc_payload"),
-                row.getJsonObject("inventory_payload"), keys);
+            method.getKeys(row.getJsonObject("payload"), keys);
             updateMatchKeyValues(connection, globalId, matchKeyConfigId, keys)
                 .onFailure(e -> log.error(e.getMessage(), e))
                 .onComplete(e -> stream.resume());

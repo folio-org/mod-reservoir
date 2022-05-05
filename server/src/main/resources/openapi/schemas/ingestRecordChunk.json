@@ -12,11 +12,9 @@
         "type": "boolean",
         "description": "If true, record is deleted. Default: false"
       },
-      "marcPayload": {
-        "type": "object"
-      },
-      "inventoryPayload": {
-        "type": "object"
+      "payload": {
+        "type": "object",
+        "description" : "Payload in JSON"
       }
     },
     "additionalProperties": false,

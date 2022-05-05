@@ -11,35 +11,25 @@ import org.folio.metastorage.matchkey.MatchKeyMethod;
 
 public class MatchKeyJsonPath implements MatchKeyMethod {
 
-  JsonPath jsonPathMarc;
-  JsonPath jsonPathInventory;
+  JsonPath jsonPath;
 
   @Override
   public void configure(JsonObject configuration) {
-    String expr = configuration.getString("marc");
-    if (expr != null) {
-      jsonPathMarc = JsonPath.compile(expr);
-      return;
+    String expr = configuration.getString("expr");
+    if (expr == null) {
+      throw new MatchKeyException("jsonpath: expr must be given");
     }
-    expr = configuration.getString("inventory");
-    if (expr != null) {
-      jsonPathInventory = JsonPath.compile(expr);
-      return;
-    }
-    throw new MatchKeyException("jsonpath: either \"marc\" or \"inventory\" must be given");
+    jsonPath = JsonPath.compile(expr);
   }
 
   @Override
-  public void getKeys(JsonObject marcPayload, JsonObject inventoryPayload,
-      Collection<String> keys) {
-    JsonPath p = jsonPathMarc != null ? jsonPathMarc : jsonPathInventory;
-    JsonObject d = jsonPathMarc != null ? marcPayload : inventoryPayload;
-    if (p == null) {
+  public void getKeys(JsonObject payload, Collection<String> keys) {
+    if (jsonPath == null) {
       throw new MatchKeyException("Not configured");
     }
-    ReadContext ctx = JsonPath.parse(d.encode());
+    ReadContext ctx = JsonPath.parse(payload.encode());
     try {
-      Object o = ctx.read(p);
+      Object o = ctx.read(jsonPath);
       if (o instanceof String) {
         keys.add((String) o);
       } else if (o instanceof List) {

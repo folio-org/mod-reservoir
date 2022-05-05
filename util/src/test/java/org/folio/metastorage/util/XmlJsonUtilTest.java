@@ -463,24 +463,26 @@ public class XmlJsonUtilTest {
             .put("original", "2")
             .put("localIdentifier", "123")
             .put("instance", new JsonObject().put("a", "b"))));
-    Assert.assertEquals(marcPayload, ingest.getJsonObject("marcPayload"));
+    JsonObject payload = ingest.getJsonObject("payload");
+    Assert.assertEquals(marcPayload, payload.getJsonObject("marc"));
     Assert.assertEquals("123", ingest.getString("localId"));
     Assert.assertEquals(new JsonObject()
             .put("localIdentifier", "123")
             .put("instance", new JsonObject().put("a", "b")),
-        ingest.getJsonObject("inventoryPayload"));
+        payload.getJsonObject("inventory"));
 
     ingest = XmlJsonUtil.createIngestRecord(marcPayload, new JsonObject()
         .put("collection", new JsonObject()
             .put("record", new JsonObject()
                 .put("localIdentifier", "123")
                 .put("instance", new JsonObject().put("a", "b")))));
-    Assert.assertEquals(marcPayload, ingest.getJsonObject("marcPayload"));
+    payload = ingest.getJsonObject("payload");
+    Assert.assertEquals(marcPayload, payload.getJsonObject("marc"));
     Assert.assertEquals("123", ingest.getString("localId"));
     Assert.assertEquals(new JsonObject()
             .put("localIdentifier", "123")
             .put("instance", new JsonObject().put("a", "b")),
-        ingest.getJsonObject("inventoryPayload"));
+        payload.getJsonObject("inventory"));
   }
 
   @Test
@@ -515,7 +517,7 @@ public class XmlJsonUtilTest {
     Assert.assertEquals(10, ingestRecords.size());
     for (int i = 0; i < 10; i++) {
       Assert.assertEquals("a" + (i + 1), ingestRecords.getJsonObject(i).getString("localId"));
-      JsonObject inventoryPayload =  ingestRecords.getJsonObject(i).getJsonObject("inventoryPayload");
+      JsonObject inventoryPayload =  ingestRecords.getJsonObject(i).getJsonObject("payload").getJsonObject("inventory");
       JsonObject instance = inventoryPayload.getJsonObject("instance");
       Assert.assertNotNull(inventoryPayload.encodePrettily(), instance);
       if (i == 0) {

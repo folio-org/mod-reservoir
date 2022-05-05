@@ -407,8 +407,9 @@ public final class XmlJsonUtil {
     inventoryPayload.remove("original");
     return new JsonObject()
         .put("localId", localId)
-        .put("marcPayload", marcPayload)
-        .put("inventoryPayload", inventoryPayload);
+        .put("payload", new JsonObject()
+            .put("marc", marcPayload)
+            .put("inventory", inventoryPayload));
   }
 
   /**

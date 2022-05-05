@@ -213,7 +213,7 @@ public class MainVerticleTest {
         .get("/meta-storage/records")
         .then().statusCode(400)
         .header("Content-Type", is("text/plain"))
-        .body(is("ERROR: relation \"unknowntenant_mod_meta_storage.bib_record\" does not exist (42P01)"));
+        .body(is("ERROR: relation \"unknowntenant_mod_meta_storage.global_records\" does not exist (42P01)"));
   }
 
   @Test
@@ -410,14 +410,11 @@ public class MainVerticleTest {
   }
 
   @Test
-  public void putSharedRecordsException() {
+  public void putSharedRecordsPayloadMissing() {
     String sourceId = UUID.randomUUID().toString();
     JsonArray records = new JsonArray()
         .add(new JsonObject()
-            .put("localId", "HRID01")
-            .put("marcPayload", new JsonArray())
-            .put("inventoryPayload", new JsonObject().put("isbn", "1"))
-        );
+            .put("localId", "HRID01"));
     JsonObject request = new JsonObject()
         .put("sourceId", sourceId)
         .put("records", records);
@@ -428,7 +425,26 @@ public class MainVerticleTest {
         .body(request.encode())
         .put("/meta-storage/records")
         .then().statusCode(400)
-        .body(containsString("class java.util.ArrayList cannot be cast to class io.vertx.core.json.JsonObject"));
+        .body(containsString("payload required"));
+  }
+
+  @Test
+  public void putSharedRecordsLocalIdMissing() {
+    String sourceId = UUID.randomUUID().toString();
+    JsonArray records = new JsonArray()
+        .add(new JsonObject()
+            .put("payload", new JsonObject()));
+    JsonObject request = new JsonObject()
+        .put("sourceId", sourceId)
+        .put("records", records);
+
+    RestAssured.given()
+        .header(XOkapiHeaders.TENANT, tenant1)
+        .header("Content-Type", "application/json")
+        .body(request.encode())
+        .put("/meta-storage/records")
+        .then().statusCode(400)
+        .body(containsString("localId required"));
   }
 
   @Test
@@ -437,13 +453,15 @@ public class MainVerticleTest {
     JsonArray records = new JsonArray()
         .add(new JsonObject()
             .put("localId", "HRID01")
-            .put("marcPayload", new JsonObject().put("leader", "00914naa  2200337   450 "))
-            .put("inventoryPayload", new JsonObject().put("isbn", "1"))
+            .put("payload", new JsonObject()
+                .put("marc", new JsonObject().put("leader", "00914naa  2200337   450 "))
+                .put("inventory", new JsonObject().put("isbn", "1")))
         )
         .add(new JsonObject()
             .put("localId", "HRID02")
-            .put("marcPayload", new JsonObject().put("leader", "00914naa  2200337   450 "))
-            .put("inventoryPayload", new JsonObject().put("isbn", "2"))
+            .put("payload", new JsonObject()
+                .put("marc", new JsonObject().put("leader", "00914naa  2200337   450 "))
+                .put("inventory", new JsonObject().put("isbn", "2")))
         );
     JsonObject request = new JsonObject()
         .put("sourceId", sourceId)
@@ -501,6 +519,7 @@ public class MainVerticleTest {
 
     for (int idx = 0; idx < records.size(); idx++) {
       JsonObject sharedRecord = records.getJsonObject(idx);
+      JsonObject payload = sharedRecord.getJsonObject("payload");
       RestAssured.given()
           .header(XOkapiHeaders.TENANT, tenant1)
           .header("Content-Type", "application/json")
@@ -509,8 +528,8 @@ public class MainVerticleTest {
           .then().statusCode(200)
           .body("items", hasSize(1))
           .body("items[0].localId", is(sharedRecord.getString("localId")))
-          .body("items[0].marcPayload.leader", is(sharedRecord.getJsonObject("marcPayload").getString("leader")))
-          .body("items[0].inventoryPayload.isbn", is(sharedRecord.getJsonObject("inventoryPayload").getString("isbn")))
+          .body("items[0].payload.marc.leader", is(payload.getJsonObject("marc").getString("leader")))
+          .body("items[0].payload.inventory.isbn", is(payload.getJsonObject("inventory").getString("isbn")))
           .body("items[0].sourceId", is(sourceId))
           .body("resultInfo.totalRecords", is(1));
     }
@@ -620,32 +639,23 @@ public class MainVerticleTest {
 
   @Test
   public void testMatchKeysIngest() {
-    JsonObject matchKey = new JsonObject()
-        .put("id", "isbn2")
-        .put("method", "jsonpath")
-        // update = ingest is the default
-        .put("params", new JsonObject().put("inventory", "$.isbn[*]"));
-
-    RestAssured.given()
-        .header(XOkapiHeaders.TENANT, tenant1)
-        .header("Content-Type", "application/json")
-        .body(matchKey.encode())
-        .post("/meta-storage/config/matchkeys")
-        .then().statusCode(201)
-        .contentType("application/json")
-        .body(Matchers.is(matchKey.encode()));
+    JsonObject matchKey = createIsbnMatchKey();
 
     String sourceId1 = UUID.randomUUID().toString();
     JsonArray records1 = new JsonArray()
         .add(new JsonObject()
             .put("localId", "S101")
-            .put("marcPayload", new JsonObject().put("leader", "00914naa  2200337   450 "))
-            .put("inventoryPayload", new JsonObject().put("isbn", new JsonArray().add("1")))
+            .put("payload", new JsonObject()
+                .put("marc", new JsonObject().put("leader", "00914naa  2200337   450 "))
+                .put("inventory", new JsonObject().put("isbn", new JsonArray().add("1")))
+            )
         )
         .add(new JsonObject()
             .put("localId", "S102")
-            .put("marcPayload", new JsonObject().put("leader", "00914naa  2200337   450 "))
-            .put("inventoryPayload", new JsonObject().put("isbn", new JsonArray().add("2").add("3")))
+            .put("payload", new JsonObject()
+                .put("marc", new JsonObject().put("leader", "00914naa  2200337   450 "))
+                .put("inventory", new JsonObject().put("isbn", new JsonArray().add("2").add("3")))
+            )
         );
     ingestRecords(records1, sourceId1);
 
@@ -670,7 +680,7 @@ public class MainVerticleTest {
     String s = RestAssured.given()
         .header(XOkapiHeaders.TENANT, tenant1)
         .header("Content-Type", "application/json")
-        .param("matchkeyid", "isbn2")
+        .param("matchkeyid", "isbn")
         .get("/meta-storage/clusters")
         .then().statusCode(200)
         .contentType("application/json")
@@ -684,7 +694,7 @@ public class MainVerticleTest {
         .header(XOkapiHeaders.TENANT, tenant1)
         .header("Content-Type", "application/json")
         .param("query", "matchValue=3")
-        .param("matchkeyid", "isbn2")
+        .param("matchkeyid", "isbn")
         .get("/meta-storage/clusters")
         .then().statusCode(200)
         .contentType("application/json")
@@ -707,7 +717,7 @@ public class MainVerticleTest {
     s = RestAssured.given()
         .header(XOkapiHeaders.TENANT, tenant1)
         .header("Content-Type", "application/json")
-        .param("matchkeyid", "isbn2")
+        .param("matchkeyid", "isbn")
         .get("/meta-storage/clusters")
         .then().statusCode(200)
         .contentType("application/json")
@@ -754,14 +764,12 @@ public class MainVerticleTest {
         .body(is("MatchKey " + id + " not found"));
   }
 
-  @Test
-  public void testClustersSameKey()  {
+  JsonObject createIssnMatchKey() {
     JsonObject matchKey = new JsonObject()
         .put("id", "issn")
         .put("method", "jsonpath")
         // update = ingest is the default
-        .put("params", new JsonObject().put("inventory", "$.issn[*]"));
-
+        .put("params", new JsonObject().put("expr", "$.inventory.issn[*]"));
     RestAssured.given()
         .header(XOkapiHeaders.TENANT, tenant1)
         .header("Content-Type", "application/json")
@@ -770,28 +778,58 @@ public class MainVerticleTest {
         .then().statusCode(201)
         .contentType("application/json")
         .body(Matchers.is(matchKey.encode()));
+    return matchKey;
+  }
+
+  JsonObject createIsbnMatchKey() {
+    return createIsbnMatchKey(null);
+  }
+
+  JsonObject createIsbnMatchKey(String updateValue) {
+    JsonObject matchKey = new JsonObject()
+        .put("id", "isbn")
+        .put("method", "jsonpath")
+        .put("params", new JsonObject().put("expr", "$.inventory.isbn[*]"));
+
+    if (updateValue != null) {
+      matchKey.put("update", updateValue);
+    }
+    RestAssured.given()
+        .header(XOkapiHeaders.TENANT, tenant1)
+        .header("Content-Type", "application/json")
+        .body(matchKey.encode())
+        .post("/meta-storage/config/matchkeys")
+        .then().statusCode(201)
+        .contentType("application/json")
+        .body(Matchers.is(matchKey.encode()));
+    return matchKey;
+  }
+
+  @Test
+  public void testClustersSameKey()  {
+    createIssnMatchKey();
 
     String sourceId1 = UUID.randomUUID().toString();
     JsonArray records1 = new JsonArray()
         .add(new JsonObject()
             .put("localId", "S101")
-            .put("marcPayload", new JsonObject().put("leader", "00914naa  2200337   450 "))
-            .put("inventoryPayload", new JsonObject()
-                .put("issn", new JsonArray().add("1"))
+            .put("payload", new JsonObject()
+                .put("marc", new JsonObject().put("leader", "00914naa  2200337   450 "))
+                .put("inventory", new JsonObject().put("issn", new JsonArray().add("1")))
             )
         )
         .add(new JsonObject()
             .put("localId", "S102")
-            .put("marcPayload", new JsonObject().put("leader", "00914naa  2200337   450 "))
-            .put("inventoryPayload", new JsonObject()
-                .put("issn", new JsonArray().add("1"))
+            .put("payload", new JsonObject()
+                .put("marc", new JsonObject().put("leader", "00914naa  2200337   450 "))
+                .put("inventory", new JsonObject().put("issn", new JsonArray().add("1")))
             )
         )
         .add(new JsonObject()
             .put("localId", "S103")
-            .put("marcPayload", new JsonObject().put("leader", "00914naa  2200337   450 "))
-            .put("inventoryPayload", new JsonObject()
-                .put("issn", new JsonArray().add("1"))
+            .put("payload", new JsonObject()
+                .put("marc", new JsonObject().put("leader", "00914naa  2200337   450 "))
+                .put("inventory", new JsonObject().put("issn", new JsonArray().add("1")))
             )
         );
     ingestRecords(records1, sourceId1);
@@ -822,28 +860,16 @@ public class MainVerticleTest {
 
   @Test
   public void testClustersLargeKey() {
-    JsonObject matchKey = new JsonObject()
-        .put("id", "issn")
-        .put("method", "jsonpath")
-        // update = ingest is the default
-        .put("params", new JsonObject().put("inventory", "$.issn[*]"));
-
-    RestAssured.given()
-        .header(XOkapiHeaders.TENANT, tenant1)
-        .header("Content-Type", "application/json")
-        .body(matchKey.encode())
-        .post("/meta-storage/config/matchkeys")
-        .then().statusCode(201)
-        .contentType("application/json")
-        .body(Matchers.is(matchKey.encode()));
+    createIssnMatchKey();
 
     String sourceId1 = UUID.randomUUID().toString();
     JsonArray records1 = new JsonArray()
         .add(new JsonObject()
             .put("localId", "S101")
-            .put("marcPayload", new JsonObject().put("leader", "00914naa  2200337   450 "))
-            .put("inventoryPayload", new JsonObject()
-                .put("issn", new JsonArray().add("1".repeat(3600)))
+            .put("payload", new JsonObject()
+                .put("marc", new JsonObject().put("leader", "00914naa  2200337   450 "))
+                .put("inventory", new JsonObject()
+                    .put("issn", new JsonArray().add("1".repeat(3600))))
             )
         );
     ingestRecords(records1, sourceId1);
@@ -881,52 +907,29 @@ public class MainVerticleTest {
         .get("/meta-storage/clusters")
         .then().statusCode(400);
 
-    JsonObject matchKey1 = new JsonObject()
-        .put("id", "isbn")
-        .put("method", "jsonpath")
-        // update = ingest is the default
-        .put("params", new JsonObject().put("inventory", "$.isbn[*]"));
-
-    RestAssured.given()
-        .header(XOkapiHeaders.TENANT, tenant1)
-        .header("Content-Type", "application/json")
-        .body(matchKey1.encode())
-        .post("/meta-storage/config/matchkeys")
-        .then().statusCode(201)
-        .contentType("application/json")
-        .body(Matchers.is(matchKey1.encode()));
-
-    JsonObject matchKey2 = new JsonObject()
-        .put("id", "issn")
-        .put("method", "jsonpath")
-        // update = ingest is the default
-        .put("params", new JsonObject().put("inventory", "$.issn[*]"));
-
-    RestAssured.given()
-        .header(XOkapiHeaders.TENANT, tenant1)
-        .header("Content-Type", "application/json")
-        .body(matchKey2.encode())
-        .post("/meta-storage/config/matchkeys")
-        .then().statusCode(201)
-        .contentType("application/json")
-        .body(Matchers.is(matchKey2.encode()));
+    createIsbnMatchKey();
+    createIssnMatchKey();
 
     String sourceId1 = UUID.randomUUID().toString();
     JsonArray records1 = new JsonArray()
         .add(new JsonObject()
             .put("localId", "S101")
-            .put("marcPayload", new JsonObject().put("leader", "00914naa  2200337   450 "))
-            .put("inventoryPayload", new JsonObject()
-                .put("isbn", new JsonArray().add("1"))
-                .put("issn", new JsonArray().add("01"))
+            .put("payload", new JsonObject()
+                .put("marc", new JsonObject().put("leader", "00914naa  2200337   450 "))
+                .put("inventory", new JsonObject()
+                    .put("isbn", new JsonArray().add("1"))
+                    .put("issn", new JsonArray().add("01"))
+                )
             )
         )
         .add(new JsonObject()
             .put("localId", "S102")
-            .put("marcPayload", new JsonObject().put("leader", "00914naa  2200337   450 "))
-            .put("inventoryPayload", new JsonObject()
-                .put("isbn", new JsonArray().add("2").add("3"))
-                .put("issn", new JsonArray().add("01"))
+            .put("payload", new JsonObject()
+                .put("marc", new JsonObject().put("leader", "00914naa  2200337   450 "))
+                .put("inventory", new JsonObject()
+                    .put("isbn", new JsonArray().add("2").add("3"))
+                    .put("issn", new JsonArray().add("01"))
+                )
             )
         );
     log.info("phase 1: insert two separate isbn recs, but one with issn");
@@ -993,8 +996,10 @@ public class MainVerticleTest {
     records1 = new JsonArray()
         .add(new JsonObject()
             .put("localId", "S101")
-            .put("marcPayload", new JsonObject().put("leader", "00914naa  2200337   450 "))
-            .put("inventoryPayload", new JsonObject().put("isbn", new JsonArray().add("4")))
+            .put("payload", new JsonObject()
+                .put("marc", new JsonObject().put("leader", "00914naa  2200337   450 "))
+                .put("inventory", new JsonObject().put("isbn", new JsonArray().add("4")))
+            )
         );
     ingestRecords(records1, sourceId1);
 
@@ -1026,8 +1031,10 @@ public class MainVerticleTest {
     records1 = new JsonArray()
         .add(new JsonObject()
             .put("localId", "S101")
-            .put("marcPayload", new JsonObject().put("leader", "00914naa  2200337   450 "))
-            .put("inventoryPayload", new JsonObject().put("isbn", new JsonArray().add("3")))
+            .put("payload", new JsonObject()
+                .put("marc", new JsonObject().put("leader", "00914naa  2200337   450 "))
+                .put("inventory", new JsonObject().put("isbn", new JsonArray().add("3")))
+            )
         );
     ingestRecords(records1, sourceId1);
 
@@ -1076,31 +1083,23 @@ public class MainVerticleTest {
         .contentType("text/plain")
         .body(is("Must specify query for delete records"));
 
-    JsonObject matchKey = new JsonObject()
-        .put("id", "isbn")
-        .put("method", "jsonpath")
-        .put("params", new JsonObject().put("inventory", "$.isbn[*]"));
-
-    RestAssured.given()
-        .header(XOkapiHeaders.TENANT, tenant1)
-        .header("Content-Type", "application/json")
-        .body(matchKey.encode())
-        .post("/meta-storage/config/matchkeys")
-        .then().statusCode(201)
-        .contentType("application/json")
-        .body(Matchers.is(matchKey.encode()));
+    JsonObject matchKey = createIsbnMatchKey();
 
     String sourceId1 = UUID.randomUUID().toString();
     JsonArray records1 = new JsonArray()
         .add(new JsonObject()
             .put("localId", "S101")
-            .put("marcPayload", new JsonObject().put("leader", "00914naa  0101   450 "))
-            .put("inventoryPayload", new JsonObject().put("isbn", new JsonArray().add("1")))
+            .put("payload", new JsonObject()
+                .put("marc", new JsonObject().put("leader", "00914naa  0101   450 "))
+                .put("inventory", new JsonObject().put("isbn", new JsonArray().add("1")))
+            )
         )
         .add(new JsonObject()
             .put("localId", "S102")
-            .put("marcPayload", new JsonObject().put("leader", "00914naa  0102   450 "))
-            .put("inventoryPayload", new JsonObject().put("isbn", new JsonArray().add("2")))
+            .put("payload", new JsonObject()
+                .put("marc", new JsonObject().put("leader", "00914naa  0102   450 "))
+                .put("inventory", new JsonObject().put("isbn", new JsonArray().add("2")))
+            )
         );
     ingestRecords(records1, sourceId1);
 
@@ -1178,36 +1177,30 @@ public class MainVerticleTest {
 
   @Test
   public void testEmptyMatchKeys() {
-    JsonObject matchKey = new JsonObject()
-        .put("id", "isbn")
-        .put("method", "jsonpath")
-        .put("params", new JsonObject().put("inventory", "$.isbn[*]"));
-
-    RestAssured.given()
-        .header(XOkapiHeaders.TENANT, tenant1)
-        .header("Content-Type", "application/json")
-        .body(matchKey.encode())
-        .post("/meta-storage/config/matchkeys")
-        .then().statusCode(201)
-        .contentType("application/json")
-        .body(Matchers.is(matchKey.encode()));
+    JsonObject matchKey = createIsbnMatchKey();
 
     String sourceId1 = UUID.randomUUID().toString();
     JsonArray records1 = new JsonArray()
         .add(new JsonObject()
             .put("localId", "S101")
-            .put("marcPayload", new JsonObject().put("leader", "00914naa  0101   450 "))
-            .put("inventoryPayload", new JsonObject().put("isbn", new JsonArray().add("1")))
+            .put("payload", new JsonObject()
+                .put("marc", new JsonObject().put("leader", "00914naa  0101   450 "))
+                .put("inventory", new JsonObject().put("isbn", new JsonArray().add("1")))
+            )
         )
         .add(new JsonObject()
             .put("localId", "S102")
-            .put("marcPayload", new JsonObject().put("leader", "00914naa  0102   450 "))
-            .put("inventoryPayload", new JsonObject().put("isbn", new JsonArray()))
+            .put("payload", new JsonObject()
+                .put("marc", new JsonObject().put("leader", "00914naa  0102   450 "))
+                .put("inventory", new JsonObject().put("isbn", new JsonArray()))
+            )
         )
         .add(new JsonObject()
             .put("localId", "S103")
-            .put("marcPayload", new JsonObject().put("leader", "00914naa  0102   450 "))
-            .put("inventoryPayload", new JsonObject().put("isbn", new JsonArray()))
+            .put("payload", new JsonObject()
+                .put("marc", new JsonObject().put("leader", "00914naa  0102   450 "))
+                .put("inventory", new JsonObject().put("isbn", new JsonArray()))
+            )
         );
     ingestRecords(records1, sourceId1);
 
@@ -1232,8 +1225,10 @@ public class MainVerticleTest {
     records1 = new JsonArray()
         .add(new JsonObject()
             .put("localId", "S103")
-            .put("marcPayload", new JsonObject().put("leader", "00914naa  0102   450 "))
-            .put("inventoryPayload", new JsonObject().put("isbn", new JsonArray().add("1")))
+            .put("payload", new JsonObject()
+                .put("marc", new JsonObject().put("leader", "00914naa  0102   450 "))
+                .put("inventory", new JsonObject().put("isbn", new JsonArray().add("1")))
+            )
         );
     ingestRecords(records1, sourceId1);
     s = RestAssured.given()
@@ -1262,32 +1257,23 @@ public class MainVerticleTest {
 
   @Test
   public void testMatchKeysManual() {
-    JsonObject matchKey = new JsonObject()
-        .put("id", "isbn")
-        .put("method", "jsonpath")
-        .put("update", "manual")
-        .put("params", new JsonObject().put("inventory", "$.isbn[*]"));
-
-    RestAssured.given()
-        .header(XOkapiHeaders.TENANT, tenant1)
-        .header("Content-Type", "application/json")
-        .body(matchKey.encode())
-        .post("/meta-storage/config/matchkeys")
-        .then().statusCode(201)
-        .contentType("application/json")
-        .body(Matchers.is(matchKey.encode()));
+    JsonObject matchKey = createIsbnMatchKey("manual");
 
     String sourceId1 = UUID.randomUUID().toString();
     JsonArray records1 = new JsonArray()
         .add(new JsonObject()
             .put("localId", "S101")
-            .put("marcPayload", new JsonObject().put("leader", "00914naa  0101   450 "))
-            .put("inventoryPayload", new JsonObject().put("isbn", new JsonArray().add("1")))
+            .put("payload", new JsonObject()
+                .put("marc", new JsonObject().put("leader", "00914naa  0101   450 "))
+                .put("inventory", new JsonObject().put("isbn", new JsonArray().add("1")))
+            )
         )
         .add(new JsonObject()
             .put("localId", "S102")
-            .put("marcPayload", new JsonObject().put("leader", "00914naa  0102   450 "))
-            .put("inventoryPayload", new JsonObject().put("isbn", new JsonArray().add("2")))
+            .put("payload", new JsonObject()
+                .put("marc", new JsonObject().put("leader", "00914naa  0102   450 "))
+                .put("inventory", new JsonObject().put("isbn", new JsonArray().add("2")))
+            )
         );
     ingestRecords(records1, sourceId1);
 
@@ -1326,28 +1312,38 @@ public class MainVerticleTest {
     JsonArray records2 = new JsonArray()
         .add(new JsonObject()
             .put("localId", "S201")
-            .put("marcPayload", new JsonObject().put("leader", "00914naa  0201   450 "))
-            .put("inventoryPayload", new JsonObject().put("isbn", new JsonArray().add("3")))
+            .put("payload", new JsonObject()
+                .put("marc", new JsonObject().put("leader", "00914naa  0201   450 "))
+                .put("inventory", new JsonObject().put("isbn", new JsonArray().add("3")))
+            )
         )
         .add(new JsonObject()
             .put("localId", "S202")
-            .put("marcPayload", new JsonObject().put("leader", "00914naa  0202   450 "))
-            .put("inventoryPayload", new JsonObject().put("isbn", new JsonArray().add("1").add("2").add("3").add("4")))
+            .put("payload", new JsonObject()
+                .put("marc", new JsonObject().put("leader", "00914naa  0202   450 "))
+                .put("inventory", new JsonObject().put("isbn", new JsonArray().add("1").add("2").add("3").add("4")))
+            )
         )
         .add(new JsonObject()
             .put("localId", "S203")
-            .put("marcPayload", new JsonObject().put("leader", "00914naa  0203   450 "))
-            .put("inventoryPayload", new JsonObject().put("isbn", new JsonArray().add("5").add("6")))
+            .put("payload", new JsonObject()
+                .put("marc", new JsonObject().put("leader", "00914naa  0203   450 "))
+                .put("inventory", new JsonObject().put("isbn", new JsonArray().add("5").add("6")))
+            )
         )
         .add(new JsonObject()
             .put("localId", "S204")
-            .put("marcPayload", new JsonObject().put("leader", "00914naa  0204   450 "))
-            .put("inventoryPayload", new JsonObject().put("isbn", new JsonArray().add("5")))
+            .put("payload", new JsonObject()
+                .put("marc", new JsonObject().put("leader", "00914naa  0204   450 "))
+                .put("inventory", new JsonObject().put("isbn", new JsonArray().add("5")))
+            )
         )
         .add(new JsonObject()
             .put("localId", "S205")
-            .put("marcPayload", new JsonObject().put("leader", "00914naa  0204   450 "))
-            .put("inventoryPayload", new JsonObject().put("isbn", new JsonArray().add("4")))
+            .put("payload", new JsonObject()
+                .put("marc", new JsonObject().put("leader", "00914naa  0204   450 "))
+                .put("inventory", new JsonObject().put("isbn", new JsonArray().add("4")))
+            )
         );
     ingestRecords(records2, sourceId2);
 
@@ -1490,20 +1486,7 @@ public class MainVerticleTest {
 
   @Test
   public void testOaiSimple() throws XMLStreamException, IOException, SAXException {
-    JsonObject matchKey1 = new JsonObject()
-        .put("id", "isbn")
-        .put("method", "jsonpath")
-        // update = ingest is the default
-        .put("params", new JsonObject().put("inventory", "$.isbn[*]"));
-
-    RestAssured.given()
-        .header(XOkapiHeaders.TENANT, tenant1)
-        .header("Content-Type", "application/json")
-        .body(matchKey1.encode())
-        .post("/meta-storage/config/matchkeys")
-        .then().statusCode(201)
-        .contentType("application/json")
-        .body(Matchers.is(matchKey1.encode()));
+    createIsbnMatchKey();
 
     List<String> identifiers = new LinkedList<>();
     String s = RestAssured.given()
@@ -1517,69 +1500,60 @@ public class MainVerticleTest {
         .extract().body().asString();
     verifyOaiResponse(s, "ListRecords", identifiers, 0);
 
-    JsonObject matchKey2 = new JsonObject()
-        .put("id", "issn")
-        .put("method", "jsonpath")
-        // update = ingest is the default
-        .put("params", new JsonObject().put("inventory", "$.issn[*]"));
-
-    RestAssured.given()
-        .header(XOkapiHeaders.TENANT, tenant1)
-        .header("Content-Type", "application/json")
-        .body(matchKey2.encode())
-        .post("/meta-storage/config/matchkeys")
-        .then().statusCode(201)
-        .contentType("application/json")
-        .body(Matchers.is(matchKey2.encode()));
+    createIssnMatchKey();
 
     String sourceId1 = UUID.randomUUID().toString();
     JsonArray records1 = new JsonArray()
         .add(new JsonObject()
             .put("localId", "S101")
-            .put("marcPayload", new JsonObject()
-                .put("leader", "00914naa  2200337   450 ")
-                .put("fields", new JsonArray()
-                    .add(new JsonObject()
-                        .put("999", new JsonObject()
-                            .put("ind1", " ")
-                            .put("ind2", " ")
-                            .put("subfields", new JsonArray()
-                                .add(new JsonObject()
-                                    .put("a", "S101a")
-                                    .put("b", "S101b")
+            .put("payload", new JsonObject()
+                .put("marc", new JsonObject()
+                    .put("leader", "00914naa  2200337   450 ")
+                    .put("fields", new JsonArray()
+                        .add(new JsonObject()
+                            .put("999", new JsonObject()
+                                .put("ind1", " ")
+                                .put("ind2", " ")
+                                .put("subfields", new JsonArray()
+                                    .add(new JsonObject()
+                                        .put("a", "S101a")
+                                        .put("b", "S101b")
+                                    )
                                 )
                             )
                         )
                     )
                 )
-            )
-            .put("inventoryPayload", new JsonObject()
-                .put("isbn", new JsonArray().add("1"))
-                .put("issn", new JsonArray().add("01"))
+                .put("inventory", new JsonObject()
+                    .put("isbn", new JsonArray().add("1"))
+                    .put("issn", new JsonArray().add("01"))
+                )
             )
         )
         .add(new JsonObject()
             .put("localId", "S102")
-            .put("marcPayload", new JsonObject()
-                .put("leader", "00914naa  2200337   450 ")
-                .put("fields", new JsonArray()
-                    .add(new JsonObject()
-                        .put("999", new JsonObject()
-                            .put("ind1", " ")
-                            .put("ind2", " ")
-                            .put("subfields", new JsonArray()
-                                .add(new JsonObject()
-                                    .put("a", "S102a")
-                                    .put("b", "S102b")
+            .put("payload", new JsonObject()
+                .put("marc", new JsonObject()
+                    .put("leader", "00914naa  2200337   450 ")
+                    .put("fields", new JsonArray()
+                        .add(new JsonObject()
+                            .put("999", new JsonObject()
+                                .put("ind1", " ")
+                                .put("ind2", " ")
+                                .put("subfields", new JsonArray()
+                                    .add(new JsonObject()
+                                        .put("a", "S102a")
+                                        .put("b", "S102b")
+                                    )
                                 )
                             )
                         )
                     )
                 )
-            )
-            .put("inventoryPayload", new JsonObject()
-                .put("isbn", new JsonArray().add("2").add("3"))
-                .put("issn", new JsonArray().add("01"))
+                .put("inventory", new JsonObject()
+                    .put("isbn", new JsonArray().add("2").add("3"))
+                    .put("issn", new JsonArray().add("01"))
+                )
             )
         );
     ingestRecords(records1, sourceId1);
@@ -1641,14 +1615,14 @@ public class MainVerticleTest {
     JsonArray records2 = new JsonArray()
         .add(new JsonObject()
             .put("localId", "S103")
-            .put("marcPayload", new JsonObject()
-                .put("leader", "00914naa  2200337   450 ")
-            )
-            .put("inventoryPayload", new JsonObject()
-                .put("isbn", new JsonArray().add("1").add("2"))
-                .put("issn", new JsonArray().add("02"))
-                .put("holdingsRecords", new JsonArray().add(new JsonObject()
-                        .put("permanentLocationDeref", "S103")
+            .put("payload", new JsonObject()
+                .put("marc", new JsonObject().put("leader", "00914naa  2200337   450 "))
+                .put("inventory", new JsonObject()
+                    .put("isbn", new JsonArray().add("1").add("2"))
+                    .put("issn", new JsonArray().add("02"))
+                    .put("holdingsRecords", new JsonArray().add(new JsonObject()
+                            .put("permanentLocationDeref", "S103")
+                        )
                     )
                 )
             )
@@ -1699,20 +1673,7 @@ public class MainVerticleTest {
     String time0 = Instant.now(Clock.systemUTC()).minusSeconds(1L).truncatedTo(ChronoUnit.SECONDS).toString();
     String time1 = Instant.now(Clock.systemUTC()).truncatedTo(ChronoUnit.SECONDS).toString();
 
-    JsonObject matchKey1 = new JsonObject()
-        .put("id", "isbn")
-        .put("method", "jsonpath")
-        // update = ingest is the default
-        .put("params", new JsonObject().put("inventory", "$.isbn[*]"));
-
-    RestAssured.given()
-        .header(XOkapiHeaders.TENANT, tenant1)
-        .header("Content-Type", "application/json")
-        .body(matchKey1.encode())
-        .post("/meta-storage/config/matchkeys")
-        .then().statusCode(201)
-        .contentType("application/json")
-        .body(Matchers.is(matchKey1.encode()));
+    createIsbnMatchKey();
 
     List<String> identifiers = new LinkedList<>();
     String s;
@@ -1721,20 +1682,16 @@ public class MainVerticleTest {
     JsonArray records1 = new JsonArray()
         .add(new JsonObject()
             .put("localId", "S101")
-            .put("marcPayload", new JsonObject()
-                .put("leader", "00914naa  2200337   450 ")
-            )
-            .put("inventoryPayload", new JsonObject()
-                .put("isbn", new JsonArray().add("1"))
+            .put("payload", new JsonObject()
+                .put("marc", new JsonObject().put("leader", "00914naa  2200337   450 "))
+                .put("inventory", new JsonObject().put("isbn", new JsonArray().add("1")))
             )
         )
         .add(new JsonObject()
             .put("localId", "S102")
-            .put("marcPayload", new JsonObject()
-                .put("leader", "00914naa  2200337   450 ")
-            )
-            .put("inventoryPayload", new JsonObject()
-                .put("isbn", new JsonArray().add("2"))
+            .put("payload", new JsonObject()
+                .put("marc", new JsonObject().put("leader", "00914naa  2200337   450 "))
+                .put("inventory", new JsonObject().put("isbn", new JsonArray().add("2")))
             )
         );
     ingestRecords(records1, sourceId1);
@@ -1848,29 +1805,17 @@ public class MainVerticleTest {
 
   @Test
   public void testOaiResumptionToken() throws XMLStreamException, IOException, SAXException {
-    JsonObject matchKey1 = new JsonObject()
-        .put("id", "isbn")
-        .put("method", "jsonpath")
-        // update = ingest is the default
-        .put("params", new JsonObject().put("inventory", "$.isbn[*]"));
-
-    RestAssured.given()
-        .header(XOkapiHeaders.TENANT, tenant1)
-        .header("Content-Type", "application/json")
-        .body(matchKey1.encode())
-        .post("/meta-storage/config/matchkeys")
-        .then().statusCode(201)
-        .contentType("application/json")
-        .body(Matchers.is(matchKey1.encode()));
+    createIsbnMatchKey();
 
     String sourceId1 = UUID.randomUUID().toString();
     for (int i = 0; i < 10; i++) {
       JsonArray records1 = new JsonArray()
           .add(new JsonObject()
               .put("localId", "S" + i)
-              .put("marcPayload", new JsonObject().put("leader", "00914naa  0101   450 "))
-              .put("inventoryPayload", new JsonObject()
-                  .put("isbn", new JsonArray().add(Integer.toString(i))))
+              .put("payload", new JsonObject()
+                  .put("marc", new JsonObject().put("leader", "00914naa  0101   450 "))
+                  .put("inventory", new JsonObject().put("isbn", new JsonArray().add(Integer.toString(i))))
+              )
           );
       ingestRecords(records1, sourceId1);
     }

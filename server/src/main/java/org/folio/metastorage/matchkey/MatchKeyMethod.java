@@ -22,9 +22,8 @@ public interface MatchKeyMethod {
 
   /**
    * Generate match keys.
-   * @param marcPayload MARC payload
-   * @param inventoryPayload inventory payload
+   * @param payload payload with marc and inventory XSLT result
    * @param keys resulting keys (unmodified if no keys were generated).
    */
-  void getKeys(JsonObject marcPayload, JsonObject inventoryPayload, Collection<String> keys);
+  void getKeys(JsonObject payload, Collection<String> keys);
 }

@@ -200,7 +200,7 @@ public final class OaiService {
    *
    * <p>999 ind1=0 ind2=0 has holding information. Not complete yet.
    *
-   * @param rowSet bib_record rowSet (empty if no record entries: deleted)
+   * @param rowSet global_records rowSet (empty if no record entries: deleted)
    * @param clusterId cluster identifier that this record is part of
    * @param matchValues match values for this cluster
    * @return
@@ -215,7 +215,7 @@ public final class OaiService {
     }
     while (iterator.hasNext()) {
       Row row = iterator.next();
-      JsonObject thisMarc = row.getJsonObject("marc_payload");
+      JsonObject thisMarc = row.getJsonObject("payload").getJsonObject("marc");
       JsonArray f999 = XmlJsonUtil.lookupMarcDataField(thisMarc, "999", " ", " ");
       if (combinedMarc == null) {
         combinedMarc = thisMarc;
@@ -241,7 +241,7 @@ public final class OaiService {
 
   static Future<String> getXmlRecordMetadata(Storage storage, SqlConnection conn, UUID clusterId,
       List<String> matchValues) {
-    String q = "SELECT * FROM " + storage.getBibRecordTable()
+    String q = "SELECT * FROM " + storage.getGlobalRecordTable()
         + " LEFT JOIN " + storage.getClusterRecordTable() + " ON record_id = id "
         + " WHERE cluster_id = $1";
     return conn.preparedQuery(q)
