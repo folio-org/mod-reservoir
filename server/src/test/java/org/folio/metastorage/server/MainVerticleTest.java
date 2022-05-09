@@ -1693,6 +1693,14 @@ public class MainVerticleTest {
                 .put("marc", new JsonObject().put("leader", "00914naa  2200337   450 "))
                 .put("inventory", new JsonObject().put("isbn", new JsonArray().add("2")))
             )
+        )
+        .add(new JsonObject()
+            .put("localId", "S103")
+            .put("payload", new JsonObject()
+                .put("marc", new JsonObject().put("leader", "00914naa  2200337   450 "))
+                .put("inventory", new JsonObject().put("isbn", new JsonArray().add("3")))
+            )
+
         );
     ingestRecords(records1, sourceId1);
     String time2 = Instant.now(Clock.systemUTC()).truncatedTo(ChronoUnit.SECONDS).toString();
@@ -1709,7 +1717,7 @@ public class MainVerticleTest {
         .then().statusCode(200)
         .contentType("text/xml")
         .extract().body().asString();
-    verifyOaiResponse(s, "ListRecords", identifiers, 2);
+    verifyOaiResponse(s, "ListRecords", identifiers, 3);
 
     s = RestAssured.given()
         .header(XOkapiHeaders.TENANT, tenant1)
@@ -1743,7 +1751,7 @@ public class MainVerticleTest {
         .then().statusCode(200)
         .contentType("text/xml")
         .extract().body().asString();
-    verifyOaiResponse(s, "ListRecords", identifiers, 2);
+    verifyOaiResponse(s, "ListRecords", identifiers, 3);
 
     RestAssured.given()
         .header(XOkapiHeaders.TENANT, tenant1)
@@ -1760,7 +1768,7 @@ public class MainVerticleTest {
 
     JsonArray records2 = new JsonArray()
         .add(new JsonObject()
-            .put("localId", "S102")
+            .put("localId", "S103")
             .put("delete", true)
         );
     ingestRecords(records2, sourceId1);
@@ -1779,12 +1787,15 @@ public class MainVerticleTest {
     TimeUnit.SECONDS.sleep(1);
     String time5 = Instant.now(Clock.systemUTC()).truncatedTo(ChronoUnit.SECONDS).toString();
 
-    RestAssured.given()
-        .header(XOkapiHeaders.TENANT, tenant1)
-        .header("Content-Type", "application/json")
-        .param("query", "cql.allRecords=true")
-        .delete("/meta-storage/records")
-        .then().statusCode(204);
+    records1 = new JsonArray()
+        .add(new JsonObject()
+            .put("localId", "S104")
+            .put("payload", new JsonObject()
+                .put("marc", new JsonObject().put("leader", "00914naa  2200337   450 "))
+                .put("inventory", new JsonObject().put("isbn", new JsonArray().add("1").add("2")))
+            )
+        );
+    ingestRecords(records1, sourceId1);
 
     s = RestAssured.given()
         .header(XOkapiHeaders.TENANT, tenant1)
@@ -1795,7 +1806,14 @@ public class MainVerticleTest {
         .then().statusCode(200)
         .contentType("text/xml")
         .extract().body().asString();
-    verifyOaiResponse(s, "ListRecords", identifiers, 1);
+    verifyOaiResponse(s, "ListRecords", identifiers, 2);
+
+    RestAssured.given()
+        .header(XOkapiHeaders.TENANT, tenant1)
+        .header("Content-Type", "application/json")
+        .param("query", "cql.allRecords=true")
+        .delete("/meta-storage/records")
+        .then().statusCode(204);
 
     RestAssured.given()
         .header(XOkapiHeaders.TENANT, tenant1)

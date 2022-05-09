@@ -297,10 +297,10 @@ public class Storage {
         .compose(clustersFound -> {
           Iterator<UUID> iterator = clustersFound.iterator();
           if (!iterator.hasNext()) {
-            return createCluster(conn, newClusterId, matchKeyConfigId); // create new cluster
+            return createMetaEntry(conn, newClusterId, matchKeyConfigId);
           }
-          UUID clusterId = iterator.next();
-          return updateCluster(conn, clusterId).compose(c -> {
+          return updateMetaEntries(conn, clustersFound).compose(c -> {
+            UUID clusterId = iterator.next();
             if (!iterator.hasNext()) {
               return Future.succeededFuture(clusterId); // exactly one already
             }
@@ -345,17 +345,29 @@ public class Storage {
         .mapEmpty();
   }
 
-  Future<UUID> createCluster(SqlConnection conn, UUID clusterId, String matchKeyConfigId) {
+  Future<UUID> createMetaEntry(SqlConnection conn, UUID clusterId, String matchKeyConfigId) {
     return conn.preparedQuery("INSERT INTO " + clusterMetaTable
             + " (cluster_id, datestamp, match_key_config_id) VALUES ($1, $2, $3)")
         .execute(Tuple.of(clusterId, LocalDateTime.now(ZoneOffset.UTC), matchKeyConfigId))
         .map(clusterId);
   }
 
-  Future<Void> updateCluster(SqlConnection conn, UUID clusterId) {
-    return conn.preparedQuery("UPDATE " + clusterMetaTable
-            + " SET datestamp = $2 WHERE cluster_id = $1")
-        .execute(Tuple.of(clusterId, LocalDateTime.now(ZoneOffset.UTC)))
+  Future<Void> updateMetaEntries(SqlConnection conn, Set<UUID> clusters) {
+    Iterator<UUID> iterator = clusters.iterator();
+    StringBuilder setClause = new StringBuilder("UPDATE " + clusterMetaTable
+        + " SET datestamp = $1 WHERE ");
+    List<Object> tupleList = new ArrayList<>();
+    tupleList.add(LocalDateTime.now(ZoneOffset.UTC));
+    for (int no = 2; iterator.hasNext(); no++) {
+      tupleList.add(iterator.next());
+      if (no > 2) {
+        setClause.append(" OR ");
+      }
+      setClause.append("cluster_id = $");
+      setClause.append(no);
+    }
+    return conn.preparedQuery(setClause.toString())
+        .execute(Tuple.from(tupleList))
         .mapEmpty();
   }
 
@@ -376,7 +388,6 @@ public class Storage {
         .compose(x -> conn.preparedQuery("UPDATE " + clusterRecordTable + setClause)
             .execute(Tuple.from(tupleList)))
         .mapEmpty();
-    // clusterMetaTable entries not removed. These are "delete items"
   }
 
   /**
