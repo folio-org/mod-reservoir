@@ -5,7 +5,7 @@
   <version>0.0.1-SNAPSHOT</version>
   <packaging>pom</packaging>
 
-  <name>Shared Index</name>
+  <name>Meta Storage</name>
   <url>https://github.com/folio-org/mod-meta-storage</url>
   <description>Module for shared meta data</description>
   <inceptionYear>2021</inceptionYear>

@@ -205,7 +205,7 @@ public class MainVerticleTest {
   }
 
   @Test
-  public void testGetSharedRecordsUnknownTenant() {
+  public void testGetGlobalRecordsUnknownTenant() {
     String tenant = "unknowntenant";
     RestAssured.given()
         .baseUri(MODULE_URL)
@@ -217,7 +217,7 @@ public class MainVerticleTest {
   }
 
   @Test
-  public void testGetSharedRecordsBadCqlField() {
+  public void testGetGlobalRecordsBadCqlField() {
     RestAssured.given()
         .header(XOkapiHeaders.TENANT, tenant1)
         .param("query","foo=bar" )
@@ -254,7 +254,7 @@ public class MainVerticleTest {
   }
 
   @Test
-  public void putSharedTitleUnknownTenant() {
+  public void ingestTitleUnknownTenant() {
     String sourceId = UUID.randomUUID().toString();
     JsonArray records = new JsonArray()
         .add(new JsonObject()
@@ -410,7 +410,7 @@ public class MainVerticleTest {
   }
 
   @Test
-  public void putSharedRecordsPayloadMissing() {
+  public void ingestRecordsPayloadMissing() {
     String sourceId = UUID.randomUUID().toString();
     JsonArray records = new JsonArray()
         .add(new JsonObject()
@@ -429,7 +429,7 @@ public class MainVerticleTest {
   }
 
   @Test
-  public void putSharedRecordsLocalIdMissing() {
+  public void ingestRecordsLocalIdMissing() {
     String sourceId = UUID.randomUUID().toString();
     JsonArray records = new JsonArray()
         .add(new JsonObject()
@@ -448,7 +448,7 @@ public class MainVerticleTest {
   }
 
   @Test
-  public void putSharedRecords() {
+  public void ingestRecords() {
     String sourceId = UUID.randomUUID().toString();
     JsonArray records = new JsonArray()
         .add(new JsonObject()
@@ -1067,7 +1067,7 @@ public class MainVerticleTest {
   }
 
   @Test
-  public void testDeleteSharedRecords() {
+  public void testDeleteGlobalRecords() {
     RestAssured.given()
         .header(XOkapiHeaders.TENANT, tenant1)
         .header("Content-Type", "application/json")

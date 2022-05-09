@@ -306,7 +306,7 @@ paths:
           $ref: "#/components/responses/trait_404"
         "500":
           $ref: "#/components/responses/trait_500"
-  # Shared Records retrieval and simple ingest
+  # Global Records retrieval and simple ingest
   /meta-storage/records:
     parameters:
       - $ref: headers/okapi-tenant.yaml
@@ -466,7 +466,7 @@ paths:
           $ref: "#/components/responses/trait_400"
         "500":
           $ref: "#/components/responses/trait_500"
-# Shared error responses
+# Meta storage error responses
 components:
   responses:
     trait_400:
