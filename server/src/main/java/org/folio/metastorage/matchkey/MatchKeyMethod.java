@@ -1,24 +1,27 @@
 package org.folio.metastorage.matchkey;
 
+import io.vertx.core.Future;
+import io.vertx.core.Vertx;
 import io.vertx.core.json.JsonObject;
 import java.util.Collection;
-import org.folio.metastorage.matchkey.impl.MatchKeyJsonPath;
 
 public interface MatchKeyMethod {
 
   /**
-   * Get MatchKeyMethod instance from method.
+   * Get MatchKeyMethod instance with configuration.
+   * @param vertx Vert.x handle
+   * @param tenant tenant
+   * @param id matchkey id
    * @param method method name
-   * @return method or NULL if not found
+   * @param configuration configuration
+   * @return Async result MatchKeyMethod
    */
-  static MatchKeyMethod get(String method) {
-    if ("jsonpath".equals(method)) {
-      return new MatchKeyJsonPath();
-    }
-    return null;
+  static Future<MatchKeyMethod> get(Vertx vertx, String tenant, String id,
+      String method, JsonObject configuration) {
+    return MatchKeyMethodFactory.get(vertx, tenant, id, method, configuration);
   }
 
-  void configure(JsonObject configuration);
+  Future<Void> configure(Vertx vertx, JsonObject configuration);
 
   /**
    * Generate match keys.
@@ -26,4 +29,9 @@ public interface MatchKeyMethod {
    * @param keys resulting keys (unmodified if no keys were generated).
    */
   void getKeys(JsonObject payload, Collection<String> keys);
+
+  /**
+   * Close resources for method.
+   */
+  default void close() { }
 }

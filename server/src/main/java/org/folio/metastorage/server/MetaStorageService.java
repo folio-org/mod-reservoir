@@ -15,7 +15,7 @@ import java.util.UUID;
 import java.util.function.Function;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-import org.folio.metastorage.matchkey.MatchKeyMethod;
+import org.folio.metastorage.matchkey.MatchKeyMethodFactory;
 import org.folio.metastorage.util.LargeJsonReadStream;
 import org.folio.okapi.common.HttpResponse;
 import org.folio.tlib.RouterCreator;
@@ -37,11 +37,12 @@ public class MetaStorageService implements RouterCreator, TenantInitHooks {
       Storage storage = new Storage(ctx);
       HttpServerRequest request = ctx.request();
       request.pause();
-      return storage.updateGlobalRecords(new LargeJsonReadStream(request)).onSuccess(res -> {
-        JsonArray ar = new JsonArray();
-        // global ids and match keys here ...
-        HttpResponse.responseJson(ctx, 200).end(ar.encode());
-      });
+      return storage.updateGlobalRecords(ctx.vertx(), new LargeJsonReadStream(request))
+          .onSuccess(res -> {
+            JsonArray ar = new JsonArray();
+            // global ids and match keys here ...
+            HttpResponse.responseJson(ctx, 200).end(ar.encode());
+          });
     } catch (Exception e) {
       return Future.failedFuture(e);
     }
@@ -145,10 +146,9 @@ public class MetaStorageService implements RouterCreator, TenantInitHooks {
         .mapEmpty();
   }
 
-
   static String getMethod(JsonObject config) {
     String method = config.getString("method");
-    if (MatchKeyMethod.get(method) == null) {
+    if (MatchKeyMethodFactory.get(method) == null) {
       throw new IllegalArgumentException("Non-existing method '" + method + "'");
     }
     return method;
@@ -235,7 +235,7 @@ public class MetaStorageService implements RouterCreator, TenantInitHooks {
     RequestParameters params = ctx.get(ValidationHandler.REQUEST_CONTEXT_KEY);
     String id = Util.getParameterString(params.pathParameter("id"));
     Storage storage = new Storage(ctx);
-    return storage.initializeMatchKey(id)
+    return storage.initializeMatchKey(ctx.vertx(), id)
         .onSuccess(res -> {
           if (res == null) {
             matchKeyNotFound(ctx, id);

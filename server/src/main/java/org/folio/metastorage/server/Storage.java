@@ -50,7 +50,9 @@ public class Storage {
   final String clusterRecordTable;
   final String clusterValueTable;
   final String clusterMetaTable;
+  private final String tenant;
   static int sqlStreamFetchSize = 50;
+
 
   /**
    * Create storage service for tenant.
@@ -59,6 +61,7 @@ public class Storage {
    */
   public Storage(Vertx vertx, String tenant) {
     this.pool = TenantPgPool.pool(vertx, tenant);
+    this.tenant = tenant;
     this.globalRecordTable = pool.getSchema() + ".global_records";
     this.matchKeyConfigTable = pool.getSchema() + ".match_key_config";
     this.clusterRecordTable = pool.getSchema() + ".cluster_records";
@@ -144,6 +147,7 @@ public class Storage {
   }
 
   Future<Void> upsertGlobalRecord(
+      Vertx vertx,
       SqlConnection conn,
       String localIdentifier,
       UUID sourceId,
@@ -162,7 +166,7 @@ public class Storage {
             Tuple.of(UUID.randomUUID(), localIdentifier, sourceId, payload)
         )
         .map(rowSet -> rowSet.iterator().next().getUUID("id"))
-        .compose(id -> updateMatchKeyValues(conn, id, payload, matchKeyConfigs))
+        .compose(id -> updateMatchKeyValues(vertx, conn, id, payload, matchKeyConfigs))
         .mapEmpty();
   }
 
@@ -180,21 +184,21 @@ public class Storage {
         .mapEmpty());
   }
 
-  Future<Void> ingestGlobalRecord(UUID sourceId, JsonObject globalRecord,
+  Future<Void> ingestGlobalRecord(Vertx vertx, UUID sourceId, JsonObject globalRecord,
       JsonArray matchKeyConfigs) {
 
     return pool.withTransaction(conn ->
-            ingestGlobalRecord(conn, sourceId, globalRecord, matchKeyConfigs))
+            ingestGlobalRecord(vertx, conn, sourceId, globalRecord, matchKeyConfigs))
         // addValuesToCluster may fail if for same new match key for parallel operations
         // we recover just once for that. 2nd will find the new value for the one that
         // succeeded.
         .recover(x ->
             pool.withTransaction(conn ->
-                ingestGlobalRecord(conn, sourceId, globalRecord, matchKeyConfigs)));
+                ingestGlobalRecord(vertx, conn, sourceId, globalRecord, matchKeyConfigs)));
   }
 
-  Future<Void> ingestGlobalRecord(SqlConnection conn, UUID sourceId,
-      JsonObject globalRecord, JsonArray matchKeyConfigs) {
+  Future<Void> ingestGlobalRecord(Vertx vertx, SqlConnection conn,
+      UUID sourceId, JsonObject globalRecord, JsonArray matchKeyConfigs) {
 
     final String localIdentifier = globalRecord.getString("localId");
     if (localIdentifier == null) {
@@ -207,20 +211,20 @@ public class Storage {
     if (payload == null) {
       return Future.failedFuture("payload required");
     }
-    return upsertGlobalRecord(conn, localIdentifier, sourceId, payload, matchKeyConfigs);
+    return upsertGlobalRecord(vertx, conn, localIdentifier, sourceId, payload, matchKeyConfigs);
   }
 
-  Future<Void> updateMatchKeyValues(SqlConnection conn, UUID globalId,
+  Future<Void> updateMatchKeyValues(Vertx vertx, SqlConnection conn, UUID globalId,
       JsonObject payload, JsonArray matchKeyConfigs) {
     List<Future<Void>> futures = new ArrayList<>(matchKeyConfigs.size());
     for (int i = 0; i < matchKeyConfigs.size(); i++) {
       JsonObject matchKeyConfig = matchKeyConfigs.getJsonObject(i);
-      futures.add(updateMatchKeyValues(conn, globalId, payload, matchKeyConfig));
+      futures.add(updateMatchKeyValues(vertx, conn, globalId, payload, matchKeyConfig));
     }
     return GenericCompositeFuture.all(futures).mapEmpty();
   }
 
-  Future<Void> updateMatchKeyValues(SqlConnection conn, UUID globalId,
+  Future<Void> updateMatchKeyValues(Vertx vertx, SqlConnection conn, UUID globalId,
       JsonObject payload, JsonObject matchKeyConfig) {
 
     String update = matchKeyConfig.getString("update");
@@ -228,15 +232,15 @@ public class Storage {
       return Future.succeededFuture();
     }
     String methodName = matchKeyConfig.getString("method");
-    MatchKeyMethod method = MatchKeyMethod.get(methodName);
-    if (method == null) {
-      return Future.failedFuture("Unknown match key method: " + methodName);
-    }
-    method.configure(matchKeyConfig.getJsonObject("params"));
-    Set<String> keys = new HashSet<>();
-    method.getKeys(payload, keys);
-    String matchKeyConfigId = matchKeyConfig.getString("id");
-    return updateMatchKeyValues(conn, globalId, matchKeyConfigId, keys);
+    JsonObject params = matchKeyConfig.getJsonObject("params");
+    String id = matchKeyConfig.getString("id");
+    return MatchKeyMethod.get(vertx, tenant, id, methodName, params)
+        .compose(matchKeyMethod -> {
+          Set<String> keys = new HashSet<>();
+          matchKeyMethod.getKeys(payload, keys);
+          String matchKeyConfigId = matchKeyConfig.getString("id");
+          return updateMatchKeyValues(conn, globalId, matchKeyConfigId, keys);
+        });
   }
 
   Future<Void> updateMatchKeyValues(SqlConnection conn, UUID globalId,
@@ -392,15 +396,16 @@ public class Storage {
 
   /**
    * Update/insert set of global records.
+   * @param vertx Vert.x handle
    * @param request ingest record request
    * @return async result
    */
-  public Future<Void> updateGlobalRecords(LargeJsonReadStream request) {
+  public Future<Void> updateGlobalRecords(Vertx vertx, LargeJsonReadStream request) {
     return pool.withConnection(this::getAvailableMatchConfigs).compose(matchKeyConfigs ->
             new ReadStreamConsumer<JsonObject, Void>()
               .consume(request, r ->
                 ingestGlobalRecord(
-                    UUID.fromString(request.topLevelObject().getString("sourceId")),
+                    vertx, UUID.fromString(request.topLevelObject().getString("sourceId")),
                     r, matchKeyConfigs)));
   }
 
@@ -681,10 +686,11 @@ public class Storage {
 
   /**
    * Initialize match key (populate clusters).
+   * @param vertx Vert.x handle
    * @param id match key id (user specified)
    * @return statistics
    */
-  public Future<JsonObject> initializeMatchKey(String id) {
+  public Future<JsonObject> initializeMatchKey(Vertx vertx, String id) {
     return pool.withConnection(connection ->
         connection.preparedQuery(
                 "SELECT * FROM " + matchKeyConfigTable + " WHERE id = $1")
@@ -697,12 +703,8 @@ public class Storage {
               Row row = iterator.next();
               String method = row.getString("method");
               JsonObject params = row.getJsonObject("params");
-              MatchKeyMethod matchKeyMethod = MatchKeyMethod.get(method);
-              if (matchKeyMethod == null) {
-                return Future.failedFuture("Unknown match key method: " + method);
-              }
-              matchKeyMethod.configure(params);
-              return recalculateMatchKeyValueTable(connection, matchKeyMethod, id);
+              return MatchKeyMethod.get(vertx, tenant, id, method, params).compose(matchKeyMethod ->
+                  recalculateMatchKeyValueTable(connection, matchKeyMethod, id));
             })
     );
   }
