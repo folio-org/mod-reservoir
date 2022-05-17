@@ -38,6 +38,7 @@
   <properties>
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
     <sonar.exclusions>**/MatchKey.java</sonar.exclusions>
+    <graalvm.version>22.1.0</graalvm.version>
   </properties>
 
   <dependencyManagement>
@@ -121,12 +122,7 @@
       <dependency>
         <groupId>org.graalvm.js</groupId>
         <artifactId>js</artifactId>
-        <version>22.1.0</version>
-      </dependency>
-      <dependency>
-        <groupId>org.graalvm.js</groupId>
-        <artifactId>js-scriptengine</artifactId>
-        <version>22.1.0</version>
+        <version>${graalvm.version}</version>
       </dependency>
     </dependencies>
 
@@ -189,6 +185,12 @@
           <groupId>pl.project13.maven</groupId>
           <artifactId>git-commit-id-plugin</artifactId>
           <version>4.9.10</version>
+        </plugin>
+
+        <plugin>
+          <groupId>org.codehaus.mojo</groupId>
+          <artifactId>exec-maven-plugin</artifactId>
+          <version>3.0.0</version>
         </plugin>
 
       </plugins>

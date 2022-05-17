@@ -2,6 +2,6 @@
   "srvcId": "${artifactId}-${version}",
   "nodeId": "localhost",
   "descriptor": {
-    "exec": "java -jar ../mod-meta-storage/server/target/${artifactId}-server-fat.jar -Dhttp.port=%p"
+    "exec": "java --module-path=../mod-meta-storage/server/target/compiler/ --upgrade-module-path=../mod-meta-storage/server/target/compiler/compiler.jar:../mod-meta-storage/server/target/compiler/compiler-management.jar -XX:+UnlockExperimentalVMOptions -XX:+EnableJVMCI -jar ../mod-meta-storage/server/target/${artifactId}-server-fat.jar -Dhttp.port=%p"
   }
 }
