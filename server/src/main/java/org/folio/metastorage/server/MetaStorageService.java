@@ -246,6 +246,22 @@ public class MetaStorageService implements RouterCreator, TenantInitHooks {
         .mapEmpty();
   }
 
+  Future<Void> statsMatchKey(RoutingContext ctx) {
+    RequestParameters params = ctx.get(ValidationHandler.REQUEST_CONTEXT_KEY);
+    String id = Util.getParameterString(params.pathParameter("id"));
+    Storage storage = new Storage(ctx);
+    return storage.selectMatchKeyConfig(id)
+        .compose(conf -> {
+          if (conf == null) {
+            matchKeyNotFound(ctx, id);
+            return Future.succeededFuture();
+          }
+          return storage.statsMatchKey(id)
+              .onSuccess(res -> HttpResponse.responseJson(ctx, 200).end(res.encode()))
+              .mapEmpty();
+        });
+  }
+
   static void failHandler(RoutingContext ctx) {
     Throwable t = ctx.failure();
     // both semantic errors and syntax errors are from same pile ... Choosing 400 over 422.
@@ -298,6 +314,7 @@ public class MetaStorageService implements RouterCreator, TenantInitHooks {
           add(routerBuilder, "deleteConfigMatchKey", this::deleteConfigMatchKey);
           add(routerBuilder, "getConfigMatchKeys", this::getConfigMatchKeys);
           add(routerBuilder, "initializeMatchKey", this::initializeMatchKey);
+          add(routerBuilder, "statsMatchKey", this::statsMatchKey);
           add(routerBuilder, "getClusters", this::getClusters);
           add(routerBuilder, "getCluster", this::getCluster);
           add(routerBuilder, "oaiService", OaiService::get);

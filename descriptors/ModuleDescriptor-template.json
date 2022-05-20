@@ -79,6 +79,15 @@
           "permissionsRequired": [
             "meta-storage-config-matchkeys.item.initialize"
           ]
+        },
+        {
+          "methods": [
+            "GET"
+          ],
+          "pathPattern": "/meta-storage/config/matchkeys/{id}/stats",
+          "permissionsRequired": [
+            "meta-storage-config-matchkeys.item.stats"
+          ]
         }
       ]
     },
@@ -195,6 +204,11 @@
       "description": "Initialize match key configuration"
     },
     {
+      "permissionName": "meta-storage-config-matchkeys.item.stats",
+      "displayName": "meta storage - get match key statistics",
+      "description": "Get match key statistics"
+    },
+    {
       "permissionName": "meta-storage-config-matchkeys.all",
       "displayName": "meta storage - all match key configuration",
       "description": "All match key configuration",
@@ -204,7 +218,8 @@
         "meta-storage-config-matchkeys.item.get",
         "meta-storage-config-matchkeys.item.put",
         "meta-storage-config-matchkeys.item.delete",
-        "meta-storage-config-matchkeys.item.initialize"
+        "meta-storage-config-matchkeys.item.initialize",
+        "meta-storage-config-matchkeys.item.stats"
      ]
     },
     {

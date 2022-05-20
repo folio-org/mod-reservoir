@@ -6,17 +6,17 @@
       "type": "integer",
       "description" : "total records"
     },
-    "totalMatchkeysInitialized": {
+    "clustersTotal": {
       "type": "integer",
-      "description": "total records initialized"
+      "description": "number of clusters"
     },
-    "recordsWithMatchkeyEmpty": {
-      "type": "integer",
-      "description": "number of records with empty match key"
+    "matchValuesPerCluster": {
+      "type" : "object",
+      "description" : "key is number of match vales in cluster; value is number of clusters"
     },
-    "matchkeySingletons": {
-      "type": "integer",
-      "description": "number of records matching no other"
+    "recordsPerCluster": {
+      "type" : "object",
+      "description" : "key is number of records in a cluster; value is number of clusters"
     }
   },
   "additionalProperties": true,
