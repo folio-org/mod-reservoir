@@ -93,8 +93,8 @@ function padContent(keyPart, length) {
 function doTitle(fieldData) {
   // FIXME: handle the other subflieds
   // FIXME: Handle the note of the spec
-  const fieldStr = stripPunctuation(fieldData, ' ').trim();
-  // FIXME: Do normalize
+  let fieldStr = stripPunctuation(fieldData, ' ').trim();
+  fieldStr = fieldStr.normalize('NFD');
   return padContent(fieldStr, 70);
 }
 
