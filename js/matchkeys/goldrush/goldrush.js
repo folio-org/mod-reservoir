@@ -2,6 +2,8 @@
 // Reads MARC JSON from input string.
 // Extracts and normalizes data from relevant fields.
 // Returns matchkey as string.
+//
+// Version: 1.0.0 (for specification September 2021)
 
 function loadMarcJson(marcJson) {
   let marcObj;
