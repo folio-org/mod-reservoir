@@ -91,10 +91,14 @@ function padContent(keyPart, length) {
 }
 
 function doTitle(fieldData) {
-  // FIXME: handle the other subfields
-  // FIXME: Handle the note of the spec
-  let fieldStr = stripPunctuation(fieldData, ' ').trim();
-  fieldStr = fieldStr.normalize('NFD');
+  // FIXME: Handle the note of the spec 245$6
+  let fieldStr = '';
+  for (let n = 0; n < fieldData.length; n += 1) {
+    if (fieldData[n] !== null) {
+      fieldStr += stripPunctuation(fieldData[n], ' ');
+    }
+  }
+  fieldStr = fieldStr.trim().normalize('NFD');
   return padContent(fieldStr, 70);
 }
 
@@ -120,14 +124,14 @@ function doPublicationYear(fieldData) {
           break;
         }
       } else if (n === 1) {
-        // Try for date from field 264c
+        // Try for date from field 264$c
         dataStr = `${fieldData[n]}`.replace(/[^0-9]/g, '');
         if ((dataStr.match(/[0-9]{4}/)) && (dataStr !== '9999')) {
           fieldStr = dataStr;
           break;
         }
       } else {
-        // Try for date from field 260c
+        // Try for date from field 260$c
         dataStr = `${fieldData[n]}`.replace(/[^0-9]/g, '');
         if ((dataStr.match(/[0-9]{4}/)) && (dataStr !== '9999')) {
           fieldStr = dataStr;
@@ -158,7 +162,11 @@ function doAuthor(fieldData) {
 function matchkey(marcJson) {
   let keyStr = '';
   const marcObj = loadMarcJson(marcJson);
-  keyStr += doTitle(getField(marcObj, '245', 'a'));
+  keyStr += doTitle([
+    getField(marcObj, '245', 'a'),
+    getField(marcObj, '245', 'b'),
+    getField(marcObj, '245', 'p'),
+  ]);
   keyStr += doGMD(getField(marcObj, '245', 'h'));
   keyStr += doPublicationYear([
     getField(marcObj, '008'),
