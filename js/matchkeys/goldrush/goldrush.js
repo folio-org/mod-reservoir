@@ -107,6 +107,41 @@ function doGMD(fieldData) {
   return padContent(fieldStr, 5);
 }
 
+function doPublicationYear(fieldData) {
+  let fieldStr = '';
+  for (let n = 0; n < fieldData.length; n += 1) {
+    if (fieldData[n] !== null) {
+      let dataStr = '';
+      if (n === 0) {
+        // Try for date2 from field 008
+        dataStr = `${fieldData[n]}`.substr(11, 4).replace(/[^0-9]/g, '');
+        if ((dataStr.match(/[0-9]{4}/)) && (dataStr !== '9999')) {
+          fieldStr = dataStr;
+          break;
+        }
+      } else if (n === 1) {
+        // Try for date from field 264c
+        dataStr = `${fieldData[n]}`.replace(/[^0-9]/g, '');
+        if ((dataStr.match(/[0-9]{4}/)) && (dataStr !== '9999')) {
+          fieldStr = dataStr;
+          break;
+        }
+      } else {
+        // Try for date from field 260c
+        dataStr = `${fieldData[n]}`.replace(/[^0-9]/g, '');
+        if ((dataStr.match(/[0-9]{4}/)) && (dataStr !== '9999')) {
+          fieldStr = dataStr;
+          break;
+        }
+      }
+    }
+  }
+  if (!fieldStr) {
+    fieldStr = '0000';
+  }
+  return padContent(fieldStr, 4);
+}
+
 function doAuthor(fieldData) {
   let fieldStr = '';
   for (let n = 0; n < fieldData.length; n += 1) {
@@ -125,6 +160,11 @@ function matchkey(marcJson) {
   const marcObj = loadMarcJson(marcJson);
   keyStr += doTitle(getField(marcObj, '245', 'a'));
   keyStr += doGMD(getField(marcObj, '245', 'h'));
+  keyStr += doPublicationYear([
+    getField(marcObj, '008'),
+    getField(marcObj, '264', 'c'),
+    getField(marcObj, '260', 'c'),
+  ]);
   keyStr += doAuthor([
     getField(marcObj, '100', 'a'),
     getField(marcObj, '110', 'a'),
