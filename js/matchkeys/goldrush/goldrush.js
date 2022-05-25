@@ -42,10 +42,43 @@ function getField(record, tag, sf) {
 }
 
 function stripPunctuation(keyPart, replaceChar) {
-  // FIXME: add the many other cases defined in spec
   let trimmed = keyPart;
-  trimmed = trimmed.replace(/[,.]/g, replaceChar);
-  trimmed = trimmed.replace(/['}{:]/g, '');
+  trimmed = trimmed.replace(/%22/g, '_');
+  trimmed = trimmed.replace(/%/g, '_');
+  trimmed = trimmed.replace(/^ +[aA] +/, '');
+  trimmed = trimmed.replace(/^ +[aA]n +/, '');
+  trimmed = trimmed.replace(/^ +[tT]he +/, '');
+  trimmed = trimmed.replace(/['{}]/g, '');
+  trimmed = trimmed.replace(/&/g, 'and');
+  trimmed = trimmed.replace(/\u0020/g, replaceChar);
+  trimmed = trimmed.replace(/\u0021/g, replaceChar);
+  trimmed = trimmed.replace(/\u0022/g, replaceChar);
+  trimmed = trimmed.replace(/\u0023/g, replaceChar);
+  trimmed = trimmed.replace(/\u0024/g, replaceChar);
+  trimmed = trimmed.replace(/\u0028/g, replaceChar);
+  trimmed = trimmed.replace(/\u0029/g, replaceChar);
+  trimmed = trimmed.replace(/\u002A/g, replaceChar);
+  trimmed = trimmed.replace(/\u002B/g, replaceChar);
+  trimmed = trimmed.replace(/\u002C/g, replaceChar);
+  trimmed = trimmed.replace(/\u002D/g, replaceChar);
+  trimmed = trimmed.replace(/\u002E/g, replaceChar);
+  trimmed = trimmed.replace(/\u002F/g, replaceChar);
+  trimmed = trimmed.replace(/\u003A/g, replaceChar);
+  trimmed = trimmed.replace(/\u003B/g, replaceChar);
+  trimmed = trimmed.replace(/\u003C/g, replaceChar);
+  trimmed = trimmed.replace(/\u003D/g, replaceChar);
+  trimmed = trimmed.replace(/\u003E/g, replaceChar);
+  trimmed = trimmed.replace(/\u003F/g, replaceChar);
+  trimmed = trimmed.replace(/\u0040/g, replaceChar);
+  trimmed = trimmed.replace(/\u005B/g, replaceChar);
+  trimmed = trimmed.replace(/\\/g, replaceChar);
+  trimmed = trimmed.replace(/\u005D/g, replaceChar);
+  trimmed = trimmed.replace(/\u005E/g, replaceChar);
+  trimmed = trimmed.replace(/\u005F/g, replaceChar);
+  trimmed = trimmed.replace(/\u0060/g, replaceChar);
+  trimmed = trimmed.replace(/\u007C/g, replaceChar);
+  trimmed = trimmed.replace(/\u007E/g, replaceChar);
+  trimmed = trimmed.replace(/\u00A9/g, replaceChar);
   return trimmed;
 }
 
