@@ -91,11 +91,20 @@ function padContent(keyPart, length) {
 }
 
 function doTitle(fieldData) {
-  // FIXME: handle the other subflieds
+  // FIXME: handle the other subfields
   // FIXME: Handle the note of the spec
   let fieldStr = stripPunctuation(fieldData, ' ').trim();
   fieldStr = fieldStr.normalize('NFD');
   return padContent(fieldStr, 70);
+}
+
+function doGMD(fieldData) {
+  let fieldStr = '';
+  if (fieldData !== null) {
+    fieldStr = fieldData.replace(/[^a-zA-Z0-9]/g, '');
+    fieldStr = fieldStr.replace(/[À-ž]/g, '');
+  }
+  return padContent(fieldStr, 5);
 }
 
 function doAuthor(fieldData) {
@@ -115,13 +124,14 @@ function matchkey(marcJson) {
   let keyStr = '';
   const marcObj = loadMarcJson(marcJson);
   keyStr += doTitle(getField(marcObj, '245', 'a'));
+  keyStr += doGMD(getField(marcObj, '245', 'h'));
   keyStr += doAuthor([
     getField(marcObj, '100', 'a'),
     getField(marcObj, '110', 'a'),
     getField(marcObj, '111', 'a'),
     getField(marcObj, '113', 'a'),
   ]);
-  return keyStr.replace(/^_/, '');
+  return keyStr;
 }
 
 module.exports = { matchkey };
