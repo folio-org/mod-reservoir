@@ -156,6 +156,24 @@ function doPagination(fieldData) {
   return padContent(fieldStr, 4);
 }
 
+function doPublisherName(fieldData) {
+  let fieldStr = '';
+  for (let n = 0; n < fieldData.length; n += 1) {
+    if (fieldData[n] !== null) {
+      if (n === 0) {
+        // Try first for field 264$a
+        fieldStr = `${fieldData[n]}`.toLowerCase();
+        break;
+      } else {
+        // Try then for field 260$a
+        fieldStr = `${fieldData[n]}`.toLowerCase();
+      }
+    }
+  }
+  fieldStr = stripPunctuation(fieldStr, '_');
+  return padContent(fieldStr, 5);
+}
+
 function doAuthor(fieldData) {
   let fieldStr = '';
   for (let n = 0; n < fieldData.length; n += 1) {
@@ -184,6 +202,10 @@ function matchkey(marcJson) {
     getField(marcObj, '260', 'c'),
   ]);
   keyStr += doPagination(getField(marcObj, '300', 'a'));
+  keyStr += doPublisherName([
+    getField(marcObj, '264', 'b'),
+    getField(marcObj, '260', 'b'),
+  ]);
   keyStr += doAuthor([
     getField(marcObj, '100', 'a'),
     getField(marcObj, '110', 'a'),
