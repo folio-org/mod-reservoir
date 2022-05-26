@@ -182,6 +182,14 @@ function doTypeOfRecord(fieldData) {
   return fieldStr;
 }
 
+function doTitleNumber(fieldData) {
+  let fieldStr = '';
+  if (fieldData !== null) {
+    fieldStr = stripPunctuation(fieldData, '_');
+  }
+  return padContent(fieldStr, 10);
+}
+
 function doAuthor(fieldData) {
   let fieldStr = '';
   for (let n = 0; n < fieldData.length; n += 1) {
@@ -215,6 +223,7 @@ function matchkey(marcJson) {
     getField(marcObj, '260', 'b'),
   ]);
   keyStr += doTypeOfRecord(marcObj.leader);
+  keyStr += doTitleNumber(getField(marcObj, '245', 'n'));
   keyStr += doAuthor([
     getField(marcObj, '100', 'a'),
     getField(marcObj, '110', 'a'),
