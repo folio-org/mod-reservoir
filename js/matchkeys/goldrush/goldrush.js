@@ -203,6 +203,14 @@ function doAuthor(fieldData) {
   return padContent(fieldStr, 20);
 }
 
+function doInclusiveDates(fieldData) {
+  let fieldStr = '';
+  if (fieldData !== null) {
+    fieldStr = stripPunctuation(fieldData.replace(/ /g, ''), '_');
+  }
+  return padContent(fieldStr, 15);
+}
+
 function matchkey(marcJson) {
   let keyStr = '';
   const marcObj = loadMarcJson(marcJson);
@@ -230,6 +238,7 @@ function matchkey(marcJson) {
     getField(marcObj, '111', 'a'),
     getField(marcObj, '113', 'a'),
   ]);
+  keyStr += doInclusiveDates(getField(marcObj, '245', 'f'));
   return keyStr;
 }
 
