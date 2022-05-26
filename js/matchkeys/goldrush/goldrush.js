@@ -148,6 +148,14 @@ function doPublicationYear(fieldData) {
   return padContent(fieldStr, 4);
 }
 
+function doPagination(fieldData) {
+  let fieldStr = '';
+  if (fieldData !== null) {
+    fieldStr = fieldData.replace(/[^0-9]/g, '');
+  }
+  return padContent(fieldStr, 4);
+}
+
 function doAuthor(fieldData) {
   let fieldStr = '';
   for (let n = 0; n < fieldData.length; n += 1) {
@@ -175,6 +183,7 @@ function matchkey(marcJson) {
     getField(marcObj, '264', 'c'),
     getField(marcObj, '260', 'c'),
   ]);
+  keyStr += doPagination(getField(marcObj, '300', 'a'));
   keyStr += doAuthor([
     getField(marcObj, '100', 'a'),
     getField(marcObj, '110', 'a'),
