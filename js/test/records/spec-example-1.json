@@ -1,0 +1,335 @@
+{
+  "fields": [
+    {
+      "000": "01295pam a2200337 a 4500"
+    },
+    {
+      "001": "001954409"
+    },
+    {
+      "003": "MdBT"
+    },
+    {
+      "005": "20091208221324.0"
+    },
+    {
+      "008": "920203s1992    nyu b 001 0 eng"
+    },
+    {
+      "010": {
+        "subfields": [
+          {
+            "a": " 92006576"
+          }
+        ]
+      }
+    },
+    {
+      "020": {
+        "subfields": [
+          {
+            "a": "0805241167 :"
+          },
+          {
+            "c": "$27.50 ($34.50 Can.)"
+          }
+        ]
+      }
+    },
+    {
+      "035": {
+        "subfields": [
+          {
+            "a": "ocm25508294"
+          }
+        ]
+      }
+    },
+    {
+      "040": {
+        "subfields": [
+          {
+            "a": "DLC"
+          },
+          {
+            "c": "DLC"
+          },
+          {
+            "d": "UMC"
+          }
+        ]
+      }
+    },
+    {
+      "049": {
+        "subfields": [
+          {
+            "a": "UMPC"
+          }
+        ]
+      }
+    },
+    {
+      "050": {
+        "subfields": [
+          {
+            "a": "DS115.5"
+          },
+          {
+            "b": ".D38 1992"
+          }
+        ]
+      }
+    },
+    {
+      "082": {
+        "subfields": [
+          {
+            "a": "909/.04924"
+          },
+          {
+            "2": "20"
+          }
+        ]
+      }
+    },
+    {
+      "100": {
+        "subfields": [
+          {
+            "a": "Dawidowicz, Lucy S."
+          }
+        ]
+      }
+    },
+    {
+      "245": {
+        "subfields": [
+          {
+            "a": "What is the use of Jewish history? :"
+          },
+          {
+            "b": "essays /"
+          },
+          {
+            "c": "by Lucy S. Dawidowicz ; edited and with an introduction by Neal Kozodoy."
+          }
+        ]
+      }
+    },
+    {
+      "250": {
+        "subfields": [
+          {
+            "a": "1st ed."
+          }
+        ]
+      }
+    },
+    {
+      "260": {
+        "subfields": [
+          {
+            "a": "New York :"
+          },
+          {
+            "b": "Schocken Books,"
+          },
+          {
+            "c": "c1992."
+          }
+        ]
+      }
+    },
+    {
+      "300": {
+        "subfields": [
+          {
+            "a": "xxiii, 278 p. ;"
+          },
+          {
+            "c": "25 cm."
+          }
+        ]
+      }
+    },
+    {
+      "583": {
+        "subfields": [
+          {
+            "a": "committed to retain"
+          },
+          {
+            "c": "20180423"
+          },
+          {
+            "d": "20330423"
+          },
+          {
+            "f": "USMAI"
+          },
+          {
+            "u": "http://usmai.org/retained-materials"
+          },
+          {
+            "5": "MdBT"
+          },
+          {
+            "z": "USMAI Shared Print Retention"
+          }
+        ]
+      }
+    },
+    {
+      "583": {
+        "subfields": [
+          {
+            "a": "committed to retain"
+          },
+          {
+            "c": "20160630"
+          },
+          {
+            "d": "20310630"
+          },
+          {
+            "f": "EAST"
+          },
+          {
+            "u": "http://eastlibraries.org/retained-materials"
+          },
+          {
+            "5": "MdBT"
+          },
+          {
+            "z": "EAST Project Holding"
+          }
+        ]
+      }
+    },
+    {
+      "504": {
+        "subfields": [
+          {
+            "a": "Includes bibliographical references and index."
+          }
+        ]
+      }
+    },
+    {
+      "650": {
+        "subfields": [
+          {
+            "a": "Jews"
+          },
+          {
+            "x": "Historiography."
+          }
+        ]
+      }
+    },
+    {
+      "650": {
+        "subfields": [
+          {
+            "a": "Jews"
+          },
+          {
+            "x": "History."
+          }
+        ]
+      }
+    },
+    {
+      "650": {
+        "subfields": [
+          {
+            "a": "Jews"
+          },
+          {
+            "x": "Philosophy."
+          }
+        ]
+      }
+    },
+    {
+      "650": {
+        "subfields": [
+          {
+            "a": "Holocaust, Jewish (1939-1945)"
+          },
+          {
+            "x": "Influence."
+          }
+        ]
+      }
+    },
+    {
+      "650": {
+        "subfields": [
+          {
+            "a": "Holocaust denial."
+          }
+        ]
+      }
+    },
+    {
+      "700": {
+        "subfields": [
+          {
+            "a": "Kozodoy, Neal."
+          }
+        ]
+      }
+    },
+    {
+      "740": {
+        "subfields": [
+          {
+            "a": "Jewish history."
+          }
+        ]
+      }
+    },
+    {
+      "852": {
+        "subfields": [
+          {
+            "b": "TU-TU"
+          },
+          {
+            "c": "BHSTK"
+          },
+          {
+            "h": "DS115.5"
+          },
+          {
+            "i": ".D38 1992"
+          },
+          {
+            "p": "36387000475904"
+          }
+        ]
+      }
+    },
+    {
+      "946": {
+        "subfields": [
+          {
+            "y": "53824704520002766"
+          },
+          {
+            "u": "http://du-primo.hosted.exlibrisgroup.com/openurl/01UODE/01UODE_SERVICES?u.ignore_date_coverage=true&rft.mms_id=991034738289702766"
+          },
+          {
+            "z": "ERIC Collection"
+          },
+          {
+            "8": "53824704520002766"
+          }
+        ]
+      }
+    }
+  ],
+  "leader": "01010ccm a2200289   4500"
+}
