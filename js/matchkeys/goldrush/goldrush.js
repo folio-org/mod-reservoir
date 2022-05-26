@@ -174,6 +174,14 @@ function doPublisherName(fieldData) {
   return padContent(fieldStr, 5);
 }
 
+function doTypeOfRecord(fieldData) {
+  let fieldStr = '';
+  if (fieldData.length > 10) {
+    fieldStr = fieldData.substr(6, 1);
+  }
+  return fieldStr;
+}
+
 function doAuthor(fieldData) {
   let fieldStr = '';
   for (let n = 0; n < fieldData.length; n += 1) {
@@ -206,6 +214,7 @@ function matchkey(marcJson) {
     getField(marcObj, '264', 'b'),
     getField(marcObj, '260', 'b'),
   ]);
+  keyStr += doTypeOfRecord(marcObj.leader);
   keyStr += doAuthor([
     getField(marcObj, '100', 'a'),
     getField(marcObj, '110', 'a'),
