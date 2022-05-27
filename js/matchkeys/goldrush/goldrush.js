@@ -120,7 +120,7 @@ function doPublicationYear(fieldData) {
       let dataStr = '';
       if (n === 0) {
         // Try for date2 from field 008
-        dataStr = `${fieldData[n]}`.substr(11, 4).replace(/[^0-9]/g, '');
+        dataStr = `${fieldData[n]}`.substring(11, 15).replace(/[^0-9]/g, '');
         if ((dataStr.match(/[0-9]{4}/)) && (dataStr !== '9999')) {
           fieldStr = dataStr;
           break;
@@ -177,7 +177,7 @@ function doPublisherName(fieldData) {
 function doTypeOfRecord(fieldData) {
   let fieldStr = '';
   if (fieldData.length > 10) {
-    fieldStr = fieldData.substr(6, 1);
+    fieldStr = fieldData.substring(6, 7);
   }
   return fieldStr;
 }
