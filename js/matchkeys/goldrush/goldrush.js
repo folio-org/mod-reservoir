@@ -26,6 +26,12 @@ function loadMarcJson(marcJson) {
   return marcObj;
 }
 
+function hasField(record, tag) {
+  let result = false;
+  result = record.fields.some((f) => f[tag]);
+  return result;
+}
+
 function getField(record, tag, sf) {
   let data = null;
   const fields = record.fields.filter((f) => f[tag]);
@@ -211,6 +217,52 @@ function doInclusiveDates(fieldData) {
   return padContent(fieldStr, 15);
 }
 
+function doElectronicIndicator(marcObj) {
+  let field = '';
+  field = getField(marcObj, '245', 'h');
+  if (field) {
+    if (field.match(/\belectronic resource\b/i)) {
+      return 'e';
+    }
+  }
+  field = getField(marcObj, '590', 'a');
+  if (field) {
+    if (field.match(/\belectronic reproduction\b/i)) {
+      return 'e';
+    }
+  }
+  field = getField(marcObj, '533', 'a');
+  if (field) {
+    if (field.match(/\belectronic reproduction\b/i)) {
+      return 'e';
+    }
+  }
+  field = getField(marcObj, '300', 'a');
+  if (field) {
+    if (field.match(/\bonline resource\b/i)) {
+      return 'e';
+    }
+  }
+  field = getField(marcObj, '007');
+  if (field) {
+    if (field.substring(0, 1) === 'c') {
+      return 'e';
+    }
+  }
+  // RDA
+  field = getField(marcObj, '337', 'a');
+  if (field) {
+    if (field.substring(0, 1) === 'c') {
+      return 'e';
+    }
+  }
+  // other electronic document
+  if (hasField(marcObj, '086') || hasField(marcObj, '856')) {
+    return 'e';
+  }
+  return 'p';
+}
+
 function matchkey(marcJson) {
   let keyStr = '';
   const marcObj = loadMarcJson(marcJson);
@@ -239,6 +291,7 @@ function matchkey(marcJson) {
     getField(marcObj, '113', 'a'),
   ]);
   keyStr += doInclusiveDates(getField(marcObj, '245', 'f'));
+  keyStr += doElectronicIndicator(marcObj);
   return keyStr;
 }
 
