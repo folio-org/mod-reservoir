@@ -1,0 +1,10 @@
+{
+  "test/records/one.json": "__ Assertion not yet ready __",
+  "test/records/one-b.json": "__ Assertion not yet ready __",
+  "test/records/spec-example-1.json": "__ Assertion not yet ready __",
+  "test/records/two.json": "Blinky_Bill_and_Nutsy_two_little_Australians__________________________elect0000_________a__________Wall__Dorothy______________________e",
+  "test/records/invalid-1-broken-json.json": "Unexpected token { in JSON at position 233",
+  "test/records/invalid-2-no-fields.json": "MARC fields is not an array.",
+  "test/records/invalid-3-first-field.json": "MARC fields[0] key is not numeric.",
+  "test/records/invalid-4-no-leader.json": "MARC leader field is missing."
+}

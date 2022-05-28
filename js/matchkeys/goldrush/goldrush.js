@@ -8,18 +8,18 @@
 function loadMarcJson(marcJson) {
   const marcObj = JSON.parse(marcJson);
   if (marcObj.fields === undefined) {
-    throw new Error('MARC "fields" array is missing.');
+    throw new Error('MARC fields array is missing.');
   }
   if (!Array.isArray(marcObj.fields)) {
-    throw new Error('MARC "fields" is not an array.');
+    throw new Error('MARC fields is not an array.');
   }
   const field0 = Object.keys(marcObj.fields[0]);
   const re = /^\d+$/;
   if (!re.test(field0)) {
-    throw new Error('MARC "fields[0]" key is not numeric.');
+    throw new Error('MARC fields[0] key is not numeric.');
   }
   if (!marcObj.leader) {
-    throw new Error('MARC "leader" field is missing.');
+    throw new Error('MARC leader field is missing.');
   }
   return marcObj;
 }
