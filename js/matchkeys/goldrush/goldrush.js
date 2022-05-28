@@ -290,7 +290,7 @@ function matchkey(marcJson) {
   ]);
   keyStr += doInclusiveDates(getField(marcObj, '245', 'f'));
   keyStr += doElectronicIndicator(marcObj);
-  return keyStr;
+  return keyStr.toLowerCase();
 }
 
 module.exports = { matchkey };
