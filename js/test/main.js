@@ -9,6 +9,11 @@ for (let n = 0; n < testFiles.length; n += 1) {
   const testFile = `${testsPath}/${testFiles[n]}`;
   const marcJson = fs.readFileSync(testFile, 'utf8');
   console.log(`Processing ${testFile}`);
-  const keyStr = goldrush.matchkey(marcJson);
-  console.log(`${keyStr}`);
+  let keyStrGoldrush = '';
+  try {
+    keyStrGoldrush = goldrush.matchkey(marcJson);
+  } catch (e) {
+    console.log(`Input must be parseable MARC-in-JSON. ${e}`);
+  }
+  console.log(`${keyStrGoldrush}`);
 }

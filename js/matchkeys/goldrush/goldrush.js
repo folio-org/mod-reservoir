@@ -6,12 +6,7 @@
 // Version: 1.0.0 (for specification September 2021)
 
 function loadMarcJson(marcJson) {
-  let marcObj;
-  try {
-    marcObj = JSON.parse(marcJson);
-  } catch (e) {
-    throw new Error(e.message);
-  }
+  const marcObj = JSON.parse(marcJson);
   if (marcObj.fields === undefined) {
     throw new Error('MARC "fields" array is missing.');
   }
@@ -22,6 +17,9 @@ function loadMarcJson(marcJson) {
   const re = /^\d+$/;
   if (!re.test(field0)) {
     throw new Error('MARC "fields[0]" key is not numeric.');
+  }
+  if (!marcObj.leader) {
+    throw new Error('MARC "leader" field is missing.');
   }
   return marcObj;
 }
