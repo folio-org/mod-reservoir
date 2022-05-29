@@ -57,9 +57,9 @@ function stripPunctuation(keyPart, replaceChar) {
   let trimmed = keyPart;
   trimmed = trimmed.replace(/%22/g, '_');
   trimmed = trimmed.replace(/%/g, '_');
-  trimmed = trimmed.replace(/^ +[aA] +/, '');
-  trimmed = trimmed.replace(/^ +[aA]n +/, '');
-  trimmed = trimmed.replace(/^ +[tT]he +/, '');
+  trimmed = trimmed.replace(/^ *[aA] +/, '');
+  trimmed = trimmed.replace(/^ *[aA]n +/, '');
+  trimmed = trimmed.replace(/^ *[tT]he +/, '');
   trimmed = trimmed.replace(/['{}]/g, '');
   trimmed = trimmed.replace(/&/g, 'and');
   trimmed = trimmed.replace(/\u0020/g, replaceChar);
