@@ -107,10 +107,10 @@ function doTitle(fieldData) {
   let fieldStr = '';
   for (let n = 0; n < fieldData.length; n += 1) {
     if (fieldData[n] !== null) {
-      fieldStr += stripPunctuation(fieldData[n], ' ');
+      fieldStr += stripPunctuation(fieldData[n], ' ').trim();
     }
   }
-  fieldStr = fieldStr.trim().normalize('NFD');
+  fieldStr = fieldStr.normalize('NFD');
   return padContent(fieldStr, 70);
 }
 
