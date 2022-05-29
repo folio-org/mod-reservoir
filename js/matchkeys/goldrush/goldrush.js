@@ -31,19 +31,25 @@ function hasField(record, tag) {
 }
 
 function getField(record, tag, sf) {
+  // Get the first relevant field or subfield.
   let data = null;
   const fields = record.fields.filter((f) => f[tag]);
-  fields.forEach((f) => {
+  // Use the first relevant field
+  const f = fields[0];
+  if (f !== undefined) {
     if (f[tag].subfields) {
-      f[tag].subfields.forEach((s) => {
+      for (let n = 0; n < f[tag].subfields.length; n += 1) {
+        const s = f[tag].subfields[n];
         if (s[sf]) {
           data = s[sf];
+          // Use the first relevant subfield
+          break;
         }
-      });
+      }
     } else {
       data = f[tag];
     }
-  });
+  }
   return data;
 }
 
