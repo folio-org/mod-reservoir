@@ -53,6 +53,23 @@ function getField(record, tag, sf) {
   return data;
 }
 
+function getMultiSubfields(record, tag, sf) {
+  const data = [];
+  const fields = record.fields.filter((f) => f[tag]);
+  for (let x = 0; x < fields.length; x += 1) {
+    const f = fields[x];
+    if (f[tag].subfields) {
+      for (let y = 0; y < f[tag].subfields.length; y += 1) {
+        const s = f[tag].subfields[y];
+        if (s[sf]) {
+          data.push(s[sf]);
+        }
+      }
+    }
+  }
+  return data;
+}
+
 function stripPunctuation(keyPart, replaceChar) {
   let trimmed = keyPart;
   trimmed = trimmed.replace(/%22/g, '_');
@@ -197,6 +214,15 @@ function doTypeOfRecord(fieldData) {
   return fieldStr;
 }
 
+function doTitlePart(fieldData) {
+  // Use all p subfields, apart from the first
+  let fieldStr = '';
+  for (let n = 1; n < fieldData.length; n += 1) {
+    fieldStr += stripPunctuation(fieldData[n].trim(), '_').substring(0, 10);
+  }
+  return padContent(fieldStr, 30);
+}
+
 function doTitleNumber(fieldData) {
   let fieldStr = '';
   if (fieldData !== null) {
@@ -315,6 +341,7 @@ function matchkey(marcJson) {
     getField(marcObj, '260', 'b'),
   ]));
   keyStr += addComponent(doTypeOfRecord(marcObj.leader));
+  keyStr += addComponent(doTitlePart(getMultiSubfields(marcObj, '245', 'p')));
   keyStr += addComponent(doTitleNumber(getField(marcObj, '245', 'n')));
   keyStr += addComponent(doAuthor([
     getField(marcObj, '100', 'a'),
