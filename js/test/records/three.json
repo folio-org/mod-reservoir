@@ -1,0 +1,132 @@
+{
+  "leader": "00317nam  2200085ua 4500",
+  "fields": [
+    {
+      "007": "c             "
+    },
+    {
+      "008": "070529s20212022au            000 0 und d"
+    },
+    {
+      "008": "070529s20192023au            000 0 und d"
+    },
+    {
+      "086": {
+        "subfields": [
+          {
+            "a": "Not å real GDCN."
+          },
+          {
+            "2": "z"
+          }
+        ],
+        "ind1": " ",
+        "ind2": " "
+      }
+    },
+    {
+      "100": {
+        "subfields": [
+          {
+            "a": "Three, Mïne"
+          }
+        ],
+        "ind1": "1",
+        "ind2": " "
+      }
+    },
+    {
+      "110": {
+        "subfields": [
+          {
+            "a": "Company X"
+          }
+        ],
+        "ind1": "2",
+        "ind2": " "
+      }
+    },
+    {
+      "245": {
+        "subfields": [
+          {
+            "a": "My test record :"
+          },
+          {
+            "b": "An example for mod-meta-storage."
+          },
+          {
+            "f": "2022 May 29."
+          },
+          {
+            "h": "[electronic resource]."
+          },
+          {
+            "n": "Part one."
+          },
+          {
+            "p": "A fictitious."
+          },
+          {
+            "p": "The second p."
+          },
+          {
+            "p": "An extra p."
+          }
+        ],
+        "ind1": "1",
+        "ind2": "0"
+      }
+    },
+    {
+      "260": {
+        "subfields": [
+          {
+            "a": "My desk,"
+          },
+          {
+            "b": "My press."
+          }
+        ],
+        "ind1": " ",
+        "ind2": " "
+      }
+    },
+    {
+      "260": {
+        "subfields": [
+          {
+            "a": "Their desk,"
+          },
+          {
+            "b": "Their press."
+          }
+        ],
+        "ind1": " ",
+        "ind2": " "
+      }
+    },
+    {
+      "300": {
+        "subfields": [
+          {
+            "a": "34 slides 1 appendix."
+          }
+        ],
+        "ind1": "1",
+        "ind2": " "
+      }
+    },
+    {
+      "856": {
+        "subfields": [
+          {
+            "u": "https://example.com/three"
+          }
+        ],
+        "ind1": "4",
+        "ind2": "0"
+      }
+    }
+  ]
+}
