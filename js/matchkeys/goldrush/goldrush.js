@@ -261,35 +261,45 @@ function doElectronicIndicator(marcObj) {
   return 'p';
 }
 
+function addComponent(component) {
+  // Assist debug
+  const debug = false;
+  let delimiter = '';
+  if (debug) {
+    delimiter = '|';
+  }
+  return `${delimiter}${component}`;
+}
+
 function matchkey(marcJson) {
   let keyStr = '';
   const marcObj = loadMarcJson(marcJson);
-  keyStr += doTitle([
+  keyStr += addComponent(doTitle([
     getField(marcObj, '245', 'a'),
     getField(marcObj, '245', 'b'),
     getField(marcObj, '245', 'p'),
-  ]);
-  keyStr += doGMD(getField(marcObj, '245', 'h'));
-  keyStr += doPublicationYear([
+  ]));
+  keyStr += addComponent(doGMD(getField(marcObj, '245', 'h')));
+  keyStr += addComponent(doPublicationYear([
     getField(marcObj, '008'),
     getField(marcObj, '264', 'c'),
     getField(marcObj, '260', 'c'),
-  ]);
-  keyStr += doPagination(getField(marcObj, '300', 'a'));
-  keyStr += doPublisherName([
+  ]));
+  keyStr += addComponent(doPagination(getField(marcObj, '300', 'a')));
+  keyStr += addComponent(doPublisherName([
     getField(marcObj, '264', 'b'),
     getField(marcObj, '260', 'b'),
-  ]);
-  keyStr += doTypeOfRecord(marcObj.leader);
-  keyStr += doTitleNumber(getField(marcObj, '245', 'n'));
-  keyStr += doAuthor([
+  ]));
+  keyStr += addComponent(doTypeOfRecord(marcObj.leader));
+  keyStr += addComponent(doTitleNumber(getField(marcObj, '245', 'n')));
+  keyStr += addComponent(doAuthor([
     getField(marcObj, '100', 'a'),
     getField(marcObj, '110', 'a'),
     getField(marcObj, '111', 'a'),
     getField(marcObj, '113', 'a'),
-  ]);
-  keyStr += doInclusiveDates(getField(marcObj, '245', 'f'));
-  keyStr += doElectronicIndicator(marcObj);
+  ]));
+  keyStr += addComponent(doInclusiveDates(getField(marcObj, '245', 'f')));
+  keyStr += addComponent(doElectronicIndicator(marcObj));
   return keyStr.toLowerCase();
 }
 
