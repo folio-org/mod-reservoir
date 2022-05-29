@@ -109,6 +109,7 @@ function doTitle(fieldData) {
 }
 
 function doGMD(fieldData) {
+  // General medium designator
   let fieldStr = '';
   if (fieldData !== null) {
     fieldStr = fieldData.replace(/[^a-zA-Z0-9]/g, '');
@@ -215,6 +216,19 @@ function doInclusiveDates(fieldData) {
   return padContent(fieldStr, 15);
 }
 
+function doGDCN(fieldData) {
+  // Government Document Classification Number
+  let fieldStr = '';
+  if (fieldData !== null) {
+    fieldStr = stripPunctuation(fieldData, '_');
+    // Remove accented characters
+    fieldStr = fieldStr.replace(/[À-ž]/g, '');
+    // Limit maximum field length
+    fieldStr = fieldStr.substring(0, 32000);
+  }
+  return fieldStr;
+}
+
 function doElectronicIndicator(marcObj) {
   let field = '';
   field = getField(marcObj, '245', 'h');
@@ -299,6 +313,7 @@ function matchkey(marcJson) {
     getField(marcObj, '113', 'a'),
   ]));
   keyStr += addComponent(doInclusiveDates(getField(marcObj, '245', 'f')));
+  keyStr += addComponent(doGDCN(getField(marcObj, '086', 'a')));
   keyStr += addComponent(doElectronicIndicator(marcObj));
   return keyStr.toLowerCase();
 }
