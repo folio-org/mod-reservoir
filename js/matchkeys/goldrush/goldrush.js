@@ -1,9 +1,4 @@
-// Generate GoldRush match key.
-// Reads MARC JSON from input string.
-// Extracts and normalizes data from relevant fields.
-// Returns matchkey as string.
-//
-// Version: 1.0.0 (for specification September 2021)
+// Generates GoldRush match key.
 
 function loadMarcJson(marcJson) {
   const marcObj = JSON.parse(marcJson);
@@ -376,6 +371,14 @@ function addComponent(component) {
   return `${delimiter}${component}`;
 }
 
+/**
+ * Generates GoldRush match key.
+ *
+ * @version 1.0.0 (for specification September 2021)
+ * @param {string} marcJson - The MARC-in-JSON input string.
+ * @return {string} The matchkey. Components are gathered from relevant fields
+ *     and concatenated to a long string.
+ */
 function matchkey(marcJson) {
   let keyStr = '';
   const marcObj = loadMarcJson(marcJson);
