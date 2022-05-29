@@ -162,7 +162,11 @@ function doPublicationYear(fieldData) {
 function doPagination(fieldData) {
   let fieldStr = '';
   if (fieldData !== null) {
-    fieldStr = fieldData.replace(/[^0-9]/g, '');
+    // Get first four contiguous digits
+    const match = fieldData.match(/([0-9]{4})/);
+    if (match) {
+      fieldStr = `${match[1]}`;
+    }
   }
   return padContent(fieldStr, 4);
 }
