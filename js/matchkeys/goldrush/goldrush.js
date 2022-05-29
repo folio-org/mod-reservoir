@@ -188,6 +188,61 @@ function doPagination(fieldData) {
   return padContent(fieldStr, 4);
 }
 
+function doEditionStatement(fieldData) {
+  let fieldStr = '';
+  if (fieldData !== null) {
+    let dataStr = fieldData.replace(/[À-ž]/g, '');
+    // Detect contiguous numeric
+    for (let n = 3; n > 0; n -= 1) {
+      const regexNum = new RegExp(`([0-9]{${n}})`);
+      const match = dataStr.match(regexNum);
+      if (match) {
+        fieldStr = `${match[1]}`;
+        break;
+      }
+    }
+    if (!fieldStr) {
+      // Detect words
+      dataStr = dataStr.substring(0, 3).toLowerCase();
+      switch (dataStr) {
+        case 'fir':
+          fieldStr = '1';
+          break;
+        case 'sec':
+          fieldStr = '2';
+          break;
+        case 'thi':
+          fieldStr = '3';
+          break;
+        case 'fou':
+          fieldStr = '4';
+          break;
+        case 'fif':
+          fieldStr = '5';
+          break;
+        case 'six':
+          fieldStr = '6';
+          break;
+        case 'sev':
+          fieldStr = '7';
+          break;
+        case 'eig':
+          fieldStr = '8';
+          break;
+        case 'nin':
+          fieldStr = '9';
+          break;
+        case 'ten':
+          fieldStr = '10';
+          break;
+        default:
+          fieldStr = '';
+      }
+    }
+  }
+  return padContent(fieldStr, 3);
+}
+
 function doPublisherName(fieldData) {
   let fieldStr = '';
   for (let n = 0; n < fieldData.length; n += 1) {
@@ -336,6 +391,7 @@ function matchkey(marcJson) {
     getField(marcObj, '260', 'c'),
   ]));
   keyStr += addComponent(doPagination(getField(marcObj, '300', 'a')));
+  keyStr += addComponent(doEditionStatement(getField(marcObj, '250', 'a')));
   keyStr += addComponent(doPublisherName([
     getField(marcObj, '264', 'b'),
     getField(marcObj, '260', 'b'),
