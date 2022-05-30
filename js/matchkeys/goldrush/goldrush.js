@@ -131,7 +131,7 @@ function doGMD(fieldData) {
   let fieldStr = '';
   if (fieldData !== null) {
     fieldStr = fieldData.replace(/[^a-zA-Z0-9]/g, '');
-    fieldStr = fieldStr.replace(/[À-ž]/g, '');
+    fieldStr = fieldStr.replace(/\p{Diacritic}/gu, '');
   }
   return padContent(fieldStr, 5);
 }
@@ -186,7 +186,7 @@ function doPagination(fieldData) {
 function doEditionStatement(fieldData) {
   let fieldStr = '';
   if (fieldData !== null) {
-    let dataStr = fieldData.replace(/[À-ž]/g, '');
+    let dataStr = fieldData.replace(/\p{Diacritic}/gu, '');
     // Detect contiguous numeric
     for (let n = 3; n > 0; n -= 1) {
       const regexNum = new RegExp(`([0-9]{${n}})`);
@@ -244,11 +244,11 @@ function doPublisherName(fieldData) {
     if (fieldData[n] !== null) {
       if (n === 0) {
         // Try first for field 264$a
-        fieldStr = `${fieldData[n]}`.toLowerCase();
+        fieldStr = `${fieldData[n]}`.replace(/\p{Diacritic}/gu, '').toLowerCase();
         break;
       } else {
         // Try then for field 260$a
-        fieldStr = `${fieldData[n]}`.toLowerCase();
+        fieldStr = `${fieldData[n]}`.replace(/\p{Diacritic}/gu, '').toLowerCase();
       }
     }
   }
@@ -286,8 +286,7 @@ function doAuthor(fieldData) {
   for (let n = 0; n < fieldData.length; n += 1) {
     if (fieldData[n] !== null) {
       let dataStr = stripPunctuation(fieldData[n], '_');
-      // Remove accented characters
-      dataStr = dataStr.replace(/[À-ž]/g, '');
+      dataStr = dataStr.normalize('NFD').replace(/\p{Diacritic}/gu, '');
       fieldStr += dataStr;
     }
   }
@@ -307,8 +306,7 @@ function doGDCN(fieldData) {
   let fieldStr = '';
   if (fieldData !== null) {
     fieldStr = stripPunctuation(fieldData, '_');
-    // Remove accented characters
-    fieldStr = fieldStr.replace(/[À-ž]/g, '');
+    fieldStr = fieldStr.normalize('NFD').replace(/\p{Diacritic}/gu, '');
     // Limit maximum field length
     fieldStr = fieldStr.substring(0, 32000);
   }
