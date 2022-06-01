@@ -1,0 +1,64 @@
+{
+  "leader": "00317nam  2200085ua 4500",
+  "fields": [
+    {
+      "008": "070529s9999    xx            000 0 und d"
+    },
+    {
+      "100": {
+        "subfields": [
+          {
+            "a": "Wall, Dorothy,"
+          },
+          {
+            "d": "1894-1942."
+          }
+        ],
+        "ind1": "1",
+        "ind2": " "
+      }
+    },
+    {
+      "245": {
+        "subfields": [
+          {
+            "a": "Blinky Bill and Nutsy :"
+          },
+          {
+            "b": "two little Australians /"
+          },
+          {
+            "c": "story and illustrations by Dorothy Wall."
+          },
+          {
+            "h": "[electronic resource]."
+          }
+        ],
+        "ind1": "1",
+        "ind2": "0"
+      }
+    },
+    {
+      "500": {
+        "subfields": [
+          {
+            "a": "An ebook provided by Project Gutenberg of Australia."
+          }
+        ],
+        "ind1": " ",
+        "ind2": " "
+      }
+    },
+    {
+      "856": {
+        "subfields": [
+          {
+            "u": "http://gutenberg.net.au/ebooks04/0400581h.html "
+          }
+        ],
+        "ind1": "4",
+        "ind2": "0"
+      }
+    }
+  ]
+}

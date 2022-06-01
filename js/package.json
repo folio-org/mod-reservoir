@@ -1,0 +1,13 @@
+{
+  "license": "Apache-2.0",
+  "scripts": {
+    "lint-goldrush": "eslint matchkeys/goldrush/goldrush.js",
+    "lint-test": "eslint test/main.js",
+    "test": "node test/main.js"
+  },
+  "devDependencies": {
+    "eslint": "^8.2.0",
+    "eslint-plugin-import": "^2.25.2",
+    "eslint-config-airbnb-base": "latest"
+  }
+}
