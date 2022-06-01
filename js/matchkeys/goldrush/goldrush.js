@@ -259,11 +259,11 @@ function doPublisherName(fieldData) {
     if (fieldData[n] !== null) {
       if (n === 0) {
         // Try first for field 264$a
-        fieldStr = normalizeAndUnaccent(`${fieldData[n]}`).toLowerCase();
+        fieldStr = normalizeAndUnaccent(fieldData[n]).toLowerCase();
         break;
       } else {
         // Try then for field 260$a
-        fieldStr = normalizeAndUnaccent(`${fieldData[n]}`).toLowerCase();
+        fieldStr = normalizeAndUnaccent(fieldData[n]).toLowerCase();
       }
     }
   }
@@ -283,7 +283,8 @@ function doTitlePart(fieldData) {
   // Use all p subfields, apart from the first
   let fieldStr = '';
   for (let n = 1; n < fieldData.length; n += 1) {
-    fieldStr += stripPunctuation(fieldData[n].trim(), '_').substring(0, 10);
+    const dataStr = normalizeAndUnaccent(fieldData[n]);
+    fieldStr += stripPunctuation(dataStr.trim(), '_').substring(0, 10);
   }
   return padContent(fieldStr, 30);
 }
