@@ -147,6 +147,13 @@ function doPublicationYear(fieldData) {
         if ((dataStr.match(/[0-9]{4}/)) && (dataStr !== '9999')) {
           fieldStr = dataStr;
           break;
+        } else {
+          // Try for date1 from field 008
+          dataStr = `${fieldData[n]}`.substring(7, 11).replace(/[^0-9]/g, '');
+          if ((dataStr.match(/[0-9]{4}/)) && (dataStr !== '9999')) {
+            fieldStr = dataStr;
+            break;
+          }
         }
       } else if (n === 1) {
         // Try for date from field 264$c
