@@ -353,7 +353,7 @@ function doElectronicIndicator(marcObj) {
     }
   }
   // other electronic document
-  if (hasField(marcObj, '086') || hasField(marcObj, '856')) {
+  if (hasField(marcObj, '086') && hasField(marcObj, '856')) {
     return 'e';
   }
   return 'p';
