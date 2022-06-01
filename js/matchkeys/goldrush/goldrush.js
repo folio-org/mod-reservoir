@@ -252,7 +252,7 @@ function doPublisherName(fieldData) {
       }
     }
   }
-  fieldStr = stripPunctuation(fieldStr, '_');
+  fieldStr = stripPunctuation(fieldStr, ' ').replace(/ /g, '');
   return padContent(fieldStr, 5);
 }
 
