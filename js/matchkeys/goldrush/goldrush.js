@@ -404,7 +404,6 @@ function matchkey(marcJson) {
     getField(marcObj, '100', 'a'),
     getField(marcObj, '110', 'a'),
     getField(marcObj, '111', 'a'),
-    getField(marcObj, '113', 'a'),
   ]));
   keyStr += addComponent(doInclusiveDates(getField(marcObj, '245', 'f')));
   keyStr += addComponent(doGDCN(getField(marcObj, '086', 'a')));
