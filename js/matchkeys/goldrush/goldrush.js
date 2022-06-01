@@ -106,6 +106,14 @@ function stripPunctuation(keyPart, replaceChar) {
   return trimmed;
 }
 
+function normalizeAndUnaccent(fieldData) {
+  let fieldStr = fieldData;
+  if (fieldData !== null) {
+    fieldStr = fieldData.normalize('NFD').replace(/\p{Diacritic}/gu, '');
+  }
+  return fieldStr;
+}
+
 function padContent(keyPart, length) {
   let padded = keyPart;
   padded = padded.replace(/ +/g, ' ');
@@ -122,7 +130,7 @@ function doTitle(fieldData) {
       fieldStr += stripPunctuation(fieldData[n], ' ').trim();
     }
   }
-  fieldStr = fieldStr.normalize('NFD');
+  fieldStr = normalizeAndUnaccent(fieldStr);
   return padContent(fieldStr, 70);
 }
 
@@ -130,8 +138,8 @@ function doGMD(fieldData) {
   // General medium designator
   let fieldStr = '';
   if (fieldData !== null) {
-    fieldStr = fieldData.replace(/[^a-zA-Z0-9]/g, '');
-    fieldStr = fieldStr.replace(/\p{Diacritic}/gu, '');
+    fieldStr = normalizeAndUnaccent(fieldData);
+    fieldStr = fieldStr.replace(/[^a-zA-Z0-9]/g, '');
   }
   return padContent(fieldStr, 5);
 }
@@ -193,7 +201,7 @@ function doPagination(fieldData) {
 function doEditionStatement(fieldData) {
   let fieldStr = '';
   if (fieldData !== null) {
-    let dataStr = fieldData.replace(/\p{Diacritic}/gu, '');
+    let dataStr = normalizeAndUnaccent(fieldData);
     // Detect contiguous numeric
     for (let n = 3; n > 0; n -= 1) {
       const regexNum = new RegExp(`([0-9]{${n}})`);
@@ -251,11 +259,11 @@ function doPublisherName(fieldData) {
     if (fieldData[n] !== null) {
       if (n === 0) {
         // Try first for field 264$a
-        fieldStr = `${fieldData[n]}`.replace(/\p{Diacritic}/gu, '').toLowerCase();
+        fieldStr = normalizeAndUnaccent(`${fieldData[n]}`).toLowerCase();
         break;
       } else {
         // Try then for field 260$a
-        fieldStr = `${fieldData[n]}`.replace(/\p{Diacritic}/gu, '').toLowerCase();
+        fieldStr = normalizeAndUnaccent(`${fieldData[n]}`).toLowerCase();
       }
     }
   }
@@ -293,7 +301,7 @@ function doAuthor(fieldData) {
   for (let n = 0; n < fieldData.length; n += 1) {
     if (fieldData[n] !== null) {
       let dataStr = stripPunctuation(fieldData[n], '_');
-      dataStr = dataStr.normalize('NFD').replace(/\p{Diacritic}/gu, '');
+      dataStr = normalizeAndUnaccent(dataStr);
       fieldStr += dataStr;
     }
   }
@@ -313,7 +321,7 @@ function doGDCN(fieldData) {
   let fieldStr = '';
   if (fieldData !== null) {
     fieldStr = stripPunctuation(fieldData, '_');
-    fieldStr = fieldStr.normalize('NFD').replace(/\p{Diacritic}/gu, '');
+    fieldStr = normalizeAndUnaccent(fieldStr);
     // Limit maximum field length
     fieldStr = fieldStr.substring(0, 32000);
   }
@@ -322,25 +330,25 @@ function doGDCN(fieldData) {
 
 function doElectronicIndicator(marcObj) {
   let field = '';
-  field = getField(marcObj, '245', 'h');
+  field = normalizeAndUnaccent(getField(marcObj, '245', 'h'));
   if (field) {
     if (field.match(/\belectronic resource\b/i)) {
       return 'e';
     }
   }
-  field = getField(marcObj, '590', 'a');
+  field = normalizeAndUnaccent(getField(marcObj, '590', 'a'));
   if (field) {
     if (field.match(/\belectronic reproduction\b/i)) {
       return 'e';
     }
   }
-  field = getField(marcObj, '533', 'a');
+  field = normalizeAndUnaccent(getField(marcObj, '533', 'a'));
   if (field) {
     if (field.match(/\belectronic reproduction\b/i)) {
       return 'e';
     }
   }
-  field = getField(marcObj, '300', 'a');
+  field = normalizeAndUnaccent(getField(marcObj, '300', 'a'));
   if (field) {
     if (field.match(/\bonline resource\b/i)) {
       return 'e';
