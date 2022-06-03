@@ -11,7 +11,10 @@ public final class JavaScriptCheck {
    * Run JavaScript compiler/interpreter once.
    */
   public static void check() {
-    check("x => 1");
+    check("x => {"
+        + "  const r = new RegExp('[0-9]');"
+        + "  return '1'.match(r) ? 1 : 0;"
+        + "}");
   }
 
   static void check(String script) {

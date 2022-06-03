@@ -215,6 +215,14 @@
                   <destFileName>compiler.jar</destFileName>
                 </artifactItem>
                 <artifactItem>
+                  <groupId>org.graalvm.regex</groupId>
+                  <artifactId>regex</artifactId>
+                  <version>${graalvm.version}</version>
+                  <type>jar</type>
+                  <overWrite>true</overWrite>
+                  <destFileName>regex.jar</destFileName>
+                </artifactItem>
+                <artifactItem>
                   <groupId>org.graalvm.compiler</groupId>
                   <artifactId>compiler-management</artifactId>
                   <version>${graalvm.version}</version>
