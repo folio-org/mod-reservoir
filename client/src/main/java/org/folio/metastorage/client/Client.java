@@ -253,6 +253,7 @@ public class Client {
         }
       }
     } catch (Exception e) {
+      log.info("Failed offset (resume at): {}", currentOffset - 1);
       promise.fail(e);
       return;
     }
@@ -272,7 +273,7 @@ public class Client {
           if (futures.isEmpty()) {
             if (!echo) {
               log.info("{}", localSequence);
-              log.info("Next offset (resume): {}", currentOffset);
+              log.info("Next offset (resume at): {}", currentOffset);
             }
             promise.complete();
             return;
@@ -291,7 +292,10 @@ public class Client {
                           .expect(errorPredicate)
                           .expect(ResponsePredicate.JSON)
                           .sendBuffer(b))
-                  .onFailure(promise::fail)
+                  .onFailure(e -> {
+                    log.info("Failed offset (resume at): {}", currentOffset - 1);
+                    promise.fail(e);
+                  })
                   .onSuccess(x -> sendChunk(reader, promise));
             } else {
               webClient.putAbs(headers.get(XOkapiHeaders.URL) + "/meta-storage/records")
@@ -299,7 +303,10 @@ public class Client {
                   .expect(errorPredicate)
                   .expect(ResponsePredicate.JSON)
                   .sendJsonObject(request)
-                  .onFailure(promise::fail)
+                  .onFailure(e -> {
+                    log.info("Failed offset (resume at): {}", currentOffset - 1);
+                    promise.fail(e);
+                  })
                   .onSuccess(x -> sendChunk(reader, promise));
             }
           }
