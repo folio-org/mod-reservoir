@@ -30,12 +30,13 @@ public final class OaiService {
 
   private OaiService() { }
 
-  static final String OAI_HEADER =
-      "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n"
-          + "<OAI-PMH xmlns=\"http://www.openarchives.org/OAI/2.0/\"\n"
-          + "         xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\"\n"
-          + "         xsi:schemaLocation=\"http://www.openarchives.org/OAI/2.0/\n"
-          + "         http://www.openarchives.org/OAI/2.0/OAI-PMH.xsd\">\n";
+  static final String OAI_HEADER = """
+  <?xml version="1.0" encoding="UTF-8"?>
+      <OAI-PMH xmlns="http://www.openarchives.org/OAI/2.0/"
+               xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+               xsi:schemaLocation="http://www.openarchives.org/OAI/2.0/
+               http://www.openarchives.org/OAI/2.0/OAI-PMH.xsd">
+      """;
 
   static String encodeOaiIdentifier(UUID clusterId) {
     return "oai:" + clusterId.toString();
@@ -203,7 +204,7 @@ public final class OaiService {
    * @param rowSet global_records rowSet (empty if no record entries: deleted)
    * @param clusterId cluster identifier that this record is part of
    * @param matchValues match values for this cluster
-   * @return
+   * @return metadata record string; null if it's deleted record
    */
   static String getMetadata(RowSet<Row> rowSet, UUID clusterId, List<String> matchValues) {
     RowIterator<Row> iterator = rowSet.iterator();

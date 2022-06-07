@@ -29,10 +29,10 @@ public class MatchKeyJsonPath implements MatchKeyMethod {
     ReadContext ctx = JsonPath.parse(payload.encode());
     try {
       Object o = ctx.read(jsonPath);
-      if (o instanceof String) {
-        keys.add((String) o);
-      } else if (o instanceof List) {
-        for (Object m : (List) o) {
+      if (o instanceof String string) {
+        keys.add(string);
+      } else if (o instanceof List<?> list) {
+        for (Object m : list) {
           if (!(m instanceof String)) {
             return;
           }

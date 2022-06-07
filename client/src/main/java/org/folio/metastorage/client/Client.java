@@ -289,33 +289,23 @@ public class Client {
             System.out.println(request);
             vertx.runOnContext(x -> sendChunk(reader, promise));
           } else {
-            if (compress) {
-              AsyncCodec.compress(vertx, request.toBuffer())
-                  .compose(b ->
-                      webClient.putAbs(headers.get(XOkapiHeaders.URL) + "/meta-storage/records")
-                          .putHeaders(headers)
-                          .putHeader(HttpHeaders.CONTENT_TYPE.toString(), "application/json")
-                          .putHeader(HttpHeaders.CONTENT_ENCODING.toString(), "gzip")
-                          .expect(errorPredicate)
-                          .expect(ResponsePredicate.JSON)
-                          .sendBuffer(b))
-                  .onFailure(e -> {
-                    log.info("Failed offset (resume at): {}", currentOffset - 1);
-                    promise.fail(e);
-                  })
-                  .onSuccess(x -> sendChunk(reader, promise));
-            } else {
-              webClient.putAbs(headers.get(XOkapiHeaders.URL) + "/meta-storage/records")
-                  .putHeaders(headers)
-                  .expect(errorPredicate)
-                  .expect(ResponsePredicate.JSON)
-                  .sendJsonObject(request)
-                  .onFailure(e -> {
-                    log.info("Failed offset (resume at): {}", currentOffset - 1);
-                    promise.fail(e);
-                  })
-                  .onSuccess(x -> sendChunk(reader, promise));
-            }
+            Future<Buffer> futureBuffer = compress
+                ? AsyncCodec.compress(vertx, request.toBuffer())
+                : Future.succeededFuture(request.toBuffer());
+            futureBuffer.compose(b ->
+                    webClient.putAbs(headers.get(XOkapiHeaders.URL) + "/meta-storage/records")
+                        .putHeaders(headers)
+                        .putHeader(HttpHeaders.CONTENT_TYPE.toString(), "application/json")
+                        .putHeader(HttpHeaders.CONTENT_ENCODING.toString(),
+                            compress ? "gzip" : null)
+                        .expect(errorPredicate)
+                        .expect(ResponsePredicate.JSON)
+                        .sendBuffer(b))
+                .onFailure(e -> {
+                  log.info("Failed offset (resume at): {}", currentOffset - 1);
+                  promise.fail(e);
+                })
+                .onSuccess(x -> sendChunk(reader, promise));
           }
         });
   }
@@ -378,9 +368,9 @@ public class Client {
   Future<Void> sendIso2709(InputStream stream) {
     return Future.<Void>future(p -> sendChunk(
       new MarcReaderProxy(
-        strict 
-          ? new MarcStreamReader(stream) 
-          : new MarcPermissiveStreamReader(stream, true, true)), 
+        strict
+          ? new MarcStreamReader(stream)
+          : new MarcPermissiveStreamReader(stream, true, true)),
         p))
         .eventually(x -> {
           try {

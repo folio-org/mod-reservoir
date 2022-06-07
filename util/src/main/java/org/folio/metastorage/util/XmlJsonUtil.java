@@ -68,15 +68,14 @@ public final class XmlJsonUtil {
         JsonObject control = fields.getJsonObject(i);
         control.fieldNames().forEach(f -> {
           Object fieldValue = control.getValue(f);
-          if (fieldValue instanceof String) {
+          if (fieldValue instanceof String string) {
             s.append("  <" + CONTROLFIELD_LABEL + " tag=\"");
             s.append(encodeXmlText(f));
             s.append("\">");
-            s.append(encodeXmlText((String) fieldValue));
+            s.append(encodeXmlText(string));
             s.append("</controlfield>\n");
           }
-          if (fieldValue instanceof JsonObject) {
-            JsonObject fieldObject = (JsonObject) fieldValue;
+          if (fieldValue instanceof JsonObject fieldObject) {
             s.append("  <datafield tag=\"");
             s.append(encodeXmlText(f));
             for (int j = 1; j <= 9; j++) { // ISO 2709 allows more than 2 indicators
@@ -299,8 +298,8 @@ public final class XmlJsonUtil {
     factory.setProperty(XMLInputFactory.SUPPORT_DTD, false);
     XMLStreamReader xmlStreamReader = factory.createXMLStreamReader(stream);
     Object o = xmlToJsonObject(0, xmlStreamReader, "original", next(xmlStreamReader), null);
-    if (o instanceof JsonObject) {
-      return (JsonObject) o;
+    if (o instanceof JsonObject jsonObject) {
+      return jsonObject;
     }
     throw new IllegalArgumentException("xmlToJsonObject not returning JsonObject");
   }

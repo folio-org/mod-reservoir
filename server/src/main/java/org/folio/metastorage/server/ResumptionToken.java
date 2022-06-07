@@ -37,7 +37,7 @@ public class ResumptionToken {
 
   /**
    * Return encoded token value.
-   * @return
+   * @return encoded token string
    */
   public String encode() {
     if (from == null) {

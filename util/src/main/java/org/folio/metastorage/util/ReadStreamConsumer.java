@@ -28,7 +28,7 @@ public class ReadStreamConsumer<T, U> {
    * Consumes provided ReadStream via the consumer function.
    * @param stream input stream
    * @param consumer consumer function
-   * @return
+   * @return async result
    */
   public Future<U> consume(ReadStream<T> stream, Function<T, Future<U>> consumer) {
     stream
