@@ -27,7 +27,7 @@ public class MatchKeyJavaScript implements MatchKeyMethod {
           .newBuilder("js", response.bodyAsString(), moduleName)
           .buildLiteral()));
   }
-  
+
   @Override
   public Future<Void> configure(Vertx vertx, JsonObject configuration) {
     String url = configuration.getString("url");
@@ -38,8 +38,8 @@ public class MatchKeyJavaScript implements MatchKeyMethod {
     }
     Future<Void> future = Future.succeededFuture();
     if (url != null) {
-      //if url is specified and ends with mjs, assume it is a ES module that exports a 
-      //'matchkey' function, othwerwise treat it like a regular script
+      // if url is specified and ends with mjs, assume it is a ES module that exports a
+      // 'matchkey' function, otherwise treat it like a regular script
       final boolean isModule = url.endsWith("mjs");
       Context.Builder cb = Context.newBuilder("js");
       if (isModule) {
@@ -51,9 +51,9 @@ public class MatchKeyJavaScript implements MatchKeyMethod {
       future = evalUrl(vertx, url)
         .map(value -> getKeysFunction = isModule ? value.getMember("matchkey") : value)
         .mapEmpty();
-    } 
-    //if script is specified, we treat it as a regular, non-module JS file which
-    //evaluates to a function that accepts an object and returs an array of strings
+    }
+    // if script is specified, we treat it as a regular, non-module JS file which
+    // evaluates to a function that accepts an object and returns an array of strings
     if (script != null) {
       context = Context.create("js");
       future = future

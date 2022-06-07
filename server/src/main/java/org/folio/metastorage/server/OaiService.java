@@ -31,7 +31,7 @@ public final class OaiService {
   private OaiService() { }
 
   static final String OAI_HEADER = """
-  <?xml version="1.0" encoding="UTF-8"?>
+      <?xml version="1.0" encoding="UTF-8"?>
       <OAI-PMH xmlns="http://www.openarchives.org/OAI/2.0/"
                xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
                xsi:schemaLocation="http://www.openarchives.org/OAI/2.0/
@@ -159,7 +159,7 @@ public final class OaiService {
           + " WHERE match_key_config_id = $1");
       int no = 2;
       if (token != null) {
-        tupleList.add(token.getFrom()); // from from resumptionToken is with fraction of seconds
+        tupleList.add(token.getFrom()); // from resumptionToken is with fraction of seconds
         sqlQuery.append(" AND datestamp >= $" + no);
         no++;
       } else if (from != null) {
