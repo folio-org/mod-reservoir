@@ -175,6 +175,270 @@ public class ClientTest {
   }
 
   @Test
+  public void sendMarcRecFileServerError(TestContext context) {
+    HttpServerOptions so = new HttpServerOptions()
+        .setHandle100ContinueAutomatically(true);
+
+    HttpServer httpServer = vertx.createHttpServer(so);
+    Router router = Router.router(vertx);
+    router.put("/meta-storage/records")
+        .handler(BodyHandler.create())
+        .handler(c -> {
+          c.response().setStatusCode(400);
+          c.response().putHeader("Content-Type", "application/json");
+          c.response().end("{\"error\": \"bad request\"}");
+        });
+
+    httpServer.requestHandler(router);
+    Future<Void> future = httpServer.listen(PORT).mapEmpty();
+
+    UUID sourceId = UUID.randomUUID();
+    String [] args = {
+        "--chunk", "2",
+        "--source", sourceId.toString(),
+        "--xsl", "../xsl/marc2inventory-instance.xsl",
+        "src/test/resources/marc3.marc"
+    };
+    future = future.compose(x -> Client.exec(client, args));
+
+    future.eventually(x -> httpServer.close())
+        .onComplete(context.asyncAssertFailure(e -> {
+          context.assertEquals("400 {\"error\": \"bad request\"}", e.getMessage());
+        }));
+  }
+
+  @Test
+  public void sendMarcRecFileBadLeaderPermissive(TestContext context) {
+    HttpServerOptions so = new HttpServerOptions()
+        .setHandle100ContinueAutomatically(true);
+
+    JsonArray requests = new JsonArray();
+
+    HttpServer httpServer = vertx.createHttpServer(so);
+    Router router = Router.router(vertx);
+    router.put("/meta-storage/records")
+        .handler(BodyHandler.create())
+        .handler(c -> {
+          requests.add(c.getBodyAsJson());
+          c.response().setStatusCode(200);
+          c.response().putHeader("Content-Type", "application/json");
+          c.response().end("{}");
+        });
+
+    httpServer.requestHandler(router);
+    Future<Void> future = httpServer.listen(PORT).mapEmpty();
+
+    UUID sourceId = UUID.randomUUID();
+    String [] args = {
+        "--chunk", "2",
+        "--source", sourceId.toString(),
+        "--xsl", "../xsl/marc2inventory-instance.xsl",
+        "src/test/resources/badleader.marc"
+    };
+    future = future.compose(x -> Client.exec(client, args));
+
+    future.eventually(x -> httpServer.close())
+        .onComplete(context.asyncAssertSuccess(res -> {
+          context.assertEquals(2, requests.size()); // two requests
+
+          // first chunk with 2 records
+          JsonObject r = requests.getJsonObject(0);
+          context.assertEquals(sourceId.toString(), r.getString("sourceId"));
+          context.assertEquals(2, r.getJsonArray("records").size());
+          context.assertEquals("   73209622 //r823", r.getJsonArray("records").getJsonObject(0).getString("localId"));
+          context.assertEquals("   11224466 ", r.getJsonArray("records").getJsonObject(1).getString("localId"));
+          // second with 1 record
+          r = requests.getJsonObject(1);
+          context.assertEquals(sourceId.toString(), r.getString("sourceId"));
+          context.assertEquals(1, r.getJsonArray("records").size());
+          context.assertEquals("   77123332 ", r.getJsonArray("records").getJsonObject(0).getString("localId"));
+        }));
+  }
+
+  @Test
+  public void sendMarcRecFileBadLeaderStrict(TestContext context) {
+    HttpServerOptions so = new HttpServerOptions()
+        .setHandle100ContinueAutomatically(true);
+
+    JsonArray requests = new JsonArray();
+
+    HttpServer httpServer = vertx.createHttpServer(so);
+    Router router = Router.router(vertx);
+    router.put("/meta-storage/records")
+        .handler(BodyHandler.create())
+        .handler(c -> {
+          requests.add(c.getBodyAsJson());
+          c.response().setStatusCode(200);
+          c.response().putHeader("Content-Type", "application/json");
+          c.response().end("{}");
+        });
+
+    httpServer.requestHandler(router);
+    Future<Void> future = httpServer.listen(PORT).mapEmpty();
+
+    UUID sourceId = UUID.randomUUID();
+    String [] args = {
+        "--chunk", "2",
+        "--source", sourceId.toString(),
+        "--strict",
+        "--xsl", "../xsl/marc2inventory-instance.xsl",
+        "src/test/resources/badleader.marc"
+    };
+    future = future.compose(x -> Client.exec(client, args));
+
+    future.eventually(x -> httpServer.close())
+        .onComplete(context.asyncAssertFailure(e -> {
+          context.assertTrue(e.getMessage().startsWith("error parsing leader"));    
+        }));
+  }
+
+  @Test
+  public void sendMarcRecFileBadCharStrict(TestContext context) {
+    HttpServerOptions so = new HttpServerOptions()
+        .setHandle100ContinueAutomatically(true);
+
+    JsonArray requests = new JsonArray();
+
+    HttpServer httpServer = vertx.createHttpServer(so);
+    Router router = Router.router(vertx);
+    router.put("/meta-storage/records")
+        .handler(BodyHandler.create())
+        .handler(c -> {
+          requests.add(c.getBodyAsJson());
+          c.response().setStatusCode(200);
+          c.response().putHeader("Content-Type", "application/json");
+          c.response().end("{}");
+        });
+
+    httpServer.requestHandler(router);
+    Future<Void> future = httpServer.listen(PORT).mapEmpty();
+
+    UUID sourceId = UUID.randomUUID();
+    String [] args = {
+        "--chunk", "2",
+        "--source", sourceId.toString(),
+        "--strict",
+        "--xsl", "../xsl/marc2inventory-instance.xsl",
+        "src/test/resources/badchar.marc"
+    };
+    future = future.compose(x -> Client.exec(client, args));
+
+    future.eventually(x -> httpServer.close())
+        .onComplete(context.asyncAssertSuccess(e -> {
+          context.assertEquals(1, requests.size()); // two requests  
+        }));
+  }
+
+  @Test
+  public void sendMarcRecFileBadCharStrictUtf8(TestContext context) {
+    HttpServerOptions so = new HttpServerOptions()
+        .setHandle100ContinueAutomatically(true);
+
+    JsonArray requests = new JsonArray();
+
+    HttpServer httpServer = vertx.createHttpServer(so);
+    Router router = Router.router(vertx);
+    router.put("/meta-storage/records")
+        .handler(BodyHandler.create())
+        .handler(c -> {
+          requests.add(c.getBodyAsJson());
+          c.response().setStatusCode(200);
+          c.response().putHeader("Content-Type", "application/json");
+          c.response().end("{}");
+        });
+
+    httpServer.requestHandler(router);
+    Future<Void> future = httpServer.listen(PORT).mapEmpty();
+
+    UUID sourceId = UUID.randomUUID();
+    String [] args = {
+        "--chunk", "2",
+        "--source", sourceId.toString(),
+        "--strict",
+        "--xsl", "../xsl/marc2inventory-instance.xsl",
+        "src/test/resources/badchar-utf8.marc"
+    };
+    future = future.compose(x -> Client.exec(client, args));
+
+    future.eventually(x -> httpServer.close())
+        .onComplete(context.asyncAssertSuccess(e -> {
+          context.assertEquals(1, requests.size()); // two requests  
+        }));
+  }
+
+  @Test
+  public void sendMarcRecFileBadCharPermissive(TestContext context) {
+    HttpServerOptions so = new HttpServerOptions()
+        .setHandle100ContinueAutomatically(true);
+
+    JsonArray requests = new JsonArray();
+
+    HttpServer httpServer = vertx.createHttpServer(so);
+    Router router = Router.router(vertx);
+    router.put("/meta-storage/records")
+        .handler(BodyHandler.create())
+        .handler(c -> {
+          requests.add(c.getBodyAsJson());
+          c.response().setStatusCode(200);
+          c.response().putHeader("Content-Type", "application/json");
+          c.response().end("{}");
+        });
+
+    httpServer.requestHandler(router);
+    Future<Void> future = httpServer.listen(PORT).mapEmpty();
+
+    UUID sourceId = UUID.randomUUID();
+    String [] args = {
+        "--chunk", "2",
+        "--source", sourceId.toString(),
+        "--xsl", "../xsl/marc2inventory-instance.xsl",
+        "src/test/resources/badchar.marc"
+    };
+    future = future.compose(x -> Client.exec(client, args));
+
+    future.eventually(x -> httpServer.close())
+        .onComplete(context.asyncAssertSuccess(e -> {
+          context.assertEquals(1, requests.size()); // two requests  
+        }));
+  }
+
+  @Test
+  public void sendMarcRecFileBadCharPermissiveUtf8(TestContext context) {
+    HttpServerOptions so = new HttpServerOptions()
+        .setHandle100ContinueAutomatically(true);
+
+    JsonArray requests = new JsonArray();
+
+    HttpServer httpServer = vertx.createHttpServer(so);
+    Router router = Router.router(vertx);
+    router.put("/meta-storage/records")
+        .handler(BodyHandler.create())
+        .handler(c -> {
+          requests.add(c.getBodyAsJson());
+          c.response().setStatusCode(200);
+          c.response().putHeader("Content-Type", "application/json");
+          c.response().end("{}");
+        });
+
+    httpServer.requestHandler(router);
+    Future<Void> future = httpServer.listen(PORT).mapEmpty();
+
+    UUID sourceId = UUID.randomUUID();
+    String [] args = {
+        "--chunk", "2",
+        "--source", sourceId.toString(),
+        "--xsl", "../xsl/marc2inventory-instance.xsl",
+        "src/test/resources/badchar-utf8.marc"
+    };
+    future = future.compose(x -> Client.exec(client, args));
+
+    future.eventually(x -> httpServer.close())
+        .onComplete(context.asyncAssertSuccess(e -> {
+          context.assertEquals(1, requests.size()); // two requests  
+        }));
+  }
+
+  @Test
   public void sendMarcXmlRecords(TestContext context) {
     HttpServerOptions so = new HttpServerOptions()
         .setHandle100ContinueAutomatically(true);

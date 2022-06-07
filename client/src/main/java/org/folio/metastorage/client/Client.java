@@ -38,6 +38,8 @@ import org.folio.metastorage.util.XmlJsonUtil;
 import org.folio.okapi.common.GenericCompositeFuture;
 import org.folio.okapi.common.XOkapiHeaders;
 import org.marc4j.MarcPermissiveStreamReader;
+import org.marc4j.MarcReader;
+import org.marc4j.MarcStreamReader;
 import org.marc4j.MarcXmlWriter;
 import org.marc4j.converter.impl.AnselToUnicode;
 
@@ -53,6 +55,7 @@ public class Client {
   int limit;
   boolean echo = false;
   boolean compress = false;
+  boolean strict = false;
   Integer localSequence = 0;
   WebClient webClient;
   Vertx vertx;
@@ -129,6 +132,10 @@ public class Client {
     this.compress = true;
   }
 
+  public void setStrict() {
+    this.strict = true;
+  }
+
   private void incrementSequence() {
     ++localSequence;
     if (!echo && (localSequence % 1000) == 0) {
@@ -149,10 +156,10 @@ public class Client {
   }
 
   private class MarcReaderProxy implements ReaderProxy {
-    private MarcPermissiveStreamReader marcReader;
+    private MarcReader marcReader;
     private org.marc4j.marc.Record marcRecord;
 
-    public MarcReaderProxy(MarcPermissiveStreamReader reader) {
+    public MarcReaderProxy(MarcReader reader) {
       if (reader == null) {
         throw new IllegalArgumentException("Argument reader cannot be null");
       }
@@ -169,16 +176,16 @@ public class Client {
     }
 
     public String parseNext() {
-      char charCodingScheme = marcRecord.getLeader().getCharCodingScheme();
-      if (charCodingScheme == ' ') {
-        marcRecord.getLeader().setCharCodingScheme('a');
-      }
       ByteArrayOutputStream out = new ByteArrayOutputStream();
       MarcXmlWriter writer = new MarcXmlWriter(out);
+      char charCodingScheme = marcRecord.getLeader().getCharCodingScheme();
+      System.err.println("Char coding scheme" + charCodingScheme);
       if (charCodingScheme == ' ') {
-        //this should never be used as we instruct the parser to convert to UTF-8
+        //ansel converter already escapes non-XML chars
+        marcRecord.getLeader().setCharCodingScheme('a');
         writer.setConverter(new AnselToUnicode());
       }
+      // we need to additionally strip non-XML chars
       writer.setCheckNonXMLChars(true);
       writer.write(marcRecord);
       writer.close();
@@ -370,7 +377,11 @@ public class Client {
 
   Future<Void> sendIso2709(InputStream stream) {
     return Future.<Void>future(p -> sendChunk(
-      new MarcReaderProxy(new MarcPermissiveStreamReader(stream, true, true)), p))
+      new MarcReaderProxy(
+        strict 
+          ? new MarcStreamReader(stream) 
+          : new MarcPermissiveStreamReader(stream, true, true)), 
+        p))
         .eventually(x -> {
           try {
             stream.close();
@@ -479,6 +490,7 @@ public class Client {
               System.out.println(" --echo              (only output result)");
               System.out.println(" --compress          (compress requests with gzip)");
               System.out.println(" --http2             (use HTTP/2)");
+              System.out.println(" --strict            (strict marc parsing, off by default)");
               System.out.println(" --init");
               System.out.println(" --purge");
               break;
@@ -503,6 +515,9 @@ public class Client {
               break;
             case "compress":
               client.setCompress();
+              break;
+            case "strict":
+              client.setStrict();
               break;
             case "http2":
               client.asHttp2Client();
