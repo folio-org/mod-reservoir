@@ -67,7 +67,7 @@ To send MARCXML to the same server with defined sourceId:
 
     export OKAPI_TENANT=diku
     export OKAPI_URL=http://localhost:8081
-    export sourceid=`uuidgen`
+    export sourceid=lib1
     java -jar client/target/mod-meta-storage-client-fat.jar \
       --source $sourceid \
       --xsl xsl/marc2inventory-instance.xsl \
