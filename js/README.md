@@ -12,8 +12,8 @@ It takes input being a MARC-in-JSON string of MARC fields, and returns the match
 
 ### matchkeys tests
 
-Do 'yarn install' in this top-level directory to install and configure ESLint. Do 'yarn lint-goldrush' and 'yarn lint-test'.
+Do 'npm install' in this top-level directory to install and configure ESLint. Do 'npm run lint-goldrush' and 'npm run lint-test'.
 
 There are some sample MARC files in the [test/records](test/records) directory.
 
-The tests are basic at this stage. Do 'yarn test' to process the samples.
+The tests are basic at this stage. Do 'npm run test' to process the samples.

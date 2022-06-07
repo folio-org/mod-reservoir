@@ -8,41 +8,60 @@ import io.vertx.ext.web.client.predicate.ResponsePredicate;
 import java.util.Collection;
 import org.folio.metastorage.matchkey.MatchKeyMethod;
 import org.folio.okapi.common.WebClientFactory;
+import org.graalvm.polyglot.Context;
+import org.graalvm.polyglot.Source;
 import org.graalvm.polyglot.Value;
 
 public class MatchKeyJavaScript implements MatchKeyMethod {
 
   Value getKeysFunction;
-
-  org.graalvm.polyglot.Context context;
+  Context context;
 
   Future<Value> evalUrl(Vertx vertx, String url) {
     WebClient webClient = WebClientFactory.getWebClient(vertx);
+    String moduleName = url.substring(url.lastIndexOf("/") + 1);
     return webClient.getAbs(url)
         .expect(ResponsePredicate.SC_OK)
         .send()
-        .map(response -> context.eval("js", response.bodyAsString()));
+        .map(response -> context.eval(Source
+          .newBuilder("js", response.bodyAsString(), moduleName)
+          .buildLiteral()));
   }
-
+  
   @Override
   public Future<Void> configure(Vertx vertx, JsonObject configuration) {
-    context = org.graalvm.polyglot.Context.create("js");
-    Future<Value> future = Future.succeededFuture(null);
     String url = configuration.getString("url");
-    if (url != null) {
-      future = evalUrl(vertx, url);
+    String script = configuration.getString("script");
+    if (url == null && script == null) {
+      return Future.failedFuture(
+        new IllegalArgumentException("javascript: url or script must be given"));
     }
-    return future.map(value -> {
-      String script = configuration.getString("script");
-      if (script != null) {
-        getKeysFunction = context.eval("js", script);
-      } else if (value != null) {
-        getKeysFunction = value;
-      } else {
-        throw new IllegalArgumentException("javascript: url or script must be given");
+    Future<Void> future = Future.succeededFuture();
+    if (url != null) {
+      //if url is specified and ends with mjs, assume it is a ES module that exports a 
+      //'matchkey' function, othwerwise treat it like a regular script
+      final boolean isModule = url.endsWith("mjs");
+      Context.Builder cb = Context.newBuilder("js");
+      if (isModule) {
+        cb = cb
+          .allowExperimentalOptions(true)
+          .option("js.esm-eval-returns-exports", "true");
       }
-      return null;
-    });
+      context = cb.build();
+      future = evalUrl(vertx, url)
+        .map(value -> getKeysFunction = isModule ? value.getMember("matchkey") : value)
+        .mapEmpty();
+    } 
+    //if script is specified, we treat it as a regular, non-module JS file which
+    //evaluates to a function that accepts an object and returs an array of strings
+    if (script != null) {
+      context = Context.create("js");
+      future = future
+        .map(v -> getKeysFunction = context.eval("js", script))
+        .mapEmpty();
+    }
+    return future;
+
   }
 
   private void addValue(Collection<String> keys, Value value) {

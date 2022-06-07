@@ -61,8 +61,20 @@ public class MatchKeyJavaScriptTest {
           + "  isbn.push(identifiers[i].isbn);"
           + "}"
           + "return isbn;"
+          + "}");
+    });
+    router.get("/lib/isbn-match.mjs").handler(ctx -> {
+      HttpServerResponse response = ctx.response();
+      response.setStatusCode(200);
+      response.putHeader(HttpHeaders.CONTENT_TYPE, "text/plain");
+      response.end("export function matchkey(x) {"
+          + "var identifiers = JSON.parse(x).identifiers;"
+          + "const isbn = [];"
+          + "for (let i = 0; i < identifiers.length; i++) {"
+          + "  isbn.push(identifiers[i].isbn);"
           + "}"
-      );
+          + "return isbn;"
+          + "}");
     });
     httpServer = vertx.createHttpServer();
     httpServer.requestHandler(router).listen(PORT).onComplete(context.asyncAssertSuccess());
@@ -175,6 +187,28 @@ public class MatchKeyJavaScriptTest {
     MatchKeyMethod m = new MatchKeyJavaScript();
     m.configure(vertx, new JsonObject()
             .put("url", HOSTPORT + "/lib/isbn-match.js"))
+        .onComplete(context.asyncAssertSuccess(x -> {
+          m.getKeys(inventory, keys);
+          assertThat(keys, containsInAnyOrder("73209629", "73209623"));
+          m.close();
+          m.close();
+        }));
+  }
+
+  @Test
+  public void testIsbnMatchUrlModule(TestContext context) {
+    JsonObject inventory = new JsonObject()
+        .put("identifiers", new JsonArray()
+            .add(new JsonObject()
+                .put("isbn", "73209629"))
+            .add(new JsonObject()
+                .put("isbn", "73209623"))
+
+        );
+    Collection<String> keys = new HashSet<>();
+    MatchKeyMethod m = new MatchKeyJavaScript();
+    m.configure(vertx, new JsonObject()
+            .put("url", HOSTPORT + "/lib/isbn-match.mjs"))
         .onComplete(context.asyncAssertSuccess(x -> {
           m.getKeys(inventory, keys);
           assertThat(keys, containsInAnyOrder("73209629", "73209623"));

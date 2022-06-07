@@ -1,6 +1,6 @@
-const fs = require('fs');
-const path = require('path');
-const goldrush = require('../matchkeys/goldrush/goldrush');
+import fs from 'fs';
+import path from 'path';
+import { matchkey } from '../matchkeys/goldrush/goldrush.mjs';
 
 function assert(result, message) {
   if (result) {
@@ -21,12 +21,15 @@ const files = fs.readdirSync(testsPath);
 const testFiles = files.filter((file) => path.extname(file) === '.json');
 for (let n = 0; n < testFiles.length; n += 1) {
   const testFile = `${testsPath}/${testFiles[n]}`;
-  const marcJson = fs.readFileSync(testFile, 'utf8');
+  let keyStrGoldrush = '';
   testsNum += 1;
   console.log(`\nProcessing ${testFile}`);
-  let keyStrGoldrush = '';
+  const marcJsonStr = fs.readFileSync(testFile, 'utf8');
   try {
-    keyStrGoldrush = goldrush.matchkey(marcJson);
+    const marcJson = JSON.parse(marcJsonStr);
+    const payloadJson = { marc: marcJson };
+    const payloadJsonStr = JSON.stringify(payloadJson);
+    keyStrGoldrush = matchkey(payloadJsonStr);
   } catch (e) {
     keyStrGoldrush = e.message;
   }

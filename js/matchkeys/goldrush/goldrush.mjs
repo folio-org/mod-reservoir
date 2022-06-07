@@ -1,7 +1,7 @@
 // Generates GoldRush match key.
 
-function loadMarcJson(marcJson) {
-  const marcObj = JSON.parse(marcJson).marc;
+function loadMarcJson(record) {
+  const marcObj = JSON.parse(record).marc;
   if (marcObj.fields === undefined) {
     throw new Error('MARC fields array is missing.');
   }
@@ -389,13 +389,13 @@ function addComponent(component) {
  * Generates GoldRush match key.
  *
  * @version 1.1.0 (for specification September 2021)
- * @param {string} marcJson - The MARC-in-JSON input string.
+ * @param {string} record - The MARC-in-JSON input string wrapped in {marc: ...} object.
  * @return {string} The matchkey. Components are gathered from relevant fields
  *     and concatenated to a long string.
  */
-function matchkey(marcJson) {
+export function matchkey(record) {
   let keyStr = '';
-  const marcObj = loadMarcJson(marcJson);
+  const marcObj = loadMarcJson(record);
   keyStr += addComponent(doTitle([
     getField(marcObj, '245', 'a'),
     getField(marcObj, '245', 'b'),
@@ -426,4 +426,3 @@ function matchkey(marcJson) {
   keyStr += addComponent(doElectronicIndicator(marcObj));
   return keyStr.toLowerCase();
 }
-
