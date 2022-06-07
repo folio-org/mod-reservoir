@@ -13,8 +13,7 @@
     },
     "sourceId": {
       "type": "string",
-      "description": "Source identifier",
-      "format" : "uuid"
+      "description": "Source identifier"
     },
     "payload": {
       "type": "object",

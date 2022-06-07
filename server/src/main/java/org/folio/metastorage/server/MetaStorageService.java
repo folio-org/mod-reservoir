@@ -64,7 +64,7 @@ public class MetaStorageService implements RouterCreator, TenantInitHooks {
     pgCqlQuery.addField(
         new PgCqlField("local_id", "localId", PgCqlField.Type.TEXT));
     pgCqlQuery.addField(
-        new PgCqlField("source_id", "sourceId", PgCqlField.Type.UUID));
+        new PgCqlField("source_id", "sourceId", PgCqlField.Type.TEXT));
     return pgCqlQuery;
   }
 

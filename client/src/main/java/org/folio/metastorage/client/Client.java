@@ -21,7 +21,6 @@ import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.LinkedList;
 import java.util.List;
-import java.util.UUID;
 import javax.xml.stream.XMLInputFactory;
 import javax.xml.stream.XMLStreamConstants;
 import javax.xml.stream.XMLStreamException;
@@ -34,6 +33,7 @@ import javax.xml.transform.stream.StreamSource;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.folio.metastorage.util.AsyncCodec;
+import org.folio.metastorage.util.SourceId;
 import org.folio.metastorage.util.XmlJsonUtil;
 import org.folio.okapi.common.GenericCompositeFuture;
 import org.folio.okapi.common.XOkapiHeaders;
@@ -47,7 +47,7 @@ import org.marc4j.converter.impl.AnselToUnicode;
 public class Client {
   static final Logger log = LogManager.getLogger(Client.class);
 
-  UUID sourceId = UUID.randomUUID();
+  SourceId sourceId;
   MultiMap headers = MultiMap.caseInsensitiveMultiMap();
   int chunkSize = 1;
   int offset;
@@ -69,7 +69,7 @@ public class Client {
     return new IOException(
       String.format("%1d %2s", response.statusCode(), response.bodyAsString()));
   });
-  
+
   ResponsePredicate errorPredicate = ResponsePredicate
       .create(ResponsePredicate.SC_SUCCESS, converter);
 
@@ -108,8 +108,8 @@ public class Client {
     return this;
   }
 
-  public void setSourceId(UUID sourceId) {
-    this.sourceId = sourceId;
+  public void setSourceId(String sourceId) {
+    this.sourceId = new SourceId(sourceId);
   }
 
   public void setChunkSize(int chunkSize) {
@@ -274,7 +274,7 @@ public class Client {
           List<JsonObject> list = resultingRecords.list();
           list.forEach(records::add);
           JsonObject request = new JsonObject()
-              .put("sourceId", sourceId)
+              .put("sourceId", sourceId.toString())
               .put("records", records);
 
           if (futures.isEmpty()) {
@@ -415,6 +415,9 @@ public class Client {
   @java.lang.SuppressWarnings({"squid:S2095"}) // Resources should be closed
   // stream.close in eventually , *not* in finally as that would premature close the stream.
   public Future<Void> sendFile(String fname) {
+    if (sourceId == null) {
+      return Future.failedFuture("source identifier must be given");
+    }
     try {
       InputStream stream = new FileInputStream(fname);
       if (fname.endsWith(".rec") || fname.endsWith(".marc") || fname.endsWith(".mrc")) {
@@ -482,7 +485,7 @@ public class Client {
           switch (args[i].substring(2)) {
             case "help":
               System.out.println("[options] [file..]");
-              System.out.println(" --source sourceId   (defaults to random UUID)");
+              System.out.println(" --source sourceId   (ISIL string, mandatory)");
               System.out.println(" --chunk sz          (defaults to 1)");
               System.out.println(" --offset int        (defaults to 0)");
               System.out.println(" --limit int         (defaults to 0 - no limit)");
@@ -496,7 +499,7 @@ public class Client {
               break;
             case "source":
               arg = getArgument(args, ++i);
-              client.setSourceId(UUID.fromString(arg));
+              client.setSourceId(arg);
               break;
             case "chunk":
               arg = getArgument(args, ++i);

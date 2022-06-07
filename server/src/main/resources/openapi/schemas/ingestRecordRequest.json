@@ -4,8 +4,7 @@
   "properties": {
     "sourceId": {
       "type": "string",
-      "description": "Source identifier",
-      "format": "uuid"
+      "description": "Source identifier"
     },
     "records": {
       "type": "array",

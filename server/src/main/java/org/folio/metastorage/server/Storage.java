@@ -105,7 +105,7 @@ public class Storage {
             CREATE_IF_NO_EXISTS + globalRecordTable
                 + "(id uuid NOT NULL PRIMARY KEY,"
                 + " local_id VARCHAR NOT NULL,"
-                + " source_id uuid NOT NULL,"
+                + " source_id VARCHAR NOT NULL,"
                 + " payload JSONB NOT NULL"
                 + ")",
             "CREATE UNIQUE INDEX IF NOT EXISTS idx_local_id ON " + globalRecordTable
@@ -152,7 +152,7 @@ public class Storage {
       Vertx vertx,
       SqlConnection conn,
       String localIdentifier,
-      UUID sourceId,
+      String sourceId,
       JsonObject payload,
       JsonArray matchKeyConfigs) {
 
@@ -172,7 +172,7 @@ public class Storage {
         .mapEmpty();
   }
 
-  Future<Void> deleteGlobalRecord(SqlConnection conn, String localIdentifier, UUID sourceId) {
+  Future<Void> deleteGlobalRecord(SqlConnection conn, String localIdentifier, String sourceId) {
     String q = "UPDATE " + clusterMetaTable + " AS m"
         + " SET datestamp = $3"
         + " FROM " + globalRecordTable + ", " + clusterRecordTable + " AS r"
@@ -186,7 +186,7 @@ public class Storage {
         .mapEmpty());
   }
 
-  Future<Void> ingestGlobalRecord(Vertx vertx, UUID sourceId, JsonObject globalRecord,
+  Future<Void> ingestGlobalRecord(Vertx vertx, String sourceId, JsonObject globalRecord,
       JsonArray matchKeyConfigs) {
 
     return pool.withTransaction(conn ->
@@ -200,7 +200,7 @@ public class Storage {
   }
 
   Future<Void> ingestGlobalRecord(Vertx vertx, SqlConnection conn,
-      UUID sourceId, JsonObject globalRecord, JsonArray matchKeyConfigs) {
+      String sourceId, JsonObject globalRecord, JsonArray matchKeyConfigs) {
 
     final String localIdentifier = globalRecord.getString("localId");
     if (localIdentifier == null) {
@@ -212,6 +212,9 @@ public class Storage {
     final JsonObject payload = globalRecord.getJsonObject("payload");
     if (payload == null) {
       return Future.failedFuture("payload required");
+    }
+    if (sourceId == null) {
+      return Future.failedFuture("sourceId required");
     }
     return upsertGlobalRecord(vertx, conn, localIdentifier, sourceId, payload, matchKeyConfigs);
   }
@@ -407,7 +410,7 @@ public class Storage {
             new ReadStreamConsumer<JsonObject, Void>()
               .consume(request, r ->
                 ingestGlobalRecord(
-                    vertx, UUID.fromString(request.topLevelObject().getString("sourceId")),
+                    vertx, request.topLevelObject().getString("sourceId"),
                     r, matchKeyConfigs)));
   }
 
@@ -431,7 +434,7 @@ public class Storage {
     return new JsonObject()
         .put("globalId", row.getUUID("id"))
         .put("localId", row.getString("local_id"))
-        .put("sourceId", row.getUUID("source_id"))
+        .put("sourceId", row.getString("source_id"))
         .put("payload", row.getJsonObject("payload"));
   }
 
