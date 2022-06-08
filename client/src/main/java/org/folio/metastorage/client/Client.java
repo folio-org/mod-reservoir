@@ -21,6 +21,7 @@ import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.Properties;
 import javax.xml.stream.XMLInputFactory;
 import javax.xml.stream.XMLStreamConstants;
 import javax.xml.stream.XMLStreamException;
@@ -452,6 +453,23 @@ public class Client {
     webClient.close();
   }
 
+  private static void printGitInfo(Class<Client> clazz) {
+    String appName = "MetaStorage CLI";
+    InputStream in = clazz.getClassLoader().getResourceAsStream("git.properties");
+    if (in != null) {
+      try {
+        Properties prop = new Properties();
+        prop.load(in);
+        in.close();
+        String gitCommitIdAbbrev = prop.getProperty("git.commit.id.abbrev");
+        String gitCommitTime = prop.getProperty("git.commit.time");
+        System.out.printf("%s %s (%s)%n", appName, gitCommitIdAbbrev, gitCommitTime);
+      } catch (IOException ioe) {
+        //ignore
+      }
+    }
+  }
+
   /** Execute command line shared-index client.
    *
    * @param vertx Vertx. handcle
@@ -473,6 +491,7 @@ public class Client {
         if (args[i].startsWith("--")) {
           switch (args[i].substring(2)) {
             case "help":
+              printGitInfo(Client.class);
               System.out.println("[options] [file..]");
               System.out.println(" --source sourceId   (ISIL string, mandatory)");
               System.out.println(" --chunk sz          (defaults to 1)");
@@ -530,7 +549,9 @@ public class Client {
         } else {
           arg = args[i];
           if (!client.echo) {
-            log.info("Offset {} Limit {} Chunk {}", client.offset, client.limit, client.chunkSize);
+            printGitInfo(Client.class);
+            log.info("Using: offset {} limit {} chunk {}",
+                client.offset, client.limit, client.chunkSize);
           }
           future = future.compose(x -> client.sendFile(arg));
           //break here otherwise args that follow will be ignored in the first call to sendChunk
