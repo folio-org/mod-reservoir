@@ -179,7 +179,6 @@ public class Client {
       ByteArrayOutputStream out = new ByteArrayOutputStream();
       MarcXmlWriter writer = new MarcXmlWriter(out);
       char charCodingScheme = marcRecord.getLeader().getCharCodingScheme();
-      System.err.println("Char coding scheme" + charCodingScheme);
       if (charCodingScheme == ' ') {
         //ansel converter already escapes non-XML chars
         marcRecord.getLeader().setCharCodingScheme('a');
