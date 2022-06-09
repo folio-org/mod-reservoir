@@ -229,7 +229,7 @@ public final class OaiService {
       }
       identifiersField.add(new JsonObject()
           .put("l", row.getString("local_id"))
-          .put("s", row.getUUID("source_id").toString())
+          .put("s", row.getString("source_id"))
       );
     }
     if (combinedMarc == null) {
