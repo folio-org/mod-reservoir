@@ -34,6 +34,7 @@ import org.apache.logging.log4j.Logger;
 import org.folio.metastorage.matchkey.MatchKeyMethod;
 import org.folio.metastorage.util.LargeJsonReadStream;
 import org.folio.metastorage.util.ReadStreamConsumer;
+import org.folio.metastorage.util.SourceId;
 import org.folio.okapi.common.GenericCompositeFuture;
 import org.folio.tlib.postgres.TenantPgPool;
 import org.folio.tlib.util.TenantUtil;
@@ -152,7 +153,7 @@ public class Storage {
       Vertx vertx,
       SqlConnection conn,
       String localIdentifier,
-      String sourceId,
+      SourceId sourceId,
       JsonObject payload,
       JsonArray matchKeyConfigs) {
 
@@ -165,28 +166,28 @@ public class Storage {
                 + " RETURNING id"
         )
         .execute(
-            Tuple.of(UUID.randomUUID(), localIdentifier, sourceId, payload)
+            Tuple.of(UUID.randomUUID(), localIdentifier, sourceId.toString(), payload)
         )
         .map(rowSet -> rowSet.iterator().next().getUUID("id"))
         .compose(id -> updateMatchKeyValues(vertx, conn, id, payload, matchKeyConfigs))
         .mapEmpty();
   }
 
-  Future<Void> deleteGlobalRecord(SqlConnection conn, String localIdentifier, String sourceId) {
+  Future<Void> deleteGlobalRecord(SqlConnection conn, String localIdentifier, SourceId sourceId) {
     String q = "UPDATE " + clusterMetaTable + " AS m"
         + " SET datestamp = $3"
         + " FROM " + globalRecordTable + ", " + clusterRecordTable + " AS r"
         + " WHERE m.cluster_id = r.cluster_id AND r.record_id = id"
         + " AND local_id = $1 AND source_id = $2";
     return conn.preparedQuery(q)
-        .execute(Tuple.of(localIdentifier, sourceId, LocalDateTime.now(ZoneOffset.UTC)))
+        .execute(Tuple.of(localIdentifier, sourceId.toString(), LocalDateTime.now(ZoneOffset.UTC)))
         .compose(x -> conn.preparedQuery("DELETE FROM " + globalRecordTable
                 + " WHERE local_id = $1 AND source_id = $2")
-        .execute(Tuple.of(localIdentifier, sourceId))
+        .execute(Tuple.of(localIdentifier, sourceId.toString()))
         .mapEmpty());
   }
 
-  Future<Void> ingestGlobalRecord(Vertx vertx, String sourceId, JsonObject globalRecord,
+  Future<Void> ingestGlobalRecord(Vertx vertx, SourceId sourceId, JsonObject globalRecord,
       JsonArray matchKeyConfigs) {
 
     return pool.withTransaction(conn ->
@@ -200,7 +201,7 @@ public class Storage {
   }
 
   Future<Void> ingestGlobalRecord(Vertx vertx, SqlConnection conn,
-      String sourceId, JsonObject globalRecord, JsonArray matchKeyConfigs) {
+      SourceId sourceId, JsonObject globalRecord, JsonArray matchKeyConfigs) {
 
     final String localIdentifier = globalRecord.getString("localId");
     if (localIdentifier == null) {
@@ -216,6 +217,7 @@ public class Storage {
     if (sourceId == null) {
       return Future.failedFuture("sourceId required");
     }
+
     return upsertGlobalRecord(vertx, conn, localIdentifier, sourceId, payload, matchKeyConfigs);
   }
 
@@ -410,7 +412,7 @@ public class Storage {
             new ReadStreamConsumer<JsonObject, Void>()
               .consume(request, r ->
                 ingestGlobalRecord(
-                    vertx, request.topLevelObject().getString("sourceId"),
+                    vertx, new SourceId(request.topLevelObject().getString("sourceId")),
                     r, matchKeyConfigs)));
   }
 

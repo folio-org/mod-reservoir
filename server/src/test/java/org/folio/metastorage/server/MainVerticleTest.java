@@ -231,7 +231,7 @@ public class MainVerticleTest {
   public void testBadTenantName() {
     String tenant = "1234"; // bad tenant name!
 
-    String sourceId = UUID.randomUUID().toString();
+    String sourceId = "SOURCE-1";
     JsonArray records = new JsonArray()
         .add(new JsonObject()
             .put("localId", "HRID01")
@@ -255,7 +255,7 @@ public class MainVerticleTest {
 
   @Test
   public void ingestTitleUnknownTenant() {
-    String sourceId = UUID.randomUUID().toString();
+    String sourceId = "SOURCE-1";
     JsonArray records = new JsonArray()
         .add(new JsonObject()
             .put("localId", "HRID01")
@@ -411,7 +411,7 @@ public class MainVerticleTest {
 
   @Test
   public void ingestRecordsPayloadMissing() {
-    String sourceId = UUID.randomUUID().toString();
+    String sourceId = "SOURCE-1";
     JsonArray records = new JsonArray()
         .add(new JsonObject()
             .put("localId", "HRID01"));
@@ -430,7 +430,7 @@ public class MainVerticleTest {
 
   @Test
   public void ingestRecordsLocalIdMissing() {
-    String sourceId = UUID.randomUUID().toString();
+    String sourceId = "SOURCE-1";
     JsonArray records = new JsonArray()
         .add(new JsonObject()
             .put("payload", new JsonObject()));
@@ -449,7 +449,7 @@ public class MainVerticleTest {
 
   @Test
   public void ingestRecords() {
-    String sourceId = UUID.randomUUID().toString();
+    String sourceId = "SOURCE-1";
     JsonArray records = new JsonArray()
         .add(new JsonObject()
             .put("localId", "HRID01")
@@ -533,6 +533,15 @@ public class MainVerticleTest {
           .body("items[0].sourceId", is(sourceId))
           .body("resultInfo.totalRecords", is(1));
     }
+
+    RestAssured.given()
+        .header(XOkapiHeaders.TENANT, tenant1)
+        .header("Content-Type", "application/json")
+        .param("query", "cql.allRecords=true")
+        .delete("/meta-storage/records")
+        .then().statusCode(204);
+
+
   }
 
   static String verifyOaiResponse(String s, String envelope, List<String> identifiers, int length)
@@ -641,7 +650,7 @@ public class MainVerticleTest {
   public void testMatchKeysIngest() {
     JsonObject matchKey = createIsbnMatchKey();
 
-    String sourceId1 = UUID.randomUUID().toString();
+    String sourceId1 = "SOURCE-1";
     JsonArray records1 = new JsonArray()
         .add(new JsonObject()
             .put("localId", "S101")
@@ -809,7 +818,7 @@ public class MainVerticleTest {
   public void testClustersSameKey()  {
     createIssnMatchKey();
 
-    String sourceId1 = UUID.randomUUID().toString();
+    String sourceId1 = "SOURCE-1";
     JsonArray records1 = new JsonArray()
         .add(new JsonObject()
             .put("localId", "S101")
@@ -862,7 +871,7 @@ public class MainVerticleTest {
   public void testClustersLargeKey() {
     createIssnMatchKey();
 
-    String sourceId1 = UUID.randomUUID().toString();
+    String sourceId1 = "SOURCE-1";
     JsonArray records1 = new JsonArray()
         .add(new JsonObject()
             .put("localId", "S101")
@@ -909,7 +918,7 @@ public class MainVerticleTest {
     createIsbnMatchKey();
     createIssnMatchKey();
 
-    String sourceId1 = UUID.randomUUID().toString();
+    String sourceId1 = "SOURCE-1";
     JsonArray records1 = new JsonArray()
         .add(new JsonObject()
             .put("localId", "S101")
@@ -1084,7 +1093,7 @@ public class MainVerticleTest {
 
     JsonObject matchKey = createIsbnMatchKey();
 
-    String sourceId1 = UUID.randomUUID().toString();
+    String sourceId1 = "SOURCE-1";
     JsonArray records1 = new JsonArray()
         .add(new JsonObject()
             .put("localId", "S101")
@@ -1178,7 +1187,7 @@ public class MainVerticleTest {
   public void testEmptyMatchKeys() {
     JsonObject matchKey = createIsbnMatchKey();
 
-    String sourceId1 = UUID.randomUUID().toString();
+    String sourceId1 = "SOURCE-1";
     JsonArray records1 = new JsonArray()
         .add(new JsonObject()
             .put("localId", "S101")
@@ -1258,7 +1267,7 @@ public class MainVerticleTest {
   public void testMatchKeysManual() {
     JsonObject matchKey = createIsbnMatchKey("manual");
 
-    String sourceId1 = UUID.randomUUID().toString();
+    String sourceId1 = "SOURCE-1";
     JsonArray records1 = new JsonArray()
         .add(new JsonObject()
             .put("localId", "S101")
@@ -1309,7 +1318,7 @@ public class MainVerticleTest {
         .extract().body().asString();
     verifyClusterResponse(s, List.of("S101"), List.of("S102"));
 
-    String sourceId2 = UUID.randomUUID().toString();
+    String sourceId2 = "SOURCE-2";
     JsonArray records2 = new JsonArray()
         .add(new JsonObject()
             .put("localId", "S201")
@@ -1505,7 +1514,7 @@ public class MainVerticleTest {
 
     createIssnMatchKey();
 
-    String sourceId1 = UUID.randomUUID().toString();
+    String sourceId1 = "SOURCE-1";
     JsonArray records1 = new JsonArray()
         .add(new JsonObject()
             .put("localId", "S101")
@@ -1681,7 +1690,7 @@ public class MainVerticleTest {
     List<String> identifiers = new LinkedList<>();
     String s;
 
-    String sourceId1 = UUID.randomUUID().toString();
+    String sourceId1 = "SOURCE-1";
     JsonArray records1 = new JsonArray()
         .add(new JsonObject()
             .put("localId", "S101")
@@ -1828,7 +1837,7 @@ public class MainVerticleTest {
   public void testOaiResumptionToken() throws XMLStreamException, IOException, SAXException {
     createIsbnMatchKey();
 
-    String sourceId1 = UUID.randomUUID().toString();
+    String sourceId1 = "SOURCE-1";
     for (int i = 0; i < 10; i++) {
       JsonArray records1 = new JsonArray()
           .add(new JsonObject()
@@ -1913,7 +1922,7 @@ public class MainVerticleTest {
         .body("clustersTotal", is(0))
     ;
 
-    String sourceId1 = UUID.randomUUID().toString();
+    String sourceId1 = "SOURCE-1";
     JsonArray records1 = new JsonArray()
         .add(new JsonObject()
             .put("localId", "S101")
@@ -1982,7 +1991,7 @@ public class MainVerticleTest {
         .body("recordsPerCluster.2", is(1))
     ;
 
-    String sourceId2 = UUID.randomUUID().toString();
+    String sourceId2 = "SOURCE-2";
     JsonArray records2 = new JsonArray()
         .add(new JsonObject()
             .put("localId", "S101")
