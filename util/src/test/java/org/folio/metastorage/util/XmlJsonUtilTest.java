@@ -36,11 +36,11 @@ public class XmlJsonUtilTest {
           + "  <leader>01010ccm a2200289   4500</leader>\n"
           + "  <controlfield tag=\"001\">a1</controlfield>\n"
           + "  <datafield tag=\"010\" ind1=\" \" ind2=\"&amp;\">\n"
-          + "    <subfield code=\"a\">   70207870</subfield>\n"
+          + "    <subfield code=\"a\">   70207870&lt;</subfield>\n"
           + "  </datafield>\n"
           + "  <datafield tag=\"245\">\n"
           + "    <subfield code=\"a\">Titlea</subfield>\n"
-          + "    <subfield code=\"b\">Titleb</subfield>\n"
+          + "    <subfield code=\"b\">Title&amp;b</subfield>\n"
           + "  </datafield>\n"
           + "</record>";
 
@@ -53,7 +53,7 @@ public class XmlJsonUtilTest {
                   .put("ind2", "&")
                   .put("subfields", new JsonArray()
                       .add(new JsonObject()
-                          .put("a", "   70207870"))
+                          .put("a", "   70207870<"))
                   )
               )
           )
@@ -62,7 +62,7 @@ public class XmlJsonUtilTest {
                       .add(new JsonObject()
                           .put("a", "Titlea"))
                       .add(new JsonObject()
-                          .put("b", "Titleb"))
+                          .put("b", "Title&b"))
                   )
               )
           )
