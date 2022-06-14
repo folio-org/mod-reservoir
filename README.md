@@ -32,7 +32,10 @@ Install all components with:
 
 Start the server with
 
-    java -Dport=8081 -jar server/target/mod-meta-storage-server-fat.jar
+    java -Dport=8081 --module-path=server/target/compiler/ \
+        --upgrade-module-path=server/target/compiler/compiler.jar \
+        -XX:+UnlockExperimentalVMOptions -XX:+EnableJVMCI \
+        -jar server/target/mod-meta-storage-server-fat.jar
 
 The module is configured by setting environment variables:
 `DB_HOST`, `DB_PORT`, `DB_USERNAME`, `DB_DATABASE`, `DB_MAXPOOLSIZE`, `DB_SERVER_PEM`.
