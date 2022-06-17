@@ -805,12 +805,11 @@ public class Storage {
       String diagnostic) {
 
     JsonObject resultInfo = new JsonObject();
-    int count = 0;
     JsonArray facetArray = new JsonArray();
     if (rowSet != null) {
       int pos = 0;
       Row row = rowSet.iterator().next();
-      count = row.getInteger(pos);
+      int count = row.getInteger(pos);
       for (String [] facetEntry : facets) {
         pos++;
         JsonObject facetObj = null;
@@ -834,8 +833,8 @@ public class Storage {
             .put("value", facetValue)
             .put("count", row.getInteger(pos)));
       }
+      resultInfo.put("totalRecords", count);
     }
-    resultInfo.put("totalRecords", count);
     JsonArray diagnostics = new JsonArray();
     if (diagnostic != null) {
       diagnostics.add(new JsonObject().put("message", diagnostic));
@@ -874,13 +873,18 @@ public class Storage {
                   stream.resume();
                 });
               });
-              stream.endHandler(end -> sqlConnection.preparedQuery(cnt).execute(tuple)
-                  .onSuccess(cntRes -> resultFooter(ctx, cntRes, facets, null))
-                  .onFailure(f -> {
-                    log.error(f.getMessage(), f);
-                    resultFooter(ctx, null, facets, f.getMessage());
-                  })
-                  .eventually(x -> tx.commit().compose(y -> sqlConnection.close())));
+              stream.endHandler(end -> {
+                Future<RowSet<Row>> cntFuture = cnt != null
+                    ? sqlConnection.preparedQuery(cnt).execute(tuple)
+                    : Future.succeededFuture(null);
+                cntFuture
+                    .onSuccess(cntRes -> resultFooter(ctx, cntRes, facets, null))
+                    .onFailure(f -> {
+                      log.error(f.getMessage(), f);
+                      resultFooter(ctx, null, facets, f.getMessage());
+                    })
+                    .eventually(x -> tx.commit().compose(y -> sqlConnection.close()));
+              });
               stream.exceptionHandler(e -> {
                 log.error("stream error {}", e.getMessage(), e);
                 resultFooter(ctx, null, facets, e.getMessage());
@@ -891,47 +895,54 @@ public class Storage {
         );
   }
 
-  Future<Void> streamResult(RoutingContext ctx, String distinct, String from, String orderByClause,
-      String property, Function<Row, Future<JsonObject>> handler) {
+  Future<Void> streamResult(RoutingContext ctx, String distinct,
+      String from, String orderByClause, String property, Function<Row,
+      Future<JsonObject>> handler) {
 
     return streamResult(ctx, distinct, distinct, Tuple.tuple(), List.of(from),
         Collections.emptyList(), orderByClause, property, handler);
   }
 
-  Future<Void> streamResult(RoutingContext ctx, String distinct, Tuple tuple, String from,
-      String orderByClause, String property, Function<Row, Future<JsonObject>> handler) {
+  Future<Void> streamResult(RoutingContext ctx, String distinct,
+      Tuple tuple, String from, String orderByClause, String property,
+      Function<Row, Future<JsonObject>> handler) {
 
-    return streamResult(ctx, distinct, distinct, tuple, List.of(from), Collections.emptyList(),
-        orderByClause, property, handler);
+    return streamResult(ctx, distinct, distinct, tuple, List.of(from),
+        Collections.emptyList(), orderByClause, property, handler);
   }
 
   @java.lang.SuppressWarnings({"squid:S107"})  // too many arguments
-  Future<Void> streamResult(RoutingContext ctx, String distinctMain, String distinctCount,
-      Tuple tuple, List<String> fromList, List<String[]> facets, String orderByClause,
-      String property, Function<Row, Future<JsonObject>> handler) {
+  Future<Void> streamResult(RoutingContext ctx, String distinctMain,
+      String distinctCount, Tuple tuple, List<String> fromList, List<String[]> facets,
+      String orderByClause, String property, Function<Row, Future<JsonObject>> handler) {
 
     RequestParameters params = ctx.get(ValidationHandler.REQUEST_CONTEXT_KEY);
     Integer offset = params.queryParameter("offset").getInteger();
     Integer limit = params.queryParameter("limit").getInteger();
+    String count = params.queryParameter("count").getString();
     String query = "SELECT " + (distinctMain != null ? "DISTINCT ON (" + distinctMain + ")" : "")
         + " * FROM " + fromList.get(0)
         + (orderByClause == null ?  "" : " ORDER BY " + orderByClause)
         + " LIMIT " + limit + " OFFSET " + offset;
+    boolean exact = "exact".equals(count);
     log.info("query={}", query);
     StringBuilder countQuery = new StringBuilder("SELECT");
-    int pos = 0;
-    for (String from : fromList) {
-      if (pos > 0) {
-        countQuery.append(",\n");
+    if (exact) {
+      int pos = 0;
+      for (String from : fromList) {
+        if (pos > 0) {
+          countQuery.append(",\n");
+        }
+        countQuery.append("(SELECT COUNT("
+            + (distinctCount != null ? "DISTINCT " + distinctCount : "*")
+            + ") FROM " + from + ") AS cnt" + pos);
+        pos++;
       }
-      countQuery.append("(SELECT COUNT("
-          + (distinctCount != null ? "DISTINCT " + distinctCount : "*")
-          + ") FROM " + from + ") AS cnt" + pos);
-      pos++;
+      log.info("cnt={}", countQuery);
     }
-    log.info("cnt={}", countQuery);
+    String countQueryString = exact ? countQuery.toString() : null;
     return pool.getConnection()
-        .compose(sqlConnection -> streamResult(ctx, sqlConnection, query, countQuery.toString(),
+        .compose(sqlConnection -> streamResult(ctx, sqlConnection, query, countQueryString,
             tuple, property, facets, handler)
             .onFailure(x -> sqlConnection.close()));
   }

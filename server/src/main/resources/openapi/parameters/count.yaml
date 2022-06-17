@@ -1,0 +1,10 @@
+in: query
+name: count
+description: control of counting in queries
+required: false
+schema:
+  type: string
+  default: none
+  enum:
+    - exact
+    - none

@@ -32,6 +32,7 @@ paths:
       description: Get match key configurations
       operationId: getConfigMatchKeys
       parameters:
+        - $ref: parameters/count.yaml
         - $ref: parameters/limit.yaml
         - $ref: parameters/query.yaml
         - $ref: parameters/offset.yaml
@@ -343,6 +344,7 @@ paths:
       description: Get records that satisfy CQL query with fields localId, sourceId, globalId.
       operationId: getGlobalRecords
       parameters:
+        - $ref: parameters/count.yaml
         - $ref: parameters/limit.yaml
         - $ref: parameters/query.yaml
         - $ref: parameters/offset.yaml
@@ -421,6 +423,7 @@ paths:
       - $ref: headers/okapi-tenant.yaml
       - $ref: headers/okapi-token.yaml
       - $ref: headers/okapi-url.yaml
+      - $ref: parameters/count.yaml
       - $ref: parameters/limit.yaml
       - $ref: parameters/matchkeyid.yaml
       - $ref: parameters/query.yaml
