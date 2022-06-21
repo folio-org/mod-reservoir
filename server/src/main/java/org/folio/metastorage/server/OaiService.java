@@ -1,5 +1,7 @@
 package org.folio.metastorage.server;
 
+import static org.folio.metastorage.util.EncodeXmlText.encodeXmlText;
+
 import io.vertx.core.Future;
 import io.vertx.core.http.HttpServerResponse;
 import io.vertx.core.json.JsonArray;
@@ -23,7 +25,8 @@ import java.util.UUID;
 import java.util.concurrent.atomic.AtomicInteger;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-import org.folio.metastorage.util.XmlJsonUtil;
+import org.folio.metastorage.util.JsonToMarcXml;
+import org.folio.metastorage.util.MarcInJsonUtil;
 
 public final class OaiService {
   private static final Logger log = LogManager.getLogger(OaiService.class);
@@ -58,9 +61,9 @@ public final class OaiService {
     response.write("  <request");
     String verb = Util.getParameterString(params.queryParameter("verb"));
     if (verb != null) {
-      response.write(" verb=\"" + XmlJsonUtil.encodeXmlText(verb) + "\"");
+      response.write(" verb=\"" + encodeXmlText(verb) + "\"");
     }
-    response.write(">" + XmlJsonUtil.encodeXmlText(ctx.request().absoluteURI()) + "</request>\n");
+    response.write(">" + encodeXmlText(ctx.request().absoluteURI()) + "</request>\n");
   }
 
   static void oaiFooter(RoutingContext ctx) {
@@ -78,7 +81,7 @@ public final class OaiService {
       oaiHeader(ctx);
       String errorCode = ((OaiException) e).getErrorCode();
       ctx.response().write("  <error code=\"" + errorCode + "\">"
-          + XmlJsonUtil.encodeXmlText(e.getMessage()) + "</error>\n");
+          + encodeXmlText(e.getMessage()) + "</error>\n");
       oaiFooter(ctx);
       return Future.succeededFuture();
     });
@@ -118,16 +121,16 @@ public final class OaiService {
     HttpServerResponse response = ctx.response();
     response.write("  <Identify>\n");
     response.write("    <repositoryName>");
-    response.write(XmlJsonUtil.encodeXmlText(
+    response.write(encodeXmlText(
         config.getString("repositoryName", "repositoryName unspecified")));
     response.write("    </repositoryName>\n");
     response.write("    <baseURL>");
-    response.write(XmlJsonUtil.encodeXmlText(
+    response.write(encodeXmlText(
         config.getString("baseURL", "baseURL unspecified")));
     response.write("    </baseURL>\n");
     response.write("    <protocolVersion>2.0</protocolVersion>\n");
     response.write("    <adminEmail>");
-    response.write(XmlJsonUtil.encodeXmlText(
+    response.write(encodeXmlText(
         config.getString("adminEmail", "admin@mail.unspecified")));
     response.write("</adminEmail>\n");
     response.write("    <earliestDatestamp>2020-01-01T00:00:00Z</earliestDatestamp>\n");
@@ -147,7 +150,7 @@ public final class OaiService {
     String from = Util.getParameterString(params.queryParameter("from"));
     String until = token != null
         ? token.getUntil() : Util.getParameterString(params.queryParameter("until"));
-    Integer limit = params.queryParameter("list-limit").getInteger();
+    Integer limit = params.queryParameter("limit").getInteger();
     Storage storage = new Storage(ctx);
     return storage.selectMatchKeyConfig(set).compose(conf -> {
       if (conf == null) {
@@ -217,11 +220,11 @@ public final class OaiService {
     while (iterator.hasNext()) {
       Row row = iterator.next();
       JsonObject thisMarc = row.getJsonObject("payload").getJsonObject("marc");
-      JsonArray f999 = XmlJsonUtil.lookupMarcDataField(thisMarc, "999", " ", " ");
+      JsonArray f999 = MarcInJsonUtil.lookupMarcDataField(thisMarc, "999", " ", " ");
       if (combinedMarc == null) {
         combinedMarc = thisMarc;
       } else {
-        JsonArray c999 = XmlJsonUtil.lookupMarcDataField(combinedMarc, "999", " ", " ");
+        JsonArray c999 = MarcInJsonUtil.lookupMarcDataField(combinedMarc, "999", " ", " ");
         // normally we'd have 999 in combined record
         if (f999 != null && c999 != null) {
           c999.addAll(f999); // all 999 in one data field
@@ -235,8 +238,8 @@ public final class OaiService {
     if (combinedMarc == null) {
       return null; // a deleted record
     }
-    XmlJsonUtil.createMarcDataField(combinedMarc, "999", "1", "0").addAll(identifiersField);
-    String xmlMetadata = XmlJsonUtil.convertJsonToMarcXml(combinedMarc);
+    MarcInJsonUtil.createMarcDataField(combinedMarc, "999", "1", "0").addAll(identifiersField);
+    String xmlMetadata = JsonToMarcXml.convert(combinedMarc);
     return "    <metadata>\n" + xmlMetadata + "\n    </metadata>\n";
   }
 
@@ -277,11 +280,11 @@ public final class OaiService {
             begin
                 + "      <header" + (metadata == null ? " status=\"deleted\"" : "") + ">\n"
                 + "        <identifier>"
-                + XmlJsonUtil.encodeXmlText(encodeOaiIdentifier(clusterId)) + "</identifier>\n"
+                + encodeXmlText(encodeOaiIdentifier(clusterId)) + "</identifier>\n"
                 + "        <datestamp>"
-                + XmlJsonUtil.encodeXmlText(Util.formatOaiDateTime(datestamp))
+                + encodeXmlText(Util.formatOaiDateTime(datestamp))
                 + "</datestamp>\n"
-                + "        <setSpec>" + XmlJsonUtil.encodeXmlText(oaiSet) + "</setSpec>\n"
+                + "        <setSpec>" + encodeXmlText(oaiSet) + "</setSpec>\n"
                 + "      </header>\n"
                 + (withMetadata && metadata != null ? metadata : "")
                 + end));
@@ -290,7 +293,7 @@ public final class OaiService {
   static void writeResumptionToken(RoutingContext ctx, ResumptionToken token) {
     HttpServerResponse response = ctx.response();
     response.write("    <resumptionToken>");
-    response.write(XmlJsonUtil.encodeXmlText(token.encode()));
+    response.write(encodeXmlText(token.encode()));
     response.write("</resumptionToken>\n");
   }
 

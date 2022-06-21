@@ -1,0 +1,51 @@
+{
+  "description": "OAI PMH client configuration",
+  "type": "object",
+  "properties": {
+    "from" : {
+      "type" : "string",
+      "description" : "OAI PMH from date"
+    },
+    "id": {
+      "type": "string",
+      "description": "OAI PMH Client identifier"
+    },
+    "headers": {
+      "type" : "object",
+      "description" : "Additional HTTP headers to be used against OAI server with keys and string values"
+    },
+    "metadataPrefix": {
+      "type" : "string",
+      "description" : "OAI PMH metadata prefix"
+    },
+    "params" : {
+      "type" : "object",
+      "description" : "Additional query parameters with keys and string values"
+    },
+    "resumptionToken" : {
+      "type" : "string",
+      "description" : "OAI PMH resumption token"
+    },
+    "set" : {
+      "type" : "string",
+      "description" : "OAI PMH set as returned in verb=ListSets"
+    },
+    "sourceId" : {
+      "type" : "string",
+      "description" : "Source identifier used for storing records"
+    },
+    "until" : {
+      "type" : "string",
+      "description" : "OAI PMH until date"
+    },
+    "url" : {
+      "type" : "string",
+      "description" : "OAI PMH server prefix so that PREFIX?verb=.. works"
+    }
+  },
+  "additionalProperties": false,
+  "required": [
+    "id", "url", "sourceId"
+  ]
+}
+

@@ -303,6 +303,7 @@ public class MetaStorageService implements RouterCreator, TenantInitHooks {
 
   @Override
   public Future<Router> createRouter(Vertx vertx) {
+    OaiPmhClientService oaiPmhClient = new OaiPmhClientService(vertx);
     return RouterBuilder.create(vertx, "openapi/meta-storage-1.0.yaml")
         .map(routerBuilder -> {
           add(routerBuilder, "getGlobalRecords", this::getGlobalRecords);
@@ -318,6 +319,14 @@ public class MetaStorageService implements RouterCreator, TenantInitHooks {
           add(routerBuilder, "getClusters", this::getClusters);
           add(routerBuilder, "getCluster", this::getCluster);
           add(routerBuilder, "oaiService", OaiService::get);
+          add(routerBuilder, "postOaiPmhClient", oaiPmhClient::post);
+          add(routerBuilder, "getOaiPmhClient", oaiPmhClient::get);
+          add(routerBuilder, "putOaiPmhClient", oaiPmhClient::put);
+          add(routerBuilder, "deleteOaiPmhClient", oaiPmhClient::delete);
+          add(routerBuilder, "getCollectionOaiPmhClient", oaiPmhClient::getCollection);
+          add(routerBuilder, "startOaiPmhClient", oaiPmhClient::start);
+          add(routerBuilder, "stopOaiPmhClient", oaiPmhClient::stop);
+          add(routerBuilder, "statusOaiPmhClient", oaiPmhClient::status);
           Router router = Router.router(vertx);
           // this endpoint is streaming and we handle it without OpenAPI and validation
           router.put("/meta-storage/records").handler(ctx ->

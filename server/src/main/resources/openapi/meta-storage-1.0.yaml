@@ -74,6 +74,18 @@ paths:
           $ref: "#/components/responses/trait_404"
         "500":
           $ref: "#/components/responses/trait_500"
+    delete:
+      description: Delete match key configuration
+      operationId: deleteConfigMatchKey
+      responses:
+        "204":
+          description: match key configuration deleted
+        "400":
+          $ref: "#/components/responses/trait_400"
+        "404":
+          $ref: "#/components/responses/trait_404"
+        "500":
+          $ref: "#/components/responses/trait_500"
     put:
       description: Update match key configuration.
       operationId: putConfigMatchKey
@@ -85,18 +97,6 @@ paths:
       responses:
         "204":
           description: Match Key configuration updated
-        "400":
-          $ref: "#/components/responses/trait_400"
-        "404":
-          $ref: "#/components/responses/trait_404"
-        "500":
-          $ref: "#/components/responses/trait_500"
-    delete:
-      description: Delete match key configuration
-      operationId: deleteConfigMatchKey
-      responses:
-        "204":
-          description: match key configuration deleted
         "400":
           $ref: "#/components/responses/trait_400"
         "404":
@@ -497,6 +497,177 @@ paths:
                 type: string
         "400":
           $ref: "#/components/responses/trait_400"
+        "500":
+          $ref: "#/components/responses/trait_500"
+  /meta-storage/pmh-clients:
+    parameters:
+      - $ref: headers/okapi-tenant.yaml
+      - $ref: headers/okapi-token.yaml
+      - $ref: headers/okapi-url.yaml
+    post:
+      description: Create OAI PMH client job
+      operationId: postOaiPmhClient
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: schemas/oai-pmh-client.json
+      responses:
+        "201":
+          description: OAI-PMH client job created
+          content:
+            application/json:
+              schema:
+                $ref: schemas/oai-pmh-client.json
+        "400":
+          $ref: "#/components/responses/trait_400"
+        "500":
+          $ref: "#/components/responses/trait_500"
+    get:
+      description: Get all OAI PMH client jobs
+      operationId: getCollectionOaiPmhClient
+      responses:
+        "201":
+          description: OAI-PMH client job created
+          content:
+            application/json:
+              schema:
+                $ref: schemas/oai-pmh-client.json
+        "400":
+          $ref: "#/components/responses/trait_400"
+        "500":
+          $ref: "#/components/responses/trait_500"
+  /meta-storage/pmh-clients/{id}:
+    parameters:
+      - $ref: headers/okapi-tenant.yaml
+      - $ref: headers/okapi-token.yaml
+      - $ref: headers/okapi-url.yaml
+      - in: path
+        name: id
+        required: true
+        description: OAI-PMH client identifier
+        schema:
+          type: string
+    get:
+      description: Get OAI-PMH client
+      operationId: getOaiPmhClient
+      responses:
+        "200":
+          description: OAI-PMH client returned
+          content:
+            application/json:
+              schema:
+                $ref: schemas/oai-pmh-client.json
+        "400":
+          $ref: "#/components/responses/trait_400"
+        "404":
+          $ref: "#/components/responses/trait_404"
+        "500":
+          $ref: "#/components/responses/trait_500"
+    put:
+      description: Update OAI-PMH client
+      operationId: putOaiPmhClient
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: schemas/oai-pmh-client.json
+      responses:
+        "204":
+          description: updated OK
+        "400":
+          $ref: "#/components/responses/trait_400"
+        "404":
+          $ref: "#/components/responses/trait_404"
+        "500":
+          $ref: "#/components/responses/trait_500"
+    delete:
+      description: Delete OAI-PMH client
+      operationId: deleteOaiPmhClient
+      responses:
+        "200":
+          description: OAI-PMH client returned
+          content:
+            application/json:
+              schema:
+                $ref: schemas/oai-pmh-client.json
+        "400":
+          $ref: "#/components/responses/trait_400"
+        "404":
+          $ref: "#/components/responses/trait_404"
+        "500":
+          $ref: "#/components/responses/trait_500"
+  /meta-storage/pmh-clients/{id}/start:
+    parameters:
+      - $ref: headers/okapi-tenant.yaml
+      - $ref: headers/okapi-token.yaml
+      - $ref: headers/okapi-url.yaml
+      - in: path
+        name: id
+        required: true
+        description: OAI-PMH client identifier
+        schema:
+          type: string
+    post:
+      description: Start OAI PMH client job
+      operationId: startOaiPmhClient
+      responses:
+        "204":
+          description: started ok
+        "400":
+          $ref: "#/components/responses/trait_400"
+        "404":
+          $ref: "#/components/responses/trait_404"
+        "500":
+          $ref: "#/components/responses/trait_500"
+  /meta-storage/pmh-clients/{id}/stop:
+    parameters:
+      - $ref: headers/okapi-tenant.yaml
+      - $ref: headers/okapi-token.yaml
+      - $ref: headers/okapi-url.yaml
+      - in: path
+        name: id
+        required: true
+        description: OAI-PMH client identifier
+        schema:
+          type: string
+    post:
+      description: Stop OAI PMH client job
+      operationId: stopOaiPmhClient
+      responses:
+        "204":
+          description: stopped ok
+        "400":
+          $ref: "#/components/responses/trait_400"
+        "404":
+          $ref: "#/components/responses/trait_404"
+        "500":
+          $ref: "#/components/responses/trait_500"
+  /meta-storage/pmh-clients/{id}/status:
+    parameters:
+      - $ref: headers/okapi-tenant.yaml
+      - $ref: headers/okapi-token.yaml
+      - $ref: headers/okapi-url.yaml
+      - in: path
+        name: id
+        required: true
+        description: OAI-PMH client identifier
+        schema:
+          type: string
+    get:
+      description: Get OAI PMH client status
+      operationId: statusOaiPmhClient
+      responses:
+        "200":
+          description: status
+          content:
+            application/json:
+              schema:
+                $ref: schemas/oai-pmh-client-status.json
+        "400":
+          $ref: "#/components/responses/trait_400"
+        "404":
+          $ref: "#/components/responses/trait_404"
         "500":
           $ref: "#/components/responses/trait_500"
 # Meta storage error responses

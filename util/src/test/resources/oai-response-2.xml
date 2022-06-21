@@ -1,0 +1,6 @@
+<?xml version="1.0"?>
+<OAI-PMH xmlns="http://www.openarchives.org/OAI/2.0/" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.openarchives.org/OAI/2.0/ http://www.openarchives.org/OAI/2.0/OAI-PMH.xsd">
+  <responseDate>2022-06-09T10:11:55Z</responseDate>
+  <request verb="ListRecords" metadataPrefix="marc21" set="339" from="2000-01-01" until="2010-01-01" controller="oai" action="show">https://pod.stanford.edu/oai</request>
+  <error code="noRecordsMatch">The combination of the values of the from, until, set and metadataPrefix arguments returns an empty list</error>
+</OAI-PMH>

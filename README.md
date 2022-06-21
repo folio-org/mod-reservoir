@@ -38,7 +38,8 @@ Start the server with
         -jar server/target/mod-meta-storage-server-fat.jar
 
 The module is configured by setting environment variables:
-`DB_HOST`, `DB_PORT`, `DB_USERNAME`, `DB_DATABASE`, `DB_MAXPOOLSIZE`, `DB_SERVER_PEM`.
+`DB_HOST`, `DB_PORT`, `DB_USERNAME`, `DB_PASSWORD`, `DB_DATABASE`,
+`DB_MAXPOOLSIZE`, `DB_SERVER_PEM`.
 
 ### Client
 

@@ -34,8 +34,9 @@ import javax.xml.transform.stream.StreamSource;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.folio.metastorage.util.AsyncCodec;
+import org.folio.metastorage.util.IngestRecord;
 import org.folio.metastorage.util.SourceId;
-import org.folio.metastorage.util.XmlJsonUtil;
+import org.folio.metastorage.util.XmlSerializer;
 import org.folio.okapi.common.GenericCompositeFuture;
 import org.folio.okapi.common.XOkapiHeaders;
 import org.marc4j.MarcPermissiveStreamReader;
@@ -157,7 +158,7 @@ public class Client {
   }
 
   private class MarcReaderProxy implements ReaderProxy {
-    private MarcReader marcReader;
+    private final MarcReader marcReader;
     private org.marc4j.marc.Record marcRecord;
 
     public MarcReaderProxy(MarcReader reader) {
@@ -196,7 +197,7 @@ public class Client {
   Future<JsonObject> createIngestRecordT(String marcXml, List<Templates> templates) {
     return vertx.executeBlocking(x -> {
       try {
-        x.complete(XmlJsonUtil.createIngestRecord(marcXml, templates));
+        x.complete(IngestRecord.createIngestRecord(marcXml, templates));
       } catch (Exception e) {
         x.fail(e);
       }
@@ -204,7 +205,7 @@ public class Client {
   }
 
   private class XmlReaderProxy implements ReaderProxy {
-    private XMLStreamReader xmlReader;
+    private final XMLStreamReader xmlReader;
     private int xmlEvent;
 
     public XmlReaderProxy(XMLStreamReader reader) {
@@ -239,7 +240,7 @@ public class Client {
 
     public String parseNext() throws IOException {
       try {
-        return XmlJsonUtil.getSubDocument(xmlEvent, xmlReader);
+        return XmlSerializer.get(xmlEvent, xmlReader);
       } catch (XMLStreamException xse) {
         throw new IOException(xse);
       }
@@ -425,7 +426,7 @@ public class Client {
   }
 
   /**
-   * Add XSLT to the be used for each record.
+   * Add XSLT to be used for each record.
    * @param fname filename of XSL stylesheet
    * @return async result
    */

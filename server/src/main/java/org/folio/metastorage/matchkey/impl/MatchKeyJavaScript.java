@@ -41,24 +41,27 @@ public class MatchKeyJavaScript implements MatchKeyMethod {
       // if url is specified and ends with mjs, assume it is a ES module that exports a
       // 'matchkey' function, otherwise treat it like a regular script
       final boolean isModule = url.endsWith("mjs");
-      Context.Builder cb = Context.newBuilder("js");
       if (isModule) {
-        cb = cb
-          .allowExperimentalOptions(true)
-          .option("js.esm-eval-returns-exports", "true");
+        context = Context.newBuilder("js")
+            .allowExperimentalOptions(true)
+            .option("js.esm-eval-returns-exports", "true")
+            .build();
+      } else {
+        context = Context.create("js");
       }
-      context = cb.build();
       future = evalUrl(vertx, url)
-        .map(value -> getKeysFunction = isModule ? value.getMember("matchkey") : value)
-        .mapEmpty();
+          .map(value -> getKeysFunction = isModule ? value.getMember("matchkey") : value)
+          .mapEmpty();
     }
     // if script is specified, we treat it as a regular, non-module JS file which
     // evaluates to a function that accepts an object and returns an array of strings
     if (script != null) {
-      context = Context.create("js");
+      if (context == null) {
+        context = Context.create("js");
+      }
       future = future
-        .map(v -> getKeysFunction = context.eval("js", script))
-        .mapEmpty();
+          .map(v -> getKeysFunction = context.eval("js", script))
+          .mapEmpty();
     }
     return future;
 

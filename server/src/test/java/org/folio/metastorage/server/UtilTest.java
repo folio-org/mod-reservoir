@@ -1,11 +1,17 @@
 package org.folio.metastorage.server;
 
+import org.folio.okapi.testing.UtilityClassTester;
 import org.junit.Assert;
 import org.junit.Test;
 
 import java.time.LocalDateTime;
 
 public class UtilTest {
+
+  @Test
+  public void isUtilityClass() {
+    UtilityClassTester.assertUtilityClass(Util.class);
+  }
 
   @Test
   public void dateParseFrom() {
@@ -21,6 +27,14 @@ public class UtilTest {
     Assert.assertEquals("2022-04-12T10:20:31", Util.parseUntil("2022-04-12T10:20:30Z").toString());
     Assert.assertEquals("badArgument", Assert.assertThrows(OaiException.class,
         () -> Util.parseUntil("2022-04x")).getErrorCode());
+  }
+
+  @Test
+  public void datestampToFrom() {
+    Assert.assertEquals("2022-04-13", Util.getNextOaiDate("2022-04-12"));
+    Assert.assertEquals("2022-04-12T10:20:31", Util.getNextOaiDate("2022-04-12T10:20:30Z"));
+    Assert.assertEquals("badArgument", Assert.assertThrows(OaiException.class,
+        () -> Util.getNextOaiDate("2022-04x")).getErrorCode());
   }
 
   @Test

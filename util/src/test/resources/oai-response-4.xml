@@ -1,0 +1,23 @@
+<?xml version="1.0"?>
+<OAI-PMH xmlns="http://www.openarchives.org/OAI/2.0/" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.openarchives.org/OAI/2.0/ http://www.openarchives.org/OAI/2.0/OAI-PMH.xsd">
+  <responseDate>2022-06-09T09:54:45Z</responseDate>
+  <request verb="ListIdentifiers" set="339" metadataPrefix="marc21">https://pod.stanford.edu/oai</request>
+  <ListIdentifiers>
+          <header status="deleted">
+            <identifier>998212783503681</identifier>
+            <datestamp>2022-05-03</datestamp>
+          </header>
+          <header>
+            <identifier>9977919382003681</identifier>
+            <datestamp>2022-05-03</datestamp>
+          </header>
+          <header>
+            <identifier>9977924842403681</identifier>
+            <datestamp>2022-05-03</datestamp>
+          </header>
+          <header>
+            <identifier>997764<x/>8149503681</identifier>
+            <datestamp>2022-05-03</datestamp>
+          </header>
+<resumptionToken>MzM5OzE7Ozt2MS4w</resumptionToken></ListIdentifiers>
+</OAI-PMH>

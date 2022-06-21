@@ -9,7 +9,7 @@ import java.io.IOException;
 import java.util.zip.GZIPInputStream;
 import java.util.zip.GZIPOutputStream;
 
-public class AsyncCodec {
+public final class AsyncCodec {
 
   private AsyncCodec() {}
 
@@ -31,7 +31,7 @@ public class AsyncCodec {
       prom.complete(Buffer.buffer(baos.toByteArray()));
     }, false);
   }
-  
+
   /**
    * Decompress gzip compressed buffer.
    * @param vertx context
@@ -55,5 +55,5 @@ public class AsyncCodec {
       prom.complete(Buffer.buffer(baos.toByteArray()));
     }, false);
   }
-  
+
 }

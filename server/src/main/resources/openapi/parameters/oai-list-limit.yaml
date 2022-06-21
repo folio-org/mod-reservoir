@@ -1,5 +1,5 @@
 in: query
-name: list-limit
+name: limit
 description: OAI list records/identifiers returns resumptionToken if this is met
 required: false
 schema:

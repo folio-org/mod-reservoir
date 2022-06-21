@@ -34,6 +34,10 @@
       <artifactId>Saxon-HE</artifactId>
       <optional>true</optional>
     </dependency>
+    <dependency>
+      <groupId>com.fasterxml</groupId>
+      <artifactId>aalto-xml</artifactId>
+    </dependency>
     <!-- Test dependencies -->
     <dependency>
       <groupId>junit</groupId>

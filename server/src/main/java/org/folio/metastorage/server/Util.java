@@ -9,8 +9,9 @@ import java.time.format.DateTimeParseException;
 import java.time.temporal.ChronoUnit;
 
 public final class Util {
-
-  private Util() { }
+  private Util() {
+    throw new UnsupportedOperationException("Util");
+  }
 
   static String getParameterString(RequestParameter parameter) {
     return parameter == null ? null : parameter.getString();
@@ -66,5 +67,18 @@ public final class Util {
   public static String formatOaiDateTime(LocalDateTime d) {
     return d.atZone(ZoneOffset.UTC).truncatedTo(ChronoUnit.SECONDS)
         .format(DateTimeFormatter.ISO_DATE_TIME);
+  }
+
+  /**
+   * Get "next" OAI date from datestamp +1 day/second.
+   * @param datestamp datestamp in either format.
+   * @return datestamp of next
+   */
+  public static String getNextOaiDate(String datestamp) {
+    String res = parseUntil(datestamp).toString();
+    if (datestamp.length() == 10) {
+      return res.substring(0, 10);
+    }
+    return res;
   }
 }

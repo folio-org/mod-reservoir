@@ -169,6 +169,84 @@
           "permissionsRequired": [ ]
         }
       ]
+    },
+    {
+      "id": "meta-storage-oai-pmh-client",
+      "version": "1.0",
+      "handlers": [
+        {
+          "methods": [
+            "POST"
+          ],
+          "pathPattern": "/meta-storage/pmh-clients",
+          "permissionsRequired": [
+	    "meta-storage-pmh-clients.post"
+	  ]
+        },
+        {
+          "methods": [
+            "GET"
+          ],
+          "pathPattern": "/meta-storage/pmh-clients",
+          "permissionsRequired": [
+	    "meta-storage-pmh-clients.collection.get"
+	  ]
+        },
+        {
+          "methods": [
+            "GET"
+          ],
+          "pathPattern": "/meta-storage/pmh-clients/{id}",
+          "permissionsRequired": [
+	    "meta-storage-pmh-clients.item.get"
+	  ]
+        },
+        {
+          "methods": [
+            "PUT"
+          ],
+          "pathPattern": "/meta-storage/pmh-clients/{id}",
+          "permissionsRequired": [
+	    "meta-storage-pmh-clients.item.put"
+	  ]
+        },
+        {
+          "methods": [
+            "DELETE"
+          ],
+          "pathPattern": "/meta-storage/pmh-clients/{id}",
+          "permissionsRequired": [
+	    "meta-storage-pmh-clients.item.delete"
+	  ]
+        },
+        {
+          "methods": [
+            "POST"
+          ],
+          "pathPattern": "/meta-storage/pmh-clients/{id}/start",
+          "permissionsRequired": [
+	    "meta-storage-pmh-clients.start"
+	  ]
+        },
+        {
+          "methods": [
+            "POST"
+          ],
+          "pathPattern": "/meta-storage/pmh-clients/{id}/stop",
+          "permissionsRequired": [
+	    "meta-storage-pmh-clients.stop"
+	  ]
+        },
+        {
+          "methods": [
+            "GET"
+          ],
+          "pathPattern": "/meta-storage/pmh-clients/{id}/status",
+          "permissionsRequired": [
+	    "meta-storage-pmh-clients.status"
+	  ]
+        }
+      ]
     }
   ],
   "requires": [],
@@ -270,6 +348,61 @@
       "subPermissions": [
         "meta-storage-clusters.collection.get",
         "meta-storage-clusters.item.get"
+      ]
+    },
+    {
+      "permissionName": "meta-storage-pmh-clients.post",
+      "displayName": "meta storage - OAI PMH post",
+      "description": "Create OAI PMH client"
+    },
+    {
+      "permissionName": "meta-storage-pmh-clients.collection.get",
+      "displayName": "meta storage - OAI PMH collection get",
+      "description": "Get OAI PMH clients"
+    },
+    {
+      "permissionName": "meta-storage-pmh-clients.item.get",
+      "displayName": "meta storage - OAI PMH item get",
+      "description": "Get OAI PMH client"
+    },
+    {
+      "permissionName": "meta-storage-pmh-clients.item.put",
+      "displayName": "meta storage - OAI PMH item put",
+      "description": "Update OAI PMH client"
+    },
+    {
+      "permissionName": "meta-storage-pmh-clients.item.delete",
+      "displayName": "meta storage - OAI PMH item delete",
+      "description": "Delete OAI PMH client"
+    },
+    {
+      "permissionName": "meta-storage-pmh-clients.start",
+      "displayName": "meta storage - OAI PMH client start",
+      "description": "Start OAI PMH client"
+    },
+    {
+      "permissionName": "meta-storage-pmh-clients.stop",
+      "displayName": "meta storage - OAI PMH client stop",
+      "description": "Stop OAI PMH client"
+    },
+    {
+      "permissionName": "meta-storage-pmh-clients.status",
+      "displayName": "meta storage - OAI PMH client status",
+      "description": "Get OAI PMH status"
+    },
+    {
+      "permissionName": "meta-storage-pmh-clients.all",
+      "displayName": "meta storage - OAI PMH clients",
+      "description": "OAI PMH client permissions",
+      "subPermissions": [
+        "meta-storage-pmh-clients.post",
+        "meta-storage-pmh-clients.collection.get",
+        "meta-storage-pmh-clients.item.get",
+        "meta-storage-pmh-clients.item.put",
+        "meta-storage-pmh-clients.item.delete",
+        "meta-storage-pmh-clients.start",
+        "meta-storage-pmh-clients.stop",
+        "meta-storage-pmh-clients.status"
       ]
     },
     {
