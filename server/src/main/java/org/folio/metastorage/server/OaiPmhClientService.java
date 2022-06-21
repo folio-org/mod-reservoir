@@ -421,10 +421,6 @@ public class OaiPmhClientService {
     }
   }
 
-  static class Datestamp {
-    String value;
-  }
-
   Future<HttpClientResponse> listRecordsRequest(JsonObject config) {
     RequestOptions requestOptions = new RequestOptions();
     requestOptions.setMethod(HttpMethod.GET);
@@ -462,17 +458,17 @@ public class OaiPmhClientService {
     XmlMetadataStreamParser<JsonObject> metadataParser
         = new XmlMetadataParserMarcInJson();
     SourceId sourceId = new SourceId(config.getString("sourceId"));
-    Datestamp newestDatestamp = new Datestamp();
     AtomicInteger cnt = new AtomicInteger();
     Promise<Void> promise = Promise.promise();
     OaiParserStream<JsonObject> oaiParserStream =
         new OaiParserStream<>(xmlParser,
             oaiRecord -> {
               cnt.incrementAndGet();
+              // populate from with newest datestamp from all responses
               String datestamp = oaiRecord.getDatestamp();
-              if (newestDatestamp.value == null
-                  || datestamp.compareTo(newestDatestamp.value) > 0) {
-                newestDatestamp.value = datestamp;
+              String from = config.getString("from");
+              if (from == null || datestamp.compareTo(from) > 0) {
+                config.put("from", datestamp);
               }
               xmlParser.pause();
               ingestRecord(storage, oaiRecord, sourceId, matchKeyConfigs)
@@ -482,9 +478,6 @@ public class OaiPmhClientService {
     oaiParserStream.exceptionHandler(promise::fail);
     xmlParser.endHandler(end -> {
       job.put(TOTAL_RECORDS_LITERAL, job.getLong(TOTAL_RECORDS_LITERAL) + cnt.get());
-      if (newestDatestamp.value != null) {
-        config.put("from", newestDatestamp.value);
-      }
       String resumptionToken = oaiParserStream.getResumptionToken();
       String oldResumptionToken = config.getString(RESUMPTION_TOKEN_LITERAL);
       if (resumptionToken == null
