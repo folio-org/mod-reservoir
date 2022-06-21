@@ -43,6 +43,8 @@ The module is configured by setting environment variables:
 
 ### Client
 
+The client is a command-line tool for sending records to mod-meta-storage module.
+
 Run the client with
 
     java -jar client/target/mod-meta-storage-client-fat.jar [options] [files...]
@@ -80,6 +82,53 @@ To send MARCXML to the same server with defined sourceId:
       client/src/test/resources/record10.xml
 
 The option `--xsl` may be repeated for a sequence of transformations.
+
+## OAI PMH client
+
+The OAI PMH client is executing in the server. The OAI PMH client is configured by
+simple JSON configuration. The identifier is user-defined and given in the initial
+post. Example with identifier `us-mdbj` below:
+
+    export OKAPI_TENANT=diku
+    export OKAPI_URL=http://localhost:8081
+    cat oai-us-mdbj.json
+    {
+      "id": "us-mdbj",
+      "set": "397",
+      "sourceId": "US-MDBJ",
+      "url": "https://pod.stanford.edu/oai",
+      "metadataPrefix": "marc21",
+      "headers": {
+        "Authorization": "Bearer ey.."
+      }
+    }
+    curl -HX-Okapi-Tenant:$OKAPI_TENANT -HContent-Type:application/json -XPOST \
+       -d@oai-us-mdbj.json $OKAPI_URL/meta-storage/pmh-clients
+
+In this case all ingested records from the client is given the source identifier `US-MDBJ`.
+
+See [schema](server/src/main/resources/openapi/schemas/oai-pmh-client.json) for more information.
+
+This configuration can be inspected with
+
+    curl -HX-Okapi-Tenant:$OKAPI_TENANT $OKAPI_URL/meta-storage/pmh-clients/us-mdbj
+
+Start a job with:
+
+    curl -HX-Okapi-Tenant:$OKAPI_TENANT -XPOST $OKAPI_URL/meta-storage/pmh-clients/us-mdbj/start
+
+The job will confinue until the server returns error or returns no resumption token. The `from`
+property of the configuration is populated with latest datestamp in records received. This allows
+the to repeat the job again at a later date to fetch updates from `from` to now (unless `until` is
+specified).
+
+Get status for a job with:
+
+    curl -HX-Okapi-Tenant:$OKAPI_TENANT -XPOST $OKAPI_URL/meta-storage/pmh-clients/us-mdbj/status
+
+Stop a job with:
+
+    curl -HX-Okapi-Tenant:$OKAPI_TENANT -XPOST $OKAPI_URL/meta-storage/pmh-clients/us-mdbj/stop
 
 ## Additional information
 
