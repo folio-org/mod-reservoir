@@ -64,26 +64,26 @@ public class CodeModuleEntity {
     return Tuple.of(id, url, function);
   }
 
-  
+
   public static class CodeModuleBuilder {
-    
+
     public static final String ID_FIELD = "id";
-    
+
     public static final String URL_FIELD = "url";
-    
+
     public static final String FUNCTION_FIELD = "function";
-    
+
     private final JsonObject json;
-    
+
     public CodeModuleBuilder(String id) {
       json = new JsonObject();
       json.put(ID_FIELD, id);
     }
-    
+
     public CodeModuleBuilder(JsonObject source) {
       json = asJson(source);
     }
-  
+
     public CodeModuleBuilder(Row row) {
       json = asJson(row);
     }
@@ -92,7 +92,7 @@ public class CodeModuleEntity {
       json.put(URL_FIELD, url);
       return this;
     }
-  
+
     public CodeModuleBuilder function(String function) {
       json.put(FUNCTION_FIELD, function);
       return this;
@@ -116,7 +116,7 @@ public class CodeModuleEntity {
     public JsonObject buildJson() {
       return json;
     }
-  
+
     /**
      * Encodes a single code module row as JSON.
      * @param row code module row
@@ -128,7 +128,7 @@ public class CodeModuleEntity {
         .put(URL_FIELD, row.getString(URL_FIELD))
         .put(FUNCTION_FIELD, row.getString(FUNCTION_FIELD));
     }
-  
+
     /**
      * Coopies the relevat parts of the input JSON as output.
      * @param source input json
@@ -140,8 +140,8 @@ public class CodeModuleEntity {
         .put(URL_FIELD, source.getString(URL_FIELD))
         .put(FUNCTION_FIELD, source.getString(FUNCTION_FIELD));
     }
-  
-  
+
+
   }
 
 }

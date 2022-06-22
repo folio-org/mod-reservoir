@@ -107,7 +107,7 @@ public class Storage {
   public String getModuleTable() {
     return moduleTable;
   }
-  
+
   public String getOaiPmhClientTable() {
     return oaiPmhClientTable;
   }
@@ -885,7 +885,7 @@ public class Storage {
    * @param sqlOrderBy the SQL ORDER BY clause
    * @return async result
    */
-  public Future<Void> selectCodeModuleEntities(RoutingContext ctx, 
+  public Future<Void> selectCodeModuleEntities(RoutingContext ctx,
       String sqlWhere, String sqlOrderBy) {
     String from = moduleTable;
     if (sqlWhere != null) {

@@ -176,7 +176,7 @@ public class ModuleTest {
             )
           )
         );
-  
+
 
     ClusterBuilder cb = new ClusterBuilder(UUID.randomUUID());
     cb.records(recordsIn);
@@ -186,11 +186,11 @@ public class ModuleTest {
       .put("id", "isbn-transformer")
       .put("url", HOSTPORT + "/lib/isbn-transformer.mjs")
       .put("function", "transform");
-      
+
     ModuleCache.getInstance().lookup(vertx, TENANT, config)
       //.onSuccess(m -> m.terminate())
       .compose(m -> m.execute(input))
-      .onComplete(context.asyncAssertSuccess(output -> { 
+      .onComplete(context.asyncAssertSuccess(output -> {
           context.assertEquals(recordOut, output);
         }
       )

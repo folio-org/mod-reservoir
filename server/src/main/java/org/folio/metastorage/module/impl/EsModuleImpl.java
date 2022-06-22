@@ -88,5 +88,5 @@ public class EsModuleImpl implements Module {
     }
     return Future.succeededFuture();
   }
-  
+
 }

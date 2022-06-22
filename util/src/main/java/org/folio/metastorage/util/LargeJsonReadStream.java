@@ -6,7 +6,7 @@ import io.vertx.core.json.JsonObject;
 import io.vertx.core.parsetools.JsonParser;
 import io.vertx.core.streams.ReadStream;
 import java.util.concurrent.atomic.AtomicInteger;
-  
+
 public class LargeJsonReadStream implements ReadStream<JsonObject> {
   private JsonParser parser;
   private AtomicInteger counter = new AtomicInteger();

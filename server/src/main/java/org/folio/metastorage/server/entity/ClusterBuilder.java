@@ -10,7 +10,7 @@ import java.util.List;
 import java.util.UUID;
 
 public class ClusterBuilder {
-  
+
   public static final String GLOBAL_ID_LABEL = "globalId";
   public static final String LOCAL_ID_LABEL = "localId";
   public static final String SOURCE_ID_LABEL = "sourceId";
@@ -22,7 +22,7 @@ public class ClusterBuilder {
 
 
   private JsonObject clusterJson = new JsonObject();
-   
+
   public ClusterBuilder(UUID clusterId) {
     clusterJson.put(CLUSTER_ID_LABEL, clusterId.toString());
   }
@@ -31,7 +31,7 @@ public class ClusterBuilder {
     clusterJson.put(DATESTAMP_LABEL, datestamp.atZone(ZoneOffset.UTC).toString());
     return this;
   }
-  
+
   /**
    * Add records from a RowSet.
    * @param rows row set

@@ -82,7 +82,7 @@ public class MainVerticleTest {
   static final int MODULE_PORT = 9231;
   static final String MODULE_URL = "http://localhost:" + MODULE_PORT;
   static String tenant1 = "tenant1";
-  static final int CODE_MODULES_PORT = 9235;  
+  static final int CODE_MODULES_PORT = 9235;
   static final int MOCK_PORT = 9232;
   static final int UNUSED_PORT = 9233;
   static final String MOCK_URL = "http://localhost:" + MOCK_PORT;
@@ -792,11 +792,11 @@ public class MainVerticleTest {
             expFieldValue.getString("ind2"),
             actFieldValue.getString("ind2")
           );
-          JsonArray expSubFields = expFieldValue.getJsonArray("subfields"); 
+          JsonArray expSubFields = expFieldValue.getJsonArray("subfields");
           JsonArray actSubFields = actFieldValue.getJsonArray("subfields");
           Assert.assertNotNull("["+i+"] "+expFieldName+" expected subfields not null", expSubFields);
           Assert.assertNotNull("["+i+"] "+expFieldName+" actual subfields not null", actSubFields);
-          Assert.assertEquals("["+i+"] "+expFieldName+"/'subfields' size", expSubFields.size(), actSubFields.size()); 
+          Assert.assertEquals("["+i+"] "+expFieldName+"/'subfields' size", expSubFields.size(), actSubFields.size());
           for (int k=0; k < expSubFields.size(); k++) {
             JsonObject expSubField = expSubFields.getJsonObject(k);
             JsonObject actSubField = actSubFields.getJsonObject(k);
@@ -804,8 +804,8 @@ public class MainVerticleTest {
               String expSubFieldValue = expSubField.getString(expSubFieldName);
               String actSubFieldValue = actSubField.getString(expSubFieldName);
               if (!"DO_NOT_ASSERT".equals(expSubFieldValue)) {
-                Assert.assertEquals("["+i+"] "+expFieldName + "/" + expSubFieldName, 
-                  expSubFieldValue, 
+                Assert.assertEquals("["+i+"] "+expFieldName + "/" + expSubFieldName,
+                  expSubFieldValue,
                   actSubFieldValue);
               }
             }
@@ -1841,7 +1841,7 @@ public class MainVerticleTest {
         .contentType("application/json")
         .body(Matchers.is(module.asJson().encode()));
 
-    //PUT item to existing 
+    //PUT item to existing
     RestAssured.given()
         .header(XOkapiHeaders.TENANT, tenant1)
         .header("Content-Type", "application/json")
@@ -1979,7 +1979,7 @@ public class MainVerticleTest {
                 )
             )
         );
-    //post records individually, otherwise the order of clusters and records in clusters is non-deterministic 
+    //post records individually, otherwise the order of clusters and records in clusters is non-deterministic
     ingestRecords(ingest1a, sourceId1);
     ingestRecords(ingest1b, sourceId1);
 
@@ -2147,8 +2147,8 @@ public class MainVerticleTest {
     //configure transformer
 
     CodeModuleEntity module = new CodeModuleEntity(
-        "marc-transformer", 
-        "http://localhost:" + CODE_MODULES_PORT + "/lib/marc-transformer.mjs", 
+        "marc-transformer",
+        "http://localhost:" + CODE_MODULES_PORT + "/lib/marc-transformer.mjs",
         "transform");
 
     //POST module configuration
@@ -2349,7 +2349,7 @@ public class MainVerticleTest {
 
         );
 
-      
+
     JsonArray expectedOAI = new JsonArray()
       .add(new JsonObject().put("leader", "00914naa  2200337   450 "))
       .add(new JsonObject().put("leader", "00914naa  2200337   450 "))

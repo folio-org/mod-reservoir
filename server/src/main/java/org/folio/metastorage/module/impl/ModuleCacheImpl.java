@@ -15,15 +15,15 @@ public class ModuleCacheImpl implements ModuleCache {
   private static class LazyInstance {
     static final ModuleCacheImpl instance = new ModuleCacheImpl();
   }
-  
+
   public static ModuleCache getInstance() {
     return LazyInstance.instance;
   }
 
   private Map<String, CacheEntry> entries = new HashMap<>();
-  
+
   private ModuleCacheImpl() { }
-  
+
   private class CacheEntry {
     private final Module module;
     private final JsonObject config;
@@ -87,5 +87,5 @@ public class ModuleCacheImpl implements ModuleCache {
     entries.forEach((x,y) -> y.module.terminate());
     entries.clear();
   }
-  
+
 }

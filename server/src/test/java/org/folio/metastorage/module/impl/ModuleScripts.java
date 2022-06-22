@@ -16,9 +16,9 @@ public class ModuleScripts {
         //collect all marc fields
         out.fields.push(...marc.fields);
         //stamp with custom 999 for each member
-        let f999 = 
+        let f999 =
         {
-          '999' : 
+          '999' :
           {
             'ind1': '1',
             'ind2': '0',
@@ -34,5 +34,5 @@ public class ModuleScripts {
       return JSON.stringify(out);
     }
     """;
-  
+
 }

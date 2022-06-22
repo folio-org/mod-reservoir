@@ -202,11 +202,11 @@ public final class OaiService {
   /**
    * Construct metadata record XML string.
    *
-   * <p>999 ind1=1 ind2=0 identifies individual member records, one for each. 
-   * Subfields: 
+   * <p>999 ind1=1 ind2=0 identifies individual member records, one for each.
+   * Subfields:
    *  $i cluster UUID
    *  $m match values (multiple)
-   *  $l local identifier 
+   *  $l local identifier
    *  $s source identifiers
    *
    *
@@ -215,7 +215,7 @@ public final class OaiService {
    * @param matchValues match values for this cluster
    * @return metadata record string; null if it's deleted record
    */
-  static Future<String> processMetadata(RoutingContext ctx, Storage storage, 
+  static Future<String> processMetadata(RoutingContext ctx, Storage storage,
       RowSet<Row> rowSet, UUID clusterId, List<String> matchValues) {
     if (rowSet.size() == 0) {
       return Future.succeededFuture(null); //deleted record
@@ -223,18 +223,18 @@ public final class OaiService {
     ClusterBuilder cb = new ClusterBuilder(clusterId)
         .records(rowSet)
         .matchValues(matchValues);
-    
+
     return getTransformerModule(storage, ctx)
       .compose(module -> {
         if (module == null) {
           return Future.succeededFuture(getMetadata(rowSet, clusterId, matchValues));
         }
         return module.execute(cb.build())
-            .map(processed -> 
+            .map(processed ->
     "    <metadata>\n" + JsonToMarcXml.convert(processed) + "\n    </metadata>\n");
       });
   }
-  
+
 
   /**
    * Construct metadata record XML string.
@@ -283,7 +283,7 @@ public final class OaiService {
     return "    <metadata>\n" + xmlMetadata + "\n    </metadata>\n";
   }
 
-  static Future<String> getXmlRecordMetadata(RoutingContext ctx, Storage storage, 
+  static Future<String> getXmlRecordMetadata(RoutingContext ctx, Storage storage,
       SqlConnection conn, UUID clusterId, List<String> matchValues) {
     String q = "SELECT * FROM " + storage.getGlobalRecordTable()
         + " LEFT JOIN " + storage.getClusterRecordTable() + " ON record_id = id "
@@ -295,8 +295,8 @@ public final class OaiService {
 
   static Future<Module> getTransformerModule(Storage storage, RoutingContext ctx) {
     return storage.selectOaiConfig()
-      .compose(oaiCfg -> { 
-        if (oaiCfg != null) { 
+      .compose(oaiCfg -> {
+        if (oaiCfg != null) {
           return storage.selectCodeModuleEntity(oaiCfg.getString("transformer"))
               .compose(module -> {
                 if (module != null) {
@@ -323,7 +323,7 @@ public final class OaiService {
         });
   }
 
-  static Future<String> getXmlRecord(RoutingContext ctx, Storage storage, SqlConnection conn, 
+  static Future<String> getXmlRecord(RoutingContext ctx, Storage storage, SqlConnection conn,
       UUID clusterId, LocalDateTime datestamp, String oaiSet, boolean withMetadata) {
     Future<List<String>> clusterValues = Future.succeededFuture(Collections.emptyList());
     if (withMetadata) {

@@ -298,7 +298,7 @@ public class ClientTest {
 
     future.eventually(x -> httpServer.close())
         .onComplete(context.asyncAssertFailure(e -> {
-          context.assertTrue(e.getMessage().startsWith("error parsing leader"));    
+          context.assertTrue(e.getMessage().startsWith("error parsing leader"));
         }));
   }
 
@@ -335,7 +335,7 @@ public class ClientTest {
 
     future.eventually(x -> httpServer.close())
         .onComplete(context.asyncAssertSuccess(e -> {
-          context.assertEquals(1, requests.size()); // two requests  
+          context.assertEquals(1, requests.size()); // two requests
         }));
   }
 
@@ -372,7 +372,7 @@ public class ClientTest {
 
     future.eventually(x -> httpServer.close())
         .onComplete(context.asyncAssertSuccess(e -> {
-          context.assertEquals(1, requests.size()); // two requests  
+          context.assertEquals(1, requests.size()); // two requests
         }));
   }
 
@@ -408,7 +408,7 @@ public class ClientTest {
 
     future.eventually(x -> httpServer.close())
         .onComplete(context.asyncAssertSuccess(e -> {
-          context.assertEquals(1, requests.size()); // two requests  
+          context.assertEquals(1, requests.size()); // two requests
         }));
   }
 
@@ -444,7 +444,7 @@ public class ClientTest {
 
     future.eventually(x -> httpServer.close())
         .onComplete(context.asyncAssertSuccess(e -> {
-          context.assertEquals(1, requests.size()); // two requests  
+          context.assertEquals(1, requests.size()); // two requests
         }));
   }
 
