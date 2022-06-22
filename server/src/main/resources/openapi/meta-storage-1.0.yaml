@@ -3,6 +3,45 @@ info:
   title: Meta Storage
   version: v1
 paths:
+  # OAI config (singleton)
+  /meta-storage/config/oai:
+    parameters:
+      - $ref: headers/okapi-tenant.yaml
+      - $ref: headers/okapi-token.yaml
+      - $ref: headers/okapi-url.yaml
+    get:
+      description: Get OAI configuration
+      operationId: getOaiConfig
+      responses:
+        "200":
+          description: OAI configuration returned
+          content:
+            application/json:
+              schema:
+                $ref: schemas/oaiConfig.json
+        "400":
+          $ref: "#/components/responses/trait_400"
+        "404":
+          $ref: "#/components/responses/trait_404"
+        "500":
+          $ref: "#/components/responses/trait_500"
+    put:
+      description: Update OAI configuration.
+      operationId: putOaiConfig
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: schemas/oaiConfig.json
+      responses:
+        "204":
+          description: OAI configuration updated
+        "400":
+          $ref: "#/components/responses/trait_400"
+        "404":
+          $ref: "#/components/responses/trait_404"
+        "500":
+          $ref: "#/components/responses/trait_500"
   # Configuration
   /meta-storage/config/matchkeys:
     parameters:
@@ -151,6 +190,106 @@ paths:
             application/json:
               schema:
                 $ref: schemas/matchKeyStats.json
+        "400":
+          $ref: "#/components/responses/trait_400"
+        "404":
+          $ref: "#/components/responses/trait_404"
+        "500":
+          $ref: "#/components/responses/trait_500"
+  # Modules
+  /meta-storage/config/modules:
+    parameters:
+      - $ref: headers/okapi-tenant.yaml
+      - $ref: headers/okapi-token.yaml
+      - $ref: headers/okapi-url.yaml
+    post:
+      description: Create a new code module
+      operationId: postCodeModule
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: schemas/codeModule.json
+      responses:
+        "201":
+          description: code module created
+          content:
+            application/json:
+              schema:
+                $ref: schemas/codeModule.json
+        "400":
+          $ref: "#/components/responses/trait_400"
+        "500":
+          $ref: "#/components/responses/trait_500"
+    get:
+      description: Retrieve all code modules
+      operationId: getCodeModules
+      parameters:
+        - $ref: parameters/count.yaml
+        - $ref: parameters/limit.yaml
+        - $ref: parameters/query.yaml
+        - $ref: parameters/offset.yaml
+      responses:
+        "200":
+          description: list of code modules
+          content:
+            application/json:
+              schema:
+                $ref: schemas/codeModules.json
+        "400":
+          $ref: "#/components/responses/trait_400"
+        "500":
+          $ref: "#/components/responses/trait_500"
+  /meta-storage/config/modules/{id}:
+    parameters:
+      - $ref: headers/okapi-tenant.yaml
+      - $ref: headers/okapi-token.yaml
+      - $ref: headers/okapi-url.yaml
+      - in: path
+        name: id
+        required: true
+        description: code module identifier
+        schema:
+          type: string
+    get:
+      description: Retrieve a code module by id
+      operationId: getCodeModule
+      responses:
+        "200":
+          description: code module returned
+          content:
+            application/json:
+              schema:
+                $ref: schemas/codeModule.json
+        "400":
+          $ref: "#/components/responses/trait_400"
+        "404":
+          $ref: "#/components/responses/trait_404"
+        "500":
+          $ref: "#/components/responses/trait_500"
+    put:
+      description: Update code module by id
+      operationId: putCodeModule
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: schemas/codeModule.json
+      responses:
+        "204":
+          description: code module updated
+        "400":
+          $ref: "#/components/responses/trait_400"
+        "404":
+          $ref: "#/components/responses/trait_404"
+        "500":
+          $ref: "#/components/responses/trait_500"
+    delete:
+      description: Delete code module by id
+      operationId: deleteCodeModule
+      responses:
+        "204":
+          description: code module deleted
         "400":
           $ref: "#/components/responses/trait_400"
         "404":

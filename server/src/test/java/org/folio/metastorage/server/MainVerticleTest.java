@@ -9,7 +9,9 @@ import io.restassured.response.Response;
 import io.vertx.core.DeploymentOptions;
 import io.vertx.core.Future;
 import io.vertx.core.Vertx;
+import io.vertx.core.http.HttpHeaders;
 import io.vertx.core.http.HttpServer;
+import io.vertx.core.http.HttpServerResponse;
 import io.vertx.core.json.JsonArray;
 import io.vertx.core.json.JsonObject;
 import io.vertx.ext.unit.TestContext;
@@ -31,6 +33,7 @@ import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
 import java.util.concurrent.TimeUnit;
@@ -47,6 +50,8 @@ import javax.xml.validation.Validator;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.awaitility.Awaitility;
+import org.folio.metastorage.module.impl.ModuleScripts;
+import org.folio.metastorage.server.entity.CodeModuleEntity;
 import org.folio.okapi.common.XOkapiHeaders;
 import org.folio.tlib.postgres.testing.TenantPgPoolContainer;
 import org.hamcrest.Matchers;
@@ -76,6 +81,8 @@ public class MainVerticleTest {
   static final String OKAPI_URL = "http://localhost:" + OKAPI_PORT;
   static final int MODULE_PORT = 9231;
   static final String MODULE_URL = "http://localhost:" + MODULE_PORT;
+  static String tenant1 = "tenant1";
+  static final int CODE_MODULES_PORT = 9235;  
   static final int MOCK_PORT = 9232;
   static final int UNUSED_PORT = 9233;
   static final String MOCK_URL = "http://localhost:" + MOCK_PORT;
@@ -192,6 +199,17 @@ public class MainVerticleTest {
     f = f.compose(e -> httpServer.listen(MOCK_PORT).mapEmpty());
 
     f.onComplete(context.asyncAssertSuccess());
+
+    //serve module
+    Router router2 = Router.router(vertx);
+    router2.get("/lib/marc-transformer.mjs").handler(ctx -> {
+      HttpServerResponse response = ctx.response();
+      response.setStatusCode(200);
+      response.putHeader(HttpHeaders.CONTENT_TYPE, "text/plain");
+      response.end(ModuleScripts.TEST_SCRIPT_1);
+    });
+    HttpServer httpServer2 = vertx.createHttpServer();
+    httpServer2.requestHandler(router2).listen(CODE_MODULES_PORT).onComplete(context.asyncAssertSuccess());
   }
 
   @AfterClass
@@ -637,7 +655,7 @@ public class MainVerticleTest {
 
   }
 
-  static String verifyOaiResponse(String s, String envelope, List<String> identifiers, int length)
+  static String verifyOaiResponse(String s, String verb, List<String> identifiers, int length, JsonArray expRecords)
       throws XMLStreamException, IOException, SAXException {
     InputStream stream = new ByteArrayInputStream(s.getBytes());
     Source source = new StreamSource(stream);
@@ -652,17 +670,35 @@ public class MainVerticleTest {
 
     int offset = 0;
     int level = 0;
+    int numRecsOrDels = 0;
+    JsonArray records = new JsonArray();
+    JsonObject record = null;
+    JsonArray fields = null;
+    JsonArray subfields = null;
     while (xmlStreamReader.hasNext()) {
       int event = xmlStreamReader.next();
       if (event == XMLStreamConstants.START_ELEMENT) {
         level++;
         String elem = xmlStreamReader.getLocalName();
-        if (level == 2 && elem == envelope) {
+        path = path + "/" + elem;
+        if (level == 2 && elem == verb) {
           foundEnvelope = true;
         }
-        path = path + "/" + elem;
+        if ("identifier".equals(elem) && xmlStreamReader.hasNext()) {
+          event = xmlStreamReader.next();
+          if (event == XMLStreamConstants.CHARACTERS) {
+            identifiers.add(xmlStreamReader.getText());
+          }
+        }
         if (level == 3 && ("record".equals(elem) || "header".equals(elem))) {
+          //ListRecords has 'record' while ListIdentifiers has 'header'
           offset++;
+        }
+        if (level == 4 && "header".equals(elem)) {
+          String status = xmlStreamReader.getAttributeValue(null, "status");
+          if ("deleted".equals(status)) {
+            numRecsOrDels++;
+          }
         }
         if (level == 3 && "resumptionToken".equals(elem)) {
           event = xmlStreamReader.next();
@@ -670,11 +706,43 @@ public class MainVerticleTest {
             resumptionToken = xmlStreamReader.getText();
           }
         }
-        if ("identifier".equals(elem) && xmlStreamReader.hasNext()) {
+        if (level == 4 && "metadata".equals(elem)) {
+          //nothing
+        }
+        if (level == 5 && "record".equals(elem)) {
+          numRecsOrDels++;
+          record = new JsonObject();
+          fields = new JsonArray();
+          record.put("fields", fields);
+          records.add(record);
+        }
+        if (level == 6 && "leader".equals(elem)) {
+          event = xmlStreamReader.next();
+          String leader = null;
+          if (event == XMLStreamConstants.CHARACTERS) {
+            leader = xmlStreamReader.getText();
+          }
+          record.put("leader", leader);
+        }
+        if (level == 6 && "datafield".equals(elem)) {
+          String tag = xmlStreamReader.getAttributeValue(null, "tag");
+          String ind1 = xmlStreamReader.getAttributeValue(null, "ind1");
+          String ind2 = xmlStreamReader.getAttributeValue(null, "ind2");
+          subfields = new JsonArray();
+          fields.add(new JsonObject()
+            .put(tag, new JsonObject()
+              .put("ind1", ind1)
+              .put("ind2", ind2)
+              .put("subfields", subfields)));
+        }
+        if (level == 7 && "subfield".equals(elem)) {
+          String code = xmlStreamReader.getAttributeValue(null, "code");
+          String value = null;
           event = xmlStreamReader.next();
           if (event == XMLStreamConstants.CHARACTERS) {
-            identifiers.add(xmlStreamReader.getText());
+            value = xmlStreamReader.getText();
           }
+          subfields.add(new JsonObject().put(code, value));
         }
       } else if (event == XMLStreamConstants.END_ELEMENT) {
         int off = path.lastIndexOf('/');
@@ -688,7 +756,63 @@ public class MainVerticleTest {
     if (length > 0) {
       Assert.assertTrue(s, foundEnvelope);
     }
+    if (length != -1 && verb.equals("ListRecords")) {
+      Assert.assertEquals(s, length, numRecsOrDels);
+      if (expRecords != null) {
+        verifyMarc(expRecords , records);
+      }
+    }
     return resumptionToken;
+  }
+
+  static void verifyMarc(JsonArray expMarcs, JsonArray actMarcs) {
+    Assert.assertEquals("size", expMarcs.size(), actMarcs.size());
+    for (int i=0; i < expMarcs.size(); i++) {
+      JsonObject expMarc = expMarcs.getJsonObject(i);
+      JsonObject actMarc = actMarcs.getJsonObject(i);
+      Assert.assertEquals("leader",
+        expMarc.getString("leader"),
+        actMarc.getString("leader"));
+      JsonArray expFields = expMarc.getJsonArray("fields");
+      JsonArray actFields = actMarc.getJsonArray("fields");
+      Assert.assertNotNull("["+i+"] expected 'fields' not null", expFields);
+      Assert.assertNotNull("["+i+"] actual 'fields' not null", actFields);
+      Assert.assertEquals("["+i+"] 'fields' size", expFields.size(), actFields.size());
+      for (int j=0; j < expFields.size(); j++) {
+        JsonObject expField = expFields.getJsonObject(j);
+        JsonObject actField = actFields.getJsonObject(j);
+        for (String expFieldName : expField.getMap().keySet()) {
+          JsonObject expFieldValue = expField.getJsonObject(expFieldName);
+          JsonObject actFieldValue = actField.getJsonObject(expFieldName);
+          Assert.assertEquals("["+i+"] "+expFieldName + "/ind1",
+            expFieldValue.getString("ind1"),
+            actFieldValue.getString("ind1")
+          );
+          Assert.assertEquals("["+i+"] "+expFieldName + "/ind2",
+            expFieldValue.getString("ind2"),
+            actFieldValue.getString("ind2")
+          );
+          JsonArray expSubFields = expFieldValue.getJsonArray("subfields"); 
+          JsonArray actSubFields = actFieldValue.getJsonArray("subfields");
+          Assert.assertNotNull("["+i+"] "+expFieldName+" expected subfields not null", expSubFields);
+          Assert.assertNotNull("["+i+"] "+expFieldName+" actual subfields not null", actSubFields);
+          Assert.assertEquals("["+i+"] "+expFieldName+"/'subfields' size", expSubFields.size(), actSubFields.size()); 
+          for (int k=0; k < expSubFields.size(); k++) {
+            JsonObject expSubField = expSubFields.getJsonObject(k);
+            JsonObject actSubField = actSubFields.getJsonObject(k);
+            for (String expSubFieldName : expSubField.getMap().keySet()) {
+              String expSubFieldValue = expSubField.getString(expSubFieldName);
+              String actSubFieldValue = actSubField.getString(expSubFieldName);
+              if (!"DO_NOT_ASSERT".equals(expSubFieldValue)) {
+                Assert.assertEquals("["+i+"] "+expFieldName + "/" + expSubFieldName, 
+                  expSubFieldValue, 
+                  actSubFieldValue);
+              }
+            }
+          }
+        }
+      }
+    }
   }
 
   /**
@@ -1591,10 +1715,194 @@ public class MainVerticleTest {
         .then().statusCode(200)
         .contentType("text/xml")
         .extract().body().asString();
-    verifyOaiResponse(s, "Identify", identifiers, 0);
+    verifyOaiResponse(s, "Identify", identifiers, 0, null);
   }
 
   @Test
+  public void testCodeModulesCRUD() {
+    //GET empty list no count
+    RestAssured.given()
+        .header(XOkapiHeaders.TENANT, tenant1)
+        .get("/meta-storage/config/modules")
+        .then().statusCode(200)
+        .contentType("application/json")
+        .body("modules", is(empty()))
+        .body("resultInfo.totalRecords", is(nullValue()));
+
+    //GET empty list with count
+    RestAssured.given()
+        .header(XOkapiHeaders.TENANT, tenant1)
+        .param("count", "exact")
+        .get("/meta-storage/config/modules")
+        .then().statusCode(200)
+        .contentType("application/json")
+        .body("modules", is(empty()))
+        .body("resultInfo.totalRecords", is(0));
+
+    CodeModuleEntity module = new CodeModuleEntity("oai-transform", "url", "transform");
+
+    //GET not found item
+    RestAssured.given()
+        .header(XOkapiHeaders.TENANT, tenant1)
+        .header("Content-Type", "application/json")
+        .get("/meta-storage/config/modules/" + module.getId())
+        .then().statusCode(404)
+        .contentType("text/plain")
+        .body(Matchers.is("Module " + module.getId() + " not found"));
+
+    //POST item
+    RestAssured.given()
+        .header(XOkapiHeaders.TENANT, tenant1)
+        .header("Content-Type", "application/json")
+        .body(module.asJson().encode())
+        .post("/meta-storage/config/modules")
+        .then().statusCode(201)
+        .contentType("application/json")
+        .body(Matchers.is(module.asJson().encode()));
+
+    //POST same item again
+    RestAssured.given()
+        .header(XOkapiHeaders.TENANT, tenant1)
+        .header("Content-Type", "application/json")
+        .body(module.asJson().encode())
+        .post("/meta-storage/config/modules")
+        .then().statusCode(400)
+        .contentType("text/plain")
+        .body(containsString("duplicate key value violates unique constraint"));
+
+    //GET posted item
+    RestAssured.given()
+        .header(XOkapiHeaders.TENANT, tenant1)
+        .header("Content-Type", "application/json")
+        .get("/meta-storage/config/modules/" + module.getId())
+        .then().statusCode(200)
+        .contentType("application/json")
+        .body(Matchers.is(module.asJson().encode()));
+
+    //GET item and validate it
+    RestAssured.given()
+        .header(XOkapiHeaders.TENANT, tenant1)
+        .get("/meta-storage/config/modules")
+        .then().statusCode(200)
+        .contentType("application/json")
+        .body("modules", hasSize(1))
+        .body("modules[0].id", is(module.getId()))
+        .body("modules[0].url", is(module.getUrl()))
+        .body("modules[0].function", is(module.getFunction()));
+
+    //GET search item and validate
+    RestAssured.given()
+        .header(XOkapiHeaders.TENANT, tenant1)
+        .get("/meta-storage/config/modules?query=function=" + module.getFunction())
+        .then().statusCode(200)
+        .contentType("application/json")
+        .body("modules", hasSize(1))
+        .body("modules[0].id", is(module.getId()))
+        .body("modules[0].url", is(module.getUrl()))
+        .body("modules[0].function", is(module.getFunction()));
+
+    //DELETE item
+    RestAssured.given()
+        .header(XOkapiHeaders.TENANT, tenant1)
+        .header("Content-Type", "application/json")
+        .delete("/meta-storage/config/modules/" + module.getId())
+        .then().statusCode(204);
+
+    //DELETE item again
+    RestAssured.given()
+        .header(XOkapiHeaders.TENANT, tenant1)
+        .header("Content-Type", "application/json")
+        .delete("/meta-storage/config/modules/" + module.getId())
+        .then().statusCode(404);
+
+    //GET deleted item
+    RestAssured.given()
+        .header(XOkapiHeaders.TENANT, tenant1)
+        .header("Content-Type", "application/json")
+        .get("/meta-storage/config/modules/" + module.getId())
+        .then().statusCode(404);
+
+    //PUT item to not existing
+    RestAssured.given()
+        .header(XOkapiHeaders.TENANT, tenant1)
+        .header("Content-Type", "application/json")
+        .body(module.asJson().encode())
+        .put("/meta-storage/config/modules/" + module.getId())
+        .then()
+        .statusCode(404);
+
+    //POST item again
+    RestAssured.given()
+        .header(XOkapiHeaders.TENANT, tenant1)
+        .header("Content-Type", "application/json")
+        .body(module.asJson().encode())
+        .post("/meta-storage/config/modules")
+        .then().statusCode(201)
+        .contentType("application/json")
+        .body(Matchers.is(module.asJson().encode()));
+
+    //PUT item to existing 
+    RestAssured.given()
+        .header(XOkapiHeaders.TENANT, tenant1)
+        .header("Content-Type", "application/json")
+        .body(module.asJson().encode())
+        .put("/meta-storage/config/modules/" + module.getId())
+        .then()
+        .statusCode(204);
+
+    //DELETE item
+    RestAssured.given()
+        .header(XOkapiHeaders.TENANT, tenant1)
+        .header("Content-Type", "application/json")
+        .delete("/meta-storage/config/modules/" + module.getId())
+        .then().statusCode(204);
+
+  }
+
+  @Test
+  public void testOaiConfigRU() {
+    RestAssured.given()
+        .header(XOkapiHeaders.TENANT, tenant1)
+        .get("/meta-storage/config/oai")
+        .then()
+        .statusCode(404);
+
+    JsonObject oaiConfig = new JsonObject()
+        .put("baseURL", "localhost")
+        .put("adminEmail", "admin@localhost")
+        .put("transformer", "transform-marc")
+        .put("repositoryName", "MetaStorage OAI server");
+
+    RestAssured.given()
+        .header(XOkapiHeaders.TENANT, tenant1)
+        .header("Content-Type", "application/json")
+        .body(oaiConfig.encode())
+        .put("/meta-storage/config/oai")
+        .then()
+        .statusCode(204);
+
+    RestAssured.given()
+        .header(XOkapiHeaders.TENANT, tenant1)
+        .get("/meta-storage/config/oai")
+        .then()
+        .statusCode(200)
+        .contentType("application/json")
+        .body(Matchers.is(oaiConfig.encode()));
+
+    oaiConfig.put("badProperty", "not allower");
+
+    RestAssured.given()
+        .header(XOkapiHeaders.TENANT, tenant1)
+        .header("Content-Type", "application/json")
+        .body(oaiConfig.encode())
+        .put("/meta-storage/config/oai")
+        .then()
+        .statusCode(400);
+
+  }
+
+  @Test
+  @java.lang.SuppressWarnings("squid:S5961")
   public void testOaiSimple() throws XMLStreamException, IOException, SAXException {
     createIsbnMatchKey();
 
@@ -1608,12 +1916,12 @@ public class MainVerticleTest {
         .then().statusCode(200)
         .contentType("text/xml")
         .extract().body().asString();
-    verifyOaiResponse(s, "ListRecords", identifiers, 0);
+    verifyOaiResponse(s, "ListRecords", identifiers, 0, null);
 
     createIssnMatchKey();
 
     String sourceId1 = "SOURCE-1";
-    JsonArray records1 = new JsonArray()
+    JsonArray ingest1a = new JsonArray()
         .add(new JsonObject()
             .put("localId", "S101")
             .put("payload", new JsonObject()
@@ -1627,6 +1935,8 @@ public class MainVerticleTest {
                                 .put("subfields", new JsonArray()
                                     .add(new JsonObject()
                                         .put("a", "S101a")
+                                    )
+                                    .add(new JsonObject()
                                         .put("b", "S101b")
                                     )
                                 )
@@ -1639,7 +1949,8 @@ public class MainVerticleTest {
                     .put("issn", new JsonArray().add("01"))
                 )
             )
-        )
+        );
+        JsonArray ingest1b = new JsonArray()
         .add(new JsonObject()
             .put("localId", "S102")
             .put("payload", new JsonObject()
@@ -1653,6 +1964,8 @@ public class MainVerticleTest {
                                 .put("subfields", new JsonArray()
                                     .add(new JsonObject()
                                         .put("a", "S102a")
+                                    )
+                                    .add(new JsonObject()
                                         .put("b", "S102b")
                                     )
                                 )
@@ -1666,7 +1979,115 @@ public class MainVerticleTest {
                 )
             )
         );
-    ingestRecords(records1, sourceId1);
+    //post records individually, otherwise the order of clusters and records in clusters is non-deterministic 
+    ingestRecords(ingest1a, sourceId1);
+    ingestRecords(ingest1b, sourceId1);
+
+    JsonArray expectedIssn = new JsonArray()
+      .add(new JsonObject()
+          .put("leader", "00914naa  2200337   450 ")
+          .put("fields", new JsonArray()
+                .add(new JsonObject()
+                  .put("999", new JsonObject()
+                    .put("ind1", "1")
+                    .put("ind2", "0")
+                    .put("subfields", new JsonArray()
+                      .add(new JsonObject().put("i", "DO_NOT_ASSERT"))
+                      .add(new JsonObject().put("m", "01"))
+                      .add(new JsonObject().put("l", "S101"))
+                      .add(new JsonObject().put("s", "SOURCE-1"))
+                      .add(new JsonObject().put("l", "S102"))
+                      .add(new JsonObject().put("s", "SOURCE-1"))
+                    )
+                  )
+                )
+                .add(new JsonObject()
+                  .put("999", new JsonObject()
+                      .put("ind1", " ")
+                      .put("ind2", " ")
+                      .put("subfields", new JsonArray()
+                          .add(new JsonObject()
+                            .put("a", "S101a")
+                          )
+                          .add(new JsonObject()
+                            .put("b", "S101b")
+                          )
+                          .add(new JsonObject()
+                            .put("a", "S102a")
+                          )
+                          .add(new JsonObject()
+                            .put("b", "S102b")
+                          )
+                      )
+                  )
+                )
+          )
+      );
+
+    JsonArray expectedIsbn = new JsonArray()
+      .add(new JsonObject()
+        .put("leader", "00914naa  2200337   450 ")
+        .put("fields", new JsonArray()
+            .add(new JsonObject()
+              .put("999", new JsonObject()
+                .put("ind1", "1")
+                .put("ind2", "0")
+                .put("subfields", new JsonArray()
+                  .add(new JsonObject().put("i", "DO_NOT_ASSERT"))
+                  .add(new JsonObject().put("m", "1"))
+                  .add(new JsonObject().put("l", "S101"))
+                  .add(new JsonObject().put("s", "SOURCE-1"))
+                )
+              )
+            )
+            .add(new JsonObject()
+                .put("999", new JsonObject()
+                    .put("ind1", " ")
+                    .put("ind2", " ")
+                    .put("subfields", new JsonArray()
+                        .add(new JsonObject()
+                            .put("a", "S101a")
+                        )
+                        .add(new JsonObject()
+                            .put("b", "S101b")
+                      )
+                    )
+                )
+            )
+        )
+      )
+      .add(new JsonObject()
+        .put("leader", "00914naa  2200337   450 ")
+        .put("fields", new JsonArray()
+          .add(new JsonObject()
+              .put("999", new JsonObject()
+              .put("ind1", "1")
+              .put("ind2", "0")
+              .put("subfields", new JsonArray()
+                  .add(new JsonObject().put("i", "DO_NOT_ASSERT"))
+                  .add(new JsonObject().put("m", "2"))
+                  .add(new JsonObject().put("m", "3"))
+                  .add(new JsonObject().put("l", "S102"))
+                  .add(new JsonObject().put("s", "SOURCE-1"))
+              )
+              )
+          )
+          .add(new JsonObject()
+              .put("999", new JsonObject()
+                  .put("ind1", " ")
+                  .put("ind2", " ")
+                  .put("subfields", new JsonArray()
+                      .add(new JsonObject()
+                          .put("a", "S102a")
+                      )
+                      .add(new JsonObject()
+                          .put("b", "S102b")
+                      )
+                  )
+              )
+          )
+        )
+      );
 
     s = RestAssured.given()
         .header(XOkapiHeaders.TENANT, TENANT_1)
@@ -1677,7 +2098,7 @@ public class MainVerticleTest {
         .then().statusCode(200)
         .contentType("text/xml")
         .extract().body().asString();
-    verifyOaiResponse(s, "ListRecords", identifiers, 1);
+    verifyOaiResponse(s, "ListRecords", identifiers, 1, expectedIssn);
 
     s = RestAssured.given()
         .header(XOkapiHeaders.TENANT, TENANT_1)
@@ -1688,7 +2109,7 @@ public class MainVerticleTest {
         .then().statusCode(200)
         .contentType("text/xml")
         .extract().body().asString();
-    verifyOaiResponse(s, "ListIdentifiers", identifiers, 1);
+    verifyOaiResponse(s, "ListIdentifiers", identifiers, 1, expectedIssn);
 
     s = RestAssured.given()
         .header(XOkapiHeaders.TENANT, TENANT_1)
@@ -1699,7 +2120,7 @@ public class MainVerticleTest {
         .then().statusCode(200)
         .contentType("text/xml")
         .extract().body().asString();
-    verifyOaiResponse(s, "GetRecord", identifiers, 1);
+    verifyOaiResponse(s, "GetRecord", identifiers, 1, expectedIssn);
 
     RestAssured.given()
         .header(XOkapiHeaders.TENANT, TENANT_1)
@@ -1720,9 +2141,122 @@ public class MainVerticleTest {
         .then().statusCode(200)
         .contentType("text/xml")
         .extract().body().asString();
-    verifyOaiResponse(s, "ListRecords", identifiers, 2);
+    verifyOaiResponse(s, "ListRecords", identifiers, 2, expectedIsbn);
 
-    JsonArray records2 = new JsonArray()
+
+    //configure transformer
+
+    CodeModuleEntity module = new CodeModuleEntity(
+        "marc-transformer", 
+        "http://localhost:" + CODE_MODULES_PORT + "/lib/marc-transformer.mjs", 
+        "transform");
+
+    //POST module configuration
+    RestAssured.given()
+        .header(XOkapiHeaders.TENANT, tenant1)
+        .header("Content-Type", "application/json")
+        .body(module.asJson().encode())
+        .post("/meta-storage/config/modules")
+        .then().statusCode(201)
+        .contentType("application/json")
+        .body(Matchers.is(module.asJson().encode()));
+
+    //PUT oai configuration
+
+    JsonObject oaiConfig = new JsonObject()
+        .put("transformer", "marc-transformer");;
+
+    RestAssured.given()
+        .header(XOkapiHeaders.TENANT, tenant1)
+        .header("Content-Type", "application/json")
+        .body(oaiConfig.encode())
+        .put("/meta-storage/config/oai")
+        .then()
+        .statusCode(204);
+
+    JsonArray expectedIssn2 = new JsonArray()
+        .add(new JsonObject()
+            .put("leader", "new leader")
+            .put("fields", new JsonArray()
+                  .add(new JsonObject()
+                    .put("999", new JsonObject()
+                        .put("ind1", " ")
+                        .put("ind2", " ")
+                        .put("subfields", new JsonArray()
+                            .add(new JsonObject()
+                              .put("a", "S101a")
+                            )
+                            .add(new JsonObject()
+                              .put("b", "S101b")
+                            )
+                        )
+                    )
+                  )
+                  .add(new JsonObject()
+                    .put("999", new JsonObject()
+                        .put("ind1", "1")
+                        .put("ind2", "0")
+                        .put("subfields", new JsonArray()
+                        .add(new JsonObject().put("i", "DO_NOT_ASSERT"))
+                        .add(new JsonObject().put("l", "S101"))
+                        .add(new JsonObject().put("s", "SOURCE-1"))
+                        )
+                    )
+                  )
+                  .add(new JsonObject()
+                    .put("999", new JsonObject()
+                        .put("ind1", " ")
+                        .put("ind2", " ")
+                        .put("subfields", new JsonArray()
+                            .add(new JsonObject()
+                              .put("a", "S102a")
+                            )
+                            .add(new JsonObject()
+                              .put("b", "S102b")
+                            )
+                        )
+                    )
+                  )
+                  .add(new JsonObject()
+                    .put("999", new JsonObject()
+                      .put("ind1", "1")
+                      .put("ind2", "0")
+                      .put("subfields", new JsonArray()
+                        .add(new JsonObject().put("i", "DO_NOT_ASSERT"))
+                        .add(new JsonObject().put("l", "S102"))
+                        .add(new JsonObject().put("s", "SOURCE-1"))
+                      )
+                    )
+                  )
+            )
+        );
+
+
+    s = RestAssured.given()
+        .header(XOkapiHeaders.TENANT, tenant1)
+        .param("set", "issn")
+        .param("verb", "ListRecords")
+        .param("metadataPrefix", "marcxml")
+        .get("/meta-storage/oai")
+        .then().statusCode(200)
+        .contentType("text/xml")
+        .extract().body().asString();
+    verifyOaiResponse(s, "ListRecords", identifiers, 1, expectedIssn2);
+
+    //PUT disable the transformer
+
+    JsonObject oaiConfigOff = new JsonObject()
+      .put("transformer", "");;
+
+    RestAssured.given()
+        .header(XOkapiHeaders.TENANT, tenant1)
+        .header("Content-Type", "application/json")
+        .body(oaiConfigOff.encode())
+        .put("/meta-storage/config/oai")
+        .then()
+        .statusCode(204);
+
+    JsonArray ingest2 = new JsonArray()
         .add(new JsonObject()
             .put("localId", "S103")
             .put("payload", new JsonObject()
@@ -1737,7 +2271,8 @@ public class MainVerticleTest {
                 )
             )
         );
-    ingestRecords(records2, sourceId1);
+    ingestRecords(ingest2, sourceId1);
+
 
     s = RestAssured.given()
         .header(XOkapiHeaders.TENANT, TENANT_1)
@@ -1745,10 +2280,11 @@ public class MainVerticleTest {
         .param("verb", "ListRecords")
         .param("metadataPrefix", "marcxml")
         .get("/meta-storage/oai")
-        .then().statusCode(200)
+        .then()
+        .statusCode(200)
         .contentType("text/xml")
         .extract().body().asString();
-    verifyOaiResponse(s, "ListRecords", identifiers, 2);
+    verifyOaiResponse(s, "ListRecords", identifiers, 2, null);
 
     s = RestAssured.given()
         .header(XOkapiHeaders.TENANT, TENANT_1)
@@ -1759,7 +2295,7 @@ public class MainVerticleTest {
         .then().statusCode(200)
         .contentType("text/xml")
         .extract().body().asString();
-    verifyOaiResponse(s, "ListIdentifiers", identifiers, 2);
+    verifyOaiResponse(s, "ListIdentifiers", identifiers, 2, null);
 
     RestAssured.given()
         .header(XOkapiHeaders.TENANT, TENANT_1)
@@ -1812,6 +2348,13 @@ public class MainVerticleTest {
             )
 
         );
+
+      
+    JsonArray expectedOAI = new JsonArray()
+      .add(new JsonObject().put("leader", "00914naa  2200337   450 "))
+      .add(new JsonObject().put("leader", "00914naa  2200337   450 "))
+      .add(new JsonObject().put("leader", "00914naa  2200337   450 "));
+
     ingestRecords(records1, sourceId1);
     String time2 = Instant.now(Clock.systemUTC()).truncatedTo(ChronoUnit.SECONDS).toString();
     TimeUnit.SECONDS.sleep(1);
@@ -1827,7 +2370,7 @@ public class MainVerticleTest {
         .then().statusCode(200)
         .contentType("text/xml")
         .extract().body().asString();
-    verifyOaiResponse(s, "ListRecords", identifiers, 3);
+    verifyOaiResponse(s, "ListRecords", identifiers, 3, null);
 
     s = RestAssured.given()
         .header(XOkapiHeaders.TENANT, TENANT_1)
@@ -1838,7 +2381,7 @@ public class MainVerticleTest {
         .then().statusCode(200)
         .contentType("text/xml")
         .extract().body().asString();
-    verifyOaiResponse(s, "ListRecords", identifiers, 0);
+    verifyOaiResponse(s, "ListRecords", identifiers, 0, null);
 
     s = RestAssured.given()
         .header(XOkapiHeaders.TENANT, TENANT_1)
@@ -1849,7 +2392,7 @@ public class MainVerticleTest {
         .then().statusCode(200)
         .contentType("text/xml")
         .extract().body().asString();
-    verifyOaiResponse(s, "ListRecords", identifiers, 0);
+    verifyOaiResponse(s, "ListRecords", identifiers, 0, null);
 
     ingestRecords(records1, sourceId1);
     s = RestAssured.given()
@@ -1861,7 +2404,7 @@ public class MainVerticleTest {
         .then().statusCode(200)
         .contentType("text/xml")
         .extract().body().asString();
-    verifyOaiResponse(s, "ListRecords", identifiers, 3);
+    verifyOaiResponse(s, "ListRecords", identifiers, 3, null);
 
     RestAssured.given()
         .header(XOkapiHeaders.TENANT, TENANT_1)
@@ -1881,6 +2424,7 @@ public class MainVerticleTest {
             .put("localId", "S103")
             .put("delete", true)
         );
+
     ingestRecords(records2, sourceId1);
 
     s = RestAssured.given()
@@ -1892,7 +2436,7 @@ public class MainVerticleTest {
         .then().statusCode(200)
         .contentType("text/xml")
         .extract().body().asString();
-    verifyOaiResponse(s, "ListRecords", identifiers, 1);
+    verifyOaiResponse(s, "ListRecords", identifiers, 1, null);
 
     TimeUnit.SECONDS.sleep(1);
     String time5 = Instant.now(Clock.systemUTC()).truncatedTo(ChronoUnit.SECONDS).toString();
@@ -1916,7 +2460,7 @@ public class MainVerticleTest {
         .then().statusCode(200)
         .contentType("text/xml")
         .extract().body().asString();
-    verifyOaiResponse(s, "ListRecords", identifiers, 2);
+    verifyOaiResponse(s, "ListRecords", identifiers, 2, null);
 
     RestAssured.given()
         .header(XOkapiHeaders.TENANT, TENANT_1)
@@ -1959,7 +2503,7 @@ public class MainVerticleTest {
         .extract().body().asString();
     int iter;
     for (iter = 0; iter < 10; iter++) {
-      String token = verifyOaiResponse(s, "ListRecords", identifiers, -1);
+      String token = verifyOaiResponse(s, "ListRecords", identifiers, -1, null);
       if (token == null) {
         break;
       }

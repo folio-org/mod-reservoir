@@ -1,0 +1,22 @@
+{
+  "description": "MetaStorage code module (extensibility)",
+  "type": "object",
+  "properties": {
+    "id": {
+      "type": "string",
+      "description" : "local module identifier"
+    },
+    "url": {
+      "type": "string",
+      "description": "HTTP URL of the module (e.g GitHub raw/usercontent)"
+    },
+    "function": {
+      "type": "string",
+      "description": "name of the exported function to be invoked, with JSONObjectString -> JSONObjectString signature"
+    }
+  },
+  "additionalProperties": false,
+  "required": [
+    "id", "url", "function"
+  ]
+}

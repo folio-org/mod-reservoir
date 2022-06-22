@@ -25,6 +25,9 @@ import java.util.UUID;
 import java.util.concurrent.atomic.AtomicInteger;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.folio.metastorage.module.Module;
+import org.folio.metastorage.module.ModuleCache;
+import org.folio.metastorage.server.entity.ClusterBuilder;
 import org.folio.metastorage.util.JsonToMarcXml;
 import org.folio.metastorage.util.MarcInJsonUtil;
 
@@ -199,6 +202,43 @@ public final class OaiService {
   /**
    * Construct metadata record XML string.
    *
+   * <p>999 ind1=1 ind2=0 identifies individual member records, one for each. 
+   * Subfields: 
+   *  $i cluster UUID
+   *  $m match values (multiple)
+   *  $l local identifier 
+   *  $s source identifiers
+   *
+   *
+   * @param rowSet global_records rowSet (empty if no record entries: deleted)
+   * @param clusterId cluster identifier that this record is part of
+   * @param matchValues match values for this cluster
+   * @return metadata record string; null if it's deleted record
+   */
+  static Future<String> processMetadata(RoutingContext ctx, Storage storage, 
+      RowSet<Row> rowSet, UUID clusterId, List<String> matchValues) {
+    if (rowSet.size() == 0) {
+      return Future.succeededFuture(null); //deleted record
+    }
+    ClusterBuilder cb = new ClusterBuilder(clusterId)
+        .records(rowSet)
+        .matchValues(matchValues);
+    
+    return getTransformerModule(storage, ctx)
+      .compose(module -> {
+        if (module == null) {
+          return Future.succeededFuture(getMetadata(rowSet, clusterId, matchValues));
+        }
+        return module.execute(cb.build())
+            .map(processed -> 
+    "    <metadata>\n" + JsonToMarcXml.convert(processed) + "\n    </metadata>\n");
+      });
+  }
+  
+
+  /**
+   * Construct metadata record XML string.
+   *
    * <p>999 ind1=1 ind2=0 has identifiers for the record. $i cluster UUID; multiple $m for each
    * match value; Multiple $l, $s pairs for local identifier and source identifiers.
    *
@@ -210,13 +250,13 @@ public final class OaiService {
    * @return metadata record string; null if it's deleted record
    */
   static String getMetadata(RowSet<Row> rowSet, UUID clusterId, List<String> matchValues) {
-    RowIterator<Row> iterator = rowSet.iterator();
-    JsonObject combinedMarc = null;
     JsonArray identifiersField = new JsonArray();
     identifiersField.add(new JsonObject().put("i", clusterId.toString()));
     for (String matchValue : matchValues) {
       identifiersField.add(new JsonObject().put("m", matchValue));
     }
+    JsonObject combinedMarc = null;
+    RowIterator<Row> iterator = rowSet.iterator();
     while (iterator.hasNext()) {
       Row row = iterator.next();
       JsonObject thisMarc = row.getJsonObject("payload").getJsonObject("marc");
@@ -231,9 +271,9 @@ public final class OaiService {
         }
       }
       identifiersField.add(new JsonObject()
-          .put("l", row.getString("local_id"))
-          .put("s", row.getString("source_id"))
-      );
+          .put("l", row.getString("local_id")));
+      identifiersField.add(new JsonObject()
+          .put("s", row.getString("source_id")));
     }
     if (combinedMarc == null) {
       return null; // a deleted record
@@ -243,14 +283,32 @@ public final class OaiService {
     return "    <metadata>\n" + xmlMetadata + "\n    </metadata>\n";
   }
 
-  static Future<String> getXmlRecordMetadata(Storage storage, SqlConnection conn, UUID clusterId,
-      List<String> matchValues) {
+  static Future<String> getXmlRecordMetadata(RoutingContext ctx, Storage storage, 
+      SqlConnection conn, UUID clusterId, List<String> matchValues) {
     String q = "SELECT * FROM " + storage.getGlobalRecordTable()
         + " LEFT JOIN " + storage.getClusterRecordTable() + " ON record_id = id "
         + " WHERE cluster_id = $1";
     return conn.preparedQuery(q)
         .execute(Tuple.of(clusterId))
-        .map(rowSet -> getMetadata(rowSet, clusterId, matchValues));
+        .compose(rowSet -> processMetadata(ctx, storage, rowSet, clusterId, matchValues));
+  }
+
+  static Future<Module> getTransformerModule(Storage storage, RoutingContext ctx) {
+    return storage.selectOaiConfig()
+      .compose(oaiCfg -> { 
+        if (oaiCfg != null) { 
+          return storage.selectCodeModuleEntity(oaiCfg.getString("transformer"))
+              .compose(module -> {
+                if (module != null) {
+                  return ModuleCache.getInstance().lookup(ctx, module.asJson());
+                } else {
+                  return Future.succeededFuture(null);
+                }
+              });
+        } else {
+          return Future.succeededFuture(null);
+        }
+      });
   }
 
   static Future<List<String>> getClusterValues(Storage storage, SqlConnection conn,
@@ -265,8 +323,8 @@ public final class OaiService {
         });
   }
 
-  static Future<String> getXmlRecord(Storage storage, SqlConnection conn, UUID clusterId,
-      LocalDateTime datestamp, String oaiSet, boolean withMetadata) {
+  static Future<String> getXmlRecord(RoutingContext ctx, Storage storage, SqlConnection conn, 
+      UUID clusterId, LocalDateTime datestamp, String oaiSet, boolean withMetadata) {
     Future<List<String>> clusterValues = Future.succeededFuture(Collections.emptyList());
     if (withMetadata) {
       clusterValues = getClusterValues(storage, conn, clusterId);
@@ -274,7 +332,7 @@ public final class OaiService {
     // When false withMetadata could optimize and not join with bibRecordTable
     String begin = withMetadata ? "    <record>\n" : "";
     String end = withMetadata ? "    </record>\n" : "";
-    return clusterValues.compose(values -> getXmlRecordMetadata(storage, conn, clusterId,
+    return clusterValues.compose(values -> getXmlRecordMetadata(ctx, storage, conn, clusterId,
         values)
         .map(metadata ->
             begin
@@ -324,7 +382,7 @@ public final class OaiService {
               }
             }
             cnt.incrementAndGet();
-            getXmlRecord(storage, conn, row.getUUID("cluster_id"), datestamp,
+            getXmlRecord(ctx, storage, conn, row.getUUID("cluster_id"), datestamp,
                 row.getString("match_key_config_id"), withMetadata)
                 .onSuccess(xmlRecord ->
                     response.write(xmlRecord).onComplete(x -> stream.resume())
@@ -363,7 +421,7 @@ public final class OaiService {
                 throw OaiException.idDoesNotExist(identifier);
               }
               Row row = iterator.next();
-              return getXmlRecord(storage, conn,
+              return getXmlRecord(ctx, storage, conn,
                   row.getUUID("cluster_id"), row.getLocalDateTime("datestamp"),
                   row.getString("match_key_config_id"), true)
                   .map(xmlRecord -> {

@@ -1,0 +1,23 @@
+{
+  "description": "List of MetaStorage code modules",
+  "type": "object",
+  "properties": {
+    "modules": {
+      "description": "List of code modules",
+      "type": "array",
+      "items": {
+        "type": "object",
+        "$ref": "codeModule.json"
+      }
+    },
+    "resultInfo": {
+      "description": "Common result set information",
+      "type": "object",
+      "$ref" : "resultInfo.json"
+    }
+  },
+  "additionalProperties": false,
+  "required": [
+    "modules"
+  ]
+}

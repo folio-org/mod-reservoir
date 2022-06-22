@@ -32,6 +32,8 @@ import java.util.function.Function;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.folio.metastorage.matchkey.MatchKeyMethod;
+import org.folio.metastorage.server.entity.ClusterBuilder;
+import org.folio.metastorage.server.entity.CodeModuleEntity;
 import org.folio.metastorage.util.LargeJsonReadStream;
 import org.folio.metastorage.util.ReadStreamConsumer;
 import org.folio.metastorage.util.SourceId;
@@ -53,6 +55,8 @@ public class Storage {
   final String clusterRecordTable;
   final String clusterValueTable;
   final String clusterMetaTable;
+  final String moduleTable;
+  final String oaiConfigTable;
   final String oaiPmhClientTable;
   private final String tenant;
   static int sqlStreamFetchSize = 50;
@@ -71,6 +75,8 @@ public class Storage {
     this.clusterRecordTable = pool.getSchema() + ".cluster_records";
     this.clusterValueTable = pool.getSchema() + ".cluster_values";
     this.clusterMetaTable = pool.getSchema() + ".cluster_meta";
+    this.moduleTable = pool.getSchema() + ".module";
+    this.oaiConfigTable = pool.getSchema() + ".oai_config";
     this.oaiPmhClientTable = pool.getSchema() + ".oai_pmh_clients";
   }
 
@@ -98,6 +104,10 @@ public class Storage {
     return clusterValueTable;
   }
 
+  public String getModuleTable() {
+    return moduleTable;
+  }
+  
   public String getOaiPmhClientTable() {
     return oaiPmhClientTable;
   }
@@ -151,6 +161,13 @@ public class Storage {
                 + clusterValueTable + "(match_key_config_id, match_value)",
             "CREATE INDEX IF NOT EXISTS cluster_value_cluster_idx ON "
                 + clusterValueTable + "(cluster_id)",
+            CREATE_IF_NO_EXISTS + moduleTable
+                + "(id VARCHAR NOT NULL PRIMARY KEY,"
+                + " url VARCHAR, "
+                + " function VARCHAR)",
+            CREATE_IF_NO_EXISTS + oaiConfigTable
+                + "(id VARCHAR NOT NULL PRIMARY KEY,"
+                + " config JSONB NOT NULL)",
             CREATE_IF_NO_EXISTS + oaiPmhClientTable
                 + "(id VARCHAR NOT NULL PRIMARY KEY,"
                 + " config JSONB, job JSONB, stop BOOLEAN, owner UUID)"
@@ -450,14 +467,6 @@ public class Storage {
     return pool.withConnection(this::getAvailableMatchConfigs);
   }
 
-  static JsonObject handleRecord(Row row) {
-    return new JsonObject()
-        .put("globalId", row.getUUID("id"))
-        .put("localId", row.getString("local_id"))
-        .put("sourceId", row.getString("source_id"))
-        .put("payload", row.getJsonObject("payload"));
-  }
-
   /**
    * Delete global records and update timestamp.
    * @param sqlWhere SQL WHERE clause
@@ -496,7 +505,7 @@ public class Storage {
       from = from + " WHERE " + sqlWhere;
     }
     return streamResult(ctx, null, from, sqlOrderBy, "items",
-        row -> Future.succeededFuture(handleRecord(row)));
+        row -> Future.succeededFuture(ClusterBuilder.encodeRecord(row)));
   }
 
   /**
@@ -517,27 +526,20 @@ public class Storage {
             + " WHERE " + clusterRecordTable + ".cluster_id = $1")
         .execute(Tuple.of(clusterId))
         .map(rowSet -> {
-          JsonArray records = new JsonArray();
-          rowSet.forEach(row -> records.add(handleRecord(row)));
-          JsonObject o = new JsonObject()
-              .put("clusterId", clusterId.toString())
-              .put("records", records);
+          ClusterBuilder cb = new ClusterBuilder(clusterId);
           RowIterator<Row> iterator = rowSet.iterator();
           if (iterator.hasNext()) {
             Row row = iterator.next();
-            o.put("datestamp", row.getLocalDateTime("datestamp").atZone(ZoneOffset.UTC).toString());
+            cb.datestamp(row.getLocalDateTime("datestamp"));
           }
-          return o;
+          cb.records(rowSet);
+          return cb;
         })
-        .compose(object -> connection.preparedQuery("SELECT * FROM " + clusterValueTable
+        .compose(cb -> connection.preparedQuery("SELECT * FROM " + clusterValueTable
               + " WHERE cluster_id = $1")
             .execute(Tuple.of(clusterId))
-            .map(rowSet -> {
-              JsonArray values = new JsonArray();
-              rowSet.forEach(row -> values.add(row.getString("match_value")));
-              object.put("matchValues", values);
-              return object;
-            }));
+            .map(cb::matchValues))
+        .map(ClusterBuilder::build);
   }
 
   /**
@@ -573,7 +575,7 @@ public class Storage {
           if (!iterator.hasNext()) {
             return null;
           }
-          return handleRecord(iterator.next());
+          return ClusterBuilder.encodeRecord(iterator.next());
         });
   }
 
@@ -808,6 +810,127 @@ public class Storage {
         )
     );
   }
+
+  //code modules, refactor to a seperate class
+
+  /**
+   * Insert code module config into storage.
+   * @param module code module entity
+   * @return async result
+   */
+  public Future<Void> insertCodeModuleEntity(CodeModuleEntity module) {
+
+    return pool.preparedQuery(
+        "INSERT INTO " + moduleTable + " (id, url, function)"
+            + " VALUES ($1, $2, $3)")
+        .execute(module.asTuple())
+        .mapEmpty();
+  }
+
+  /**
+   * Update code module config in storage.
+   * @param module code module entity
+   * @return async result with TRUE if updated; FALSE if not found
+   */
+  public Future<Boolean> updateCodeModuleEntity(CodeModuleEntity module) {
+
+    return pool.preparedQuery(
+            "UPDATE " + moduleTable
+                + " SET url = $2, function = $3 WHERE id = $1")
+        .execute(module.asTuple())
+        .map(res -> res.rowCount() > 0);
+  }
+
+  /**
+   * Select code module entity from storage.
+   * @param id code module id; null takes any first config
+   * @return code module entity if found; null if not found
+   */
+  public Future<CodeModuleEntity> selectCodeModuleEntity(String id) {
+    String sql = "SELECT * FROM " + moduleTable;
+    List<String> tupleList = new ArrayList<>();
+    if (id != null) {
+      sql = sql + " WHERE id = $1";
+      tupleList.add(id);
+    }
+    return pool.preparedQuery(sql)
+        .execute(Tuple.from(tupleList))
+        .map(res -> {
+          RowIterator<Row> iterator = res.iterator();
+          if (!iterator.hasNext()) {
+            return null;
+          }
+          Row row = iterator.next();
+          return new CodeModuleEntity.CodeModuleBuilder(row).build();
+        });
+  }
+
+  /**
+   * Delete code module entity.
+   * @param id code module entity id
+   * @return TRUE if deleted; FALSE if not found
+   */
+  public Future<Boolean> deleteCodeModuleEntity(String id) {
+    return pool.withConnection(connection ->
+        connection.preparedQuery(
+                "DELETE FROM " + moduleTable + " WHERE id = $1")
+            .execute(Tuple.of(id))
+            .map(res -> res.rowCount() > 0));
+  }
+
+  /**
+   * Select code module entities keys.
+   * @param ctx routing context
+   * @param sqlWhere the SQL WHERE clause
+   * @param sqlOrderBy the SQL ORDER BY clause
+   * @return async result
+   */
+  public Future<Void> selectCodeModuleEntities(RoutingContext ctx, 
+      String sqlWhere, String sqlOrderBy) {
+    String from = moduleTable;
+    if (sqlWhere != null) {
+      from = from + " WHERE " + sqlWhere;
+    }
+    return streamResult(ctx, null, from, sqlOrderBy, "modules",
+        row -> Future.succeededFuture(CodeModuleEntity.CodeModuleBuilder.asJson(row)));
+  }
+
+  //end modules
+  //start oai config
+
+  /**
+   * Update OAI config.
+   * @param config OAI config
+   * @return async result with TRUE if updated; FALSE if not found
+   */
+  public Future<Boolean> updateOaiConfig(JsonObject config) {
+
+    return pool.preparedQuery(
+      "INSERT INTO " + oaiConfigTable + " (id, config)"
+          + " VALUES ($1, $2) ON CONFLICT(id) DO UPDATE SET config = $2")
+      .execute(Tuple.of("1", config))
+      .mapEmpty();
+  }
+
+  /**
+   * Select OAI config.
+   * @return OAI config
+   */
+  public Future<JsonObject> selectOaiConfig() {
+    String sql = "SELECT * FROM " + oaiConfigTable + " WHERE id = '1'";
+
+    return pool.preparedQuery(sql)
+        .execute()
+        .map(res -> {
+          RowIterator<Row> iterator = res.iterator();
+          if (!iterator.hasNext()) {
+            return null;
+          }
+          Row row = iterator.next();
+          return row.getJsonObject("config");
+        });
+  }
+  // end oai config
 
   private static JsonObject copyWithoutNulls(JsonObject obj) {
     JsonObject n = new JsonObject();

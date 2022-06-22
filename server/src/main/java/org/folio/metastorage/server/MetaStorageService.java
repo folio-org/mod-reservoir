@@ -16,6 +16,7 @@ import java.util.function.Function;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.folio.metastorage.matchkey.MatchKeyMethodFactory;
+import org.folio.metastorage.server.entity.CodeModuleEntity;
 import org.folio.metastorage.util.LargeJsonReadStream;
 import org.folio.okapi.common.HttpResponse;
 import org.folio.tlib.RouterCreator;
@@ -27,6 +28,8 @@ public class MetaStorageService implements RouterCreator, TenantInitHooks {
 
   private static final Logger log = LogManager.getLogger(MetaStorageService.class);
   final Vertx vertx;
+  private static final String ENTITY_ID_NOT_FOUND_PATTERN = "%s %s not found";
+  private static final String MODULE_LABEL = "Module";
 
   public MetaStorageService(Vertx vertx) {
     this.vertx = vertx;
@@ -262,6 +265,115 @@ public class MetaStorageService implements RouterCreator, TenantInitHooks {
         });
   }
 
+  //start modules, move to anothe class
+
+  Future<Void> postCodeModule(RoutingContext ctx) {
+    Storage storage = new Storage(ctx);
+    CodeModuleEntity e = new CodeModuleEntity.CodeModuleBuilder(ctx.getBodyAsJson()).build();
+    return storage.insertCodeModuleEntity(e).onSuccess(res ->
+        HttpResponse.responseJson(ctx, 201)
+            .putHeader("Location", ctx.request().absoluteURI() + "/" + e.getId())
+            .end(e.asJson().encode())
+    );
+  }
+
+  Future<Void> getCodeModule(RoutingContext ctx) {
+    RequestParameters params = ctx.get(ValidationHandler.REQUEST_CONTEXT_KEY);
+    String id = Util.getParameterString(params.pathParameter("id"));
+    Storage storage = new Storage(ctx);
+    return storage.selectCodeModuleEntity(id)
+        .onSuccess(e -> {
+          if (e == null) {
+            HttpResponse.responseError(ctx, 404, 
+                String.format(ENTITY_ID_NOT_FOUND_PATTERN, MODULE_LABEL, id));
+            return;
+          }
+          HttpResponse.responseJson(ctx, 200).end(e.asJson().encode());
+        })
+        .mapEmpty();
+  }
+
+  Future<Void> putCodeModule(RoutingContext ctx) {
+    Storage storage = new Storage(ctx);
+    CodeModuleEntity e = new CodeModuleEntity.CodeModuleBuilder(ctx.getBodyAsJson()).build();
+    return storage.updateCodeModuleEntity(e)
+        .onSuccess(res -> {
+          if (Boolean.FALSE.equals(res)) {
+            HttpResponse.responseError(ctx, 404, 
+                String.format(ENTITY_ID_NOT_FOUND_PATTERN, MODULE_LABEL, e.getId()));
+            return;
+          }
+          ctx.response().setStatusCode(204).end();
+        })
+        .mapEmpty();
+  }
+
+  Future<Void> deleteCodeModule(RoutingContext ctx) {
+    RequestParameters params = ctx.get(ValidationHandler.REQUEST_CONTEXT_KEY);
+    String id = Util.getParameterString(params.pathParameter("id"));
+    Storage storage = new Storage(ctx);
+    return storage.deleteCodeModuleEntity(id)
+        .onSuccess(res -> {
+          if (Boolean.FALSE.equals(res)) {
+            HttpResponse.responseError(ctx, 404, 
+                String.format(ENTITY_ID_NOT_FOUND_PATTERN, MODULE_LABEL, id));
+            return;
+          }
+          ctx.response().setStatusCode(204).end();
+        })
+        .mapEmpty();
+  }
+
+  Future<Void> getCodeModules(RoutingContext ctx) {
+    PgCqlQuery pgCqlQuery = createPgCqlQuery();
+    pgCqlQuery.addField(
+        new PgCqlField("id", PgCqlField.Type.TEXT));
+    pgCqlQuery.addField(
+        new PgCqlField("function", PgCqlField.Type.TEXT));
+
+    RequestParameters params = ctx.get(ValidationHandler.REQUEST_CONTEXT_KEY);
+    pgCqlQuery.parse(Util.getQueryParameter(params));
+
+    Storage storage = new Storage(ctx);
+    return storage.selectCodeModuleEntities(ctx, pgCqlQuery.getWhereClause(),
+        pgCqlQuery.getOrderByClause());
+  }
+
+
+  //end modules
+
+  //oai config
+
+  Future<Void> getOaiConfig(RoutingContext ctx) {
+    Storage storage = new Storage(ctx);
+    return storage.selectOaiConfig()
+        .onSuccess(res -> {
+          if (res == null) {
+            HttpResponse.responseError(ctx, 404, "OAI config not found");
+            return;
+          }
+          HttpResponse.responseJson(ctx, 200).end(res.encode());
+        })
+        .mapEmpty();
+  }
+
+  Future<Void> putOaiConfig(RoutingContext ctx) {
+    Storage storage = new Storage(ctx);
+    JsonObject request = ctx.getBodyAsJson();
+    return storage.updateOaiConfig(request)
+        .onSuccess(res -> {
+          if (Boolean.FALSE.equals(res)) {
+            HttpResponse.responseError(ctx, 400, "OAI config not updated");
+            return;
+          }
+          ctx.response().setStatusCode(204).end();
+        })
+        .mapEmpty();
+  }
+
+
+  //end oai config
+
   static void failHandler(RoutingContext ctx) {
     Throwable t = ctx.failure();
     // both semantic errors and syntax errors are from same pile ... Choosing 400 over 422.
@@ -319,6 +431,13 @@ public class MetaStorageService implements RouterCreator, TenantInitHooks {
           add(routerBuilder, "getClusters", this::getClusters);
           add(routerBuilder, "getCluster", this::getCluster);
           add(routerBuilder, "oaiService", OaiService::get);
+          add(routerBuilder, "postCodeModule", this::postCodeModule);
+          add(routerBuilder, "getCodeModule", this::getCodeModule);
+          add(routerBuilder, "putCodeModule", this::putCodeModule);
+          add(routerBuilder, "deleteCodeModule", this::deleteCodeModule);
+          add(routerBuilder, "getCodeModules", this::getCodeModules);
+          add(routerBuilder, "getOaiConfig", this::getOaiConfig);
+          add(routerBuilder, "putOaiConfig", this::putOaiConfig);
           add(routerBuilder, "postOaiPmhClient", oaiPmhClient::post);
           add(routerBuilder, "getOaiPmhClient", oaiPmhClient::get);
           add(routerBuilder, "putOaiPmhClient", oaiPmhClient::put);

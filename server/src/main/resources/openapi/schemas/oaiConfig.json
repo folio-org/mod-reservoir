@@ -1,0 +1,23 @@
+{
+  "description": "OAI configuration",
+  "type": "object",
+  "properties": {
+    "transformer": {
+      "type": "string",
+      "description" : "OAI server response transformer module ID"
+    },
+    "repositoryName": {
+      "type": "string",
+      "description": "OAI repository name"
+    },
+    "baseURL": {
+      "type": "string",
+      "description": "OAI repository base URL"
+    },
+    "adminEmail": {
+      "type": "string",
+      "description": "OAI repository admin email"
+    }
+  },
+  "additionalProperties": false
+}
