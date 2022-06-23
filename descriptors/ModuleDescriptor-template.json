@@ -255,8 +255,8 @@
           ],
           "pathPattern": "/meta-storage/pmh-clients",
           "permissionsRequired": [
-	    "meta-storage-pmh-clients.post"
-	  ]
+            "meta-storage-pmh-clients.post"
+          ]
         },
         {
           "methods": [
@@ -264,8 +264,8 @@
           ],
           "pathPattern": "/meta-storage/pmh-clients",
           "permissionsRequired": [
-	    "meta-storage-pmh-clients.collection.get"
-	  ]
+            "meta-storage-pmh-clients.collection.get"
+          ]
         },
         {
           "methods": [
@@ -273,8 +273,8 @@
           ],
           "pathPattern": "/meta-storage/pmh-clients/{id}",
           "permissionsRequired": [
-	    "meta-storage-pmh-clients.item.get"
-	  ]
+            "meta-storage-pmh-clients.item.get"
+          ]
         },
         {
           "methods": [
@@ -282,8 +282,8 @@
           ],
           "pathPattern": "/meta-storage/pmh-clients/{id}",
           "permissionsRequired": [
-	    "meta-storage-pmh-clients.item.put"
-	  ]
+            "meta-storage-pmh-clients.item.put"
+          ]
         },
         {
           "methods": [
@@ -291,8 +291,8 @@
           ],
           "pathPattern": "/meta-storage/pmh-clients/{id}",
           "permissionsRequired": [
-	    "meta-storage-pmh-clients.item.delete"
-	  ]
+            "meta-storage-pmh-clients.item.delete"
+          ]
         },
         {
           "methods": [
@@ -300,8 +300,8 @@
           ],
           "pathPattern": "/meta-storage/pmh-clients/{id}/start",
           "permissionsRequired": [
-	    "meta-storage-pmh-clients.start"
-	  ]
+            "meta-storage-pmh-clients.start"
+          ]
         },
         {
           "methods": [
@@ -309,8 +309,8 @@
           ],
           "pathPattern": "/meta-storage/pmh-clients/{id}/stop",
           "permissionsRequired": [
-	    "meta-storage-pmh-clients.stop"
-	  ]
+            "meta-storage-pmh-clients.stop"
+          ]
         },
         {
           "methods": [
@@ -318,8 +318,8 @@
           ],
           "pathPattern": "/meta-storage/pmh-clients/{id}/status",
           "permissionsRequired": [
-	    "meta-storage-pmh-clients.status"
-	  ]
+            "meta-storage-pmh-clients.status"
+          ]
         }
       ]
     }
@@ -541,11 +541,12 @@
       "displayName": "meta storage - all permissions",
       "description": "All permissions",
       "subPermissions": [
-        "meta-storage-config-oai.all",
+        "meta-storage-clusters.all",
         "meta-storage-config-matchkeys.all",
         "meta-storage-config-modules.all",
-        "meta-storage-records.all",
-        "meta-storage-clusters.all"
+        "meta-storage-config-oai.all",
+        "meta-storage-pmh-clients.all",
+        "meta-storage-records.all"
       ]
     }
   ],
