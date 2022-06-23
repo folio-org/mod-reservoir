@@ -53,7 +53,7 @@ To see list options use `--help`. The client uses environment variables
 `OKAPI_URL`, `OKAPI_TENANT`, `OKAPI_TOKEN` for Okapi URL, tenant and
 token respectively.
 
-Before you can push record, you'll want to prepare the database for the
+Before you can push records, you'll want to prepare the database for the
 tenant. If Okapi is used, then the install command will do it, but if you
 are running mod-meta-storage module on its own, you must do that manually.
 
@@ -105,11 +105,11 @@ post. Example with identifier `us-mdbj` below:
     curl -HX-Okapi-Tenant:$OKAPI_TENANT -HContent-Type:application/json -XPOST \
        -d@oai-us-mdbj.json $OKAPI_URL/meta-storage/pmh-clients
 
-In this case all ingested records from the client is given the source identifier `US-MDBJ`.
+In this case all ingested records from the client are given the source identifier `US-MDBJ`.
 
 See [schema](server/src/main/resources/openapi/schemas/oai-pmh-client.json) for more information.
 
-This configuration can be inspected with
+This configuration can be inspected with:
 
     curl -HX-Okapi-Tenant:$OKAPI_TENANT $OKAPI_URL/meta-storage/pmh-clients/us-mdbj
 
@@ -118,8 +118,8 @@ Start a job with:
     curl -HX-Okapi-Tenant:$OKAPI_TENANT -XPOST $OKAPI_URL/meta-storage/pmh-clients/us-mdbj/start
 
 The job will confinue until the server returns error or returns no resumption token. The `from`
-property of the configuration is populated with latest datestamp in records received. This allows
-the to repeat the job again at a later date to fetch updates from `from` to now (unless `until` is
+property of the configuration is populated with latest datestamp in records received. This enables
+the client to repeat the job again at a later date to fetch updates from `from` to now (unless `until` is
 specified).
 
 Get status for a job with:
@@ -158,7 +158,12 @@ Generated [API documentation](https://dev.folio.org/reference/api/#mod-meta-stor
 
 ### Code analysis
 
+[SonarQube analysis](https://sonarcloud.io/dashboard?id=org.folio%3Amod-meta-storage).
 
 ### Download and configuration
 
+The built artifacts for this module are available.
+See [configuration](https://dev.folio.org/download/artifacts) for repository access,
+and the Docker images for [released versions](https://hub.docker.com/r/folioorg/mod-meta-storage/)
+and for [snapshot versions](https://hub.docker.com/r/folioci/mod-meta-storage/).
 

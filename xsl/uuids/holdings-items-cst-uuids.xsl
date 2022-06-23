@@ -95,7 +95,7 @@
           <permanentLocationIdHere>UNMAPPED</permanentLocationIdHere>
         </i>
       </xsl:if>
-      </arr> 
+      </arr>
      </holdingsRecords>
   </xsl:template>
   <xsl:template match="text()"/>

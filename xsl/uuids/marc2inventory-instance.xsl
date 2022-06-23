@@ -5,7 +5,7 @@
     xmlns:marc="http://www.loc.gov/MARC21/slim">
 
     <xsl:import href="map-relator-to-contributor-type.xsl"/>
-    
+
     <xsl:output indent="yes" method="xml" version="1.0" encoding="UTF-8"/>
 
     <xsl:template match="/">
@@ -19,7 +19,7 @@
 
     <record>
 
-        <original>            
+        <original>
             <xsl:copy>
                 <xsl:copy-of select="@*"/>
                 <xsl:copy-of select="*"/>
@@ -179,7 +179,7 @@
                     <xsl:with-param  name="characters">,-./ :;</xsl:with-param>
                 </xsl:call-template>
             </title>
-            
+
             <!-- Contributors -->
             <xsl:if test="marc:datafield[@tag='100' or @tag='110' or @tag='111' or @tag='700' or @tag='710' or @tag='711']">
                 <contributors>
@@ -363,7 +363,7 @@
                 </number-of-part-section-of-work>
                 <inclusive-dates>
                     <xsl:value-of select="marc:subfield[@code='f']" />
-                </inclusive-dates> 
+                </inclusive-dates>
                 </xsl:for-each>
             </matchKey>
 
@@ -375,7 +375,7 @@
 
     <xsl:template match="text()"/>
 
-    
+
     <xsl:template name="remove-characters-last">
         <xsl:param name="input" />
         <xsl:param name="characters"/>
