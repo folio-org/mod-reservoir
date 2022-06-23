@@ -66,7 +66,7 @@
                     <barcode><xsl:value-of select="./marc:subfield[@code='i']"/></barcode>
                     <copyNumber><xsl:value-of select="./marc:subfield[@code='c']"/></copyNumber>
                     <status><name>Unknown</name></status>
-                    <permanentLoanTypeDeref>Can circulate</permanentLoanTypeDeref> 
+                    <permanentLoanTypeDeref>Can circulate</permanentLoanTypeDeref>
                     <materialTypeDeref>
                       <!-- Mappings to ReShare specific material types, taken from OCLC table "Type of Record" -->
                       <!-- Mapping from leader position 6 -->
@@ -95,7 +95,7 @@
           <permanentLocationDeref>Unmapped</permanentLocationDeref>
         </i>
       </xsl:if>
-      </arr> 
+      </arr>
      </holdingsRecords>
   </xsl:template>
   <xsl:template match="text()"/>
