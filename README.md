@@ -158,7 +158,12 @@ Generated [API documentation](https://dev.folio.org/reference/api/#mod-meta-stor
 
 ### Code analysis
 
+[SonarQube analysis](https://sonarcloud.io/dashboard?id=org.folio%3Amod-meta-storage).
 
 ### Download and configuration
 
+The built artifacts for this module are available.
+See [configuration](https://dev.folio.org/download/artifacts) for repository access,
+and the Docker images for [released versions](https://hub.docker.com/r/folioorg/mod-meta-storage/)
+and for [snapshot versions](https://hub.docker.com/r/folioci/mod-meta-storage/).
 
