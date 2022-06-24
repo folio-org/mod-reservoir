@@ -9,9 +9,7 @@ import io.restassured.response.Response;
 import io.vertx.core.DeploymentOptions;
 import io.vertx.core.Future;
 import io.vertx.core.Vertx;
-import io.vertx.core.http.HttpHeaders;
 import io.vertx.core.http.HttpServer;
-import io.vertx.core.http.HttpServerResponse;
 import io.vertx.core.json.JsonArray;
 import io.vertx.core.json.JsonObject;
 import io.vertx.ext.unit.TestContext;
@@ -33,7 +31,6 @@ import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.LinkedList;
 import java.util.List;
-import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
 import java.util.concurrent.TimeUnit;
@@ -65,6 +62,8 @@ import org.junit.runner.RunWith;
 import org.testcontainers.containers.PostgreSQLContainer;
 import org.xml.sax.SAXException;
 
+import static org.hamcrest.MatcherAssert.assertThat;
+import static org.hamcrest.Matchers.contains;
 import static org.hamcrest.Matchers.containsString;
 import static org.hamcrest.Matchers.empty;
 import static org.hamcrest.Matchers.hasLength;
@@ -197,19 +196,8 @@ public class MainVerticleTest {
     });
     HttpServer httpServer = Vertx.vertx().createHttpServer().requestHandler(router);
     f = f.compose(e -> httpServer.listen(MOCK_PORT).mapEmpty());
-
+    f = f.compose(e -> ModuleScripts.serveModules(vertx, CODE_MODULES_PORT).mapEmpty());
     f.onComplete(context.asyncAssertSuccess());
-
-    //serve module
-    Router router2 = Router.router(vertx);
-    router2.get("/lib/marc-transformer.mjs").handler(ctx -> {
-      HttpServerResponse response = ctx.response();
-      response.setStatusCode(200);
-      response.putHeader(HttpHeaders.CONTENT_TYPE, "text/plain");
-      response.end(ModuleScripts.TEST_SCRIPT_1);
-    });
-    HttpServer httpServer2 = vertx.createHttpServer();
-    httpServer2.requestHandler(router2).listen(CODE_MODULES_PORT).onComplete(context.asyncAssertSuccess());
   }
 
   @AfterClass
@@ -221,6 +209,11 @@ public class MainVerticleTest {
 
   @After
   public void after(TestContext context) {
+    RestAssured.given()
+        .header(XOkapiHeaders.TENANT, tenant1)
+        .delete("/meta-storage/config/oai")
+        .then()
+        .statusCode(204);
     RestAssured.given()
         .header(XOkapiHeaders.TENANT, TENANT_1)
         .delete("/meta-storage/config/matchkeys/issn");
@@ -2143,26 +2136,23 @@ public class MainVerticleTest {
         .extract().body().asString();
     verifyOaiResponse(s, "ListRecords", identifiers, 2, expectedIsbn);
 
+    //configure transformers
+    for (String m : List.of("marc-transformer", "empty", "throw")) {
+      CodeModuleEntity module = new CodeModuleEntity(
+          m, "http://localhost:" + CODE_MODULES_PORT + "/lib/" + m + ".mjs", "transform");
 
-    //configure transformer
-
-    CodeModuleEntity module = new CodeModuleEntity(
-        "marc-transformer",
-        "http://localhost:" + CODE_MODULES_PORT + "/lib/marc-transformer.mjs",
-        "transform");
-
-    //POST module configuration
-    RestAssured.given()
-        .header(XOkapiHeaders.TENANT, tenant1)
-        .header("Content-Type", "application/json")
-        .body(module.asJson().encode())
-        .post("/meta-storage/config/modules")
-        .then().statusCode(201)
-        .contentType("application/json")
-        .body(Matchers.is(module.asJson().encode()));
+      //POST module configuration
+      RestAssured.given()
+          .header(XOkapiHeaders.TENANT, tenant1)
+          .header("Content-Type", "application/json")
+          .body(module.asJson().encode())
+          .post("/meta-storage/config/modules")
+          .then().statusCode(201)
+          .contentType("application/json")
+          .body(Matchers.is(module.asJson().encode()));
+    }
 
     //PUT oai configuration
-
     JsonObject oaiConfig = new JsonObject()
         .put("transformer", "marc-transformer");;
 
@@ -2242,6 +2232,60 @@ public class MainVerticleTest {
         .contentType("text/xml")
         .extract().body().asString();
     verifyOaiResponse(s, "ListRecords", identifiers, 1, expectedIssn2);
+
+    oaiConfig = new JsonObject()
+        .put("transformer", "empty");
+
+    RestAssured.given()
+        .header(XOkapiHeaders.TENANT, tenant1)
+        .header("Content-Type", "application/json")
+        .body(oaiConfig.encode())
+        .put("/meta-storage/config/oai")
+        .then()
+        .statusCode(204);
+
+    s = RestAssured.given()
+        .header(XOkapiHeaders.TENANT, tenant1)
+        .param("set", "issn")
+        .param("verb", "ListRecords")
+        .param("metadataPrefix", "marcxml")
+        .get("/meta-storage/oai")
+        .then().statusCode(200)
+        .contentType("text/xml")
+        .extract().body().asString();
+
+    verifyOaiResponse(s, "ListRecords", identifiers, 1, null);
+
+    oaiConfig = new JsonObject()
+        .put("transformer", "throw");;
+
+    RestAssured.given()
+        .header(XOkapiHeaders.TENANT, tenant1)
+        .header("Content-Type", "application/json")
+        .body(oaiConfig.encode())
+        .put("/meta-storage/config/oai")
+        .then()
+        .statusCode(204);
+
+    RestAssured.given()
+        .header(XOkapiHeaders.TENANT, tenant1)
+        .param("set", "issn")
+        .param("verb", "ListRecords")
+        .param("metadataPrefix", "marcxml")
+        .get("/meta-storage/oai")
+        .then().statusCode(200)
+        .contentType("text/xml")
+        .body(containsString("<!-- Failed to produce record: Error -->"));
+
+    RestAssured.given()
+        .header(XOkapiHeaders.TENANT, TENANT_1)
+        .param("verb", "GetRecord")
+        .param("metadataPrefix", "marcxml")
+        .param("identifier", identifiers.get(0))
+        .get("/meta-storage/oai")
+        .then().statusCode(400)
+        .contentType("text/plain")
+        .body(containsString("Error"));
 
     //PUT disable the transformer
 
@@ -2798,7 +2842,7 @@ public class MainVerticleTest {
   }
 
   @Test
-  public void oaiPmhClientJobs() throws InterruptedException {
+  public void oaiPmhClientJobs() {
     String sourceId1 = "SOURCE-1";
 
     RestAssured.given()
@@ -3240,7 +3284,6 @@ public class MainVerticleTest {
         .body("config.id", is(PMH_CLIENT_ID))
         .body("config.sourceId", is(sourceId1));
   }
-
 
   @Test
   public void oaiPmhClientSameResumptionToken() {

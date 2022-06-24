@@ -371,6 +371,11 @@ public class MetaStorageService implements RouterCreator, TenantInitHooks {
         .mapEmpty();
   }
 
+  Future<Void> deleteOaiConfig(RoutingContext ctx) {
+    Storage storage = new Storage(ctx);
+    return storage.deleteOaiConfig()
+        .onSuccess(res -> ctx.response().setStatusCode(204).end());
+  }
 
   //end oai config
 
@@ -438,6 +443,7 @@ public class MetaStorageService implements RouterCreator, TenantInitHooks {
           add(routerBuilder, "getCodeModules", this::getCodeModules);
           add(routerBuilder, "getOaiConfig", this::getOaiConfig);
           add(routerBuilder, "putOaiConfig", this::putOaiConfig);
+          add(routerBuilder, "deleteOaiConfig", this::deleteOaiConfig);
           add(routerBuilder, "postOaiPmhClient", oaiPmhClient::post);
           add(routerBuilder, "getOaiPmhClient", oaiPmhClient::get);
           add(routerBuilder, "putOaiPmhClient", oaiPmhClient::put);

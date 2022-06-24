@@ -43,6 +43,15 @@
           "permissionsRequired": [
             "meta-storage-config-oai.put"
           ]
+        },
+        {
+          "methods": [
+            "DELETE"
+          ],
+          "pathPattern": "/meta-storage/config/oai",
+          "permissionsRequired": [
+            "meta-storage-config-oai.delete"
+          ]
         }
       ]
     },
@@ -337,12 +346,18 @@
       "description": "Update OAI configurations"
     },
     {
+      "permissionName": "meta-storage-config-oai.delete",
+      "displayName": "meta storage - delete OAI configuration",
+      "description": "Delete OAI configurations"
+    },
+    {
       "permissionName": "meta-storage-config-oai.all",
       "displayName": "meta storage - all OAI configuration permissions",
       "description": "All OAI configuration permissions",
       "subPermissions": [
         "meta-storage-config-oai.get",
-        "meta-storage-config-oai.put"
+        "meta-storage-config-oai.put",
+        "meta-storage-config-oai.delete"
      ]
     },
     {

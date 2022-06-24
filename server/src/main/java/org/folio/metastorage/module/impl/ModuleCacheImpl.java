@@ -3,12 +3,10 @@ package org.folio.metastorage.module.impl;
 import io.vertx.core.Future;
 import io.vertx.core.Vertx;
 import io.vertx.core.json.JsonObject;
-import io.vertx.ext.web.RoutingContext;
 import java.util.HashMap;
 import java.util.Map;
 import org.folio.metastorage.module.Module;
 import org.folio.metastorage.module.ModuleCache;
-import org.folio.tlib.util.TenantUtil;
 
 public class ModuleCacheImpl implements ModuleCache {
 
@@ -29,21 +27,10 @@ public class ModuleCacheImpl implements ModuleCache {
     private final JsonObject config;
 
     CacheEntry(Module module, JsonObject config) {
-      if (module == null) {
-        throw new IllegalArgumentException("Arg module must not be null");
-      }
-      if (config == null) {
-        throw new IllegalArgumentException("Arg config must not be null");
-      }
       this.module = module;
       this.config = config;
     }
 
-  }
-
-  @Override
-  public Future<Module> lookup(RoutingContext ctx, JsonObject config) {
-    return lookup(ctx.vertx(), TenantUtil.tenant(ctx), config);
   }
 
   @Override
@@ -62,21 +49,17 @@ public class ModuleCacheImpl implements ModuleCache {
       entries.remove(cacheKey);
     }
     Module module = new EsModuleImpl();
-    try {
-      return module.initialize(vertx, config).map(x -> {
-        CacheEntry e = new CacheEntry(module, config);
-        entries.put(cacheKey, e);
-        return module;
-      });
-    } catch (Exception e) {
-      return Future.failedFuture(e);
-    }
+    return module.initialize(vertx, config).map(x -> {
+      CacheEntry e = new CacheEntry(module, config);
+      entries.put(cacheKey, e);
+      return module;
+    });
   }
 
   @Override
   public void purge(String tenantId, String moduleId) {
     String cacheKey = tenantId + ":" + moduleId;
-    CacheEntry entry = entries.get(cacheKey);
+    CacheEntry entry = entries.remove(cacheKey);
     if (entry != null) {
       entry.module.terminate();
     }

@@ -1,23 +1,24 @@
 package org.folio.metastorage.module.impl;
 
-import io.vertx.core.Future;
 import io.vertx.core.Vertx;
-import io.vertx.core.http.HttpServer;
-import io.vertx.core.http.HttpServerResponse;
+import io.vertx.core.json.DecodeException;
 import io.vertx.core.json.JsonArray;
 import io.vertx.core.json.JsonObject;
 import io.vertx.ext.unit.TestContext;
 import io.vertx.ext.unit.junit.VertxUnitRunner;
-import io.vertx.ext.web.Router;
-import io.vertx.reactivex.core.http.HttpHeaders;
 import java.util.UUID;
 import org.folio.metastorage.module.ModuleCache;
 import org.folio.metastorage.server.entity.ClusterBuilder;
+import org.graalvm.polyglot.PolyglotException;
+import org.junit.After;
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 
+import static org.hamcrest.MatcherAssert.assertThat;
+import static org.hamcrest.Matchers.containsString;
+import static org.hamcrest.Matchers.is;
 
 @RunWith(VertxUnitRunner.class)
 public class ModuleTest {
@@ -33,19 +34,7 @@ public class ModuleTest {
   @BeforeClass
   public static void beforeClass(TestContext context)  {
     vertx = Vertx.vertx();
-    serveModules(vertx, PORT).onComplete(context.asyncAssertSuccess());
-  }
-
-  public static Future<HttpServer> serveModules(Vertx vertx, int port)  {
-    Router router = Router.router(vertx);
-    router.get("/lib/isbn-transformer.mjs").handler(ctx -> {
-      HttpServerResponse response = ctx.response();
-      response.setStatusCode(200);
-      response.putHeader(HttpHeaders.CONTENT_TYPE, "text/plain");
-      response.end(ModuleScripts.TEST_SCRIPT_1);
-    });
-    HttpServer httpServer = vertx.createHttpServer();
-    return httpServer.requestHandler(router).listen(PORT);
+    ModuleScripts.serveModules(vertx, PORT).onComplete(context.asyncAssertSuccess());
   }
 
   @AfterClass
@@ -53,74 +42,69 @@ public class ModuleTest {
     vertx.close().onComplete(context.asyncAssertSuccess());
   }
 
+  @After
+  public void before() {
+    ModuleCache.getInstance().purgeAll();
+  }
 
-  @Test
-  public void testIsbnTransformerUrl(TestContext context) {
-    JsonObject inputOld = new JsonObject()
-        .put("identifiers", new JsonArray()
-            .add(new JsonObject()
-                .put("isbn", "73209629"))
-            .add(new JsonObject()
-                .put("isbn", "73209623"))
-
-        );
-
-    JsonArray recordsIn = new JsonArray()
+  JsonArray recordsIn = new JsonArray()
       //first record
       .add(new JsonObject()
-        .put("globalId", "source-1-record-1")
-        .put("localId", "REC:A")
-        .put("sourceId", "source-1")
-        .put("payload", new JsonObject()
-          .put("marc", new JsonObject()
-            .put("leader", "leader-1")
-            .put("fields", new JsonArray()
-              .add(new JsonObject()
-                .put("245", new JsonObject()
-                  .put("subfields", new JsonArray()
-                    .add(new JsonObject().put("a", "source-1 title"))
+          .put("globalId", "source-1-record-1")
+          .put("localId", "REC:A")
+          .put("sourceId", "source-1")
+          .put("payload", new JsonObject()
+              .put("marc", new JsonObject()
+                  .put("leader", "leader-1")
+                  .put("fields", new JsonArray()
+                      .add(new JsonObject()
+                          .put("245", new JsonObject()
+                              .put("subfields", new JsonArray()
+                                  .add(new JsonObject().put("a", "source-1 title"))
+                              )
+                          )
+                      )
+                      .add(new JsonObject()
+                          .put("998", new JsonObject()
+                              .put("subfields", new JsonArray()
+                                  .add(new JsonObject().put("x", "source-1 location"))
+                              )
+                          )
+                      )
                   )
-                )
               )
-              .add(new JsonObject()
-                .put("998", new JsonObject()
-                  .put("subfields", new JsonArray()
-                    .add(new JsonObject().put("x", "source-1 location"))
-                  )
-                )
-              )
-            )
           )
-        )
       )
       //second record
       .add(new JsonObject()
-        .put("globalId", "source-2-record-2")
-        .put("localId", "rec_1")
-        .put("sourceId", "source-2")
-        .put("payload", new JsonObject()
-          .put("marc", new JsonObject()
-            .put("leader", "leader-1")
-            .put("fields", new JsonArray()
-              .add(new JsonObject()
-                .put("245", new JsonObject()
-                  .put("subfields", new JsonArray()
-                    .add(new JsonObject().put("a", "source-2 title"))
+          .put("globalId", "source-2-record-2")
+          .put("localId", "rec_1")
+          .put("sourceId", "source-2")
+          .put("payload", new JsonObject()
+              .put("marc", new JsonObject()
+                  .put("leader", "leader-1")
+                  .put("fields", new JsonArray()
+                      .add(new JsonObject()
+                          .put("245", new JsonObject()
+                              .put("subfields", new JsonArray()
+                                  .add(new JsonObject().put("a", "source-2 title"))
+                              )
+                          )
+                      )
+                      .add(new JsonObject()
+                          .put("998", new JsonObject()
+                              .put("subfields", new JsonArray()
+                                  .add(new JsonObject().put("x", "source-2 location"))
+                              )
+                          )
+                      )
                   )
-                )
               )
-              .add(new JsonObject()
-                .put("998", new JsonObject()
-                  .put("subfields", new JsonArray()
-                    .add(new JsonObject().put("x", "source-2 location"))
-                  )
-                )
-              )
-            )
           )
-        )
       );
 
+  @Test
+  public void testIsbnTransformerUrl(TestContext context) {
       JsonObject recordOut = new JsonObject()
       //merged record
         .put("leader", "new leader")
@@ -177,24 +161,184 @@ public class ModuleTest {
           )
         );
 
-
     ClusterBuilder cb = new ClusterBuilder(UUID.randomUUID());
     cb.records(recordsIn);
     JsonObject input = cb.build();
 
     JsonObject config = new JsonObject()
-      .put("id", "isbn-transformer")
-      .put("url", HOSTPORT + "/lib/isbn-transformer.mjs")
+      .put("id", "marc-transformer")
+      .put("url", HOSTPORT + "/lib/marc-transformer.mjs")
       .put("function", "transform");
 
     ModuleCache.getInstance().lookup(vertx, TENANT, config)
-      //.onSuccess(m -> m.terminate())
-      .compose(m -> m.execute(input))
-      .onComplete(context.asyncAssertSuccess(output -> {
-          context.assertEquals(recordOut, output);
-        }
-      )
+      .compose(m -> m.execute(input).eventually(x -> m.terminate()))
+      .onComplete(context.asyncAssertSuccess(output -> context.assertEquals(recordOut, output))
     );
   }
+
+  @Test
+  public void moduleReturnInt(TestContext context) {
+    ClusterBuilder cb = new ClusterBuilder(UUID.randomUUID());
+    cb.records(recordsIn);
+    JsonObject input = cb.build();
+
+    JsonObject config = new JsonObject()
+        .put("id", "returns-int")
+        .put("url", HOSTPORT + "/lib/returns-int.mjs")
+        .put("function", "transform");
+
+    ModuleCache.getInstance().lookup(vertx, TENANT, config)
+        .compose(m -> m.execute(input).eventually(x -> m.terminate()))
+        .onComplete(context.asyncAssertFailure(
+            e -> assertThat(e.getMessage(), containsString("must return JSON string"))));
+  }
+
+  @Test
+  public void moduleThrowsException(TestContext context) {
+    ClusterBuilder cb = new ClusterBuilder(UUID.randomUUID());
+    cb.records(recordsIn);
+    JsonObject input = cb.build();
+
+    JsonObject config = new JsonObject()
+        .put("id", "throw")
+        .put("url", HOSTPORT + "/lib/throw.mjs")
+        .put("function", "transform");
+
+    ModuleCache.getInstance().lookup(vertx, TENANT, config)
+        .compose(m -> m.execute(input).eventually(x -> m.terminate()))
+        .onComplete(context.asyncAssertFailure(
+            e -> {
+              assertThat(e.getClass(), is(PolyglotException.class));
+              assertThat(e.getMessage(), is("Error"));
+            }));
+  }
+
+  @Test
+  public void moduleBadJson(TestContext context) {
+    ClusterBuilder cb = new ClusterBuilder(UUID.randomUUID());
+    cb.records(recordsIn);
+    JsonObject input = cb.build();
+
+    JsonObject config = new JsonObject()
+        .put("id", "bad-json")
+        .put("url", HOSTPORT + "/lib/bad-json.mjs")
+        .put("function", "transform");
+
+    ModuleCache.getInstance().lookup(vertx, TENANT, config)
+        .compose(m -> m.execute(input).eventually(x -> m.terminate()))
+        .onComplete(context.asyncAssertFailure(
+            e -> {
+              assertThat(e.getClass(), is(DecodeException.class));
+              assertThat(e.getMessage(), containsString("Unexpected end-of-input"));
+            }));
+  }
+
+  @Test
+  public void cachingEquals(TestContext context) {
+    JsonObject config = new JsonObject()
+        .put("id", "marc-transformer")
+        .put("url", HOSTPORT + "/lib/marc-transformer.mjs")
+        .put("function", "transform");
+    ModuleCache.getInstance().lookup(vertx, TENANT, config).compose(m1 ->
+        ModuleCache.getInstance().lookup(vertx, TENANT, config).map(m2 -> m1 == m2))
+    .onComplete(context.asyncAssertSuccess(equals -> context.assertTrue(equals)));
+  }
+
+  @Test
+  public void cachingPurge(TestContext context) {
+    JsonObject config = new JsonObject()
+        .put("id", "marc-transformer")
+        .put("url", HOSTPORT + "/lib/marc-transformer.mjs")
+        .put("function", "transform");
+    ModuleCache.getInstance().lookup(vertx, TENANT, config).compose(m1 -> {
+      ModuleCache.getInstance().purge(TENANT, "marc-transformer");
+      ModuleCache.getInstance().purge(TENANT, "marc-transformer");
+      return ModuleCache.getInstance().lookup(vertx, TENANT, config).map(m2 -> m1 == m2);
+    })
+    .onComplete(context.asyncAssertSuccess(equals -> context.assertFalse(equals)));
+  }
+
+  @Test
+  public void cachingNotEquals(TestContext context) {
+    JsonObject config = new JsonObject()
+        .put("id", "marc-transformer1")
+        .put("url", HOSTPORT + "/lib/marc-transformer.mjs")
+        .put("function", "transform");
+
+    ModuleCache.getInstance().lookup(vertx, TENANT, config).compose(m1 -> {
+      config.put("id", "marc-transformer2");
+      return ModuleCache.getInstance().lookup(vertx, TENANT, config).map(m2 -> m1 == m2);
+    })
+    .onComplete(context.asyncAssertSuccess(equals -> context.assertFalse(equals)));
+  }
+
+  @Test
+  public void cachingChangedConfig(TestContext context) {
+    JsonObject config1 = new JsonObject()
+        .put("id", "marc-transformer")
+        .put("url", HOSTPORT + "/lib/marc-transformer.mjs")
+        .put("function", "transform");
+    JsonObject config2 = new JsonObject()
+        .put("id", "marc-transformer")
+        .put("url", HOSTPORT + "/lib/marc-transformer.mjs")
+        .put("foo", "bar")
+        .put("function", "transform");
+    ModuleCache.getInstance().lookup(vertx, TENANT, config1).compose(m1 ->
+      ModuleCache.getInstance().lookup(vertx, TENANT, config2).map(m2 -> m1 == m2))
+    .onComplete(context.asyncAssertSuccess(equals -> context.assertFalse(equals)));
+  }
+
+  @Test
+  public void exceptionInInitialize(TestContext context) {
+    JsonObject config1 = new JsonObject()
+        .put("id", "marc-transformer")
+        .put("url", HOSTPORT + "/lib/marc-transformer.mjs")
+        .put("function", "transform1");
+    ModuleCache.getInstance().lookup(vertx, TENANT, config1)
+        .onComplete(context.asyncAssertFailure(e ->
+            assertThat(e.getMessage(), containsString("Invariant contract violation"))));
+  }
+
+  @Test
+  public void mustEndInMjs(TestContext context) {
+    JsonObject config1 = new JsonObject()
+        .put("id", "marc-transformer")
+        .put("url", HOSTPORT + "/lib/marc-transformer.js")
+        .put("function", "transform1");
+    ModuleCache.getInstance().lookup(vertx, TENANT, config1)
+        .onComplete(context.asyncAssertFailure(e ->
+            assertThat(e.getMessage(), is("url must end with .mjs to designate ES module"))));
+  }
+
+  @Test
+  public void missingUrl(TestContext context) {
+    JsonObject config1 = new JsonObject()
+        .put("id", "marc-transformer")
+        .put("function", "transform");
+    ModuleCache.getInstance().lookup(vertx, TENANT, config1)
+        .onComplete(context.asyncAssertFailure(e ->
+            assertThat(e.getMessage(), is("Module config must include 'url'"))));
+  }
+
+  @Test
+  public void missingFunction(TestContext context) {
+    JsonObject config1 = new JsonObject()
+        .put("id", "marc-transformer")
+        .put("url", HOSTPORT + "/lib/marc-transformer.mjs");
+    ModuleCache.getInstance().lookup(vertx, TENANT, config1)
+        .onComplete(context.asyncAssertFailure(e ->
+            assertThat(e.getMessage(), is("Module config must include 'function'"))));
+  }
+
+  @Test
+  public void missingModuleId(TestContext context) {
+    JsonObject config1 = new JsonObject()
+        .put("url", HOSTPORT + "/lib/marc-transformer.mjs")
+        .put("function", "transform");
+    ModuleCache.getInstance().lookup(vertx, TENANT, config1)
+        .onComplete(context.asyncAssertFailure(e ->
+            assertThat(e.getMessage(), is("module config must include 'id'"))));
+  }
+
 
 }

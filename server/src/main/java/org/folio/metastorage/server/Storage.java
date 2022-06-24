@@ -930,6 +930,16 @@ public class Storage {
           return row.getJsonObject("config");
         });
   }
+
+  /**
+   * Delete OAI config.
+   * @return async void result
+   */
+  public Future<Void> deleteOaiConfig() {
+    return pool.preparedQuery("DELETE FROM " + oaiConfigTable + " WHERE id = $1")
+        .execute(Tuple.of("1")).mapEmpty();
+  }
+
   // end oai config
 
   private static JsonObject copyWithoutNulls(JsonObject obj) {

@@ -30,6 +30,7 @@ import org.folio.metastorage.module.ModuleCache;
 import org.folio.metastorage.server.entity.ClusterBuilder;
 import org.folio.metastorage.util.JsonToMarcXml;
 import org.folio.metastorage.util.MarcInJsonUtil;
+import org.folio.tlib.util.TenantUtil;
 
 public final class OaiService {
   private static final Logger log = LogManager.getLogger(OaiService.class);
@@ -295,20 +296,19 @@ public final class OaiService {
 
   static Future<Module> getTransformerModule(Storage storage, RoutingContext ctx) {
     return storage.selectOaiConfig()
-      .compose(oaiCfg -> {
-        if (oaiCfg != null) {
+        .compose(oaiCfg -> {
+          if (oaiCfg == null) {
+            return Future.succeededFuture(null);
+          }
           return storage.selectCodeModuleEntity(oaiCfg.getString("transformer"))
               .compose(module -> {
-                if (module != null) {
-                  return ModuleCache.getInstance().lookup(ctx, module.asJson());
-                } else {
+                if (module == null) {
                   return Future.succeededFuture(null);
                 }
+                return ModuleCache.getInstance().lookup(
+                    ctx.vertx(), TenantUtil.tenant(ctx), module.asJson());
               });
-        } else {
-          return Future.succeededFuture(null);
-        }
-      });
+        });
   }
 
   static Future<List<String>> getClusterValues(Storage storage, SqlConnection conn,
@@ -384,13 +384,12 @@ public final class OaiService {
             cnt.incrementAndGet();
             getXmlRecord(ctx, storage, conn, row.getUUID("cluster_id"), datestamp,
                 row.getString("match_key_config_id"), withMetadata)
-                .onSuccess(xmlRecord ->
-                    response.write(xmlRecord).onComplete(x -> stream.resume())
-                )
+                .onSuccess(xmlRecord -> response.write(xmlRecord).onComplete(x -> stream.resume()))
                 .onFailure(e -> {
+                  response.write("<!-- Failed to produce record: "
+                      + encodeXmlText(e.getMessage()) + " -->\n");
                   log.info("failure {}", e.getMessage(), e);
-                  stream.close();
-                  conn.close();
+                  stream.resume();
                 });
           });
           stream.endHandler(end -> endListResponse(ctx, conn, tx, elem));

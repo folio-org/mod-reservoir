@@ -42,6 +42,16 @@ paths:
           $ref: "#/components/responses/trait_404"
         "500":
           $ref: "#/components/responses/trait_500"
+    delete:
+      description: Update OAI configuration.
+      operationId: deleteOaiConfig
+      responses:
+        "204":
+          description: OAI configuration deleted
+        "400":
+          $ref: "#/components/responses/trait_400"
+        "500":
+          $ref: "#/components/responses/trait_500"
   # Configuration
   /meta-storage/config/matchkeys:
     parameters:

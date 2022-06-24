@@ -1,8 +1,16 @@
 package org.folio.metastorage.module.impl;
 
+import io.vertx.core.Future;
+import io.vertx.core.Vertx;
+import io.vertx.core.http.HttpServer;
+import io.vertx.core.http.HttpServerResponse;
+import io.vertx.ext.web.Router;
+import io.vertx.ext.web.RoutingContext;
+import io.vertx.reactivex.core.http.HttpHeaders;
+
 public class ModuleScripts {
 
-  public final static String TEST_SCRIPT_1 = """
+  final static String TEST_SCRIPT_1 = """
     export function transform(clusterStr) {
       let cluster = JSON.parse(clusterStr);
       let recs = cluster.records;
@@ -35,4 +43,45 @@ public class ModuleScripts {
     }
     """;
 
+  final static String TEST_SCRIPT_RETURNS_INT = """
+    export function transform(clusterStr) {
+      return 1;
+    }
+    """;
+
+  final static String TEST_SCRIPT_THROW = """
+    export function transform(clusterStr) {
+      throw 'Error';
+    }
+    """;
+
+  final static String TEST_SCRIPT_BAD_JSON = """
+    export function transform(clusterStr) {
+      return '{';
+    }
+    """;
+
+  final static String TEST_SCRIPT_EMPTY = """
+    export function transform(clusterStr) {
+      return '{}';
+    }
+    """;
+
+  static void respondPlain(RoutingContext ctx, String script) {
+    HttpServerResponse response = ctx.response();
+    response.setStatusCode(200);
+    response.putHeader(HttpHeaders.CONTENT_TYPE, "text/plain");
+    response.end(script);
+  }
+
+  public static Future<HttpServer> serveModules(Vertx vertx, int port)  {
+    Router router = Router.router(vertx);
+    router.get("/lib/marc-transformer.mjs").handler(ctx -> respondPlain(ctx, TEST_SCRIPT_1));
+    router.get("/lib/returns-int.mjs").handler(ctx -> respondPlain(ctx, TEST_SCRIPT_RETURNS_INT));
+    router.get("/lib/throw.mjs").handler(ctx -> respondPlain(ctx, TEST_SCRIPT_THROW));
+    router.get("/lib/bad-json.mjs").handler(ctx -> respondPlain(ctx, TEST_SCRIPT_BAD_JSON));
+    router.get("/lib/empty.mjs").handler(ctx -> respondPlain(ctx, TEST_SCRIPT_EMPTY));
+    HttpServer httpServer = vertx.createHttpServer();
+    return httpServer.requestHandler(router).listen(port);
+  }
 }
