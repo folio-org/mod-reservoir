@@ -501,6 +501,7 @@ public class OaiPmhClientService {
             return;
           }
           Future<Void> f;
+          job.remove("error");
           if (Boolean.TRUE.equals(row.getBoolean("stop"))) {
             f = Future.failedFuture((String) null);
           } else {
