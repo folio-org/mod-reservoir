@@ -1732,7 +1732,16 @@ public class MainVerticleTest {
         .body("modules", is(empty()))
         .body("resultInfo.totalRecords", is(0));
 
-    CodeModuleEntity module = new CodeModuleEntity("oai-transform", "url", "transform");
+    //POST item with bad url and nothing should be created
+    CodeModuleEntity badModule = new CodeModuleEntity("empty",  "url", "transform");
+    RestAssured.given()
+        .header(XOkapiHeaders.TENANT, tenant1)
+        .header("Content-Type", "application/json")
+        .body(badModule.asJson().encode())
+        .post("/meta-storage/config/modules")
+        .then().statusCode(400);
+
+    CodeModuleEntity module = new CodeModuleEntity("empty",  "http://localhost:" + CODE_MODULES_PORT + "/lib/empty.mjs", "transform");
 
     //GET not found item
     RestAssured.given()
@@ -2283,14 +2292,43 @@ public class MainVerticleTest {
         .param("metadataPrefix", "marcxml")
         .param("identifier", identifiers.get(0))
         .get("/meta-storage/oai")
-        .then().statusCode(400)
+        .then().statusCode(500)
         .contentType("text/plain")
         .body(containsString("Error"));
 
-    //PUT disable the transformer
+    // OAI config with unknown transformer
+    JsonObject oaiConfigBadTransformer = new JsonObject()
+        .put("transformer", "doesnotexist");
+    RestAssured.given()
+        .header(XOkapiHeaders.TENANT, tenant1)
+        .header("Content-Type", "application/json")
+        .body(oaiConfigBadTransformer.encode())
+        .put("/meta-storage/config/oai")
+        .then()
+        .statusCode(204);
 
-    JsonObject oaiConfigOff = new JsonObject()
-      .put("transformer", "");;
+    RestAssured.given()
+        .header(XOkapiHeaders.TENANT, tenant1)
+        .param("set", "issn")
+        .param("verb", "ListRecords")
+        .param("metadataPrefix", "marcxml")
+        .get("/meta-storage/oai")
+        .then().statusCode(500)
+        .contentType("text/plain")
+        .body(is("Transformer not found: doesnotexist"));
+
+    RestAssured.given()
+        .header(XOkapiHeaders.TENANT, TENANT_1)
+        .param("verb", "GetRecord")
+        .param("metadataPrefix", "marcxml")
+        .param("identifier", identifiers.get(0))
+        .get("/meta-storage/oai")
+        .then().statusCode(500)
+        .contentType("text/plain")
+        .body(is("Transformer not found: doesnotexist"));
+
+    //PUT disable the transformer
+    JsonObject oaiConfigOff = new JsonObject();
 
     RestAssured.given()
         .header(XOkapiHeaders.TENANT, tenant1)

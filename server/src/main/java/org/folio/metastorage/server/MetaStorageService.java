@@ -16,6 +16,7 @@ import java.util.function.Function;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.folio.metastorage.matchkey.MatchKeyMethodFactory;
+import org.folio.metastorage.module.ModuleCache;
 import org.folio.metastorage.server.entity.CodeModuleEntity;
 import org.folio.metastorage.util.LargeJsonReadStream;
 import org.folio.okapi.common.HttpResponse;
@@ -23,6 +24,7 @@ import org.folio.tlib.RouterCreator;
 import org.folio.tlib.TenantInitHooks;
 import org.folio.tlib.postgres.PgCqlField;
 import org.folio.tlib.postgres.PgCqlQuery;
+import org.folio.tlib.util.TenantUtil;
 
 public class MetaStorageService implements RouterCreator, TenantInitHooks {
 
@@ -49,6 +51,21 @@ public class MetaStorageService implements RouterCreator, TenantInitHooks {
     } catch (Exception e) {
       return Future.failedFuture(e);
     }
+  }
+
+  Future<Void> deleteCodeModule(RoutingContext ctx) {
+    RequestParameters params = ctx.get(ValidationHandler.REQUEST_CONTEXT_KEY);
+    String id = Util.getParameterString(params.pathParameter("id"));
+    Storage storage = new Storage(ctx);
+    return storage.deleteCodeModuleEntity(id)
+        .onSuccess(res -> {
+          if (Boolean.FALSE.equals(res)) {
+            HttpResponse.responseError(ctx, 404,
+                String.format(ENTITY_ID_NOT_FOUND_PATTERN, MODULE_LABEL, id));
+            return;
+          }
+          ctx.response().setStatusCode(204).end();
+        }).mapEmpty();
   }
 
   static PgCqlQuery createPgCqlQuery() {
@@ -270,11 +287,13 @@ public class MetaStorageService implements RouterCreator, TenantInitHooks {
   Future<Void> postCodeModule(RoutingContext ctx) {
     Storage storage = new Storage(ctx);
     CodeModuleEntity e = new CodeModuleEntity.CodeModuleBuilder(ctx.getBodyAsJson()).build();
-    return storage.insertCodeModuleEntity(e).onSuccess(res ->
-        HttpResponse.responseJson(ctx, 201)
-            .putHeader("Location", ctx.request().absoluteURI() + "/" + e.getId())
-            .end(e.asJson().encode())
-    );
+
+    return ModuleCache.getInstance().lookup(ctx.vertx(), TenantUtil.tenant(ctx), e.asJson())
+        .compose(module -> storage.insertCodeModuleEntity(e).onSuccess(res ->
+            HttpResponse.responseJson(ctx, 201)
+                .putHeader("Location", ctx.request().absoluteURI() + "/" + e.getId())
+                .end(e.asJson().encode())
+        ));
   }
 
   Future<Void> getCodeModule(RoutingContext ctx) {
@@ -296,31 +315,16 @@ public class MetaStorageService implements RouterCreator, TenantInitHooks {
   Future<Void> putCodeModule(RoutingContext ctx) {
     Storage storage = new Storage(ctx);
     CodeModuleEntity e = new CodeModuleEntity.CodeModuleBuilder(ctx.getBodyAsJson()).build();
-    return storage.updateCodeModuleEntity(e)
-        .onSuccess(res -> {
-          if (Boolean.FALSE.equals(res)) {
-            HttpResponse.responseError(ctx, 404,
-                String.format(ENTITY_ID_NOT_FOUND_PATTERN, MODULE_LABEL, e.getId()));
-            return;
-          }
-          ctx.response().setStatusCode(204).end();
-        })
-        .mapEmpty();
-  }
-
-  Future<Void> deleteCodeModule(RoutingContext ctx) {
-    RequestParameters params = ctx.get(ValidationHandler.REQUEST_CONTEXT_KEY);
-    String id = Util.getParameterString(params.pathParameter("id"));
-    Storage storage = new Storage(ctx);
-    return storage.deleteCodeModuleEntity(id)
-        .onSuccess(res -> {
-          if (Boolean.FALSE.equals(res)) {
-            HttpResponse.responseError(ctx, 404,
-                String.format(ENTITY_ID_NOT_FOUND_PATTERN, MODULE_LABEL, id));
-            return;
-          }
-          ctx.response().setStatusCode(204).end();
-        })
+    return ModuleCache.getInstance().lookup(ctx.vertx(), TenantUtil.tenant(ctx), e.asJson())
+        .compose(module -> storage.updateCodeModuleEntity(e)
+            .onSuccess(res -> {
+              if (Boolean.FALSE.equals(res)) {
+                HttpResponse.responseError(ctx, 404,
+                    String.format(ENTITY_ID_NOT_FOUND_PATTERN, MODULE_LABEL, e.getId()));
+                return;
+              }
+              ctx.response().setStatusCode(204).end();
+            }))
         .mapEmpty();
   }
 
