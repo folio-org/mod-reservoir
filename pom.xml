@@ -130,6 +130,11 @@
         <version>${graalvm.version}</version>
       </dependency>
       <dependency>
+        <groupId>org.graalvm.regex</groupId>
+        <artifactId>regex</artifactId>
+        <version>${graalvm.version}</version>
+      </dependency>
+      <dependency>
        <groupId>org.awaitility</groupId>
        <artifactId>awaitility</artifactId>
        <version>4.2.0</version>
