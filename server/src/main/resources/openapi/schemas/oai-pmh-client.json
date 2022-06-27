@@ -26,6 +26,14 @@
       "type" : "string",
       "description" : "OAI PMH resumption token"
     },
+    "numberRetries" : {
+      "type" : "integer",
+      "description" : "Number of retries for temporary errors before giving up (default 3)"
+    },
+    "waitRetries" : {
+      "type" : "integer",
+      "description" : "Number of seconds to wait between retries (default 10)"
+    },
     "set" : {
       "type" : "string",
       "description" : "OAI PMH set as returned in verb=ListSets"

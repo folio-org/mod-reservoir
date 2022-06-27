@@ -12,6 +12,7 @@ import io.vertx.core.Vertx;
 import io.vertx.core.http.HttpServer;
 import io.vertx.core.json.JsonArray;
 import io.vertx.core.json.JsonObject;
+import io.vertx.core.net.NetServer;
 import io.vertx.ext.unit.TestContext;
 import io.vertx.ext.unit.junit.VertxUnitRunner;
 import io.vertx.ext.web.Router;
@@ -84,6 +85,7 @@ public class MainVerticleTest {
   static final int CODE_MODULES_PORT = 9235;
   static final int MOCK_PORT = 9232;
   static final int UNUSED_PORT = 9233;
+  static final int NET_PORT = 9234;
   static final String MOCK_URL = "http://localhost:" + MOCK_PORT;
   static final String TENANT_1 = "tenant1";
   static final String TENANT_2 = "tenant2";
@@ -194,9 +196,11 @@ public class MainVerticleTest {
         c.response().end(mockBody);
       });
     });
-    HttpServer httpServer = Vertx.vertx().createHttpServer().requestHandler(router);
+    HttpServer httpServer = vertx.createHttpServer().requestHandler(router);
     f = f.compose(e -> httpServer.listen(MOCK_PORT).mapEmpty());
     f = f.compose(e -> ModuleScripts.serveModules(vertx, CODE_MODULES_PORT).mapEmpty());
+    NetServer netServer = vertx.createNetServer().connectHandler(socket -> socket.close());
+    f = f.compose(x -> netServer.listen(NET_PORT).mapEmpty());
     f.onComplete(context.asyncAssertSuccess());
   }
 
@@ -3140,6 +3144,49 @@ public class MainVerticleTest {
         .body("totalRecords", is(0))
         .body("totalRequests", is(0))
         .body("error", containsString("localhost"))
+        .body("config.id", is(PMH_CLIENT_ID))
+        .body("config.sourceId", is(sourceId1));
+  }
+
+  @Test
+  public void oaiPmhClientConnectionClosed() {
+    String sourceId1 = "SOURCE-1";
+
+    createIsbnMatchKey();
+
+    JsonObject oaiPmhClient = new JsonObject()
+        .put("url", "http://localhost:" + NET_PORT + "/mock/oai")
+        .put("set", "isbn")
+        .put("sourceId", sourceId1)
+        .put("waitRetries", 1)
+        .put("numberRetries", 1)
+        .put("id", PMH_CLIENT_ID);
+
+    RestAssured.given()
+        .header(XOkapiHeaders.TENANT, TENANT_1)
+        .header("Content-Type", "application/json")
+        .body(oaiPmhClient.encode())
+        .post("/meta-storage/pmh-clients")
+        .then().statusCode(201)
+        .contentType("application/json")
+        .body(Matchers.is(oaiPmhClient.encode()));
+
+    RestAssured.given()
+        .header(XOkapiHeaders.TENANT, TENANT_1)
+        .post("/meta-storage/pmh-clients/" + PMH_CLIENT_ID + "/start")
+        .then().statusCode(204);
+
+    Awaitility.await().atMost(Duration.ofSeconds(3)).until(() -> harvestCompleted(TENANT_1, PMH_CLIENT_ID));
+
+    RestAssured.given()
+        .header(XOkapiHeaders.TENANT, TENANT_1)
+        .get("/meta-storage/pmh-clients/" + PMH_CLIENT_ID + "/status")
+        .then().statusCode(200)
+        .contentType("application/json")
+        .body("status", is("idle"))
+        .body("totalRecords", is(0))
+        .body("totalRequests", is(0))
+        .body("error", is("Connection was closed"))
         .body("config.id", is(PMH_CLIENT_ID))
         .body("config.sourceId", is(sourceId1));
   }
