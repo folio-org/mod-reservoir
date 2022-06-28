@@ -48,6 +48,7 @@ import javax.xml.validation.Validator;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.awaitility.Awaitility;
+import org.folio.metastorage.module.ModuleCache;
 import org.folio.metastorage.module.impl.ModuleScripts;
 import org.folio.metastorage.server.entity.CodeModuleEntity;
 import org.folio.okapi.common.XOkapiHeaders;
@@ -1749,6 +1750,14 @@ public class MainVerticleTest {
         .contentType("text/plain")
         .body(Matchers.is("Module " + module.getId() + " not found"));
 
+    //reload - not found item
+    RestAssured.given()
+        .header(XOkapiHeaders.TENANT, tenant1)
+        .put("/meta-storage/config/modules/" + module.getId() + "/reload")
+        .then().statusCode(404)
+        .contentType("text/plain")
+        .body(Matchers.is("Module " + module.getId() + " not found"));
+
     //POST item
     RestAssured.given()
         .header(XOkapiHeaders.TENANT, tenant1)
@@ -1777,6 +1786,12 @@ public class MainVerticleTest {
         .then().statusCode(200)
         .contentType("application/json")
         .body(Matchers.is(module.asJson().encode()));
+
+    // reload existing module
+    RestAssured.given()
+        .header(XOkapiHeaders.TENANT, tenant1)
+        .put("/meta-storage/config/modules/" + module.getId() + "/reload")
+        .then().statusCode(204);
 
     //GET item and validate it
     RestAssured.given()

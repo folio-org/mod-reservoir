@@ -53,6 +53,24 @@ public class MetaStorageService implements RouterCreator, TenantInitHooks {
     }
   }
 
+  Future<Void> reloadCodeModule(RoutingContext ctx) {
+    RequestParameters params = ctx.get(ValidationHandler.REQUEST_CONTEXT_KEY);
+    String id = Util.getParameterString(params.pathParameter("id"));
+    Storage storage = new Storage(ctx);
+    return storage.selectCodeModuleEntity(id)
+        .compose(res -> {
+          if (res == null) {
+            HttpResponse.responseError(ctx, 404,
+                String.format(ENTITY_ID_NOT_FOUND_PATTERN, MODULE_LABEL, id));
+            return Future.succeededFuture();
+          }
+          ModuleCache.getInstance().purge(TenantUtil.tenant(ctx), id);
+          return ModuleCache.getInstance().lookup(vertx, TenantUtil.tenant(ctx), res.asJson())
+                  .onSuccess(x -> ctx.response().setStatusCode(204).end());
+        })
+        .mapEmpty();
+  }
+
   Future<Void> deleteCodeModule(RoutingContext ctx) {
     RequestParameters params = ctx.get(ValidationHandler.REQUEST_CONTEXT_KEY);
     String id = Util.getParameterString(params.pathParameter("id"));
@@ -64,6 +82,7 @@ public class MetaStorageService implements RouterCreator, TenantInitHooks {
                 String.format(ENTITY_ID_NOT_FOUND_PATTERN, MODULE_LABEL, id));
             return;
           }
+          ModuleCache.getInstance().purge(TenantUtil.tenant(ctx), id);
           ctx.response().setStatusCode(204).end();
         }).mapEmpty();
   }
@@ -288,6 +307,7 @@ public class MetaStorageService implements RouterCreator, TenantInitHooks {
     Storage storage = new Storage(ctx);
     CodeModuleEntity e = new CodeModuleEntity.CodeModuleBuilder(ctx.getBodyAsJson()).build();
 
+    ModuleCache.getInstance().purge(TenantUtil.tenant(ctx), e.getId());
     return ModuleCache.getInstance().lookup(ctx.vertx(), TenantUtil.tenant(ctx), e.asJson())
         .compose(module -> storage.insertCodeModuleEntity(e).onSuccess(res ->
             HttpResponse.responseJson(ctx, 201)
@@ -444,6 +464,7 @@ public class MetaStorageService implements RouterCreator, TenantInitHooks {
           add(routerBuilder, "getCodeModule", this::getCodeModule);
           add(routerBuilder, "putCodeModule", this::putCodeModule);
           add(routerBuilder, "deleteCodeModule", this::deleteCodeModule);
+          add(routerBuilder, "reloadCodeModule", this::reloadCodeModule);
           add(routerBuilder, "getCodeModules", this::getCodeModules);
           add(routerBuilder, "getOaiConfig", this::getOaiConfig);
           add(routerBuilder, "putOaiConfig", this::putOaiConfig);

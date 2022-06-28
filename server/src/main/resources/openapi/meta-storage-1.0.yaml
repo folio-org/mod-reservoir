@@ -306,6 +306,29 @@ paths:
           $ref: "#/components/responses/trait_404"
         "500":
           $ref: "#/components/responses/trait_500"
+  /meta-storage/config/modules/{id}/reload:
+    parameters:
+      - $ref: headers/okapi-tenant.yaml
+      - $ref: headers/okapi-token.yaml
+      - $ref: headers/okapi-url.yaml
+      - in: path
+        name: id
+        required: true
+        description: code module identifier
+        schema:
+          type: string
+    put:
+      description: Force module to be reloaded
+      operationId: reloadCodeModule
+      responses:
+        "204":
+          description: code module updated
+        "400":
+          $ref: "#/components/responses/trait_400"
+        "404":
+          $ref: "#/components/responses/trait_404"
+        "500":
+          $ref: "#/components/responses/trait_500"
   # Sources
   /meta-storage/sources:
     parameters:

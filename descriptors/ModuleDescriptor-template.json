@@ -172,6 +172,15 @@
           "permissionsRequired": [
             "meta-storage-config-modules.item.delete"
           ]
+        },
+        {
+          "methods": [
+            "PUT"
+          ],
+          "pathPattern": "/meta-storage/config/modules/{id}/reload",
+          "permissionsRequired": [
+            "meta-storage-config-modules.item.reload"
+          ]
         }
       ]
     },
@@ -435,6 +444,11 @@
       "description": "Delete code module config"
     },
     {
+      "permissionName": "meta-storage-config-modules.item.reload",
+      "displayName": "meta storage - reload code module",
+      "description": "Reload code module config"
+    },
+    {
       "permissionName": "meta-storage-config-modules.all",
       "displayName": "meta storage - all code modules configuration",
       "description": "All code modules configuration",
@@ -443,7 +457,8 @@
         "meta-storage-config-modules.collection.get",
         "meta-storage-config-modules.item.get",
         "meta-storage-config-modules.item.put",
-        "meta-storage-config-modules.item.delete"
+        "meta-storage-config-modules.item.delete",
+        "meta-storage-config-modules.item.reload"
      ]
     },
     {
