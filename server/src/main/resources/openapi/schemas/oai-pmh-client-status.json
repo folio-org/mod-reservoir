@@ -1,32 +1,41 @@
 {
-  "description": "OAI PMH client status",
-  "type": "object",
-  "properties": {
-    "config" : {
-      "description" : "configuration",
-      "type" : "object",
-      "$ref" : "oai-pmh-client.json"
-    },
-    "error" : {
-      "type" : "string",
-      "description" : "Error message for last error"
-    },
-    "status": {
-      "type" : "string",
-      "enum" : [ "idle", "running"],
-      "description" : "OAI PMH job status"
-    },
-    "totalRecords" : {
-      "type" : "integer",
-      "description" : "Total records fetched"
-    },
-    "totalRequests" : {
-      "type" : "integer",
-      "description" : "Total HTTP requests"
+  "description": "OAI PMH clients status",
+  "type" : "object",
+  "properties" : {
+    "items" : {
+      "description" : "Status each PMH client",
+      "type" : "array",
+      "items" : {
+        "type": "object",
+        "properties": {
+          "config" : {
+            "description" : "configuration",
+            "type" : "object",
+            "$ref" : "oai-pmh-client.json"
+          },
+          "error" : {
+            "type" : "string",
+            "description" : "Error message for last error"
+          },
+          "status": {
+            "type" : "string",
+            "enum" : ["idle", "running"],
+            "description" : "OAI PMH job status"
+          },
+          "totalRecords" : {
+            "type" : "integer",
+            "description" : "Total records fetched"
+          },
+          "totalRequests" : {
+            "type" : "integer",
+            "description" : "Total HTTP requests"
+          }
+        },
+        "additionalProperties": false,
+        "required": [
+          "status", "config", "totalRecords", "totalRequests"
+        ]
+      }
     }
-  },
-  "additionalProperties": false,
-  "required": [
-    "status", "config", "totalRecords", "totalRequests"
-  ]
+  }
 }

@@ -754,7 +754,7 @@ paths:
       - in: path
         name: id
         required: true
-        description: OAI-PMH client identifier
+        description: OAI-PMH client identifier; "_all" for all clients
         schema:
           type: string
     post:
@@ -777,7 +777,7 @@ paths:
       - in: path
         name: id
         required: true
-        description: OAI-PMH client identifier
+        description: OAI-PMH client identifier; "_all" for all clients
         schema:
           type: string
     post:
@@ -800,7 +800,7 @@ paths:
       - in: path
         name: id
         required: true
-        description: OAI-PMH client identifier
+        description: OAI-PMH client identifier; "_all" for all clients
         schema:
           type: string
     get:
