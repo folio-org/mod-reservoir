@@ -64,6 +64,7 @@ import org.junit.runner.RunWith;
 import org.testcontainers.containers.PostgreSQLContainer;
 import org.xml.sax.SAXException;
 
+import static org.hamcrest.Matchers.anyOf;
 import static org.hamcrest.Matchers.containsString;
 import static org.hamcrest.Matchers.empty;
 import static org.hamcrest.Matchers.greaterThanOrEqualTo;
@@ -3183,7 +3184,7 @@ public class MainVerticleTest {
         .body("items[0].status", is("idle"))
         .body("items[0].totalRecords", is(0))
         .body("items[0].totalRequests", is(0))
-        .body("items[0].error", is("Connection was closed"))
+        .body("items[0].error", anyOf(is("Connection was closed"), is("Connection reset")))
         .body("items[0].config.id", is(PMH_CLIENT_ID))
         .body("items[0].config.sourceId", is(SOURCE_ID_1));
   }

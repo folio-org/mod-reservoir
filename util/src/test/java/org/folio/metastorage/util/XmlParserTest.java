@@ -107,7 +107,7 @@ public class XmlParserTest {
            xmlParser.handler(event -> events.add(event.getEventType()));
            xmlParser.pause();
            xmlParser.fetch(2);
-           vertx.setTimer(50, x -> {
+           vertx.setTimer(100, x -> {
              assertThat(events, hasSize(2));
              xmlParser.resume();
              xmlParser.resume();
