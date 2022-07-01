@@ -48,7 +48,6 @@ import javax.xml.validation.Validator;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.awaitility.Awaitility;
-import org.folio.metastorage.module.ModuleCache;
 import org.folio.metastorage.module.impl.ModuleScripts;
 import org.folio.metastorage.server.entity.CodeModuleEntity;
 import org.folio.okapi.common.XOkapiHeaders;
