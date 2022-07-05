@@ -175,14 +175,10 @@ public class Storage {
     ).mapEmpty();
   }
 
-  Future<Void> upsertGlobalRecord(
-      Vertx vertx,
-      SqlConnection conn,
-      String localIdentifier,
-      SourceId sourceId,
-      JsonObject payload,
-      JsonArray matchKeyConfigs) {
+  Future<Boolean> upsertGlobalRecord(Vertx vertx, SqlConnection conn, String localIdentifier,
+      SourceId sourceId, JsonObject payload, JsonArray matchKeyConfigs) {
 
+    UUID startId = UUID.randomUUID();
     return conn.preparedQuery(
             "INSERT INTO " + globalRecordTable
                 + " (id, local_id, source_id, payload)"
@@ -191,12 +187,10 @@ public class Storage {
                 + " SET payload = $4"
                 + " RETURNING id"
         )
-        .execute(
-            Tuple.of(UUID.randomUUID(), localIdentifier, sourceId.toString(), payload)
-        )
+        .execute(Tuple.of(startId, localIdentifier, sourceId.toString(), payload))
         .map(rowSet -> rowSet.iterator().next().getUUID("id"))
-        .compose(id -> updateMatchKeyValues(vertx, conn, id, payload, matchKeyConfigs))
-        .mapEmpty();
+        .compose(id -> updateMatchKeyValues(vertx, conn, id, payload, matchKeyConfigs)
+            .map(x -> id.equals(startId)));
   }
 
   Future<Void> deleteGlobalRecord(SqlConnection conn, String localIdentifier, SourceId sourceId) {
@@ -213,7 +207,15 @@ public class Storage {
         .mapEmpty());
   }
 
-  Future<Void> ingestGlobalRecord(Vertx vertx, SourceId sourceId, JsonObject globalRecord,
+  /**
+   * Insert/update/delete global record.
+   * @param vertx Vert.x handle
+   * @param sourceId source identifier
+   * @param globalRecord global record JSON object
+   * @param matchKeyConfigs match key configrations in use
+   * @return async result with TRUE=inserted, FALSE=updated, null=deleted
+   */
+  Future<Boolean> ingestGlobalRecord(Vertx vertx, SourceId sourceId, JsonObject globalRecord,
       JsonArray matchKeyConfigs) {
 
     return pool.withTransaction(conn ->
@@ -226,7 +228,16 @@ public class Storage {
                 ingestGlobalRecord(vertx, conn, sourceId, globalRecord, matchKeyConfigs)));
   }
 
-  Future<Void> ingestGlobalRecord(Vertx vertx, SqlConnection conn,
+  /**
+   * Insert/update/delete global record.
+   * @param vertx Vert.x handle
+   * @param conn connection
+   * @param sourceId source identifier
+   * @param globalRecord global record JSON object
+   * @param matchKeyConfigs match key configrations in use
+   * @return async result with TRUE=inserted, FALSE=updated, null=deleted
+   */
+  Future<Boolean> ingestGlobalRecord(Vertx vertx, SqlConnection conn,
       SourceId sourceId, JsonObject globalRecord, JsonArray matchKeyConfigs) {
 
     final String localIdentifier = globalRecord.getString("localId");
@@ -234,7 +245,7 @@ public class Storage {
       return Future.failedFuture("localId required");
     }
     if (Boolean.TRUE.equals(globalRecord.getBoolean("delete"))) {
-      return deleteGlobalRecord(conn, localIdentifier, sourceId);
+      return deleteGlobalRecord(conn, localIdentifier, sourceId).map(x -> null);
     }
     final JsonObject payload = globalRecord.getJsonObject("payload");
     if (payload == null) {
@@ -243,7 +254,6 @@ public class Storage {
     if (sourceId == null) {
       return Future.failedFuture("sourceId required");
     }
-
     return upsertGlobalRecord(vertx, conn, localIdentifier, sourceId, payload, matchKeyConfigs);
   }
 
@@ -435,11 +445,12 @@ public class Storage {
    */
   public Future<Void> updateGlobalRecords(Vertx vertx, LargeJsonReadStream request) {
     return pool.withConnection(this::getAvailableMatchConfigs).compose(matchKeyConfigs ->
-            new ReadStreamConsumer<JsonObject, Void>()
-              .consume(request, r ->
+        new ReadStreamConsumer<JsonObject, Void>()
+            .consume(request, r ->
                 ingestGlobalRecord(
                     vertx, new SourceId(request.topLevelObject().getString("sourceId")),
-                    r, matchKeyConfigs)));
+                    r, matchKeyConfigs)
+                    .mapEmpty()));
   }
 
   /**

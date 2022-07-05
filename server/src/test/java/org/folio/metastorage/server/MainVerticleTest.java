@@ -13,6 +13,7 @@ import io.vertx.core.http.HttpServer;
 import io.vertx.core.json.JsonArray;
 import io.vertx.core.json.JsonObject;
 import io.vertx.core.net.NetServer;
+import io.vertx.core.net.NetSocket;
 import io.vertx.ext.unit.TestContext;
 import io.vertx.ext.unit.junit.VertxUnitRunner;
 import io.vertx.ext.web.Router;
@@ -66,11 +67,13 @@ import org.xml.sax.SAXException;
 import static org.hamcrest.Matchers.anyOf;
 import static org.hamcrest.Matchers.containsString;
 import static org.hamcrest.Matchers.empty;
+import static org.hamcrest.Matchers.endsWith;
 import static org.hamcrest.Matchers.greaterThanOrEqualTo;
 import static org.hamcrest.Matchers.hasLength;
 import static org.hamcrest.Matchers.hasSize;
 import static org.hamcrest.Matchers.is;
 import static org.hamcrest.Matchers.nullValue;
+import static org.hamcrest.Matchers.startsWith;
 
 @RunWith(VertxUnitRunner.class)
 public class MainVerticleTest {
@@ -190,17 +193,15 @@ public class MainVerticleTest {
             .mapEmpty());
 
     Router router = Router.router(vertx);
-    router.get("/mock/oai").handler(c -> {
-      vertx.setTimer(10, x -> {
-        c.response().setStatusCode(mockStatus);
-        c.response().putHeader("Content-Type", mockContentType);
-        c.response().end(mockBody);
-      });
-    });
+    router.get("/mock/oai").handler(c -> vertx.setTimer(10, x -> {
+      c.response().setStatusCode(mockStatus);
+      c.response().putHeader("Content-Type", mockContentType);
+      c.response().end(mockBody);
+    }));
     HttpServer httpServer = vertx.createHttpServer().requestHandler(router);
     f = f.compose(e -> httpServer.listen(MOCK_PORT).mapEmpty());
     f = f.compose(e -> ModuleScripts.serveModules(vertx, CODE_MODULES_PORT).mapEmpty());
-    NetServer netServer = vertx.createNetServer().connectHandler(socket -> socket.close());
+    NetServer netServer = vertx.createNetServer().connectHandler(NetSocket::close);
     f = f.compose(x -> netServer.listen(NET_PORT).mapEmpty());
     f.onComplete(context.asyncAssertSuccess());
   }
@@ -213,7 +214,7 @@ public class MainVerticleTest {
   }
 
   @After
-  public void after(TestContext context) {
+  public void after() {
     RestAssured.given()
         .header(XOkapiHeaders.TENANT, tenant1)
         .delete("/meta-storage/config/oai")
@@ -703,9 +704,6 @@ public class MainVerticleTest {
           if (event == XMLStreamConstants.CHARACTERS) {
             resumptionToken = xmlStreamReader.getText();
           }
-        }
-        if (level == 4 && "metadata".equals(elem)) {
-          //nothing
         }
         if (level == 5 && "record".equals(elem)) {
           numRecsOrDels++;
@@ -2910,6 +2908,7 @@ public class MainVerticleTest {
         .contentType("text/plain")
         .body(Matchers.is(PMH_CLIENT_ID));
 
+
     JsonObject oaiPmhClient = new JsonObject()
         .put("url", "http://localhost:" + MODULE_PORT + "/meta-storage/oai")
         .put("headers", new JsonObject().put(XOkapiHeaders.TENANT, TENANT_1))
@@ -2933,11 +2932,12 @@ public class MainVerticleTest {
         .contentType("application/json")
         .body("items[0].status", is("idle"))
         .body("items[0].totalRecords", is(0))
+        .body("items[0].lastTotalRecords", is(nullValue()))
         .body("items[0].totalRequests", is(0))
         .body("items[0].config.id", is(PMH_CLIENT_ID))
         .body("items[0].config.sourceId", is(SOURCE_ID_1));
 
-        RestAssured.given()
+    RestAssured.given()
         .header(XOkapiHeaders.TENANT, TENANT_1)
         .post("/meta-storage/pmh-clients/" + PMH_CLIENT_ID + "/stop")
         .then().statusCode(400)
@@ -2958,6 +2958,9 @@ public class MainVerticleTest {
         .contentType("application/json")
         .body("items[0].status", is("idle"))
         .body("items[0].totalRecords", is(0))
+        .body("items[0].lastTotalRecords", is(0))
+        .body("items[0].lastActiveTimestamp", endsWith("Z"))
+        .body("items[0].lastStartedTimestamp", endsWith("Z"))
         .body("items[0].totalRequests", is(1));
 
     RestAssured.given()
@@ -3043,6 +3046,12 @@ public class MainVerticleTest {
         .then().statusCode(200)
         .contentType("application/json")
         .body("items[0].status", is("idle"))
+        .body("items[0].lastTotalRecords", is(10))
+        .body("items[0].lastRunningTime", startsWith("0 days 00 hrs 00 mins 0"))
+        .body("items[0].lastRecsPerSec", greaterThanOrEqualTo(100))
+        .body("items[0].totalDeleted", is(0))
+        .body("items[0].totalInserted", is(10))
+        .body("items[0].totalUpdated", is(0))
         .body("items[0].totalRecords", is(10))
         .body("items[0].totalRequests", is(3)) // 4 + 4 + 2 : 3 requests with limit 4
         .body("items[0].config.id", is(PMH_CLIENT_ID))
@@ -3092,6 +3101,8 @@ public class MainVerticleTest {
         .then().statusCode(200)
         .contentType("application/json")
         .body("items[0].status", is("idle"))
+        .body("items[0].totalDeleted", is(3))
+        .body("items[0].totalInserted", is(10))
         .body("items[0].config.id", is(PMH_CLIENT_ID))
         .body("items[0].config.resumptionToken", is(nullValue()))
         .body("items[0].config.from", hasLength(20))
@@ -3481,6 +3492,8 @@ public class MainVerticleTest {
         .body("items[0].status", is("idle"))
         .body("items[0].totalRecords", is(0))
         .body("items[0].totalRequests", greaterThanOrEqualTo(1))
+        .body("items[0].lastTotalRecords", greaterThanOrEqualTo(0))
+        .body("items[0].lastRunningTime", startsWith("0 days 00 hrs 00 mins 0"))
         .body("items[0].config.id", is(PMH_CLIENT_ID))
         .body("items[0].config.sourceId", is(SOURCE_ID_1));
   }
@@ -3575,6 +3588,8 @@ public class MainVerticleTest {
         .body("items[0].status", is("idle"))
         .body("items[0].totalRecords", is(0))
         .body("items[0].totalRequests", greaterThanOrEqualTo(1))
+        .body("items[0].lastTotalRecords", greaterThanOrEqualTo(0))
+        .body("items[0].lastRunningTime", startsWith("0 days 00 hrs 00 mins 0"))
         .body("items[0].config.id", is(PMH_CLIENT_ID))
         .body("items[0].config.sourceId", is(SOURCE_ID_1));
   }

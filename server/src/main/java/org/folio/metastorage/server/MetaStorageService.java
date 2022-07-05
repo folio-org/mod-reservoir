@@ -301,7 +301,7 @@ public class MetaStorageService implements RouterCreator, TenantInitHooks {
         });
   }
 
-  //start modules, move to anothe class
+  //start modules, move to another class
 
   Future<Void> postCodeModule(RoutingContext ctx) {
     Storage storage = new Storage(ctx);
@@ -478,7 +478,7 @@ public class MetaStorageService implements RouterCreator, TenantInitHooks {
           add(routerBuilder, "stopOaiPmhClient", oaiPmhClient::stop);
           add(routerBuilder, "statusOaiPmhClient", oaiPmhClient::status);
           Router router = Router.router(vertx);
-          // this endpoint is streaming and we handle it without OpenAPI and validation
+          // this endpoint is streaming, and we handle it without OpenAPI and validation
           router.put("/meta-storage/records").handler(ctx ->
               putGlobalRecords(ctx).onFailure(cause -> failHandler(400, ctx, cause)));
           router.mountSubRouter("/", routerBuilder.createRouter());

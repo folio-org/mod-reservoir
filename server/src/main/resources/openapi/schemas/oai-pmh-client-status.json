@@ -17,18 +17,52 @@
             "type" : "string",
             "description" : "Error message for last error"
           },
-          "status": {
+          "lastActiveTimestamp" : {
+            "description" : "timestamp when the job was last active (last successful ingest)",
             "type" : "string",
-            "enum" : ["idle", "running"],
-            "description" : "OAI PMH job status"
+            "format" : "date-time"
+          },
+          "lastRecsPerSec" : {
+            "description" : "Average records per second for the last run",
+            "type" : "integer"
+          },
+          "lastRunningTime" : {
+            "description" : "Last running time, since the job was (re)started",
+            "type" : "string"
+          },
+          "lastTotalRecords" : {
+            "description" : "Records retrieved during last run",
+            "type" : "integer"
+          },
+          "lastStartedTimestamp" : {
+            "description" : "Timestamp when the job was last started",
+            "type" : "string",
+            "format" : "date-time"
+          },
+          "status": {
+            "description" : "OAI PMH job status",
+            "type" : "string",
+            "enum" : ["idle", "running"]
           },
           "totalRecords" : {
-            "type" : "integer",
-            "description" : "Total records fetched"
+            "description" : "Total number of records fetched",
+            "type" : "integer"
+          },
+          "totalDeleted" : {
+            "description" : "Total number of deleted records",
+            "type" : "integer"
+          },
+          "totalInserted" : {
+            "description" : "Total number of inserted records",
+            "type" : "integer"
+          },
+          "totalUpdated" : {
+            "description" : "Total number of updated records",
+            "type" : "integer"
           },
           "totalRequests" : {
-            "type" : "integer",
-            "description" : "Total HTTP requests"
+            "description" : "Total HTTP requests",
+            "type" : "integer"
           }
         },
         "additionalProperties": false,
