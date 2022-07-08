@@ -28,6 +28,10 @@ import java.nio.file.Path;
 import java.time.Clock;
 import java.time.Duration;
 import java.time.Instant;
+import java.time.LocalDate;
+import java.time.LocalDateTime;
+import java.time.ZoneOffset;
+import java.time.format.DateTimeFormatter;
 import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
 import java.util.HashSet;
@@ -63,6 +67,8 @@ import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.testcontainers.containers.PostgreSQLContainer;
 import org.xml.sax.SAXException;
+
+import com.oracle.truffle.js.builtins.intl.DateTimeFormatPrototypeBuiltins.DateTimeFormatPrototype;
 
 import static org.hamcrest.Matchers.anyOf;
 import static org.hamcrest.Matchers.containsString;
@@ -2994,6 +3000,42 @@ public class MainVerticleTest {
         .header(XOkapiHeaders.TENANT, TENANT_1)
         .delete("/meta-storage/pmh-clients/" + PMH_CLIENT_ID)
         .then().statusCode(204);
+  }
+
+  @Test
+  public void moveFromDate() {
+    LocalDateTime now = LocalDateTime.now(ZoneOffset.UTC).truncatedTo(ChronoUnit.SECONDS);
+    String nowShort = now.format(DateTimeFormatter.ISO_LOCAL_DATE);
+    String nowLong = now.format(DateTimeFormatter.ISO_LOCAL_DATE_TIME) + "Z";
+    LocalDateTime dayAgo = now.minusDays(1L);
+    String dayAgoShort = dayAgo.format(DateTimeFormatter.ISO_LOCAL_DATE);
+    String dayAgoLong = dayAgo.format(DateTimeFormatter.ISO_LOCAL_DATE_TIME) + "Z";
+    String dayAgoSecondLater = dayAgo.plusSeconds(1L).format(DateTimeFormatter.ISO_LOCAL_DATE_TIME) + "Z"; 
+    LocalDateTime hourAgo = now.minusHours(1L);
+    String hourAgoLong = hourAgo.format(DateTimeFormatter.ISO_LOCAL_DATE_TIME) + "Z";
+    String hourAgoSecondLater = hourAgo.plusSeconds(1L).format(DateTimeFormatter.ISO_LOCAL_DATE_TIME) + "Z";
+    JsonObject config = new JsonObject();
+    //date granularity, yesterday from moves 1 day
+    config.put("from", dayAgoShort);
+    OaiPmhClientService.moveFromDate(config);
+    Assert.assertEquals(nowShort, config.getString("from"));
+    //time granularity, yesterday from moves 1 sec
+    config = new JsonObject();
+    config.put("from", dayAgoLong);
+    OaiPmhClientService.moveFromDate(config);
+    Assert.assertEquals(dayAgoSecondLater, config.getString("from"));
+    //date granularity, today from doesn't move
+    config.put("from", nowShort);
+    OaiPmhClientService.moveFromDate(config);
+    Assert.assertEquals(nowShort, config.getString("from"));
+    //time granularity, now from doesn't move
+    config.put("from", nowLong);
+    OaiPmhClientService.moveFromDate(config);
+    Assert.assertEquals(nowLong, config.getString("from"));
+    //time granularity, hour ago moves 1 sec
+    config.put("from", hourAgoLong);
+    OaiPmhClientService.moveFromDate(config);
+    Assert.assertEquals(hourAgoSecondLater, config.getString("from"));
   }
 
   /**

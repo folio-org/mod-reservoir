@@ -525,11 +525,25 @@ public class OaiPmhClientService {
     String oldResumptionToken = config.getString(RESUMPTION_TOKEN_LITERAL);
     if (resumptionToken.length() == 0
         || resumptionToken.toString().equals(oldResumptionToken)) {
+      moveFromDate(config);
       config.remove(RESUMPTION_TOKEN_LITERAL);
       promise.fail((String) null);
     } else {
       config.put(RESUMPTION_TOKEN_LITERAL, resumptionToken);
       promise.complete();
+    }
+  }
+
+  /**
+   * If the last datestamp is at least 1 DAY or 1 HOUR before "now"
+   * we bump it by 1 DAY or 1 SEC respectively, to avoid reharvesting 
+   * the same files next time.
+   * @param config job config
+   */
+  static void moveFromDate(JsonObject config) {
+    String from = config.getString("from");
+    if (from != null &&  Util.unitsBetween(Util.getOaiNow(), from) < 0) {
+      config.put("from", Util.getNextOaiDate(from));
     }
   }
 
