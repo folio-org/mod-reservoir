@@ -6,6 +6,7 @@ import io.vertx.sqlclient.Row;
 import io.vertx.sqlclient.RowSet;
 import java.time.LocalDateTime;
 import java.time.ZoneOffset;
+import java.util.Collections;
 import java.util.List;
 import java.util.UUID;
 
@@ -14,6 +15,7 @@ public class ClusterBuilder {
   public static final String GLOBAL_ID_LABEL = "globalId";
   public static final String LOCAL_ID_LABEL = "localId";
   public static final String SOURCE_ID_LABEL = "sourceId";
+  public static final String SOURCE_VERSION_LABEL = "sourceVersion";
   public static final String PAYLOAD_LABEL = "payload";
   public static final String CLUSTER_ID_LABEL = "clusterId";
   public static final String DATESTAMP_LABEL = "datestamp";
@@ -33,18 +35,36 @@ public class ClusterBuilder {
   }
 
   /**
-   * Add records from a RowSet.
+   * Set records from a RowSet.
    * @param rows row set
    * @return this
    */
   public ClusterBuilder records(RowSet<Row> rows) {
     JsonArray records = new JsonArray();
     rows.forEach(row -> records.add(encodeRecord(row)));
-    clusterJson.put(RECORDS_LABEL, records);
-    return this;
+    return records(records);
   }
 
+  /**
+   * Set records from JsonArray.
+   * @param records these are modified (sorted)
+   * @return this
+   */
   public ClusterBuilder records(JsonArray records) {
+    Collections.sort((List<JsonObject>) records.getList(), (a, b) -> {
+      int cmp = a.getString(ClusterBuilder.SOURCE_ID_LABEL)
+          .compareTo(b.getString(ClusterBuilder.SOURCE_ID_LABEL));
+      if (cmp != 0) {
+        return cmp;
+      }
+      cmp = a.getInteger(ClusterBuilder.SOURCE_VERSION_LABEL)
+          - b.getInteger(ClusterBuilder.SOURCE_VERSION_LABEL);
+      if (cmp != 0) {
+        return cmp;
+      }
+      return a.getString(ClusterBuilder.LOCAL_ID_LABEL)
+          .compareTo(b.getString(ClusterBuilder.LOCAL_ID_LABEL));
+    });
     clusterJson.put(RECORDS_LABEL, records);
     return this;
   }
@@ -85,6 +105,7 @@ public class ClusterBuilder {
       .put(GLOBAL_ID_LABEL, row.getUUID("id"))
       .put(LOCAL_ID_LABEL, row.getString("local_id"))
       .put(SOURCE_ID_LABEL, row.getString("source_id"))
+      .put(SOURCE_VERSION_LABEL, row.getInteger("source_version"))
       .put(PAYLOAD_LABEL, row.getJsonObject(PAYLOAD_LABEL));
   }
 }

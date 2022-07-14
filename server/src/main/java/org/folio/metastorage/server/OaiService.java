@@ -243,6 +243,8 @@ public final class OaiService {
           .put("l", clusterRecord.getString(ClusterBuilder.LOCAL_ID_LABEL)));
       identifiersField.add(new JsonObject()
           .put("s", clusterRecord.getString(ClusterBuilder.SOURCE_ID_LABEL)));
+      identifiersField.add(new JsonObject()
+          .put("v", clusterRecord.getInteger(ClusterBuilder.SOURCE_VERSION_LABEL).toString()));
     }
     if (combinedMarc == null) {
       return null; // a deleted record

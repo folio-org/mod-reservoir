@@ -77,7 +77,7 @@ public final class Util {
    * @return datestamp of next
    */
   public static String getNextOaiDate(String datestamp) {
-    String res = parseUntil(datestamp).toString();
+    String res = parseUntil(datestamp).format(DateTimeFormatter.ISO_DATE_TIME);
     if (datestamp.length() == 10) {
       return res.substring(0, 10);
     }

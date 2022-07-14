@@ -42,6 +42,10 @@
       "type" : "string",
       "description" : "Source identifier used for storing records"
     },
+    "sourceVersion" : {
+      "type" : "integer",
+      "description" : "Source version used for storing records"
+    },
     "until" : {
       "type" : "string",
       "description" : "OAI PMH until date"

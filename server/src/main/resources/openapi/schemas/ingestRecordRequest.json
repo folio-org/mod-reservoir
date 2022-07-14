@@ -6,6 +6,10 @@
       "type": "string",
       "description": "Source identifier"
     },
+    "sourceVersion": {
+      "type": "integer",
+      "description": "Source version"
+    },
     "records": {
       "type": "array",
       "description" : "Records",
