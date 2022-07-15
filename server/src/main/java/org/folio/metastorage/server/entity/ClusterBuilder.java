@@ -6,6 +6,7 @@ import io.vertx.sqlclient.Row;
 import io.vertx.sqlclient.RowSet;
 import java.time.LocalDateTime;
 import java.time.ZoneOffset;
+import java.time.format.DateTimeFormatter;
 import java.util.Collections;
 import java.util.List;
 import java.util.UUID;
@@ -29,8 +30,14 @@ public class ClusterBuilder {
     clusterJson.put(CLUSTER_ID_LABEL, clusterId.toString());
   }
 
+  /**
+   * Set datestamp for cluster.
+   * @param datestamp date stamp in ISO date time format
+   * @return this
+   */
   public ClusterBuilder datestamp(LocalDateTime datestamp) {
-    clusterJson.put(DATESTAMP_LABEL, datestamp.atZone(ZoneOffset.UTC).toString());
+    clusterJson.put(DATESTAMP_LABEL,
+        datestamp.atZone(ZoneOffset.UTC).format(DateTimeFormatter.ISO_DATE_TIME));
     return this;
   }
 
@@ -78,16 +85,6 @@ public class ClusterBuilder {
     JsonArray matchValues = new JsonArray();
     rows.forEach(row -> matchValues.add(row.getString("match_value")));
     clusterJson.put(MATCH_VALUES_LABEL, matchValues);
-    return this;
-  }
-
-  public ClusterBuilder matchValues(JsonArray matchValues) {
-    clusterJson.put(MATCH_VALUES_LABEL, matchValues);
-    return this;
-  }
-
-  public ClusterBuilder matchValues(List<String> matchValues) {
-    clusterJson.put(MATCH_VALUES_LABEL, new JsonArray(matchValues));
     return this;
   }
 

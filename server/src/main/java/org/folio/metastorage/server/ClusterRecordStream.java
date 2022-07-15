@@ -15,9 +15,7 @@ import io.vertx.core.json.JsonObject;
 import io.vertx.core.streams.WriteStream;
 import io.vertx.sqlclient.SqlConnection;
 import io.vertx.sqlclient.Tuple;
-import java.util.Collections;
 import java.util.HashSet;
-import java.util.List;
 import java.util.Set;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -69,43 +67,34 @@ public class ClusterRecordStream implements WriteStream<ClusterRecordItem> {
     return this;
   }
 
-  Future<Void> populateCluster(ClusterRecordItem cr) {
-    Future<List<String>> clusterValues = Future.succeededFuture(Collections.emptyList());
-    if (withMetadata) {
-      clusterValues = getClusterValues(storage, connection, cr.clusterId);
-    }
-    return clusterValues.compose(values -> {
-      cr.clusterValues = values;
-      return populateCluster2(cr);
-    });
-  }
-
-  Future<Void> populateCluster2(ClusterRecordItem cr) {
+  Future<ClusterBuilder> populateCluster(ClusterRecordItem cr) {
     String q = "SELECT * FROM " + storage.getGlobalRecordTable()
         + " LEFT JOIN " + storage.getClusterRecordTable() + " ON record_id = id "
         + " WHERE cluster_id = $1";
     return connection.preparedQuery(q)
         .execute(Tuple.of(cr.clusterId))
-        .map(rowSet -> {
-          if (rowSet.size() != 0) { // only set ClusterBuilder if not a deleted record
-            cr.cb = new ClusterBuilder(cr.clusterId)
-                .records(rowSet)
-                .matchValues(cr.clusterValues);
+        .compose(rowSet -> {
+          if (rowSet.size() == 0) {
+            return Future.succeededFuture(null); // deleted record
           }
-          return null;
+          ClusterBuilder cb = new ClusterBuilder(cr.clusterId).records(rowSet);
+          if (!withMetadata) {
+            return Future.succeededFuture(cb);
+          }
+          return getClusterValues(storage, connection, cr.clusterId, cb);
         });
   }
 
   Future<Buffer> getClusterRecordMetadata(ClusterRecordItem cr) {
     return populateCluster(cr)
-        .compose(x -> {
+        .compose(cb -> {
           Future<String> future;
-          if (cr.cb == null) {
+          if (cb == null) {
             future = Future.succeededFuture(null); // deleted record
           } else if (module == null) {
-            future = Future.succeededFuture(getMetadataJava(cr.cb.build()));
+            future = Future.succeededFuture(getMetadataJava(cb.build()));
           } else {
-            JsonObject build = cr.cb.build();
+            JsonObject build = cb.build();
             future = vertx.executeBlocking(prom -> {
               try {
                 prom.handle(module.execute(build).map(JsonToMarcXml::convert));

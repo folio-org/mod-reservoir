@@ -219,9 +219,11 @@ public final class OaiService {
     identifiersField.add(new JsonObject()
         .put("i", clusterJson.getString(ClusterBuilder.CLUSTER_ID_LABEL)));
     JsonArray matchValues = clusterJson.getJsonArray(ClusterBuilder.MATCH_VALUES_LABEL);
-    for (int i = 0; i < matchValues.size(); i++) {
-      String matchValue = matchValues.getString(i);
-      identifiersField.add(new JsonObject().put("m", matchValue));
+    if (matchValues != null) {
+      for (int i = 0; i < matchValues.size(); i++) {
+        String matchValue = matchValues.getString(i);
+        identifiersField.add(new JsonObject().put("m", matchValue));
+      }
     }
     JsonArray records = clusterJson.getJsonArray("records");
     JsonObject combinedMarc = null;
@@ -274,16 +276,12 @@ public final class OaiService {
         });
   }
 
-  static Future<List<String>> getClusterValues(Storage storage, SqlConnection conn,
-      UUID clusterId) {
+  static Future<ClusterBuilder> getClusterValues(Storage storage, SqlConnection conn,
+      UUID clusterId, ClusterBuilder cb) {
     return conn.preparedQuery("SELECT match_value FROM " + storage.getClusterValuesTable()
             + " WHERE cluster_id = $1")
         .execute(Tuple.of(clusterId))
-        .map(rowSet -> {
-          List<String> values = new ArrayList<>();
-          rowSet.forEach(row -> values.add(row.getString("match_value")));
-          return values;
-        });
+        .map(cb::matchValues);
   }
 
   static void writeResumptionToken(RoutingContext ctx, ResumptionToken token) {
@@ -325,10 +323,7 @@ public final class OaiService {
               }
             }
             cnt.incrementAndGet();
-            ClusterRecordItem cr = new ClusterRecordItem();
-            cr.clusterId = row.getUUID("cluster_id");
-            cr.datestamp = datestamp;
-            cr.oaiSet = row.getString("match_key_config_id");
+            ClusterRecordItem cr = new ClusterRecordItem(row);
             clusterRecordStream.write(cr);
             if (clusterRecordStream.writeQueueFull()) {
               stream.pause();
@@ -366,10 +361,7 @@ public final class OaiService {
                   throw OaiException.idDoesNotExist(identifier);
                 }
                 Row row = iterator.next();
-                ClusterRecordItem cr = new ClusterRecordItem();
-                cr.clusterId = row.getUUID("cluster_id");
-                cr.datestamp = row.getLocalDateTime("datestamp");
-                cr.oaiSet = row.getString("match_key_config_id");
+                ClusterRecordItem cr = new ClusterRecordItem(row);
                 HttpServerResponse response = ctx.response();
                 ClusterRecordStream clusterRecordStream
                     = new ClusterRecordStream(ctx.vertx(), storage, conn, response, module, true);

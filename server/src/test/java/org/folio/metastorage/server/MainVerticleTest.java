@@ -211,8 +211,8 @@ public class MainVerticleTest {
 
   @AfterClass
   public static void afterClass(TestContext context) {
-    tenantOp(context, TENANT_1, new JsonObject().put("module_from", "mod-shared-index-1.0.0"), null);
-    tenantOp(context, TENANT_2, new JsonObject().put("module_from", "mod-shared-index-1.0.0"), null);
+    tenantOp(context, TENANT_1, new JsonObject().put("module_from", "mod-shared-index-1.0.0"));
+    tenantOp(context, TENANT_2, new JsonObject().put("module_from", "mod-shared-index-1.0.0"));
     vertx.close().onComplete(context.asyncAssertSuccess());
   }
 
@@ -253,9 +253,8 @@ public class MainVerticleTest {
    * @param context          test context
    * @param tenant           tenant that we're dealing with.
    * @param tenantAttributes tenant attributes as it would come from Okapi install.
-   * @param expectedError    error to expect (null for expecting no error)
    */
-  static void tenantOp(TestContext context, String tenant, JsonObject tenantAttributes, String expectedError) {
+  static void tenantOp(TestContext context, String tenant, JsonObject tenantAttributes) {
     ExtractableResponse<Response> response = RestAssured.given()
         .baseUri(MODULE_URL)
         .header(XOkapiHeaders.TENANT, tenant)
@@ -279,7 +278,7 @@ public class MainVerticleTest {
         .extract();
 
     context.assertTrue(response.path("complete"));
-    context.assertEquals(expectedError, response.path("error"));
+    context.assertEquals(null, response.path("error"));
 
     RestAssured.given()
         .baseUri(MODULE_URL)
@@ -683,7 +682,7 @@ public class MainVerticleTest {
         level++;
         String elem = xmlStreamReader.getLocalName();
         path = path + "/" + elem;
-        if (level == 2 && elem == verb) {
+        if (level == 2 && elem.equals(verb)) {
           foundEnvelope = true;
         }
         if ("identifier".equals(elem) && xmlStreamReader.hasNext()) {
@@ -820,7 +819,7 @@ public class MainVerticleTest {
    * @param s        cluster response
    * @param localIds expected localId values for each cluster
    */
-  static void verifyClusterResponse(String s, List<String>... localIds) {
+  static void verifyClusterResponse(String s, List<List<String>> localIds) {
     List<Set<String>> foundIds = new ArrayList<>();
     JsonObject clusterResponse = new JsonObject(s);
     JsonArray items = clusterResponse.getJsonArray("items");
@@ -918,7 +917,7 @@ public class MainVerticleTest {
         .body("items[0].records", hasSize(1))
         .body("items[1].records", hasSize(1))
         .extract().body().asString();
-    verifyClusterResponse(s, List.of("S101"), List.of("S102"));
+    verifyClusterResponse(s, List.of(List.of("S101"), List.of("S102")));
 
     s = RestAssured.given()
         .header(XOkapiHeaders.TENANT, TENANT_1)
@@ -931,7 +930,7 @@ public class MainVerticleTest {
         .body("items", hasSize(1))
         .body("items[0].records", hasSize(1))
         .extract().body().asString();
-    verifyClusterResponse(s, List.of("S102"));
+    verifyClusterResponse(s, List.of(List.of("S102")));
 
     ingestRecords(records1, SOURCE_ID_1);
 
@@ -955,7 +954,7 @@ public class MainVerticleTest {
         .body("items[0].records", hasSize(1))
         .body("items[1].records", hasSize(1))
         .extract().body().asString();
-    verifyClusterResponse(s, List.of("S101"), List.of("S102"));
+    verifyClusterResponse(s, List.of(List.of("S101"), List.of("S102")));
 
     RestAssured.given()
         .header(XOkapiHeaders.TENANT, TENANT_1)
@@ -994,7 +993,7 @@ public class MainVerticleTest {
         .body(is("MatchKey " + id + " not found"));
   }
 
-  JsonObject createIssnMatchKey() {
+  void createIssnMatchKey() {
     JsonObject matchKey = new JsonObject()
         .put("id", "issn")
         .put("method", "jsonpath")
@@ -1008,7 +1007,6 @@ public class MainVerticleTest {
         .then().statusCode(201)
         .contentType("application/json")
         .body(Matchers.is(matchKey.encode()));
-    return matchKey;
   }
 
   JsonObject createIsbnMatchKey() {
@@ -1072,7 +1070,7 @@ public class MainVerticleTest {
         .contentType("application/json")
         .body("items", hasSize(1))
         .extract().body().asString();
-    verifyClusterResponse(s, List.of("S101", "S102", "S103"));
+    verifyClusterResponse(s, List.of(List.of("S101", "S102", "S103")));
 
     RestAssured.given()
         .header(XOkapiHeaders.TENANT, TENANT_1)
@@ -1111,7 +1109,7 @@ public class MainVerticleTest {
         .contentType("application/json")
         .body("items", hasSize(1))
         .extract().body().asString();
-    verifyClusterResponse(s, List.of("S101"));
+    verifyClusterResponse(s, List.of(List.of("S101")));
 
     RestAssured.given()
         .header(XOkapiHeaders.TENANT, TENANT_1)
@@ -1171,7 +1169,7 @@ public class MainVerticleTest {
         .body("items", hasSize(1))
         .body("items[0].records", hasSize(2))
         .extract().body().asString();
-    verifyClusterResponse(s, List.of("S101", "S102"));
+    verifyClusterResponse(s, List.of(List.of("S101", "S102")));
 
     s = RestAssured.given()
         .header(XOkapiHeaders.TENANT, TENANT_1)
@@ -1184,7 +1182,7 @@ public class MainVerticleTest {
         .body("items[0].records", hasSize(1))
         .body("items[1].records", hasSize(1))
         .extract().body().asString();
-    verifyClusterResponse(s, List.of("S101"), List.of("S102"));
+    verifyClusterResponse(s, List.of(List.of("S101"), List.of("S102")));
 
     String clusterId = new JsonObject(s).getJsonArray("items").getJsonObject(0).getString("clusterId");
     String datestamp = new JsonObject(s).getJsonArray("items").getJsonObject(0).getString("datestamp");
@@ -1240,7 +1238,7 @@ public class MainVerticleTest {
         .body("items[0].records", hasSize(1))
         .body("items[1].records", hasSize(1))
         .extract().body().asString();
-    verifyClusterResponse(s, List.of("S101"), List.of("S102"));
+    verifyClusterResponse(s, List.of(List.of("S101"), List.of("S102")));
 
     s = RestAssured.given()
         .header(XOkapiHeaders.TENANT, TENANT_1)
@@ -1251,7 +1249,7 @@ public class MainVerticleTest {
         .contentType("application/json")
         .body("items", hasSize(2))
         .extract().body().asString();
-    verifyClusterResponse(s, List.of("S101"), List.of("S102"));
+    verifyClusterResponse(s, List.of(List.of("S101"), List.of("S102")));
 
     log.info("phase 3: S101 from 4 to 3");
     records1 = new JsonArray()
@@ -1273,7 +1271,7 @@ public class MainVerticleTest {
         .contentType("application/json")
         .body("items", hasSize(1))
         .extract().body().asString();
-    verifyClusterResponse(s, List.of("S101", "S102"));
+    verifyClusterResponse(s, List.of(List.of("S101", "S102")));
 
     RestAssured.given()
         .header(XOkapiHeaders.TENANT, TENANT_1)
@@ -1345,7 +1343,7 @@ public class MainVerticleTest {
         .contentType("application/json")
         .body("items", hasSize(2))
         .extract().body().asString();
-    verifyClusterResponse(s, List.of("S101"), List.of("S102"));
+    verifyClusterResponse(s, List.of(List.of("S101"), List.of("S102")));
 
     RestAssured.given()
         .header(XOkapiHeaders.TENANT, TENANT_1)
@@ -1371,7 +1369,7 @@ public class MainVerticleTest {
         .contentType("application/json")
         .body("items", hasSize(1))
         .extract().body().asString();
-    verifyClusterResponse(s, List.of("S101"));
+    verifyClusterResponse(s, List.of(List.of("S101")));
 
     RestAssured.given()
         .header(XOkapiHeaders.TENANT, TENANT_1)
@@ -1448,7 +1446,7 @@ public class MainVerticleTest {
         .contentType("application/json")
         .body("items", hasSize(3))
         .extract().body().asString();
-    verifyClusterResponse(s, List.of("S101"), List.of("S102"), List.of("S103"));
+    verifyClusterResponse(s, List.of(List.of("S101"), List.of("S102"), List.of("S103")));
 
     records1 = new JsonArray()
         .add(new JsonObject()
@@ -1468,7 +1466,7 @@ public class MainVerticleTest {
         .contentType("application/json")
         .body("items", hasSize(2))
         .extract().body().asString();
-    verifyClusterResponse(s, List.of("S101", "S103"), List.of("S102"));
+    verifyClusterResponse(s, List.of(List.of("S101", "S103"), List.of("S102")));
 
     RestAssured.given()
         .header(XOkapiHeaders.TENANT, TENANT_1)
@@ -1535,7 +1533,7 @@ public class MainVerticleTest {
         .body("items[0].records", hasSize(1))
         .body("items[1].records", hasSize(1))
         .extract().body().asString();
-    verifyClusterResponse(s, List.of("S101"), List.of("S102"));
+    verifyClusterResponse(s, List.of(List.of("S101"), List.of("S102")));
 
     String sourceId2 = "SOURCE-2";
     JsonArray records2 = new JsonArray()
@@ -1597,7 +1595,7 @@ public class MainVerticleTest {
         .body("items", hasSize(2))
         .extract().body().asString();
 
-    verifyClusterResponse(s, List.of("S101", "S102", "S201", "S202", "S205"), List.of("S203", "S204"));
+    verifyClusterResponse(s, List.of(List.of("S101", "S102", "S201", "S202", "S205"), List.of("S203", "S204")));
 
     RestAssured.given()
         .header(XOkapiHeaders.TENANT, TENANT_1)
@@ -1644,7 +1642,7 @@ public class MainVerticleTest {
   }
 
   @Test
-  public void testOaiDiagnostics(TestContext context) {
+  public void testOaiDiagnostics() {
     RestAssured.given()
         .header(XOkapiHeaders.TENANT, TENANT_1)
         .get("/meta-storage/oai")
@@ -2184,7 +2182,7 @@ public class MainVerticleTest {
 
     //PUT oai configuration
     JsonObject oaiConfig = new JsonObject()
-        .put("transformer", "marc-transformer");;
+        .put("transformer", "marc-transformer");
 
     RestAssured.given()
         .header(XOkapiHeaders.TENANT, tenant1)
@@ -2287,7 +2285,7 @@ public class MainVerticleTest {
     verifyOaiResponse(s, "ListRecords", identifiers, 1, null);
 
     oaiConfig = new JsonObject()
-        .put("transformer", "throw");;
+        .put("transformer", "throw");
 
     RestAssured.given()
         .header(XOkapiHeaders.TENANT, tenant1)
@@ -2636,10 +2634,10 @@ public class MainVerticleTest {
   public void upgradeDb(TestContext context) {
     String tenant = "tenant2";
     tenantOp(context, tenant, new JsonObject()
-        .put("module_to", "mod-shared-index-1.0.0"), null);
+        .put("module_to", "mod-shared-index-1.0.0"));
     tenantOp(context, tenant, new JsonObject()
         .put("module_from", "mod-shared-index-1.0.0")
-        .put("module_to", "mod-shared-index-1.0.1"), null);
+        .put("module_to", "mod-shared-index-1.0.1"));
   }
 
   @Test
