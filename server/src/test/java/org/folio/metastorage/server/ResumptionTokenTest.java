@@ -5,6 +5,7 @@ import org.junit.Test;
 
 import java.time.LocalDateTime;
 import java.util.Base64;
+import java.util.UUID;
 
 public class ResumptionTokenTest {
 
@@ -22,25 +23,43 @@ public class ResumptionTokenTest {
     Assert.assertEquals(until, token2.getUntil());
     Assert.assertEquals(set, token2.getSet());
 
-    Assert.assertEquals("set=" + set + " from=" + from + " until=" + until, token2.toString());
+    Assert.assertEquals("set=" + set + " from=" + from + " id=null until=" + until, token2.toString());
   }
 
   @Test
   public void testNullUntil() {
-    LocalDateTime from = LocalDateTime.now();
     String until = null;
-    String set = "my set";
+    String set = "my / set";
     ResumptionToken token = new ResumptionToken(set, until);
-    Assert.assertEquals("set=" + set + " from=null until=" + until, token.toString());
-    token.setFrom(from);
+    Assert.assertEquals("set=" + set + " from=null id=null until=" + until, token.toString());
 
+    LocalDateTime from = LocalDateTime.now();
+    token.setFrom(from);
     String coded = token.encode();
 
     ResumptionToken token2 = new ResumptionToken(coded);
     Assert.assertEquals(from, token2.getFrom());
     Assert.assertEquals(until, token2.getUntil());
     Assert.assertEquals(set, token2.getSet());
-    Assert.assertEquals("set=" + set + " from=" + from + " until=" + until, token2.toString());
+    Assert.assertEquals("set=" + set + " from=" + from + " id=null until=" + until, token2.toString());
+  }
+
+  @Test
+  public void testWithId() {
+    String until = null;
+    String set = "my set";
+    UUID id = UUID.randomUUID();
+    ResumptionToken token = new ResumptionToken(set, until);
+    LocalDateTime from = LocalDateTime.now();
+    token.setFrom(from);
+    token.setId(id);
+    String coded = token.encode();
+    ResumptionToken token2 = new ResumptionToken(coded);
+    Assert.assertEquals(from, token2.getFrom());
+    Assert.assertEquals(until, token2.getUntil());
+    Assert.assertEquals(set, token2.getSet());
+    Assert.assertEquals(id, token2.getId());
+    Assert.assertEquals("set=" + set + " from=" + from + " id=" + id + " until=" + until, token2.toString());
   }
 
   @Test

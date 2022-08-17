@@ -16,7 +16,6 @@ import io.vertx.sqlclient.SqlConnection;
 import io.vertx.sqlclient.Transaction;
 import io.vertx.sqlclient.Tuple;
 import java.time.Instant;
-import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
@@ -169,7 +168,14 @@ public final class OaiService {
       int no = 2;
       if (token != null) {
         tupleList.add(token.getFrom()); // from resumptionToken is with fraction of seconds
-        sqlQuery.append(" AND datestamp >= $" + no);
+        if (token.getId() == null) {
+          sqlQuery.append(" AND datestamp >= $" + no);
+        } else {
+          tupleList.add(token.getId());
+          sqlQuery.append(" AND (datestamp = $" + no + " AND cluster_id >= $" + (no + 1)
+              + " OR datestamp > $" + no + ")");
+          no++;
+        }
         no++;
       } else if (from != null) {
         tupleList.add(Util.parseFrom(from));
@@ -181,7 +187,7 @@ public final class OaiService {
         sqlQuery.append(" AND datestamp < $" + no);
       }
       ResumptionToken resumptionToken = new ResumptionToken(conf.getString("id"), until);
-      sqlQuery.append(" ORDER BY datestamp");
+      sqlQuery.append(" ORDER BY datestamp, cluster_id");
       return getTransformerModule(storage, ctx)
           .compose(module -> storage.getPool().getConnection().compose(conn ->
               listRecordsResponse(ctx, module, storage, conn, sqlQuery.toString(),
@@ -310,17 +316,15 @@ public final class OaiService {
               oaiHeader(ctx);
               response.write("  <" + elem + ">\n");
             }
-            LocalDateTime datestamp = row.getLocalDateTime("datestamp");
-            if (token.getFrom() == null || datestamp.isAfter(token.getFrom())) {
-              token.setFrom(datestamp);
-              if (cnt.get() >= limit) {
-                stream.pause();
-                clusterRecordStream.end().onComplete(y -> {
-                  writeResumptionToken(ctx, token);
-                  endListResponse(ctx, conn, tx, elem);
-                });
-                return;
-              }
+            if (cnt.get() >= limit) {
+              token.setFrom(row.getLocalDateTime("datestamp"));
+              token.setId(row.getUUID("cluster_id"));
+              stream.pause();
+              clusterRecordStream.end().onComplete(y -> {
+                writeResumptionToken(ctx, token);
+                endListResponse(ctx, conn, tx, elem);
+              });
+              return;
             }
             cnt.incrementAndGet();
             ClusterRecordItem cr = new ClusterRecordItem(row);
