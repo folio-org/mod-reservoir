@@ -576,8 +576,19 @@ public class Storage {
    */
   public Future<Void> getClusters(RoutingContext ctx, String matchKeyId,
       String sqlWhere, String sqlOrderBy) {
-    String from = clusterRecordTable + " LEFT JOIN " + clusterValueTable + " ON "
-        + clusterValueTable + ".cluster_id = " + clusterRecordTable + ".cluster_id"
+    String joinGlobal = "";
+    if (sqlWhere != null && sqlWhere.contains("global_records.")) {
+      joinGlobal = " LEFT JOIN " + globalRecordTable + " ON "
+          + clusterRecordTable + ".record_id = " + globalRecordTable + ".id";
+    }
+    String joinClusterValue = "";
+    if (sqlWhere != null && sqlWhere.contains("cluster_values.match_value")) {
+      joinClusterValue = " LEFT JOIN " + clusterValueTable + " ON "
+          + clusterValueTable + ".cluster_id = " + clusterRecordTable + ".cluster_id";
+    }
+    String from = clusterRecordTable
+        + joinClusterValue
+        + joinGlobal
         + " WHERE " + clusterRecordTable + ".match_key_config_id = $1";
     if (sqlWhere != null) {
       from = from + " AND (" + sqlWhere + ")";

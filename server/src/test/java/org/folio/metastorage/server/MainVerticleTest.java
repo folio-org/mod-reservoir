@@ -944,6 +944,21 @@ public class MainVerticleTest {
         .extract().body().asString();
     verifyClusterResponse(s, List.of(List.of("S102")));
 
+    s = RestAssured.given()
+        .header(XOkapiHeaders.TENANT, TENANT_1)
+        .header("Content-Type", "application/json")
+        .param("query", "sourceId=" + SOURCE_ID_1)
+        .param("matchkeyid", "isbn")
+        .get("/meta-storage/clusters")
+        .then().statusCode(200)
+        .contentType("application/json")
+        .body("items", hasSize(2))
+        .body("items[0].records", hasSize(1))
+        .body("items[1].records", hasSize(1))
+        .extract().body().asString();
+    verifyClusterResponse(s, List.of(List.of("S101"), List.of("S102")));
+
+
     ingestRecords(records1, SOURCE_ID_1);
 
     RestAssured.given()
@@ -1606,8 +1621,19 @@ public class MainVerticleTest {
         .contentType("application/json")
         .body("items", hasSize(2))
         .extract().body().asString();
-
     verifyClusterResponse(s, List.of(List.of("S101", "S102", "S201", "S202", "S205"), List.of("S203", "S204")));
+
+    s = RestAssured.given()
+        .header(XOkapiHeaders.TENANT, TENANT_1)
+        .header("Content-Type", "application/json")
+        .param("matchkeyid", "isbn")
+        .param("query", "sourceId=" + SOURCE_ID_1 + " and sourceVersion = 1")
+        .get("/meta-storage/clusters")
+        .then().statusCode(200)
+        .contentType("application/json")
+        .body("items", hasSize(1))
+        .extract().body().asString();
+    verifyClusterResponse(s, List.of(List.of("S101", "S102", "S201", "S202", "S205")));
 
     RestAssured.given()
         .header(XOkapiHeaders.TENANT, TENANT_1)
