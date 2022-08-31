@@ -1,4 +1,6 @@
-# mod-meta-storage
+# Reservoir 
+
+__Note:__ mod-meta-storage is being renamed to __Reservoir__ (mod-reservoir in FOLIO parlance) which means that this repository will be soon archived.
 
 Copyright (C) 2021-2022 The Open Library Foundation
 
