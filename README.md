@@ -21,7 +21,7 @@ Requirements:
 
 * Java 17. A later version might very well work
 * Maven 3.6.3 or later
-* `JAVA_HOME` set, e.g.
+* `JAVA_HOME` set, e.g.\
    `export JAVA_HOME=$(readlink -f /usr/bin/javac | sed "s:bin/javac::")`
 
 Install all components with: `mvn install`
@@ -88,9 +88,14 @@ The option `--xsl` may be repeated for a sequence of transformations.
 
 ## OAI-PMH client
 
-The OAI-PMH client is executing in the server. The OAI-PMH client is configured by
-simple JSON configuration. The identifier is user-defined and given in the initial
-post. Example with identifier `us-mdbj` below:
+The OAI-PMH client is executing in the server. So it is not an external client.
+Commands are sent to the server to initiate the client operations.
+
+### OAI-PMH client configuration
+
+The OAI-PMH client is configured by posting simple JSON configuration.
+The identifier `id` is user-defined and given in the initial post.
+Example with identifier `us-mdbj` below:
 
 ```
 export OKAPI_TENANT=diku
@@ -160,6 +165,9 @@ Stop all jobs with:
 curl -HX-Okapi-Tenant:$OKAPI_TENANT -XPOST \
   $OKAPI_URL/meta-storage/pmh-clients/_all/stop
 ```
+
+**Note**: The abovementioned commands are for the server running on localhost.
+For a real server, the `-HX-Okapi-Token:$OKAPI_TOKEN` is required.
 
 ## Additional information
 
