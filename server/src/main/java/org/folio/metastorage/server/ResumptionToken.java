@@ -2,10 +2,12 @@ package org.folio.metastorage.server;
 
 import java.time.LocalDateTime;
 import java.util.Base64;
+import java.util.UUID;
 
 public class ResumptionToken {
   private final String set;
   private LocalDateTime from;
+  private UUID id;
   private final String until;
 
   /**
@@ -29,7 +31,13 @@ public class ResumptionToken {
     if (i1 == -1 || i2 == -1) {
       throw new IllegalArgumentException("Bad resumptiontoken");
     }
-    from = Util.parseIso(s.substring(0, i1));
+    int islash = s.indexOf('/'); // from date does not contain slash
+    if (islash > 0 && islash < i1) {
+      id = UUID.fromString(s.substring(islash + 1, i1));
+    } else {
+      islash = i1;
+    }
+    from = Util.parseIso(s.substring(0, islash));
     String tmp = s.substring(i1 + 1, i2);
     until = tmp.equals("null") ? null : tmp;
     set = s.substring(i2 + 1);
@@ -43,7 +51,7 @@ public class ResumptionToken {
     if (from == null) {
       throw new IllegalStateException("from unset");
     }
-    String s = from + " " + until + " " + set;
+    String s = from + (id != null ? "/" + id : "") + " " + until + " " + set;
     return Base64.getEncoder().encodeToString(s.getBytes());
   }
 
@@ -55,6 +63,14 @@ public class ResumptionToken {
     return from;
   }
 
+  void setId(UUID id) {
+    this.id = id;
+  }
+
+  public UUID getId() {
+    return id;
+  }
+
   public String getUntil() {
     return until;
   }
@@ -64,6 +80,7 @@ public class ResumptionToken {
   }
 
   public String toString() {
-    return "set=" + set + " from=" + (from != null ? from.toString() : "null") + " until=" + until;
+    return "set=" + set + " from=" + (from != null ? from.toString() : "null")
+        + " id=" + id + " until=" + until;
   }
 }

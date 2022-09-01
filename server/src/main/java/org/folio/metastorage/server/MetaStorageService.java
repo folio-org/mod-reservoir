@@ -154,9 +154,13 @@ public class MetaStorageService implements RouterCreator, TenantInitHooks {
   Future<Void> getClusters(RoutingContext ctx) {
     PgCqlQuery pgCqlQuery = createPgCqlQuery();
     pgCqlQuery.addField(
-        new PgCqlField("match_value", "matchValue", PgCqlField.Type.TEXT));
+        new PgCqlField("cluster_values.match_value", "matchValue", PgCqlField.Type.TEXT));
     pgCqlQuery.addField(
         new PgCqlField("cluster_records.cluster_id", "clusterId", PgCqlField.Type.UUID));
+    pgCqlQuery.addField(
+        new PgCqlField("global_records.source_id", "sourceId", PgCqlField.Type.TEXT));
+    pgCqlQuery.addField(
+        new PgCqlField("global_records.source_version", "sourceVersion", PgCqlField.Type.NUMBER));
 
     RequestParameters params = ctx.get(ValidationHandler.REQUEST_CONTEXT_KEY);
     pgCqlQuery.parse(Util.getQueryParameter(params));
