@@ -2,7 +2,7 @@
   "id": "goldrush",
   "method": "javascript",
   "params": {
-    "url": "https://raw.githubusercontent.com/folio-org/mod-meta-storage/master/js/matchkeys/goldrush/goldrush.mjs"
+    "url": "https://raw.githubusercontent.com/folio-org/mod-reservoir/master/js/matchkeys/goldrush/goldrush.mjs"
   },
   "update": "ingest"
 }
