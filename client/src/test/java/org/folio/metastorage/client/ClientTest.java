@@ -145,7 +145,7 @@ public class ClientTest {
 
     HttpServer httpServer = vertx.createHttpServer(so);
     Router router = Router.router(vertx);
-    router.put("/meta-storage/records")
+    router.put("/reservoir/records")
         .handler(BodyHandler.create())
         .handler(c -> {
           requests.add(c.getBodyAsJson());
@@ -191,7 +191,7 @@ public class ClientTest {
 
     HttpServer httpServer = vertx.createHttpServer(so);
     Router router = Router.router(vertx);
-    router.put("/meta-storage/records")
+    router.put("/reservoir/records")
         .handler(BodyHandler.create())
         .handler(c -> {
           c.response().setStatusCode(400);
@@ -226,7 +226,7 @@ public class ClientTest {
 
     HttpServer httpServer = vertx.createHttpServer(so);
     Router router = Router.router(vertx);
-    router.put("/meta-storage/records")
+    router.put("/reservoir/records")
         .handler(BodyHandler.create())
         .handler(c -> {
           requests.add(c.getBodyAsJson());
@@ -274,7 +274,7 @@ public class ClientTest {
 
     HttpServer httpServer = vertx.createHttpServer(so);
     Router router = Router.router(vertx);
-    router.put("/meta-storage/records")
+    router.put("/reservoir/records")
         .handler(BodyHandler.create())
         .handler(c -> {
           requests.add(c.getBodyAsJson());
@@ -311,7 +311,7 @@ public class ClientTest {
 
     HttpServer httpServer = vertx.createHttpServer(so);
     Router router = Router.router(vertx);
-    router.put("/meta-storage/records")
+    router.put("/reservoir/records")
         .handler(BodyHandler.create())
         .handler(c -> {
           requests.add(c.getBodyAsJson());
@@ -348,7 +348,7 @@ public class ClientTest {
 
     HttpServer httpServer = vertx.createHttpServer(so);
     Router router = Router.router(vertx);
-    router.put("/meta-storage/records")
+    router.put("/reservoir/records")
         .handler(BodyHandler.create())
         .handler(c -> {
           requests.add(c.getBodyAsJson());
@@ -385,7 +385,7 @@ public class ClientTest {
 
     HttpServer httpServer = vertx.createHttpServer(so);
     Router router = Router.router(vertx);
-    router.put("/meta-storage/records")
+    router.put("/reservoir/records")
         .handler(BodyHandler.create())
         .handler(c -> {
           requests.add(c.getBodyAsJson());
@@ -421,7 +421,7 @@ public class ClientTest {
 
     HttpServer httpServer = vertx.createHttpServer(so);
     Router router = Router.router(vertx);
-    router.put("/meta-storage/records")
+    router.put("/reservoir/records")
         .handler(BodyHandler.create())
         .handler(c -> {
           requests.add(c.getBodyAsJson());
@@ -457,7 +457,7 @@ public class ClientTest {
 
     HttpServer httpServer = vertx.createHttpServer(so);
     Router router = Router.router(vertx);
-    router.put("/meta-storage/records")
+    router.put("/reservoir/records")
         .handler(BodyHandler.create())
         .handler(c -> {
           requests.add(c.getBodyAsJson());
@@ -506,7 +506,7 @@ public class ClientTest {
     JsonArray requests = new JsonArray();
     HttpServer httpServer = vertx.createHttpServer(so);
     Router router = Router.router(vertx);
-    router.put("/meta-storage/records")
+    router.put("/reservoir/records")
         .handler(BodyHandler.create())
         .handler(c -> {
           requests.add(c.getBodyAsJson());
@@ -556,7 +556,7 @@ public class ClientTest {
     JsonArray requests = new JsonArray();
     HttpServer httpServer = vertx.createHttpServer(so);
     Router router = Router.router(vertx);
-    router.put("/meta-storage/records")
+    router.put("/reservoir/records")
         .handler(BodyHandler.create())
         .handler(c -> {
           requests.add(c.getBodyAsJson());
@@ -606,7 +606,7 @@ public class ClientTest {
 
     HttpServer httpServer = vertx.createHttpServer(so);
     Router router = Router.router(vertx);
-    router.put("/meta-storage/records")
+    router.put("/reservoir/records")
         .handler(BodyHandler.create())
         .handler(c -> {
           requests.add(c.getBodyAsJson());
@@ -652,7 +652,7 @@ public class ClientTest {
 
     HttpServer httpServer = vertx.createHttpServer(so);
     Router router = Router.router(vertx);
-    router.put("/meta-storage/records")
+    router.put("/reservoir/records")
         .handler(BodyHandler.create())
         .handler(c -> {
           requests.add(c.getBodyAsJson());
@@ -691,7 +691,7 @@ public class ClientTest {
 
     HttpServer httpServer = vertx.createHttpServer(so);
     Router router = Router.router(vertx);
-    router.put("/meta-storage/records")
+    router.put("/reservoir/records")
         .handler(BodyHandler.create())
         .handler(c -> {
           requests.add(c.getBodyAsJson());

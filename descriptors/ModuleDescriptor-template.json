@@ -1,6 +1,6 @@
 {
   "id": "${artifactId}-${version}",
-  "name": "Meta storage",
+  "name": "Reservoir",
   "provides": [
     {
       "id": "_tenant",
@@ -23,320 +23,320 @@
       ]
     },
     {
-      "id": "meta-storage-config-oai",
+      "id": "reservoir-config-oai",
       "version": "1.0",
       "handlers": [
         {
           "methods": [
             "GET"
           ],
-          "pathPattern": "/meta-storage/config/oai",
+          "pathPattern": "/reservoir/config/oai",
           "permissionsRequired": [
-            "meta-storage-config-oai.get"
+            "reservoir-config-oai.get"
           ]
         },
         {
           "methods": [
             "PUT"
           ],
-          "pathPattern": "/meta-storage/config/oai",
+          "pathPattern": "/reservoir/config/oai",
           "permissionsRequired": [
-            "meta-storage-config-oai.put"
+            "reservoir-config-oai.put"
           ]
         },
         {
           "methods": [
             "DELETE"
           ],
-          "pathPattern": "/meta-storage/config/oai",
+          "pathPattern": "/reservoir/config/oai",
           "permissionsRequired": [
-            "meta-storage-config-oai.delete"
+            "reservoir-config-oai.delete"
           ]
         }
       ]
     },
     {
-      "id": "meta-storage-config-matchkeys",
+      "id": "reservoir-config-matchkeys",
       "version": "1.0",
       "handlers": [
         {
           "methods": [
             "POST"
           ],
-          "pathPattern": "/meta-storage/config/matchkeys",
+          "pathPattern": "/reservoir/config/matchkeys",
           "permissionsRequired": [
-            "meta-storage-config-matchkeys.item.post"
+            "reservoir-config-matchkeys.item.post"
           ]
         },
         {
           "methods": [
             "GET"
           ],
-          "pathPattern": "/meta-storage/config/matchkeys",
+          "pathPattern": "/reservoir/config/matchkeys",
           "permissionsRequired": [
-            "meta-storage-config-matchkeys.collection.get"
+            "reservoir-config-matchkeys.collection.get"
           ]
         },
         {
           "methods": [
             "GET"
           ],
-          "pathPattern": "/meta-storage/config/matchkeys/{id}",
+          "pathPattern": "/reservoir/config/matchkeys/{id}",
           "permissionsRequired": [
-            "meta-storage-config-matchkeys.item.get"
+            "reservoir-config-matchkeys.item.get"
           ]
         },
         {
           "methods": [
             "PUT"
           ],
-          "pathPattern": "/meta-storage/config/matchkeys/{id}",
+          "pathPattern": "/reservoir/config/matchkeys/{id}",
           "permissionsRequired": [
-            "meta-storage-config-matchkeys.item.put"
+            "reservoir-config-matchkeys.item.put"
           ]
         },
         {
           "methods": [
             "DELETE"
           ],
-          "pathPattern": "/meta-storage/config/matchkeys/{id}",
+          "pathPattern": "/reservoir/config/matchkeys/{id}",
           "permissionsRequired": [
-            "meta-storage-config-matchkeys.item.delete"
+            "reservoir-config-matchkeys.item.delete"
           ]
         },
         {
           "methods": [
             "PUT"
           ],
-          "pathPattern": "/meta-storage/config/matchkeys/{id}/initialize",
+          "pathPattern": "/reservoir/config/matchkeys/{id}/initialize",
           "permissionsRequired": [
-            "meta-storage-config-matchkeys.item.initialize"
+            "reservoir-config-matchkeys.item.initialize"
           ]
         },
         {
           "methods": [
             "GET"
           ],
-          "pathPattern": "/meta-storage/config/matchkeys/{id}/stats",
+          "pathPattern": "/reservoir/config/matchkeys/{id}/stats",
           "permissionsRequired": [
-            "meta-storage-config-matchkeys.item.stats"
+            "reservoir-config-matchkeys.item.stats"
           ]
         }
       ]
     },
     {
-      "id": "meta-storage-config-modules",
+      "id": "reservoir-config-modules",
       "version": "1.0",
       "handlers": [
         {
           "methods": [
             "POST"
           ],
-          "pathPattern": "/meta-storage/config/modules",
+          "pathPattern": "/reservoir/config/modules",
           "permissionsRequired": [
-            "meta-storage-config-modules.item.post"
+            "reservoir-config-modules.item.post"
           ]
         },
         {
           "methods": [
             "GET"
           ],
-          "pathPattern": "/meta-storage/config/modules",
+          "pathPattern": "/reservoir/config/modules",
           "permissionsRequired": [
-            "meta-storage-config-modules.collection.get"
+            "reservoir-config-modules.collection.get"
           ]
         },
         {
           "methods": [
             "GET"
           ],
-          "pathPattern": "/meta-storage/config/modules/{id}",
+          "pathPattern": "/reservoir/config/modules/{id}",
           "permissionsRequired": [
-            "meta-storage-config-modules.item.get"
+            "reservoir-config-modules.item.get"
           ]
         },
         {
           "methods": [
             "PUT"
           ],
-          "pathPattern": "/meta-storage/config/modules/{id}",
+          "pathPattern": "/reservoir/config/modules/{id}",
           "permissionsRequired": [
-            "meta-storage-config-modules.item.put"
+            "reservoir-config-modules.item.put"
           ]
         },
         {
           "methods": [
             "DELETE"
           ],
-          "pathPattern": "/meta-storage/config/modules/{id}",
+          "pathPattern": "/reservoir/config/modules/{id}",
           "permissionsRequired": [
-            "meta-storage-config-modules.item.delete"
+            "reservoir-config-modules.item.delete"
           ]
         },
         {
           "methods": [
             "PUT"
           ],
-          "pathPattern": "/meta-storage/config/modules/{id}/reload",
+          "pathPattern": "/reservoir/config/modules/{id}/reload",
           "permissionsRequired": [
-            "meta-storage-config-modules.item.reload"
+            "reservoir-config-modules.item.reload"
           ]
         }
       ]
     },
     {
-      "id": "meta-storage-records",
+      "id": "reservoir-records",
       "version": "1.0",
       "handlers": [
         {
           "methods": [
             "GET"
           ],
-          "pathPattern": "/meta-storage/records",
+          "pathPattern": "/reservoir/records",
           "permissionsRequired": [
-            "meta-storage-records.collection.get"
+            "reservoir-records.collection.get"
           ]
         },
         {
           "methods": [
             "PUT"
           ],
-          "pathPattern": "/meta-storage/records",
+          "pathPattern": "/reservoir/records",
           "permissionsRequired": [
-            "meta-storage-records.put"
+            "reservoir-records.put"
           ]
         },
         {
           "methods": [
             "DELETE"
           ],
-          "pathPattern": "/meta-storage/records",
+          "pathPattern": "/reservoir/records",
           "permissionsRequired": [
-            "meta-storage-records.delete"
+            "reservoir-records.delete"
           ]
         },
         {
           "methods": [
             "GET"
           ],
-          "pathPattern": "/meta-storage/records/{globalId}",
+          "pathPattern": "/reservoir/records/{globalId}",
           "permissionsRequired": [
-            "meta-storage-records.item.get"
+            "reservoir-records.item.get"
           ]
         }
       ]
     },
     {
-      "id": "meta-storage-clusters",
+      "id": "reservoir-clusters",
       "version": "1.0",
       "handlers": [
         {
           "methods": [
             "GET"
           ],
-          "pathPattern": "/meta-storage/clusters",
+          "pathPattern": "/reservoir/clusters",
           "permissionsRequired": [
-            "meta-storage-clusters.collection.get"
+            "reservoir-clusters.collection.get"
           ]
         },
         {
           "methods": [
             "GET"
           ],
-          "pathPattern": "/meta-storage/clusters/{clusterId}",
+          "pathPattern": "/reservoir/clusters/{clusterId}",
           "permissionsRequired": [
-            "meta-storage-clusters.item.get"
+            "reservoir-clusters.item.get"
           ]
         }
       ]
     },
     {
-      "id": "meta-storage-oai",
+      "id": "reservoir-oai",
       "version": "1.0",
       "handlers": [
         {
           "methods": [
             "GET"
           ],
-          "pathPattern": "/meta-storage/oai",
+          "pathPattern": "/reservoir/oai",
           "permissionsRequired": [ ]
         }
       ]
     },
     {
-      "id": "meta-storage-oai-pmh-client",
+      "id": "reservoir-oai-pmh-client",
       "version": "1.0",
       "handlers": [
         {
           "methods": [
             "POST"
           ],
-          "pathPattern": "/meta-storage/pmh-clients",
+          "pathPattern": "/reservoir/pmh-clients",
           "permissionsRequired": [
-            "meta-storage-pmh-clients.post"
+            "reservoir-pmh-clients.post"
           ]
         },
         {
           "methods": [
             "GET"
           ],
-          "pathPattern": "/meta-storage/pmh-clients",
+          "pathPattern": "/reservoir/pmh-clients",
           "permissionsRequired": [
-            "meta-storage-pmh-clients.collection.get"
+            "reservoir-pmh-clients.collection.get"
           ]
         },
         {
           "methods": [
             "GET"
           ],
-          "pathPattern": "/meta-storage/pmh-clients/{id}",
+          "pathPattern": "/reservoir/pmh-clients/{id}",
           "permissionsRequired": [
-            "meta-storage-pmh-clients.item.get"
+            "reservoir-pmh-clients.item.get"
           ]
         },
         {
           "methods": [
             "PUT"
           ],
-          "pathPattern": "/meta-storage/pmh-clients/{id}",
+          "pathPattern": "/reservoir/pmh-clients/{id}",
           "permissionsRequired": [
-            "meta-storage-pmh-clients.item.put"
+            "reservoir-pmh-clients.item.put"
           ]
         },
         {
           "methods": [
             "DELETE"
           ],
-          "pathPattern": "/meta-storage/pmh-clients/{id}",
+          "pathPattern": "/reservoir/pmh-clients/{id}",
           "permissionsRequired": [
-            "meta-storage-pmh-clients.item.delete"
+            "reservoir-pmh-clients.item.delete"
           ]
         },
         {
           "methods": [
             "POST"
           ],
-          "pathPattern": "/meta-storage/pmh-clients/{id}/start",
+          "pathPattern": "/reservoir/pmh-clients/{id}/start",
           "permissionsRequired": [
-            "meta-storage-pmh-clients.start"
+            "reservoir-pmh-clients.start"
           ]
         },
         {
           "methods": [
             "POST"
           ],
-          "pathPattern": "/meta-storage/pmh-clients/{id}/stop",
+          "pathPattern": "/reservoir/pmh-clients/{id}/stop",
           "permissionsRequired": [
-            "meta-storage-pmh-clients.stop"
+            "reservoir-pmh-clients.stop"
           ]
         },
         {
           "methods": [
             "GET"
           ],
-          "pathPattern": "/meta-storage/pmh-clients/{id}/status",
+          "pathPattern": "/reservoir/pmh-clients/{id}/status",
           "permissionsRequired": [
-            "meta-storage-pmh-clients.status"
+            "reservoir-pmh-clients.status"
           ]
         }
       ]
@@ -345,238 +345,238 @@
   "requires": [],
   "permissionSets": [
     {
-      "permissionName": "meta-storage-config-oai.get",
-      "displayName": "meta storage - retrieve OAI configuration",
+      "permissionName": "reservoir-config-oai.get",
+      "displayName": "reservoir - retrieve OAI configuration",
       "description": "Retrieve OAI configuration"
     },
     {
-      "permissionName": "meta-storage-config-oai.put",
-      "displayName": "meta storage - update OAI configuration",
+      "permissionName": "reservoir-config-oai.put",
+      "displayName": "reservoir - update OAI configuration",
       "description": "Update OAI configurations"
     },
     {
-      "permissionName": "meta-storage-config-oai.delete",
-      "displayName": "meta storage - delete OAI configuration",
+      "permissionName": "reservoir-config-oai.delete",
+      "displayName": "reservoir - delete OAI configuration",
       "description": "Delete OAI configurations"
     },
     {
-      "permissionName": "meta-storage-config-oai.all",
-      "displayName": "meta storage - all OAI configuration permissions",
+      "permissionName": "reservoir-config-oai.all",
+      "displayName": "reservoir - all OAI configuration permissions",
       "description": "All OAI configuration permissions",
       "subPermissions": [
-        "meta-storage-config-oai.get",
-        "meta-storage-config-oai.put",
-        "meta-storage-config-oai.delete"
+        "reservoir-config-oai.get",
+        "reservoir-config-oai.put",
+        "reservoir-config-oai.delete"
      ]
     },
     {
-      "permissionName": "meta-storage-config-matchkeys.item.post",
-      "displayName": "meta storage - create match key configuration",
+      "permissionName": "reservoir-config-matchkeys.item.post",
+      "displayName": "reservoir - create match key configuration",
       "description": "Create match key configuration"
     },
     {
-      "permissionName": "meta-storage-config-matchkeys.collection.get",
-      "displayName": "meta storage - get match key configurations",
+      "permissionName": "reservoir-config-matchkeys.collection.get",
+      "displayName": "reservoir - get match key configurations",
       "description": "Get match key configurations"
     },
     {
-      "permissionName": "meta-storage-config-matchkeys.item.get",
-      "displayName": "meta storage - get match key configuration",
+      "permissionName": "reservoir-config-matchkeys.item.get",
+      "displayName": "reservoir - get match key configuration",
       "description": "Get match key configuration"
     },
     {
-      "permissionName": "meta-storage-config-matchkeys.item.put",
-      "displayName": "meta storage - update match key configuration",
+      "permissionName": "reservoir-config-matchkeys.item.put",
+      "displayName": "reservoir - update match key configuration",
       "description": "Update match key configuration"
     },
     {
-      "permissionName": "meta-storage-config-matchkeys.item.delete",
-      "displayName": "meta storage - delete match key configuration",
+      "permissionName": "reservoir-config-matchkeys.item.delete",
+      "displayName": "reservoir - delete match key configuration",
       "description": "Delete match key configuration"
     },
     {
-      "permissionName": "meta-storage-config-matchkeys.item.initialize",
-      "displayName": "meta storage - initialize match key configuration",
+      "permissionName": "reservoir-config-matchkeys.item.initialize",
+      "displayName": "reservoir - initialize match key configuration",
       "description": "Initialize match key configuration"
     },
     {
-      "permissionName": "meta-storage-config-matchkeys.item.stats",
-      "displayName": "meta storage - get match key statistics",
+      "permissionName": "reservoir-config-matchkeys.item.stats",
+      "displayName": "reservoir - get match key statistics",
       "description": "Get match key statistics"
     },
     {
-      "permissionName": "meta-storage-config-matchkeys.all",
-      "displayName": "meta storage - all match key configuration",
+      "permissionName": "reservoir-config-matchkeys.all",
+      "displayName": "reservoir - all match key configuration",
       "description": "All match key configuration",
       "subPermissions": [
-        "meta-storage-config-matchkeys.item.post",
-        "meta-storage-config-matchkeys.collection.get",
-        "meta-storage-config-matchkeys.item.get",
-        "meta-storage-config-matchkeys.item.put",
-        "meta-storage-config-matchkeys.item.delete",
-        "meta-storage-config-matchkeys.item.initialize",
-        "meta-storage-config-matchkeys.item.stats"
+        "reservoir-config-matchkeys.item.post",
+        "reservoir-config-matchkeys.collection.get",
+        "reservoir-config-matchkeys.item.get",
+        "reservoir-config-matchkeys.item.put",
+        "reservoir-config-matchkeys.item.delete",
+        "reservoir-config-matchkeys.item.initialize",
+        "reservoir-config-matchkeys.item.stats"
      ]
     },
     {
-      "permissionName": "meta-storage-config-modules.item.post",
-      "displayName": "meta storage - create code module",
+      "permissionName": "reservoir-config-modules.item.post",
+      "displayName": "reservoir - create code module",
       "description": "Create code module config"
     },
     {
-      "permissionName": "meta-storage-config-modules.collection.get",
-      "displayName": "meta storage - retrieve all code modules",
+      "permissionName": "reservoir-config-modules.collection.get",
+      "displayName": "reservoir - retrieve all code modules",
       "description": "Read all code modules configs"
     },
     {
-      "permissionName": "meta-storage-config-modules.item.get",
-      "displayName": "meta storage - retrieve code module",
+      "permissionName": "reservoir-config-modules.item.get",
+      "displayName": "reservoir - retrieve code module",
       "description": "Read code module config"
     },
     {
-      "permissionName": "meta-storage-config-modules.item.put",
-      "displayName": "meta storage - update code module",
+      "permissionName": "reservoir-config-modules.item.put",
+      "displayName": "reservoir - update code module",
       "description": "Update code module config"
     },
     {
-      "permissionName": "meta-storage-config-modules.item.delete",
-      "displayName": "meta storage - delete code module",
+      "permissionName": "reservoir-config-modules.item.delete",
+      "displayName": "reservoir - delete code module",
       "description": "Delete code module config"
     },
     {
-      "permissionName": "meta-storage-config-modules.item.reload",
-      "displayName": "meta storage - reload code module",
+      "permissionName": "reservoir-config-modules.item.reload",
+      "displayName": "reservoir - reload code module",
       "description": "Reload code module config"
     },
     {
-      "permissionName": "meta-storage-config-modules.all",
-      "displayName": "meta storage - all code modules configuration",
+      "permissionName": "reservoir-config-modules.all",
+      "displayName": "reservoir - all code modules configuration",
       "description": "All code modules configuration",
       "subPermissions": [
-        "meta-storage-config-modules.item.post",
-        "meta-storage-config-modules.collection.get",
-        "meta-storage-config-modules.item.get",
-        "meta-storage-config-modules.item.put",
-        "meta-storage-config-modules.item.delete",
-        "meta-storage-config-modules.item.reload"
+        "reservoir-config-modules.item.post",
+        "reservoir-config-modules.collection.get",
+        "reservoir-config-modules.item.get",
+        "reservoir-config-modules.item.put",
+        "reservoir-config-modules.item.delete",
+        "reservoir-config-modules.item.reload"
      ]
     },
     {
-      "permissionName": "meta-storage-records.collection.get",
-      "displayName": "meta storage - get records",
+      "permissionName": "reservoir-records.collection.get",
+      "displayName": "reservoir - get records",
       "description": "Get records"
     },
     {
-      "permissionName": "meta-storage-records.put",
-      "displayName": "meta storage - ingest records",
+      "permissionName": "reservoir-records.put",
+      "displayName": "reservoir - ingest records",
       "description": "Ingest records"
     },
     {
-      "permissionName": "meta-storage-records.delete",
-      "displayName": "meta storage - delete records",
+      "permissionName": "reservoir-records.delete",
+      "displayName": "reservoir - delete records",
       "description": "Delete records"
     },
     {
-      "permissionName": "meta-storage-records.item.get",
-      "displayName": "meta storage - get record",
+      "permissionName": "reservoir-records.item.get",
+      "displayName": "reservoir - get record",
       "description": "Get record by globalId"
     },
     {
-      "permissionName": "meta-storage-records.all",
-      "displayName": "meta storage - record management",
+      "permissionName": "reservoir-records.all",
+      "displayName": "reservoir - record management",
       "description": "Record management",
       "subPermissions": [
-        "meta-storage-records.collection.get",
-        "meta-storage-records.put",
-        "meta-storage-records.delete",
-        "meta-storage-records.item.get"
+        "reservoir-records.collection.get",
+        "reservoir-records.put",
+        "reservoir-records.delete",
+        "reservoir-records.item.get"
       ]
     },
     {
-      "permissionName": "meta-storage-clusters.collection.get",
-      "displayName": "meta storage - get clusters",
+      "permissionName": "reservoir-clusters.collection.get",
+      "displayName": "reservoir - get clusters",
       "description": "Get clusters"
     },
     {
-      "permissionName": "meta-storage-clusters.item.get",
-      "displayName": "meta storage - get cluster",
+      "permissionName": "reservoir-clusters.item.get",
+      "displayName": "reservoir - get cluster",
       "description": "Get cluster"
     },
     {
-      "permissionName": "meta-storage-clusters.all",
-      "displayName": "meta storage - clusters",
+      "permissionName": "reservoir-clusters.all",
+      "displayName": "reservoir - clusters",
       "description": "Clusters permissions",
       "subPermissions": [
-        "meta-storage-clusters.collection.get",
-        "meta-storage-clusters.item.get"
+        "reservoir-clusters.collection.get",
+        "reservoir-clusters.item.get"
       ]
     },
     {
-      "permissionName": "meta-storage-pmh-clients.post",
-      "displayName": "meta storage - OAI PMH post",
+      "permissionName": "reservoir-pmh-clients.post",
+      "displayName": "reservoir - OAI PMH post",
       "description": "Create OAI PMH client"
     },
     {
-      "permissionName": "meta-storage-pmh-clients.collection.get",
-      "displayName": "meta storage - OAI PMH collection get",
+      "permissionName": "reservoir-pmh-clients.collection.get",
+      "displayName": "reservoir - OAI PMH collection get",
       "description": "Get OAI PMH clients"
     },
     {
-      "permissionName": "meta-storage-pmh-clients.item.get",
-      "displayName": "meta storage - OAI PMH item get",
+      "permissionName": "reservoir-pmh-clients.item.get",
+      "displayName": "reservoir - OAI PMH item get",
       "description": "Get OAI PMH client"
     },
     {
-      "permissionName": "meta-storage-pmh-clients.item.put",
-      "displayName": "meta storage - OAI PMH item put",
+      "permissionName": "reservoir-pmh-clients.item.put",
+      "displayName": "reservoir - OAI PMH item put",
       "description": "Update OAI PMH client"
     },
     {
-      "permissionName": "meta-storage-pmh-clients.item.delete",
-      "displayName": "meta storage - OAI PMH item delete",
+      "permissionName": "reservoir-pmh-clients.item.delete",
+      "displayName": "reservoir - OAI PMH item delete",
       "description": "Delete OAI PMH client"
     },
     {
-      "permissionName": "meta-storage-pmh-clients.start",
-      "displayName": "meta storage - OAI PMH client start",
+      "permissionName": "reservoir-pmh-clients.start",
+      "displayName": "reservoir - OAI PMH client start",
       "description": "Start OAI PMH client"
     },
     {
-      "permissionName": "meta-storage-pmh-clients.stop",
-      "displayName": "meta storage - OAI PMH client stop",
+      "permissionName": "reservoir-pmh-clients.stop",
+      "displayName": "reservoir - OAI PMH client stop",
       "description": "Stop OAI PMH client"
     },
     {
-      "permissionName": "meta-storage-pmh-clients.status",
-      "displayName": "meta storage - OAI PMH client status",
+      "permissionName": "reservoir-pmh-clients.status",
+      "displayName": "reservoir - OAI PMH client status",
       "description": "Get OAI PMH status"
     },
     {
-      "permissionName": "meta-storage-pmh-clients.all",
-      "displayName": "meta storage - OAI PMH clients",
+      "permissionName": "reservoir-pmh-clients.all",
+      "displayName": "reservoir - OAI PMH clients",
       "description": "OAI PMH client permissions",
       "subPermissions": [
-        "meta-storage-pmh-clients.post",
-        "meta-storage-pmh-clients.collection.get",
-        "meta-storage-pmh-clients.item.get",
-        "meta-storage-pmh-clients.item.put",
-        "meta-storage-pmh-clients.item.delete",
-        "meta-storage-pmh-clients.start",
-        "meta-storage-pmh-clients.stop",
-        "meta-storage-pmh-clients.status"
+        "reservoir-pmh-clients.post",
+        "reservoir-pmh-clients.collection.get",
+        "reservoir-pmh-clients.item.get",
+        "reservoir-pmh-clients.item.put",
+        "reservoir-pmh-clients.item.delete",
+        "reservoir-pmh-clients.start",
+        "reservoir-pmh-clients.stop",
+        "reservoir-pmh-clients.status"
       ]
     },
     {
-      "permissionName": "meta-storage.all",
-      "displayName": "meta storage - all permissions",
+      "permissionName": "reservoir.all",
+      "displayName": "reservoir - all permissions",
       "description": "All permissions",
       "subPermissions": [
-        "meta-storage-clusters.all",
-        "meta-storage-config-matchkeys.all",
-        "meta-storage-config-modules.all",
-        "meta-storage-config-oai.all",
-        "meta-storage-pmh-clients.all",
-        "meta-storage-records.all"
+        "reservoir-clusters.all",
+        "reservoir-config-matchkeys.all",
+        "reservoir-config-modules.all",
+        "reservoir-config-oai.all",
+        "reservoir-pmh-clients.all",
+        "reservoir-records.all"
       ]
     }
   ],

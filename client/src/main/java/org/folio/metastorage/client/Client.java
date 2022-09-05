@@ -294,7 +294,7 @@ public class Client {
                 ? AsyncCodec.compress(vertx, request.toBuffer())
                 : Future.succeededFuture(request.toBuffer());
             futureBuffer.compose(b ->
-                    webClient.putAbs(headers.get(XOkapiHeaders.URL) + "/meta-storage/records")
+                    webClient.putAbs(headers.get(XOkapiHeaders.URL) + "/reservoir/records")
                         .putHeaders(headers)
                         .putHeader(HttpHeaders.CONTENT_TYPE.toString(), "application/json")
                         .putHeader(HttpHeaders.CONTENT_ENCODING.toString(),
@@ -317,7 +317,7 @@ public class Client {
    */
   public Future<Void> init() {
     JsonObject request = new JsonObject()
-        .put("module_to", "mod-meta-storage-1.0.0");
+        .put("module_to", "mod-reservoir-1.0.0");
     return tenantOp(request);
   }
 
@@ -328,7 +328,7 @@ public class Client {
   public Future<Void> purge() {
     JsonObject request = new JsonObject()
         .put("purge", Boolean.TRUE)
-        .put("module_to", "mod-shared-index-1.0.0");
+        .put("module_to", "mod-reservoir-1.0.0");
     return tenantOp(request);
   }
 

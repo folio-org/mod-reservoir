@@ -132,7 +132,7 @@ public class OaiPmhClientService {
     JsonObject json = row.getJsonObject("job");
     OaiPmhStatus oaiPmhStatus;
     if (json != null) {
-      // earlier version of mod-meta-storage stored config in jobs (not anymore)
+      // earlier version of mod-reservoir stored config in jobs (not anymore)
       json.remove(CONFIG_LITERAL);
       oaiPmhStatus = json.mapTo(OaiPmhStatus.class);
     } else {
@@ -141,7 +141,7 @@ public class OaiPmhClientService {
       oaiPmhStatus.setTotalRecords(0L);
       oaiPmhStatus.setTotalRequests(0);
     }
-    // because these fields did not exist in earlier mod-meta-storage versions.
+    // because these fields did not exist in earlier mod-reservoir versions.
     if (oaiPmhStatus.getTotalDeleted() == null) {
       oaiPmhStatus.setTotalDeleted(0L);
     }

@@ -1,10 +1,10 @@
 openapi: 3.0.0
 info:
-  title: Meta Storage
+  title: Reservoir
   version: v1
 paths:
   # OAI config (singleton)
-  /meta-storage/config/oai:
+  /reservoir/config/oai:
     parameters:
       - $ref: headers/okapi-tenant.yaml
       - $ref: headers/okapi-token.yaml
@@ -53,7 +53,7 @@ paths:
         "500":
           $ref: "#/components/responses/trait_500"
   # Configuration
-  /meta-storage/config/matchkeys:
+  /reservoir/config/matchkeys:
     parameters:
       - $ref: headers/okapi-tenant.yaml
       - $ref: headers/okapi-token.yaml
@@ -96,7 +96,7 @@ paths:
           $ref: "#/components/responses/trait_400"
         "500":
           $ref: "#/components/responses/trait_500"
-  /meta-storage/config/matchkeys/{id}:
+  /reservoir/config/matchkeys/{id}:
     parameters:
       - $ref: headers/okapi-tenant.yaml
       - $ref: headers/okapi-token.yaml
@@ -152,7 +152,7 @@ paths:
           $ref: "#/components/responses/trait_404"
         "500":
           $ref: "#/components/responses/trait_500"
-  /meta-storage/config/matchkeys/{id}/initialize:
+  /reservoir/config/matchkeys/{id}/initialize:
     parameters:
       - $ref: headers/okapi-tenant.yaml
       - $ref: headers/okapi-token.yaml
@@ -179,7 +179,7 @@ paths:
           $ref: "#/components/responses/trait_404"
         "500":
           $ref: "#/components/responses/trait_500"
-  /meta-storage/config/matchkeys/{id}/stats:
+  /reservoir/config/matchkeys/{id}/stats:
     parameters:
       - $ref: headers/okapi-tenant.yaml
       - $ref: headers/okapi-token.yaml
@@ -207,7 +207,7 @@ paths:
         "500":
           $ref: "#/components/responses/trait_500"
   # Modules
-  /meta-storage/config/modules:
+  /reservoir/config/modules:
     parameters:
       - $ref: headers/okapi-tenant.yaml
       - $ref: headers/okapi-token.yaml
@@ -250,7 +250,7 @@ paths:
           $ref: "#/components/responses/trait_400"
         "500":
           $ref: "#/components/responses/trait_500"
-  /meta-storage/config/modules/{id}:
+  /reservoir/config/modules/{id}:
     parameters:
       - $ref: headers/okapi-tenant.yaml
       - $ref: headers/okapi-token.yaml
@@ -306,7 +306,7 @@ paths:
           $ref: "#/components/responses/trait_404"
         "500":
           $ref: "#/components/responses/trait_500"
-  /meta-storage/config/modules/{id}/reload:
+  /reservoir/config/modules/{id}/reload:
     parameters:
       - $ref: headers/okapi-tenant.yaml
       - $ref: headers/okapi-token.yaml
@@ -330,7 +330,7 @@ paths:
         "500":
           $ref: "#/components/responses/trait_500"
   # Sources
-  /meta-storage/sources:
+  /reservoir/sources:
     parameters:
       - $ref: headers/okapi-tenant.yaml
       - $ref: headers/okapi-token.yaml
@@ -372,7 +372,7 @@ paths:
           $ref: "#/components/responses/trait_400"
         "500":
           $ref: "#/components/responses/trait_500"
-  /meta-storage/config/sources/{id}:
+  /reservoir/config/sources/{id}:
     parameters:
       - $ref: headers/okapi-tenant.yaml
       - $ref: headers/okapi-token.yaml
@@ -413,7 +413,7 @@ paths:
         "500":
           $ref: "#/components/responses/trait_500"
   # Ingest
-  /meta-storage/ingest-jobs:
+  /reservoir/ingest-jobs:
     parameters:
       - $ref: headers/okapi-tenant.yaml
       - $ref: headers/okapi-token.yaml
@@ -437,7 +437,7 @@ paths:
           $ref: "#/components/responses/trait_400"
         "500":
           $ref: "#/components/responses/trait_500"
-  /meta-storage/ingest-jobs/{id}:
+  /reservoir/ingest-jobs/{id}:
     parameters:
       - $ref: headers/okapi-tenant.yaml
       - $ref: headers/okapi-token.yaml
@@ -507,7 +507,7 @@ paths:
         "500":
           $ref: "#/components/responses/trait_500"
   # Global Records retrieval and simple ingest
-  /meta-storage/records:
+  /reservoir/records:
     parameters:
       - $ref: headers/okapi-tenant.yaml
       - $ref: headers/okapi-token.yaml
@@ -562,7 +562,7 @@ paths:
           $ref: "#/components/responses/trait_400"
         "500":
           $ref: "#/components/responses/trait_500"
-  /meta-storage/records/{globalId}:
+  /reservoir/records/{globalId}:
     parameters:
       - $ref: headers/okapi-tenant.yaml
       - $ref: headers/okapi-token.yaml
@@ -590,7 +590,7 @@ paths:
           $ref: "#/components/responses/trait_404"
         "500":
           $ref: "#/components/responses/trait_500"
-  /meta-storage/clusters:
+  /reservoir/clusters:
     parameters:
       - $ref: headers/okapi-tenant.yaml
       - $ref: headers/okapi-token.yaml
@@ -616,7 +616,7 @@ paths:
           $ref: "#/components/responses/trait_404"
         "500":
           $ref: "#/components/responses/trait_500"
-  /meta-storage/clusters/{clusterId}:
+  /reservoir/clusters/{clusterId}:
     parameters:
       - $ref: headers/okapi-tenant.yaml
       - $ref: headers/okapi-token.yaml
@@ -644,7 +644,7 @@ paths:
           $ref: "#/components/responses/trait_404"
         "500":
           $ref: "#/components/responses/trait_500"
-  /meta-storage/oai:
+  /reservoir/oai:
     parameters:
       - $ref: headers/okapi-tenant.yaml
       - $ref: headers/okapi-token.yaml
@@ -671,7 +671,7 @@ paths:
           $ref: "#/components/responses/trait_400"
         "500":
           $ref: "#/components/responses/trait_500"
-  /meta-storage/pmh-clients:
+  /reservoir/pmh-clients:
     parameters:
       - $ref: headers/okapi-tenant.yaml
       - $ref: headers/okapi-token.yaml
@@ -709,7 +709,7 @@ paths:
           $ref: "#/components/responses/trait_400"
         "500":
           $ref: "#/components/responses/trait_500"
-  /meta-storage/pmh-clients/{id}:
+  /reservoir/pmh-clients/{id}:
     parameters:
       - $ref: headers/okapi-tenant.yaml
       - $ref: headers/okapi-token.yaml
@@ -769,7 +769,7 @@ paths:
           $ref: "#/components/responses/trait_404"
         "500":
           $ref: "#/components/responses/trait_500"
-  /meta-storage/pmh-clients/{id}/start:
+  /reservoir/pmh-clients/{id}/start:
     parameters:
       - $ref: headers/okapi-tenant.yaml
       - $ref: headers/okapi-token.yaml
@@ -792,7 +792,7 @@ paths:
           $ref: "#/components/responses/trait_404"
         "500":
           $ref: "#/components/responses/trait_500"
-  /meta-storage/pmh-clients/{id}/stop:
+  /reservoir/pmh-clients/{id}/stop:
     parameters:
       - $ref: headers/okapi-tenant.yaml
       - $ref: headers/okapi-token.yaml
@@ -815,7 +815,7 @@ paths:
           $ref: "#/components/responses/trait_404"
         "500":
           $ref: "#/components/responses/trait_500"
-  /meta-storage/pmh-clients/{id}/status:
+  /reservoir/pmh-clients/{id}/status:
     parameters:
       - $ref: headers/okapi-tenant.yaml
       - $ref: headers/okapi-token.yaml
@@ -842,7 +842,7 @@ paths:
           $ref: "#/components/responses/trait_404"
         "500":
           $ref: "#/components/responses/trait_500"
-# Meta storage error responses
+# Reservoir error responses
 components:
   responses:
     trait_400:

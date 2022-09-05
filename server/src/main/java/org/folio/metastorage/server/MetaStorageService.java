@@ -485,7 +485,7 @@ public class MetaStorageService implements RouterCreator, TenantInitHooks {
           add(routerBuilder, "statusOaiPmhClient", oaiPmhClient::status);
           Router router = Router.router(vertx);
           // this endpoint is streaming, and we handle it without OpenAPI and validation
-          router.put("/meta-storage/records").handler(ctx ->
+          router.put("/reservoir/records").handler(ctx ->
               putGlobalRecords(ctx).onFailure(cause -> failHandler(400, ctx, cause)));
           router.mountSubRouter("/", routerBuilder.createRouter());
           return router;
