@@ -26,14 +26,14 @@ import org.folio.tlib.postgres.PgCqlField;
 import org.folio.tlib.postgres.PgCqlQuery;
 import org.folio.tlib.util.TenantUtil;
 
-public class MetaStorageService implements RouterCreator, TenantInitHooks {
+public class ReservoirService implements RouterCreator, TenantInitHooks {
 
-  private static final Logger log = LogManager.getLogger(MetaStorageService.class);
+  private static final Logger log = LogManager.getLogger(ReservoirService.class);
   final Vertx vertx;
   private static final String ENTITY_ID_NOT_FOUND_PATTERN = "%s %s not found";
   private static final String MODULE_LABEL = "Module";
 
-  public MetaStorageService(Vertx vertx) {
+  public ReservoirService(Vertx vertx) {
     this.vertx = vertx;
   }
 
@@ -445,13 +445,13 @@ public class MetaStorageService implements RouterCreator, TenantInitHooks {
           } catch (Exception t) {
             failHandler(400, ctx, t);
           }
-        }).failureHandler(MetaStorageService::failHandler);
+        }).failureHandler(ReservoirService::failHandler);
   }
 
   @Override
   public Future<Router> createRouter(Vertx vertx) {
     OaiPmhClientService oaiPmhClient = new OaiPmhClientService(vertx);
-    return RouterBuilder.create(vertx, "openapi/meta-storage-1.0.yaml")
+    return RouterBuilder.create(vertx, "openapi/reservoir.yaml")
         .map(routerBuilder -> {
           add(routerBuilder, "getGlobalRecords", this::getGlobalRecords);
           add(routerBuilder, "deleteGlobalRecords", this::deleteGlobalRecords);

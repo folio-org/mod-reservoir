@@ -18,18 +18,18 @@ public class MainVerticle extends AbstractVerticle {
   @Override
   public void start(Promise<Void> promise) {
     TenantPgPool.setModule("mod-reservoir");
-    ModuleVersionReporter m = new ModuleVersionReporter("org.folio/mod-meta-storage-server");
+    ModuleVersionReporter m = new ModuleVersionReporter("org.folio/mod-reservoir-server");
     log.info("Starting {} {} {}", m.getModule(), m.getVersion(), m.getCommitId());
 
     final int port = Integer.parseInt(
         Config.getSysConf("http.port", "port", "8081", config()));
     log.info("Listening on port {}", port);
 
-    MetaStorageService sharedIndexService = new MetaStorageService(vertx);
+    ReservoirService reservoirService = new ReservoirService(vertx);
 
     RouterCreator[] routerCreators = {
-        sharedIndexService,
-        new Tenant2Api(sharedIndexService),
+        reservoirService,
+        new Tenant2Api(reservoirService),
         new HealthApi(),
     };
 

@@ -1,7 +1,7 @@
 FROM eclipse-temurin:17-jdk-alpine AS jre-build
 WORKDIR /build
 
-ENV JAR mod-meta-storage-server-fat.jar
+ENV JAR mod-reservoir-server-fat.jar
 
 # copy the executable jar into the docker image
 COPY server/target/$JAR $JAR
