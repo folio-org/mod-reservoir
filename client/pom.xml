@@ -2,16 +2,16 @@
   <modelVersion>4.0.0</modelVersion>
   <parent>
     <groupId>org.folio</groupId>
-    <artifactId>mod-meta-storage</artifactId>
+    <artifactId>mod-reservoir</artifactId>
     <version>0.0.1-SNAPSHOT</version>
   </parent>
-  <artifactId>mod-meta-storage-client</artifactId>
-  <name>Meta storage command-line client</name>
+  <artifactId>mod-reservoir-client</artifactId>
+  <name>Reservoir command-line client</name>
 
   <dependencies>
     <dependency>
       <groupId>org.folio</groupId>
-      <artifactId>mod-meta-storage-util</artifactId>
+      <artifactId>mod-reservoir-util</artifactId>
       <version>${project.version}</version>
     </dependency>
     <dependency>

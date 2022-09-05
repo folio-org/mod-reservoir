@@ -2,11 +2,11 @@
   <modelVersion>4.0.0</modelVersion>
   <parent>
     <groupId>org.folio</groupId>
-    <artifactId>mod-meta-storage</artifactId>
+    <artifactId>mod-reservoir</artifactId>
     <version>0.0.1-SNAPSHOT</version>
   </parent>
-  <artifactId>mod-meta-storage-util</artifactId>
-  <name>Shared Index Index utility</name>
+  <artifactId>mod-reservoir-util</artifactId>
+  <name>Reservoir utility library</name>
 
   <dependencies>
     <dependency>
