@@ -9,7 +9,7 @@
   <name>Reservoir storage server module</name>
   <properties>
     <vertx.launcher>io.vertx.core.Launcher</vertx.launcher>
-    <vertx.verticle>org.folio.metastorage.server.MainVerticle</vertx.verticle>
+    <vertx.verticle>org.folio.reservoir.server.MainVerticle</vertx.verticle>
     <graal.compiler.dir>${project.build.directory}/compiler</graal.compiler.dir>
   </properties>
   <dependencies>
@@ -178,7 +178,7 @@
                     <Multi-Release>true</Multi-Release>
                   </manifestEntries>
                 </transformer>
-                <!-- 
+                <!--
                   merge truffle language providers otheriwse only the first on CP is found
                   see https://github.com/oracle/graaljs/issues/125
                 -->
