@@ -173,7 +173,7 @@ For a real server, the `-HX-Okapi-Token:$OKAPI_TOKEN` is required.
 
 ### Issue tracker
 
-See project [MODMS](https://issues.folio.org/browse/MODMS)
+See project [RSRVR](https://issues.folio.org/browse/RSRVR)
 at the [FOLIO issue tracker](https://dev.folio.org/guidelines/issue-tracker).
 
 ### Code of Conduct
