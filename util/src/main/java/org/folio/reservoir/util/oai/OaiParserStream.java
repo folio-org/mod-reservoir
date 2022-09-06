@@ -1,4 +1,4 @@
-package org.folio.reservoir.oai;
+package org.folio.reservoir.util.oai;
 
 import io.vertx.core.Handler;
 import io.vertx.core.streams.ReadStream;

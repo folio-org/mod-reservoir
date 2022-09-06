@@ -1,4 +1,4 @@
-package org.folio.reservoir.oai;
+package org.folio.reservoir.util.oai;
 
 public class OaiRecord<T> {
   String datestamp;

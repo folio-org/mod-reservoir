@@ -1,4 +1,4 @@
-package org.folio.reservoir.oai;
+package org.folio.reservoir.util.oai;
 
 import io.vertx.core.Future;
 import io.vertx.core.Promise;
@@ -10,6 +10,8 @@ import io.vertx.ext.unit.junit.VertxUnitRunner;
 import org.folio.reservoir.util.XmlMetadataParserMarcInJson;
 import org.folio.reservoir.util.XmlMetadataStreamParser;
 import org.folio.reservoir.util.XmlParser;
+import org.folio.reservoir.util.oai.OaiParserStream;
+import org.folio.reservoir.util.oai.OaiRecord;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;

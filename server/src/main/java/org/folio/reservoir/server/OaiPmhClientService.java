@@ -34,14 +34,14 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.folio.okapi.common.GenericCompositeFuture;
 import org.folio.okapi.common.HttpResponse;
-import org.folio.reservoir.oai.OaiParserStream;
-import org.folio.reservoir.oai.OaiRecord;
 import org.folio.reservoir.server.entity.ClusterBuilder;
 import org.folio.reservoir.server.entity.OaiPmhStatus;
 import org.folio.reservoir.util.SourceId;
 import org.folio.reservoir.util.XmlMetadataParserMarcInJson;
 import org.folio.reservoir.util.XmlMetadataStreamParser;
 import org.folio.reservoir.util.XmlParser;
+import org.folio.reservoir.util.oai.OaiParserStream;
+import org.folio.reservoir.util.oai.OaiRecord;
 
 public class OaiPmhClientService {
 
