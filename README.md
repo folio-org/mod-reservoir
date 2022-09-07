@@ -1,4 +1,4 @@
-# Reservoir 
+# Reservoir
 
 Copyright (C) 2021-2022 The Open Library Foundation
 
