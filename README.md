@@ -1,7 +1,5 @@
 # Reservoir 
 
-__Note:__ mod-meta-storage is being renamed to __Reservoir__ (mod-reservoir in FOLIO parlance) which means that this repository will be soon archived.
-
 Copyright (C) 2021-2022 The Open Library Foundation
 
 This software is distributed under the terms of the Apache License,
@@ -14,7 +12,7 @@ A service that provides a clustering storage of metadata for the purpose of cons
 This project has three sub-projects:
 
 * `util` -- A library with utilities to normalize MARC to Inventory.
-* `server` -- The meta storage server. This is the FOLIO module: mod-meta-storage
+* `server` -- The reservoir storage server. This is the FOLIO module: mod-reservoir
 * `client` -- A client for sending ISO2709/MARCXML records to the server.
 
 ## Compilation
@@ -35,7 +33,7 @@ Start the server with:
 java -Dport=8081 --module-path=server/target/compiler/ \
   --upgrade-module-path=server/target/compiler/compiler.jar \
   -XX:+UnlockExperimentalVMOptions -XX:+EnableJVMCI \
-  -jar server/target/mod-meta-storage-server-fat.jar
+  -jar server/target/mod-reservoir-server-fat.jar
 ```
 
 The module is configured by setting environment variables:
@@ -44,11 +42,11 @@ The module is configured by setting environment variables:
 
 ## Command-line client
 
-The client is a command-line tool for sending records to the mod-meta-storage server.
+The client is a command-line tool for sending records to the mod-reservoir server.
 
 Run the client with:
 ```
-java -jar client/target/mod-meta-storage-client-fat.jar [options] [files...]
+java -jar client/target/mod-reservoir-client-fat.jar [options] [files...]
 ```
 
 To see list options use `--help`. The client uses environment variables
@@ -57,20 +55,20 @@ token respectively.
 
 Before records can be pushed, the database needs to be prepared for the tenant.
 If Okapi is used, then the usual `install` command will do it, but if the
-mod-meta-storage module is being run on its own, then that must be done manually.
+mod-reservoir module is being run on its own, then that must be done manually.
 
 For example, to prepare the database for tenant `diku` on server running on localhost:8081, use:
 ```
 export OKAPI_TENANT=diku
 export OKAPI_URL=http://localhost:8081
-java -jar client/target/mod-meta-storage-client-fat.jar --init
+java -jar client/target/mod-reservoir-client-fat.jar --init
 ```
 
 To purge the data, use:
 ```
 export OKAPI_TENANT=diku
 export OKAPI_URL=http://localhost:8081
-java -jar client/target/mod-meta-storage-client-fat.jar --purge
+java -jar client/target/mod-reservoir-client-fat.jar --purge
 ```
 
 To send MARCXML to the same server with defined `sourceId`, use:
@@ -78,7 +76,7 @@ To send MARCXML to the same server with defined `sourceId`, use:
 export OKAPI_TENANT=diku
 export OKAPI_URL=http://localhost:8081
 export sourceid=lib1
-java -jar client/target/mod-meta-storage-client-fat.jar \
+java -jar client/target/mod-reservoir-client-fat.jar \
   --source $sourceid \
   --xsl xsl/marc2inventory-instance.xsl \
   --xsl xsl/holdings-items-cst.xsl \
@@ -114,7 +112,7 @@ cat oai-us-mdbj.json
   }
 }
 curl -HX-Okapi-Tenant:$OKAPI_TENANT -HContent-Type:application/json -XPOST \
-   -d@oai-us-mdbj.json $OKAPI_URL/meta-storage/pmh-clients
+   -d@oai-us-mdbj.json $OKAPI_URL/reservoir/pmh-clients
 ```
 
 In this case, all ingested records from the client are given the source identifier `US-MDBJ`.
@@ -124,19 +122,19 @@ See [schema](server/src/main/resources/openapi/schemas/oai-pmh-client.json) for 
 This configuration can be inspected with:
 ```
 curl -HX-Okapi-Tenant:$OKAPI_TENANT \
-  $OKAPI_URL/meta-storage/pmh-clients/us-mdbj
+  $OKAPI_URL/reservoir/pmh-clients/us-mdbj
 ```
 
 Start a job with:
 ```
 curl -HX-Okapi-Tenant:$OKAPI_TENANT -XPOST \
-  $OKAPI_URL/meta-storage/pmh-clients/us-mdbj/start
+  $OKAPI_URL/reservoir/pmh-clients/us-mdbj/start
 ```
 
 Start all jobs with:
 ```
 curl -HX-Okapi-Tenant:$OKAPI_TENANT -XPOST \
-  $OKAPI_URL/meta-storage/pmh-clients/_all/start
+  $OKAPI_URL/reservoir/pmh-clients/_all/start
 ```
 
 Each job will continue until the server returns error or returns no resumption token. The `from`
@@ -147,25 +145,25 @@ specified).
 Get status for a job with:
 ```
 curl -HX-Okapi-Tenant:$OKAPI_TENANT \
-  $OKAPI_URL/meta-storage/pmh-clients/us-mdbj/status
+  $OKAPI_URL/reservoir/pmh-clients/us-mdbj/status
 ```
 
 Get status for all jobs with:
 ```
 curl -HX-Okapi-Tenant:$OKAPI_TENANT \
-  $OKAPI_URL/meta-storage/pmh-clients/_all/status
+  $OKAPI_URL/reservoir/pmh-clients/_all/status
 ```
 
 Stop a job with:
 ```
 curl -HX-Okapi-Tenant:$OKAPI_TENANT -XPOST \
-  $OKAPI_URL/meta-storage/pmh-clients/us-mdbj/stop
+  $OKAPI_URL/reservoir/pmh-clients/us-mdbj/stop
 ```
 
 Stop all jobs with:
 ```
 curl -HX-Okapi-Tenant:$OKAPI_TENANT -XPOST \
-  $OKAPI_URL/meta-storage/pmh-clients/_all/stop
+  $OKAPI_URL/reservoir/pmh-clients/_all/stop
 ```
 
 **Note**: The abovementioned commands are for the server running on localhost.
@@ -175,7 +173,7 @@ For a real server, the `-HX-Okapi-Token:$OKAPI_TOKEN` is required.
 
 ### Issue tracker
 
-See project [MODMS](https://issues.folio.org/browse/MODMS)
+See project [RSRVR](https://issues.folio.org/browse/RSRVR)
 at the [FOLIO issue tracker](https://dev.folio.org/guidelines/issue-tracker).
 
 ### Code of Conduct
@@ -195,16 +193,16 @@ API descriptions:
  * [OpenAPI](server/src/main/resources/openapi/)
  * [Schemas](server/src/main/resources/openapi/schemas/)
 
-Generated [API documentation](https://dev.folio.org/reference/api/#mod-meta-storage).
+Generated [API documentation](https://dev.folio.org/reference/api/#mod-reservoir).
 
 ### Code analysis
 
-[SonarQube analysis](https://sonarcloud.io/dashboard?id=org.folio%3Amod-meta-storage).
+[SonarQube analysis](https://sonarcloud.io/dashboard?id=org.folio%3Amod-reservoir).
 
 ### Download and configuration
 
 The built artifacts for this module are available.
 See [configuration](https://dev.folio.org/download/artifacts) for repository access,
-and the Docker images for [released versions](https://hub.docker.com/r/folioorg/mod-meta-storage/)
-and for [snapshot versions](https://hub.docker.com/r/folioci/mod-meta-storage/).
+and the Docker images for [released versions](https://hub.docker.com/r/folioorg/mod-reservoir/)
+and for [snapshot versions](https://hub.docker.com/r/folioci/mod-reservoir/).
 

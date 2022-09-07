@@ -2,16 +2,16 @@
   <modelVersion>4.0.0</modelVersion>
   <parent>
     <groupId>org.folio</groupId>
-    <artifactId>mod-meta-storage</artifactId>
+    <artifactId>mod-reservoir</artifactId>
     <version>0.0.1-SNAPSHOT</version>
   </parent>
-  <artifactId>mod-meta-storage-client</artifactId>
-  <name>Meta storage command-line client</name>
+  <artifactId>mod-reservoir-client</artifactId>
+  <name>Reservoir command-line client</name>
 
   <dependencies>
     <dependency>
       <groupId>org.folio</groupId>
-      <artifactId>mod-meta-storage-util</artifactId>
+      <artifactId>mod-reservoir-util</artifactId>
       <version>${project.version}</version>
     </dependency>
     <dependency>
@@ -88,7 +88,7 @@
         <configuration>
           <archive>
             <manifestEntries>
-              <Automatic-Module-Name>org.folio.meta.storage.client</Automatic-Module-Name>
+              <Automatic-Module-Name>org.folio.reservoir.client</Automatic-Module-Name>
             </manifestEntries>
           </archive>
         </configuration>
@@ -106,7 +106,7 @@
               <transformers>
                 <transformer implementation="org.apache.maven.plugins.shade.resource.ManifestResourceTransformer">
                   <manifestEntries>
-                    <Main-Class>org.folio.metastorage.client.Main</Main-Class>
+                    <Main-Class>org.folio.reservoir.client.Main</Main-Class>
                     <Multi-Release>true</Multi-Release>
                   </manifestEntries>
                 </transformer>

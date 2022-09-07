@@ -2,20 +2,20 @@
   <modelVersion>4.0.0</modelVersion>
   <parent>
     <groupId>org.folio</groupId>
-    <artifactId>mod-meta-storage</artifactId>
+    <artifactId>mod-reservoir</artifactId>
     <version>0.0.1-SNAPSHOT</version>
   </parent>
-  <artifactId>mod-meta-storage-server</artifactId>
-  <name>Meta storage server module</name>
+  <artifactId>mod-reservoir-server</artifactId>
+  <name>Reservoir storage server module</name>
   <properties>
     <vertx.launcher>io.vertx.core.Launcher</vertx.launcher>
-    <vertx.verticle>org.folio.metastorage.server.MainVerticle</vertx.verticle>
+    <vertx.verticle>org.folio.reservoir.server.MainVerticle</vertx.verticle>
     <graal.compiler.dir>${project.build.directory}/compiler</graal.compiler.dir>
   </properties>
   <dependencies>
     <dependency>
       <groupId>org.folio</groupId>
-      <artifactId>mod-meta-storage-util</artifactId>
+      <artifactId>mod-reservoir-util</artifactId>
       <version>${project.version}</version>
     </dependency>
     <dependency>
@@ -155,7 +155,7 @@
         <configuration>
           <archive>
             <manifestEntries>
-              <Automatic-Module-Name>org.folio.meta.storage.server</Automatic-Module-Name>
+              <Automatic-Module-Name>org.folio.reservoir.server</Automatic-Module-Name>
             </manifestEntries>
           </archive>
         </configuration>
@@ -178,7 +178,7 @@
                     <Multi-Release>true</Multi-Release>
                   </manifestEntries>
                 </transformer>
-                <!-- 
+                <!--
                   merge truffle language providers otheriwse only the first on CP is found
                   see https://github.com/oracle/graaljs/issues/125
                 -->
