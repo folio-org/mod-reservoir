@@ -185,8 +185,8 @@
                 <transformer implementation="org.apache.maven.plugins.shade.resource.ServicesResourceTransformer"/>
               </transformers>
               <artifactSet/>
-	      <outputFile>${project.build.directory}/${project.artifactId}-fat.jar</outputFile>
-	      <filters>
+              <outputFile>${project.build.directory}/${project.artifactId}-fat.jar</outputFile>
+              <filters>
                 <filter>
                   <artifact>*:*</artifact>
                   <excludes>
@@ -195,7 +195,7 @@
                    <exclude>META-INF/*.RSA</exclude>
                  </excludes>
                </filter>
-	     </filters>
+              </filters>
             </configuration>
           </execution>
         </executions>
