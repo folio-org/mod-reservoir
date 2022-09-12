@@ -8,7 +8,9 @@ import java.time.LocalDateTime;
 import java.time.ZoneOffset;
 import java.time.format.DateTimeFormatter;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.UUID;
 
 public class ClusterBuilder {
@@ -64,8 +66,8 @@ public class ClusterBuilder {
       if (cmp != 0) {
         return cmp;
       }
-      cmp = a.getInteger(ClusterBuilder.SOURCE_VERSION_LABEL)
-          - b.getInteger(ClusterBuilder.SOURCE_VERSION_LABEL);
+      cmp = a.getInteger(ClusterBuilder.SOURCE_VERSION_LABEL, 0)
+          - b.getInteger(ClusterBuilder.SOURCE_VERSION_LABEL, 0);
       if (cmp != 0) {
         return cmp;
       }

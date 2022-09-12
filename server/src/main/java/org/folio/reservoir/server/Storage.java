@@ -130,7 +130,7 @@ public class Storage {
             "ALTER TABLE " + globalRecordTable + " ADD COLUMN IF NOT EXISTS"
                 + " source_version integer DEFAULT 1",
             "CREATE UNIQUE INDEX IF NOT EXISTS idx_local_source ON " + globalRecordTable
-                + " (local_id, source_id, source_version)",
+                + " (local_id, source_id)",
             "CREATE INDEX IF NOT EXISTS idx_source ON " + globalRecordTable
                 + " (source_id, source_version)",
             CREATE_IF_NO_EXISTS + matchKeyConfigTable
@@ -189,8 +189,8 @@ public class Storage {
             "INSERT INTO " + globalRecordTable
                 + " (id, local_id, source_id, source_version, payload)"
                 + " VALUES ($1, $2, $3, $4, $5)"
-                + " ON CONFLICT (local_id, source_id, source_version) DO UPDATE "
-                + " SET payload = $5"
+                + " ON CONFLICT (local_id, source_id) DO UPDATE "
+                + " SET source_version = $4, payload = $5"
                 + " RETURNING id"
         )
         .execute(Tuple.of(startId, localIdentifier, sourceId.toString(), sourceVersion, payload))
@@ -199,19 +199,17 @@ public class Storage {
             .map(x -> id.equals(startId)));
   }
 
-  Future<Void> deleteGlobalRecord(SqlConnection conn, String localIdentifier, SourceId sourceId,
-      int sourceVersion) {
+  Future<Void> deleteGlobalRecord(SqlConnection conn, String localIdentifier, SourceId sourceId) {
     String q = "UPDATE " + clusterMetaTable + " AS m"
-        + " SET datestamp = $4"
+        + " SET datestamp = $3"
         + " FROM " + globalRecordTable + ", " + clusterRecordTable + " AS r"
         + " WHERE m.cluster_id = r.cluster_id AND r.record_id = id"
-        + " AND local_id = $1 AND source_id = $2 and source_version = $3";
+        + " AND local_id = $1 AND source_id = $2";
     return conn.preparedQuery(q)
-        .execute(Tuple.of(localIdentifier, sourceId.toString(), sourceVersion,
-            LocalDateTime.now(ZoneOffset.UTC)))
+        .execute(Tuple.of(localIdentifier, sourceId.toString(), LocalDateTime.now(ZoneOffset.UTC)))
         .compose(x -> conn.preparedQuery("DELETE FROM " + globalRecordTable
-                + " WHERE local_id = $1 AND source_id = $2 and source_version = $3")
-        .execute(Tuple.of(localIdentifier, sourceId.toString(), sourceVersion))
+                + " WHERE local_id = $1 AND source_id = $2")
+        .execute(Tuple.of(localIdentifier, sourceId.toString()))
         .mapEmpty());
   }
 
@@ -258,8 +256,7 @@ public class Storage {
       return Future.failedFuture("localId required");
     }
     if (Boolean.TRUE.equals(globalRecord.getBoolean("delete"))) {
-      return deleteGlobalRecord(conn, localIdentifier, sourceId, sourceVersion)
-          .map(x -> null);
+      return deleteGlobalRecord(conn, localIdentifier, sourceId).mapEmpty();
     }
     final JsonObject payload = globalRecord.getJsonObject("payload");
     if (payload == null) {
