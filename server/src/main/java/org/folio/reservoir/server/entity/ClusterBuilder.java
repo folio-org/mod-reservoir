@@ -64,8 +64,8 @@ public class ClusterBuilder {
       if (cmp != 0) {
         return cmp;
       }
-      cmp = a.getInteger(ClusterBuilder.SOURCE_VERSION_LABEL)
-          - b.getInteger(ClusterBuilder.SOURCE_VERSION_LABEL);
+      cmp = a.getInteger(ClusterBuilder.SOURCE_VERSION_LABEL, 0)
+          - b.getInteger(ClusterBuilder.SOURCE_VERSION_LABEL, 0);
       if (cmp != 0) {
         return cmp;
       }

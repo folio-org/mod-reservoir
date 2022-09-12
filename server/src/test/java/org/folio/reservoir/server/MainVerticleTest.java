@@ -2739,6 +2739,111 @@ public class MainVerticleTest {
   }
 
   @Test
+  public void testOaiSourceVersions() {
+    List<String> identifiers = new LinkedList<>();
+    String s;
+
+    createIsbnMatchKey();
+
+    int v1 = 55;
+
+    JsonArray ingest2 = new JsonArray()
+        .add(new JsonObject()
+            .put("localId", "S100")
+            .put("payload", new JsonObject()
+                .put("marc", new JsonObject()
+                    .put("leader", "00914naa  " + v1 + "00337   450 ")
+                )
+                .put("inventory", new JsonObject()
+                    .put("isbn", new JsonArray().add("1"))
+                )
+            )
+        )
+        .add(new JsonObject()
+            .put("localId", "S102")
+            .put("payload", new JsonObject()
+                .put("marc", new JsonObject()
+                    .put("leader", "00914naa  " + v1 + "00337   450 ")
+                )
+                .put("inventory", new JsonObject()
+                    .put("isbn", new JsonArray().add("2"))
+                )
+            )
+        );
+    ingestRecords(ingest2, SOURCE_ID_1, v1);
+
+    s = RestAssured.given()
+        .header(XOkapiHeaders.TENANT, TENANT_1)
+        .param("set", "isbn")
+        .param("verb", "ListRecords")
+        .param("metadataPrefix", "marcxml")
+        .get("/reservoir/oai")
+        .then().statusCode(200)
+        .contentType("text/xml")
+        .extract().body().asString();
+    log.info("OAI 1 = {}", s);
+    verifyOaiResponseRuntime(s, "ListRecords", identifiers, 2, null);
+
+    int v2 = 56;
+
+    JsonArray ingest1b = new JsonArray()
+        .add(new JsonObject()
+            .put("localId", "S100")
+            .put("payload", new JsonObject()
+                .put("marc", new JsonObject()
+                    .put("leader", "00914naa  " + v2 + "00337   450 ")
+                )
+                .put("inventory", new JsonObject()
+                    .put("isbn", new JsonArray().add("1"))
+                )
+            )
+        )
+        .add(new JsonObject()
+            .put("localId", "S102")
+            .put("payload", new JsonObject()
+                .put("marc", new JsonObject()
+                    .put("leader", "00914naa  " + v2 + "00337   450 ")
+                )
+                .put("inventory", new JsonObject()
+                    .put("isbn", new JsonArray().add("3"))
+                )
+            )
+        );
+    ingestRecords(ingest1b, SOURCE_ID_1, v2);
+
+    s = RestAssured.given()
+        .header(XOkapiHeaders.TENANT, TENANT_1)
+        .param("set", "isbn")
+        .param("verb", "ListRecords")
+        .param("metadataPrefix", "marcxml")
+        .get("/reservoir/oai")
+        .then().statusCode(200)
+        .contentType("text/xml")
+        .extract().body().asString();
+    log.info("OAI 2 = {}", s);
+    verifyOaiResponseRuntime(s, "ListRecords", identifiers, 3, null);
+
+    RestAssured.given()
+        .header(XOkapiHeaders.TENANT, TENANT_1)
+        .header("Content-Type", "application/json")
+        .param("query", "sourceId=" + SOURCE_ID_1 + " AND sourceVersion = " + v1)
+        .delete("/reservoir/records")
+        .then().statusCode(204);
+
+    s = RestAssured.given()
+        .header(XOkapiHeaders.TENANT, TENANT_1)
+        .param("set", "isbn")
+        .param("verb", "ListRecords")
+        .param("metadataPrefix", "marcxml")
+        .get("/reservoir/oai")
+        .then().statusCode(200)
+        .contentType("text/xml")
+        .extract().body().asString();
+    log.info("OAI 3 = {}", s);
+    verifyOaiResponseRuntime(s, "ListRecords", identifiers, 3, null);
+  }
+
+  @Test
   public void upgradeDb(TestContext context) {
     String tenant = "tenant2";
     tenantOp(context, tenant, new JsonObject()
