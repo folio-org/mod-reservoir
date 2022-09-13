@@ -1,4 +1,4 @@
-package org.folio.reservoir.storage;
+package org.folio.reservoir.server.storage;
 
 import io.vertx.core.Future;
 import io.vertx.core.Promise;
@@ -32,9 +32,9 @@ import java.util.function.Function;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.folio.okapi.common.GenericCompositeFuture;
-import org.folio.reservoir.matchkey.MatchKeyMethod;
 import org.folio.reservoir.server.entity.ClusterBuilder;
 import org.folio.reservoir.server.entity.CodeModuleEntity;
+import org.folio.reservoir.server.matchkey.MatchKeyMethod;
 import org.folio.reservoir.util.LargeJsonReadStream;
 import org.folio.reservoir.util.ReadStreamConsumer;
 import org.folio.reservoir.util.SourceId;

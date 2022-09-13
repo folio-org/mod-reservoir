@@ -56,9 +56,12 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.awaitility.Awaitility;
 import org.folio.reservoir.module.impl.ModuleScripts;
+import org.folio.reservoir.server.data.Source;
 import org.folio.reservoir.server.entity.CodeModuleEntity;
 import org.folio.okapi.common.XOkapiHeaders;
-import org.folio.reservoir.storage.Storage;
+import org.folio.reservoir.server.misc.ResumptionToken;
+import org.folio.reservoir.server.service.OaiPmhClientService;
+import org.folio.reservoir.server.storage.Storage;
 import org.folio.tlib.postgres.testing.TenantPgPoolContainer;
 import org.hamcrest.Matchers;
 import org.junit.After;
@@ -3913,7 +3916,7 @@ public class MainVerticleTest {
 
   @Test
   public void sources() {
-    var source = new org.folio.reservoir.data.Source();
+    var source = new Source();
     source.setId("bib1");
     source.setVersion(3);
 

@@ -1,4 +1,4 @@
-package org.folio.reservoir.storage;
+package org.folio.reservoir.server.storage;
 
 import io.vertx.core.Future;
 import io.vertx.core.json.JsonObject;
@@ -8,8 +8,8 @@ import io.vertx.ext.web.validation.ValidationHandler;
 import io.vertx.sqlclient.Row;
 import io.vertx.sqlclient.RowIterator;
 import io.vertx.sqlclient.Tuple;
-import org.folio.reservoir.data.Source;
-import org.folio.reservoir.server.Util;
+import org.folio.reservoir.server.misc.Util;
+import org.folio.reservoir.server.data.Source;
 import org.folio.tlib.postgres.PgCqlField;
 import org.folio.tlib.postgres.PgCqlQuery;
 

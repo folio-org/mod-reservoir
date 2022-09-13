@@ -1,4 +1,4 @@
-package org.folio.reservoir.matchkey.impl;
+package org.folio.reservoir.server.matchkey.impl;
 
 import com.jayway.jsonpath.JsonPath;
 import com.jayway.jsonpath.PathNotFoundException;
@@ -8,7 +8,7 @@ import io.vertx.core.Vertx;
 import io.vertx.core.json.JsonObject;
 import java.util.Collection;
 import java.util.List;
-import org.folio.reservoir.matchkey.MatchKeyMethod;
+import org.folio.reservoir.server.matchkey.MatchKeyMethod;
 
 public class MatchKeyJsonPath implements MatchKeyMethod {
 

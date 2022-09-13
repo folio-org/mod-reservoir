@@ -1,15 +1,13 @@
-package org.folio.reservoir.service;
+package org.folio.reservoir.server.service;
 
 import io.vertx.core.Future;
 import io.vertx.core.json.JsonObject;
 import io.vertx.ext.web.RoutingContext;
 import io.vertx.ext.web.validation.RequestParameters;
 import io.vertx.ext.web.validation.ValidationHandler;
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
 import org.folio.okapi.common.HttpResponse;
-import org.folio.reservoir.data.Source;
-import org.folio.reservoir.storage.SourceStorage;
+import org.folio.reservoir.server.data.Source;
+import org.folio.reservoir.server.storage.SourceStorage;
 
 public class SourceService {
 

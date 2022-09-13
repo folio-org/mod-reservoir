@@ -1,4 +1,4 @@
-package org.folio.reservoir.server;
+package org.folio.reservoir.server.service;
 
 import static org.folio.reservoir.util.EncodeXmlText.encodeXmlText;
 
@@ -23,10 +23,12 @@ import java.util.concurrent.atomic.AtomicInteger;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.folio.okapi.common.HttpResponse;
-import org.folio.reservoir.module.Module;
-import org.folio.reservoir.module.ModuleCache;
+import org.folio.reservoir.server.misc.ResumptionToken;
+import org.folio.reservoir.server.misc.Util;
 import org.folio.reservoir.server.entity.ClusterBuilder;
-import org.folio.reservoir.storage.Storage;
+import org.folio.reservoir.server.module.Module;
+import org.folio.reservoir.server.module.ModuleCache;
+import org.folio.reservoir.server.storage.Storage;
 import org.folio.reservoir.util.JsonToMarcXml;
 import org.folio.reservoir.util.MarcInJsonUtil;
 import org.folio.tlib.util.TenantUtil;
@@ -75,7 +77,7 @@ public final class OaiService {
     response.end();
   }
 
-  static Future<Void> get(RoutingContext ctx) {
+  public static Future<Void> get(RoutingContext ctx) {
     return getCheck(ctx).recover(e -> {
       if (!(e instanceof OaiException)) {
         // failedFuture ends up as 400, so we return 500 for this

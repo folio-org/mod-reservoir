@@ -1,4 +1,4 @@
-package org.folio.reservoir.server;
+package org.folio.reservoir.server.misc;
 
 import org.graalvm.polyglot.Value;
 

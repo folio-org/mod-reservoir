@@ -1,9 +1,9 @@
-package org.folio.reservoir.module;
+package org.folio.reservoir.server.module;
 
 import io.vertx.core.Future;
 import io.vertx.core.Vertx;
 import io.vertx.core.json.JsonObject;
-import org.folio.reservoir.module.impl.ModuleCacheImpl;
+import org.folio.reservoir.server.module.impl.ModuleCacheImpl;
 
 public interface ModuleCache {
 

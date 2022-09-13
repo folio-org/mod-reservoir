@@ -270,6 +270,9 @@
         <configuration>
           <release>17</release>
           <encoding>UTF-8</encoding>
+          <annotationProcessors>
+            <annotationProcessor>io.vertx.codegen.CodeGenProcessor</annotationProcessor>
+          </annotationProcessors>
           <compilerArgument>-Xlint:unchecked</compilerArgument>
         </configuration>
       </plugin>

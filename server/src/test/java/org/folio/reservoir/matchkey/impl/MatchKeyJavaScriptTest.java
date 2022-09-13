@@ -12,7 +12,8 @@ import io.vertx.reactivex.core.http.HttpHeaders;
 import java.util.Collection;
 import java.util.HashSet;
 
-import org.folio.reservoir.matchkey.MatchKeyMethod;
+import org.folio.reservoir.server.matchkey.MatchKeyMethod;
+import org.folio.reservoir.server.matchkey.impl.MatchKeyJavaScript;
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
 import org.junit.Test;

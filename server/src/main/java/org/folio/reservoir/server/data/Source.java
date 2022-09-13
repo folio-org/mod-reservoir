@@ -1,7 +1,11 @@
-package org.folio.reservoir.data;
+package org.folio.reservoir.server.data;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
+import io.vertx.codegen.annotations.DataObject;
+import io.vertx.sqlclient.templates.annotations.RowMapped;
 
+@DataObject
+@RowMapped
 @JsonInclude(JsonInclude.Include.NON_NULL)
 public class Source {
 
@@ -24,4 +28,5 @@ public class Source {
   public void setVersion(Integer version) {
     this.version = version;
   }
+
 }

@@ -1,4 +1,4 @@
-package org.folio.reservoir.module.impl;
+package org.folio.reservoir.server.module.impl;
 
 import io.vertx.core.Future;
 import io.vertx.core.Vertx;
@@ -7,7 +7,7 @@ import io.vertx.core.json.JsonObject;
 import io.vertx.ext.web.client.WebClient;
 import io.vertx.ext.web.client.predicate.ResponsePredicate;
 import org.folio.okapi.common.WebClientFactory;
-import org.folio.reservoir.module.Module;
+import org.folio.reservoir.server.module.Module;
 import org.graalvm.polyglot.Context;
 import org.graalvm.polyglot.Source;
 import org.graalvm.polyglot.Value;

@@ -1,4 +1,4 @@
-package org.folio.reservoir.server;
+package org.folio.reservoir.server.service;
 
 import io.vertx.sqlclient.Row;
 import java.time.LocalDateTime;

@@ -7,7 +7,7 @@ import io.vertx.core.json.JsonObject;
 import io.vertx.ext.unit.TestContext;
 import io.vertx.ext.unit.junit.VertxUnitRunner;
 import java.util.UUID;
-import org.folio.reservoir.module.ModuleCache;
+import org.folio.reservoir.server.module.ModuleCache;
 import org.folio.reservoir.server.entity.ClusterBuilder;
 import org.graalvm.polyglot.PolyglotException;
 import org.junit.After;

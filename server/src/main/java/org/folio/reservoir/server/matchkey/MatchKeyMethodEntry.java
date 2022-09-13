@@ -1,4 +1,4 @@
-package org.folio.reservoir.matchkey;
+package org.folio.reservoir.server.matchkey;
 
 import io.vertx.core.json.JsonObject;
 

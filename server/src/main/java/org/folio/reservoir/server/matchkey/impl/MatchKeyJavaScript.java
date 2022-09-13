@@ -1,4 +1,4 @@
-package org.folio.reservoir.matchkey.impl;
+package org.folio.reservoir.server.matchkey.impl;
 
 import io.vertx.core.Future;
 import io.vertx.core.Vertx;
@@ -7,7 +7,7 @@ import io.vertx.ext.web.client.WebClient;
 import io.vertx.ext.web.client.predicate.ResponsePredicate;
 import java.util.Collection;
 import org.folio.okapi.common.WebClientFactory;
-import org.folio.reservoir.matchkey.MatchKeyMethod;
+import org.folio.reservoir.server.matchkey.MatchKeyMethod;
 import org.graalvm.polyglot.Context;
 import org.graalvm.polyglot.Source;
 import org.graalvm.polyglot.Value;

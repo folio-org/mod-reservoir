@@ -1,6 +1,7 @@
 package org.folio.reservoir.server;
 
 import org.folio.okapi.testing.UtilityClassTester;
+import org.folio.reservoir.server.misc.JavaScriptCheck;
 import org.junit.Assert;
 import org.junit.Test;
 

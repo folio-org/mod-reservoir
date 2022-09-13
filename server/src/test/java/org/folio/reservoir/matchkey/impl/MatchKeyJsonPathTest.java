@@ -10,7 +10,8 @@ import io.vertx.ext.unit.junit.VertxUnitRunner;
 import java.util.HashSet;
 import java.util.Set;
 
-import org.folio.reservoir.matchkey.MatchKeyMethod;
+import org.folio.reservoir.server.matchkey.MatchKeyMethod;
+import org.folio.reservoir.server.matchkey.impl.MatchKeyJsonPath;
 import org.junit.AfterClass;
 import org.junit.Assert;
 import org.junit.BeforeClass;

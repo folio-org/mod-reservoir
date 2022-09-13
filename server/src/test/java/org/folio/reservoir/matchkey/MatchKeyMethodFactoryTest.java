@@ -6,6 +6,8 @@ import io.vertx.core.json.JsonObject;
 import io.vertx.ext.unit.TestContext;
 import io.vertx.ext.unit.junit.VertxUnitRunner;
 import org.folio.okapi.testing.UtilityClassTester;
+import org.folio.reservoir.server.matchkey.MatchKeyMethod;
+import org.folio.reservoir.server.matchkey.MatchKeyMethodFactory;
 import org.hamcrest.Matchers;
 import org.junit.AfterClass;
 import org.junit.BeforeClass;

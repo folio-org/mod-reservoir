@@ -1,4 +1,4 @@
-package org.folio.reservoir.server;
+package org.folio.reservoir.server.service;
 
 import io.vertx.core.Future;
 import io.vertx.core.Vertx;
@@ -16,11 +16,11 @@ import java.util.function.Function;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.folio.okapi.common.HttpResponse;
-import org.folio.reservoir.matchkey.MatchKeyMethodFactory;
-import org.folio.reservoir.module.ModuleCache;
 import org.folio.reservoir.server.entity.CodeModuleEntity;
-import org.folio.reservoir.service.SourceService;
-import org.folio.reservoir.storage.Storage;
+import org.folio.reservoir.server.matchkey.MatchKeyMethodFactory;
+import org.folio.reservoir.server.misc.Util;
+import org.folio.reservoir.server.module.ModuleCache;
+import org.folio.reservoir.server.storage.Storage;
 import org.folio.reservoir.util.LargeJsonReadStream;
 import org.folio.tlib.RouterCreator;
 import org.folio.tlib.TenantInitHooks;
