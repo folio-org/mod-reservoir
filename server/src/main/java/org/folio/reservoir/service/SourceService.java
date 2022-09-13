@@ -12,7 +12,8 @@ import org.folio.reservoir.data.Source;
 import org.folio.reservoir.storage.SourceStorage;
 
 public class SourceService {
-  private static final Logger log = LogManager.getLogger(SourceService.class);
+
+  private SourceService() {}
 
   /**
    * Create source.
@@ -66,8 +67,7 @@ public class SourceService {
     return storage.delete(id)
         .onSuccess(res -> {
           if (Boolean.FALSE.equals(res)) {
-            HttpResponse.responseError(ctx, 404,
-                String.format("Source " + id + " not found"));
+            HttpResponse.responseError(ctx, 404, "Source " + id + " not found");
           } else {
             ctx.response().setStatusCode(204).end();
           }

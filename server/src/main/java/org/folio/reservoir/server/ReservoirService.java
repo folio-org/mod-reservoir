@@ -393,13 +393,7 @@ public class ReservoirService implements RouterCreator, TenantInitHooks {
     Storage storage = new Storage(ctx);
     JsonObject request = ctx.body().asJsonObject();
     return storage.updateOaiConfig(request)
-        .onSuccess(res -> {
-          if (Boolean.FALSE.equals(res)) {
-            HttpResponse.responseError(ctx, 400, "OAI config not updated");
-            return;
-          }
-          ctx.response().setStatusCode(204).end();
-        });
+        .onSuccess(res -> ctx.response().setStatusCode(204).end());
   }
 
   Future<Void> deleteOaiConfig(RoutingContext ctx) {
