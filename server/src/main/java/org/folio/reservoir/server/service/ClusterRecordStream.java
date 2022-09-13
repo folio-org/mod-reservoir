@@ -1,8 +1,8 @@
 package org.folio.reservoir.server.service;
 
-import static org.folio.reservoir.server.service.OaiService.encodeOaiIdentifier;
-import static org.folio.reservoir.server.service.OaiService.getClusterValues;
-import static org.folio.reservoir.server.service.OaiService.getMetadataJava;
+import static org.folio.reservoir.server.service.OaiServerService.encodeOaiIdentifier;
+import static org.folio.reservoir.server.service.OaiServerService.getClusterValues;
+import static org.folio.reservoir.server.service.OaiServerService.getMetadataJava;
 import static org.folio.reservoir.util.EncodeXmlText.encodeXmlText;
 
 import io.vertx.codegen.annotations.Nullable;
@@ -19,8 +19,8 @@ import java.util.HashSet;
 import java.util.Set;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-import org.folio.reservoir.server.misc.Util;
 import org.folio.reservoir.server.entity.ClusterBuilder;
+import org.folio.reservoir.server.misc.Util;
 import org.folio.reservoir.server.module.Module;
 import org.folio.reservoir.server.storage.Storage;
 import org.folio.reservoir.util.JsonToMarcXml;

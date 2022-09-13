@@ -1,7 +1,5 @@
 package org.folio.reservoir.server.misc;
 
-import org.folio.reservoir.server.misc.Util;
-
 import java.time.LocalDateTime;
 import java.util.Base64;
 import java.util.UUID;

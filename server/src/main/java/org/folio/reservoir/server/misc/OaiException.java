@@ -1,4 +1,4 @@
-package org.folio.reservoir.server.service;
+package org.folio.reservoir.server.misc;
 
 public class OaiException extends RuntimeException {
 

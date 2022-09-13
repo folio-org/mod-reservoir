@@ -465,7 +465,7 @@ public class ReservoirService implements RouterCreator, TenantInitHooks {
           add(routerBuilder, "statsMatchKey", this::statsMatchKey);
           add(routerBuilder, "getClusters", this::getClusters);
           add(routerBuilder, "getCluster", this::getCluster);
-          add(routerBuilder, "oaiService", OaiService::get);
+          add(routerBuilder, "oaiService", OaiServerService::get);
           add(routerBuilder, "postCodeModule", this::postCodeModule);
           add(routerBuilder, "getCodeModule", this::getCodeModule);
           add(routerBuilder, "putCodeModule", this::putCodeModule);

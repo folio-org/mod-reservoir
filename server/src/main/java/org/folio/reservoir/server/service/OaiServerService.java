@@ -23,9 +23,10 @@ import java.util.concurrent.atomic.AtomicInteger;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.folio.okapi.common.HttpResponse;
+import org.folio.reservoir.server.entity.ClusterBuilder;
+import org.folio.reservoir.server.misc.OaiException;
 import org.folio.reservoir.server.misc.ResumptionToken;
 import org.folio.reservoir.server.misc.Util;
-import org.folio.reservoir.server.entity.ClusterBuilder;
 import org.folio.reservoir.server.module.Module;
 import org.folio.reservoir.server.module.ModuleCache;
 import org.folio.reservoir.server.storage.Storage;
@@ -33,10 +34,10 @@ import org.folio.reservoir.util.JsonToMarcXml;
 import org.folio.reservoir.util.MarcInJsonUtil;
 import org.folio.tlib.util.TenantUtil;
 
-public final class OaiService {
-  private static final Logger log = LogManager.getLogger(OaiService.class);
+public final class OaiServerService {
+  private static final Logger log = LogManager.getLogger(OaiServerService.class);
 
-  private OaiService() { }
+  private OaiServerService() { }
 
   static final String OAI_HEADER = """
       <?xml version="1.0" encoding="UTF-8"?>
@@ -77,6 +78,11 @@ public final class OaiService {
     response.end();
   }
 
+  /**
+   * OAI-PMH server service.
+   * @param ctx routing context
+   * @return async result
+   */
   public static Future<Void> get(RoutingContext ctx) {
     return getCheck(ctx).recover(e -> {
       if (!(e instanceof OaiException)) {

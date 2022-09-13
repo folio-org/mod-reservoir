@@ -2,7 +2,7 @@ package org.folio.reservoir.server;
 
 import org.folio.okapi.testing.UtilityClassTester;
 import org.folio.reservoir.server.misc.Util;
-import org.folio.reservoir.server.service.OaiException;
+import org.folio.reservoir.server.misc.OaiException;
 import org.junit.Assert;
 import org.junit.Test;
 
