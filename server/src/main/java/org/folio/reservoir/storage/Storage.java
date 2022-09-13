@@ -1,4 +1,4 @@
-package org.folio.reservoir.server;
+package org.folio.reservoir.storage;
 
 import io.vertx.core.Future;
 import io.vertx.core.Promise;
@@ -50,6 +50,7 @@ public class Storage {
 
   private static final int MATCHVALUE_MAX_LENGTH = 600; // < 2704 / 4
   final TenantPgPool pool;
+  final String sourcesTable;
   final String globalRecordTable;
   final String matchKeyConfigTable;
   final String clusterRecordTable;
@@ -70,6 +71,7 @@ public class Storage {
   public Storage(Vertx vertx, String tenant) {
     this.pool = TenantPgPool.pool(vertx, tenant);
     this.tenant = tenant;
+    this.sourcesTable = pool.getSchema() + ".sources";
     this.globalRecordTable = pool.getSchema() + ".global_records";
     this.matchKeyConfigTable = pool.getSchema() + ".match_key_config";
     this.clusterRecordTable = pool.getSchema() + ".cluster_records";
@@ -119,6 +121,9 @@ public class Storage {
   public Future<Void> init() {
     return pool.execute(List.of(
             "SET search_path TO " + pool.getSchema(),
+            CREATE_IF_NO_EXISTS + sourcesTable
+                + "(id VARCHAR NOT NULL PRIMARY KEY,"
+                + " version integer DEFAULT 1)",
             CREATE_IF_NO_EXISTS + globalRecordTable
                 + "(id uuid NOT NULL PRIMARY KEY,"
                 + " local_id VARCHAR NOT NULL,"
@@ -224,7 +229,7 @@ public class Storage {
    * @param matchKeyConfigs match key configrations in use
    * @return async result with TRUE=inserted, FALSE=updated, null=deleted
    */
-  Future<Boolean> ingestGlobalRecord(Vertx vertx, SourceId sourceId, int sourceVersion,
+  public Future<Boolean> ingestGlobalRecord(Vertx vertx, SourceId sourceId, int sourceVersion,
       JsonObject globalRecord, JsonArray matchKeyConfigs) {
 
     return pool.withTransaction(conn ->
@@ -947,10 +952,9 @@ public class Storage {
   /**
    * Update OAI config.
    * @param config OAI config
-   * @return async result with TRUE if updated; FALSE if not found
+   * @return async result
    */
-  public Future<Boolean> updateOaiConfig(JsonObject config) {
-
+  public Future<Void> updateOaiConfig(JsonObject config) {
     return pool.preparedQuery(
       "INSERT INTO " + oaiConfigTable + " (id, config)"
           + " VALUES ($1, $2) ON CONFLICT(id) DO UPDATE SET config = $2")

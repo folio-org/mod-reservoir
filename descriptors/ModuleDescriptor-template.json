@@ -23,6 +23,57 @@
       ]
     },
     {
+      "id": "reservoir-config-sources",
+      "version": "1.0",
+      "handlers": [
+        {
+          "methods": [
+            "POST"
+          ],
+          "pathPattern": "/reservoir/config/sources",
+          "permissionsRequired": [
+            "reservoir-config-sources.item.post"
+          ]
+        },
+        {
+          "methods": [
+            "GET"
+          ],
+          "pathPattern": "/reservoir/config/sources",
+          "permissionsRequired": [
+            "reservoir-config-sources.collection.get"
+          ]
+        },
+        {
+          "methods": [
+            "GET"
+          ],
+          "pathPattern": "/reservoir/config/sources/{id}",
+          "permissionsRequired": [
+            "reservoir-config-sources.item.get"
+          ]
+        },
+        {
+          "methods": [
+            "PUT"
+          ],
+          "pathPattern": "/reservoir/config/sources/{id}",
+          "permissionsRequired": [
+            "reservoir-config-sources.item.put"
+          ]
+        },
+        {
+          "methods": [
+            "DELETE"
+          ],
+          "pathPattern": "/reservoir/config/sources/{id}",
+          "permissionsRequired": [
+            "reservoir-config-sources.item.delete"
+          ]
+        }
+      ]
+    },
+    {
       "id": "reservoir-config-oai",
       "version": "1.0",
       "handlers": [
@@ -345,6 +396,43 @@
   "requires": [],
   "permissionSets": [
     {
+      "permissionName": "reservoir-config-sources.item.post",
+      "displayName": "reservoir - POST source",
+      "description": "Create source configuration"
+    },
+    {
+      "permissionName": "reservoir-config-sources.collection.get",
+      "displayName": "reservoir - GET sources list",
+      "description": "Get sources list"
+    },
+    {
+      "permissionName": "reservoir-config-sources.item.get",
+      "displayName": "reservoir - GET source",
+      "description": "Get source by id"
+    },
+    {
+      "permissionName": "reservoir-config-sources.item.put",
+      "displayName": "reservoir - PUT source",
+      "description": "Upsert source by id"
+    },
+    {
+      "permissionName": "reservoir-config-sources.item.delete",
+      "displayName": "reservoir - DELETE source",
+      "description": "Delete source by id"
+    },
+    {
+      "permissionName": "reservoir-config-sources.all",
+      "displayName": "reservoir - all sources configuration permissions",
+      "description": "All sources configuration permissions",
+      "subPermissions": [
+        "reservoir-config-sources.item.post",
+        "reservoir-config-sources.collection.get",
+        "reservoir-config-sources.item.get",
+        "reservoir-config-sources.item.put",
+        "reservoir-config-sources.item.delete"
+     ]
+    },
+    {
       "permissionName": "reservoir-config-oai.get",
       "displayName": "reservoir - retrieve OAI configuration",
       "description": "Retrieve OAI configuration"
@@ -572,6 +660,7 @@
       "description": "All permissions",
       "subPermissions": [
         "reservoir-clusters.all",
+        "reservoir-config-sources.all",
         "reservoir-config-matchkeys.all",
         "reservoir-config-modules.all",
         "reservoir-config-oai.all",

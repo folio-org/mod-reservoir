@@ -15,11 +15,11 @@ public final class Util {
     throw new UnsupportedOperationException("Util");
   }
 
-  static String getParameterString(RequestParameter parameter) {
+  public static String getParameterString(RequestParameter parameter) {
     return parameter == null ? null : parameter.getString();
   }
 
-  static String getQueryParameter(RequestParameters params) {
+  public static String getQueryParameter(RequestParameters params) {
     return Util.getParameterString(params.queryParameter("query"));
   }
 

@@ -19,6 +19,8 @@ import org.folio.okapi.common.HttpResponse;
 import org.folio.reservoir.matchkey.MatchKeyMethodFactory;
 import org.folio.reservoir.module.ModuleCache;
 import org.folio.reservoir.server.entity.CodeModuleEntity;
+import org.folio.reservoir.service.SourceService;
+import org.folio.reservoir.storage.Storage;
 import org.folio.reservoir.util.LargeJsonReadStream;
 import org.folio.tlib.RouterCreator;
 import org.folio.tlib.TenantInitHooks;
@@ -201,7 +203,7 @@ public class ReservoirService implements RouterCreator, TenantInitHooks {
 
   Future<Void> postConfigMatchKey(RoutingContext ctx) {
     Storage storage = new Storage(ctx);
-    JsonObject request = ctx.getBodyAsJson();
+    JsonObject request = ctx.body().asJsonObject();
     String id = request.getString("id");
     String method = getMethod(request);
     String update = request.getString("update", "ingest");
@@ -230,7 +232,7 @@ public class ReservoirService implements RouterCreator, TenantInitHooks {
 
   Future<Void> putConfigMatchKey(RoutingContext ctx) {
     Storage storage = new Storage(ctx);
-    JsonObject request = ctx.getBodyAsJson();
+    JsonObject request = ctx.body().asJsonObject();
     String id = request.getString("id");
     String method = getMethod(request);
     String update = request.getString("update", "ingest");
@@ -311,7 +313,7 @@ public class ReservoirService implements RouterCreator, TenantInitHooks {
 
   Future<Void> postCodeModule(RoutingContext ctx) {
     Storage storage = new Storage(ctx);
-    CodeModuleEntity e = new CodeModuleEntity.CodeModuleBuilder(ctx.getBodyAsJson()).build();
+    CodeModuleEntity e = new CodeModuleEntity.CodeModuleBuilder(ctx.body().asJsonObject()).build();
 
     ModuleCache.getInstance().purge(TenantUtil.tenant(ctx), e.getId());
     return ModuleCache.getInstance().lookup(ctx.vertx(), TenantUtil.tenant(ctx), e.asJson())
@@ -340,7 +342,7 @@ public class ReservoirService implements RouterCreator, TenantInitHooks {
 
   Future<Void> putCodeModule(RoutingContext ctx) {
     Storage storage = new Storage(ctx);
-    CodeModuleEntity e = new CodeModuleEntity.CodeModuleBuilder(ctx.getBodyAsJson()).build();
+    CodeModuleEntity e = new CodeModuleEntity.CodeModuleBuilder(ctx.body().asJsonObject()).build();
     return ModuleCache.getInstance().lookup(ctx.vertx(), TenantUtil.tenant(ctx), e.asJson())
         .compose(module -> storage.updateCodeModuleEntity(e)
             .onSuccess(res -> {
@@ -389,7 +391,7 @@ public class ReservoirService implements RouterCreator, TenantInitHooks {
 
   Future<Void> putOaiConfig(RoutingContext ctx) {
     Storage storage = new Storage(ctx);
-    JsonObject request = ctx.getBodyAsJson();
+    JsonObject request = ctx.body().asJsonObject();
     return storage.updateOaiConfig(request)
         .onSuccess(res -> {
           if (Boolean.FALSE.equals(res)) {
@@ -397,8 +399,7 @@ public class ReservoirService implements RouterCreator, TenantInitHooks {
             return;
           }
           ctx.response().setStatusCode(204).end();
-        })
-        .mapEmpty();
+        });
   }
 
   Future<Void> deleteOaiConfig(RoutingContext ctx) {
@@ -453,6 +454,11 @@ public class ReservoirService implements RouterCreator, TenantInitHooks {
     OaiPmhClientService oaiPmhClient = new OaiPmhClientService(vertx);
     return RouterBuilder.create(vertx, "openapi/reservoir.yaml")
         .map(routerBuilder -> {
+          add(routerBuilder, "postSource", SourceService::postSource);
+          add(routerBuilder, "getSources", SourceService::getSources);
+          add(routerBuilder, "getSource", SourceService::getSource);
+          add(routerBuilder, "putSource", SourceService::putSource);
+          add(routerBuilder, "deleteSource", SourceService::deleteSource);
           add(routerBuilder, "getGlobalRecords", this::getGlobalRecords);
           add(routerBuilder, "deleteGlobalRecords", this::deleteGlobalRecords);
           add(routerBuilder, "getGlobalRecord", this::getGlobalRecord);

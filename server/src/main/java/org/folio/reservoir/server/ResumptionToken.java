@@ -55,7 +55,7 @@ public class ResumptionToken {
     return Base64.getEncoder().encodeToString(s.getBytes());
   }
 
-  void setFrom(LocalDateTime from) {
+  public void setFrom(LocalDateTime from) {
     this.from = from;
   }
 
@@ -63,7 +63,7 @@ public class ResumptionToken {
     return from;
   }
 
-  void setId(UUID id) {
+  public void setId(UUID id) {
     this.id = id;
   }
 

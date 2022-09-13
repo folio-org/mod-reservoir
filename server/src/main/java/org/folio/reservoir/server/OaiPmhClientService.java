@@ -36,6 +36,7 @@ import org.folio.okapi.common.GenericCompositeFuture;
 import org.folio.okapi.common.HttpResponse;
 import org.folio.reservoir.server.entity.ClusterBuilder;
 import org.folio.reservoir.server.entity.OaiPmhStatus;
+import org.folio.reservoir.storage.Storage;
 import org.folio.reservoir.util.SourceId;
 import org.folio.reservoir.util.XmlMetadataParserMarcInJson;
 import org.folio.reservoir.util.XmlMetadataStreamParser;
@@ -72,7 +73,7 @@ public class OaiPmhClientService {
    */
   public Future<Void> post(RoutingContext ctx) {
     Storage storage = new Storage(ctx);
-    JsonObject config = ctx.getBodyAsJson();
+    JsonObject config = ctx.body().asJsonObject();
 
     String id = config.getString("id");
     if (CLIENT_ID_ALL.equals(id)) {
@@ -235,7 +236,7 @@ public class OaiPmhClientService {
     Storage storage = new Storage(ctx);
     RequestParameters params = ctx.get(ValidationHandler.REQUEST_CONTEXT_KEY);
     String id = Util.getParameterString(params.pathParameter("id"));
-    JsonObject config = ctx.getBodyAsJson();
+    JsonObject config = ctx.body().asJsonObject();
     config.remove("id");
     return getJob(storage, id).compose(existing -> {
       if (existing != null) {
@@ -555,7 +556,7 @@ public class OaiPmhClientService {
 
   /**
    * If the last datestamp is at least 1 DAY or 1 HOUR before "now"
-   * we bump it by 1 DAY or 1 SEC respectively, to avoid reharvesting
+   * we bump it by 1 DAY or 1 SEC respectively, to avoid re-harvesting
    * the same files next time.
    * @param config job config
    */
