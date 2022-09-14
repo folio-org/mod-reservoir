@@ -24,8 +24,6 @@ import org.folio.reservoir.server.storage.Storage;
 import org.folio.reservoir.util.LargeJsonReadStream;
 import org.folio.tlib.RouterCreator;
 import org.folio.tlib.TenantInitHooks;
-import org.folio.tlib.postgres.PgCqlField;
-import org.folio.tlib.postgres.PgCqlQuery;
 import org.folio.tlib.util.TenantUtil;
 
 public class ReservoirService implements RouterCreator, TenantInitHooks {
@@ -89,49 +87,20 @@ public class ReservoirService implements RouterCreator, TenantInitHooks {
         }).mapEmpty();
   }
 
-  static PgCqlQuery createPgCqlQuery() {
-    PgCqlQuery pgCqlQuery = PgCqlQuery.query();
-    pgCqlQuery.addField(
-        new PgCqlField("cql.allRecords", PgCqlField.Type.ALWAYS_MATCHES));
-    return pgCqlQuery;
-  }
-
-  static PgCqlQuery getPqCqlQueryForRecords() {
-    PgCqlQuery pgCqlQuery = createPgCqlQuery();
-    pgCqlQuery.addField(
-        new PgCqlField("id", PgCqlField.Type.UUID));
-    pgCqlQuery.addField(
-        new PgCqlField("id", "globalId", PgCqlField.Type.UUID));
-    pgCqlQuery.addField(
-        new PgCqlField("local_id", "localId", PgCqlField.Type.TEXT));
-    pgCqlQuery.addField(
-        new PgCqlField("source_id", "sourceId", PgCqlField.Type.TEXT));
-    pgCqlQuery.addField(
-        new PgCqlField("source_version", "sourceVersion", PgCqlField.Type.NUMBER));
-    return pgCqlQuery;
-  }
-
   Future<Void> deleteGlobalRecords(RoutingContext ctx) {
-    PgCqlQuery pgCqlQuery = getPqCqlQueryForRecords();
     RequestParameters params = ctx.get(ValidationHandler.REQUEST_CONTEXT_KEY);
     String query = Util.getQueryParameter(params);
     if (query == null) {
       failHandler(400, ctx, "Must specify query for delete records");
       return Future.succeededFuture();
     }
-    pgCqlQuery.parse(query);
     Storage storage = new Storage(ctx);
-    return storage.deleteGlobalRecords(pgCqlQuery.getWhereClause())
+    return storage.deleteGlobalRecords(query)
         .onSuccess(x -> ctx.response().setStatusCode(204).end());
   }
 
   Future<Void> getGlobalRecords(RoutingContext ctx) {
-    PgCqlQuery pgCqlQuery = getPqCqlQueryForRecords();
-    RequestParameters params = ctx.get(ValidationHandler.REQUEST_CONTEXT_KEY);
-    pgCqlQuery.parse(Util.getQueryParameter(params));
-    Storage storage = new Storage(ctx);
-    return storage.getGlobalRecords(ctx, pgCqlQuery.getWhereClause(),
-        pgCqlQuery.getOrderByClause());
+    return new Storage(ctx).getGlobalRecords(ctx);
   }
 
   Future<Void> getGlobalRecord(RoutingContext ctx) {
@@ -154,18 +123,7 @@ public class ReservoirService implements RouterCreator, TenantInitHooks {
   }
 
   Future<Void> getClusters(RoutingContext ctx) {
-    PgCqlQuery pgCqlQuery = createPgCqlQuery();
-    pgCqlQuery.addField(
-        new PgCqlField("cluster_values.match_value", "matchValue", PgCqlField.Type.TEXT));
-    pgCqlQuery.addField(
-        new PgCqlField("cluster_records.cluster_id", "clusterId", PgCqlField.Type.UUID));
-    pgCqlQuery.addField(
-        new PgCqlField("global_records.source_id", "sourceId", PgCqlField.Type.TEXT));
-    pgCqlQuery.addField(
-        new PgCqlField("global_records.source_version", "sourceVersion", PgCqlField.Type.NUMBER));
-
     RequestParameters params = ctx.get(ValidationHandler.REQUEST_CONTEXT_KEY);
-    pgCqlQuery.parse(Util.getQueryParameter(params));
     String matchKeyId = Util.getParameterString(params.queryParameter("matchkeyid"));
     Storage storage = new Storage(ctx);
     return storage.selectMatchKeyConfig(matchKeyId).compose(conf -> {
@@ -173,8 +131,7 @@ public class ReservoirService implements RouterCreator, TenantInitHooks {
         matchKeyNotFound(ctx, matchKeyId);
         return Future.succeededFuture();
       }
-      return storage.getClusters(ctx, matchKeyId,
-          pgCqlQuery.getWhereClause(), pgCqlQuery.getOrderByClause());
+      return storage.getClusters(ctx, matchKeyId);
     });
   }
 
@@ -264,18 +221,7 @@ public class ReservoirService implements RouterCreator, TenantInitHooks {
   }
 
   Future<Void> getConfigMatchKeys(RoutingContext ctx) {
-    PgCqlQuery pgCqlQuery = createPgCqlQuery();
-    pgCqlQuery.addField(
-        new PgCqlField("id", PgCqlField.Type.TEXT));
-    pgCqlQuery.addField(
-        new PgCqlField("method", PgCqlField.Type.TEXT));
-
-    RequestParameters params = ctx.get(ValidationHandler.REQUEST_CONTEXT_KEY);
-    pgCqlQuery.parse(Util.getQueryParameter(params));
-
-    Storage storage = new Storage(ctx);
-    return storage.getMatchKeyConfigs(ctx, pgCqlQuery.getWhereClause(),
-        pgCqlQuery.getOrderByClause());
+    return new Storage(ctx).getMatchKeyConfigs(ctx);
   }
 
   Future<Void> initializeMatchKey(RoutingContext ctx) {
@@ -357,18 +303,7 @@ public class ReservoirService implements RouterCreator, TenantInitHooks {
   }
 
   Future<Void> getCodeModules(RoutingContext ctx) {
-    PgCqlQuery pgCqlQuery = createPgCqlQuery();
-    pgCqlQuery.addField(
-        new PgCqlField("id", PgCqlField.Type.TEXT));
-    pgCqlQuery.addField(
-        new PgCqlField("function", PgCqlField.Type.TEXT));
-
-    RequestParameters params = ctx.get(ValidationHandler.REQUEST_CONTEXT_KEY);
-    pgCqlQuery.parse(Util.getQueryParameter(params));
-
-    Storage storage = new Storage(ctx);
-    return storage.selectCodeModuleEntities(ctx, pgCqlQuery.getWhereClause(),
-        pgCqlQuery.getOrderByClause());
+    return new Storage(ctx).selectCodeModuleEntities(ctx);
   }
 
 

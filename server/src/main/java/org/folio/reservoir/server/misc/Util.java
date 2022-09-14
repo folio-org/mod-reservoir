@@ -1,5 +1,6 @@
 package org.folio.reservoir.server.misc;
 
+import io.vertx.core.json.JsonObject;
 import io.vertx.ext.web.validation.RequestParameter;
 import io.vertx.ext.web.validation.RequestParameters;
 import java.time.LocalDateTime;
@@ -7,6 +8,8 @@ import java.time.ZoneOffset;
 import java.time.format.DateTimeFormatter;
 import java.time.format.DateTimeParseException;
 import java.time.temporal.ChronoUnit;
+import org.folio.tlib.postgres.PgCqlField;
+import org.folio.tlib.postgres.PgCqlQuery;
 
 public final class Util {
   private static final String TIME_ZERO = "T00:00:00Z";
@@ -108,4 +111,32 @@ public final class Util {
     }
     return ChronoUnit.DAYS.between(now, ds);
   }
+
+  /**
+   * Strip properties with null value from JsonObject.
+   * @param obj input JsonObject
+   * @return JsonObject without null values
+   */
+  public static JsonObject copyWithoutNulls(JsonObject obj) {
+    JsonObject n = new JsonObject();
+    obj.getMap().forEach((key, value) -> {
+      if (value != null) {
+        n.put(key, value);
+      }
+    });
+    return n;
+  }
+
+  /**
+   * Create PgCqlQuery with cql.allRecords field.
+   * @return query
+   */
+  public static PgCqlQuery createPgCqlQuery() {
+    PgCqlQuery pgCqlQuery = PgCqlQuery.query();
+    pgCqlQuery.addField(
+        new PgCqlField("cql.allRecords", PgCqlField.Type.ALWAYS_MATCHES));
+    return pgCqlQuery;
+  }
+
+
 }

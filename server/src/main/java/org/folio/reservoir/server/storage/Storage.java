@@ -10,7 +10,6 @@ import io.vertx.ext.web.validation.RequestParameters;
 import io.vertx.ext.web.validation.ValidationHandler;
 import io.vertx.sqlclient.Row;
 import io.vertx.sqlclient.RowIterator;
-import io.vertx.sqlclient.RowSet;
 import io.vertx.sqlclient.RowStream;
 import io.vertx.sqlclient.SqlConnection;
 import io.vertx.sqlclient.Tuple;
@@ -18,7 +17,6 @@ import java.time.LocalDateTime;
 import java.time.ZoneOffset;
 import java.util.ArrayList;
 import java.util.Collection;
-import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
@@ -26,18 +24,20 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
-import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
-import java.util.function.Function;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.folio.okapi.common.GenericCompositeFuture;
 import org.folio.reservoir.server.entity.ClusterBuilder;
 import org.folio.reservoir.server.entity.CodeModuleEntity;
 import org.folio.reservoir.server.matchkey.MatchKeyMethod;
+import org.folio.reservoir.server.misc.StreamResult;
+import org.folio.reservoir.server.misc.Util;
 import org.folio.reservoir.util.LargeJsonReadStream;
 import org.folio.reservoir.util.ReadStreamConsumer;
 import org.folio.reservoir.util.SourceId;
+import org.folio.tlib.postgres.PgCqlField;
+import org.folio.tlib.postgres.PgCqlQuery;
 import org.folio.tlib.postgres.TenantPgPool;
 import org.folio.tlib.util.TenantUtil;
 
@@ -498,12 +498,30 @@ public class Storage {
     return pool.withConnection(this::getAvailableMatchConfigs);
   }
 
+  static PgCqlQuery getPqCqlQueryForRecords() {
+    PgCqlQuery pgCqlQuery = Util.createPgCqlQuery();
+    pgCqlQuery.addField(
+        new PgCqlField("id", PgCqlField.Type.UUID));
+    pgCqlQuery.addField(
+        new PgCqlField("id", "globalId", PgCqlField.Type.UUID));
+    pgCqlQuery.addField(
+        new PgCqlField("local_id", "localId", PgCqlField.Type.TEXT));
+    pgCqlQuery.addField(
+        new PgCqlField("source_id", "sourceId", PgCqlField.Type.TEXT));
+    pgCqlQuery.addField(
+        new PgCqlField("source_version", "sourceVersion", PgCqlField.Type.NUMBER));
+    return pgCqlQuery;
+  }
+
   /**
    * Delete global records and update timestamp.
-   * @param sqlWhere SQL WHERE clause
+   * @param query CQL query for selecting records to delete
    * @return async result
    */
-  public Future<Void> deleteGlobalRecords(String sqlWhere) {
+  public Future<Void> deleteGlobalRecords(String query) {
+    PgCqlQuery pgCqlQuery = getPqCqlQueryForRecords();
+    pgCqlQuery.parse(query);
+    String sqlWhere = pgCqlQuery.getWhereClause();
     String q = "UPDATE " + clusterMetaTable + " AS m"
         + " SET datestamp = $1"
         + " FROM " + globalRecordTable + ", " + clusterRecordTable + " AS r"
@@ -526,17 +544,13 @@ public class Storage {
   /**
    * Get global records.
    * @param ctx routing context
-   * @param sqlWhere SQL WHERE clause
-   * @param sqlOrderBy the SQL ORDER BY clause
    * @return async result
    */
-  public Future<Void> getGlobalRecords(RoutingContext ctx, String sqlWhere, String sqlOrderBy) {
-    String from = globalRecordTable;
-    if (sqlWhere != null) {
-      from = from + " WHERE " + sqlWhere;
-    }
-    return streamResult(ctx, null, from, sqlOrderBy, "items",
-        row -> Future.succeededFuture(ClusterBuilder.encodeRecord(row)));
+  public Future<Void> getGlobalRecords(RoutingContext ctx) {
+    PgCqlQuery pgCqlQuery = getPqCqlQueryForRecords();
+    return new StreamResult(pool, ctx, pgCqlQuery, globalRecordTable)
+        .withArrayProp("items")
+        .result(row -> Future.succeededFuture(ClusterBuilder.encodeRecord(row)));
   }
 
   /**
@@ -576,11 +590,23 @@ public class Storage {
   /**
    * return all clusters as streaming result.
    * @param ctx routing context
-   * @param matchKeyId match ke config to use
+   * @param matchKeyId match key config to use
    * @return async result
    */
-  public Future<Void> getClusters(RoutingContext ctx, String matchKeyId,
-      String sqlWhere, String sqlOrderBy) {
+  public Future<Void> getClusters(RoutingContext ctx, String matchKeyId) {
+    PgCqlQuery pgCqlQuery = Util.createPgCqlQuery();
+    pgCqlQuery.addField(
+        new PgCqlField("cluster_values.match_value", "matchValue", PgCqlField.Type.TEXT));
+    pgCqlQuery.addField(
+        new PgCqlField("cluster_records.cluster_id", "clusterId", PgCqlField.Type.UUID));
+    pgCqlQuery.addField(
+        new PgCqlField("global_records.source_id", "sourceId", PgCqlField.Type.TEXT));
+    pgCqlQuery.addField(
+        new PgCqlField("global_records.source_version", "sourceVersion", PgCqlField.Type.NUMBER));
+
+    RequestParameters params = ctx.get(ValidationHandler.REQUEST_CONTEXT_KEY);
+    pgCqlQuery.parse(Util.getQueryParameter(params));
+    String sqlWhere = pgCqlQuery.getWhereClause();
     String joinGlobal = "";
     if (sqlWhere != null && sqlWhere.contains("global_records.")) {
       joinGlobal = " LEFT JOIN " + globalRecordTable + " ON "
@@ -598,9 +624,12 @@ public class Storage {
     if (sqlWhere != null) {
       from = from + " AND (" + sqlWhere + ")";
     }
-    return streamResult(ctx, clusterRecordTable + ".cluster_id", Tuple.of(matchKeyId),
-        from, sqlOrderBy, "items",
-        row -> getClusterById(row.getUUID("cluster_id")));
+    String sqlOrderBy = pgCqlQuery.getOrderByClause();
+    return new StreamResult(pool, ctx, from, sqlOrderBy)
+        .withDistinct(clusterRecordTable + ".cluster_id")
+        .withTuple(Tuple.of(matchKeyId))
+        .withArrayProp("items")
+        .result(row -> getClusterById(row.getUUID("cluster_id")));
   }
 
   /**
@@ -701,17 +730,18 @@ public class Storage {
   /**
    * Get match keys.
    * @param ctx routing context
-   * @param sqlWhere the SQL WHERE clause
-   * @param sqlOrderBy the SQL ORDER BY clause
    * @return async result
    */
-  public Future<Void> getMatchKeyConfigs(RoutingContext ctx, String sqlWhere, String sqlOrderBy) {
-    String from = matchKeyConfigTable;
-    if (sqlWhere != null) {
-      from = from + " WHERE " + sqlWhere;
-    }
-    return streamResult(ctx, null, from, sqlOrderBy, "matchKeys",
-        row -> Future.succeededFuture(new JsonObject()
+  public Future<Void> getMatchKeyConfigs(RoutingContext ctx) {
+    PgCqlQuery pgCqlQuery = Util.createPgCqlQuery();
+    pgCqlQuery.addField(
+        new PgCqlField("id", PgCqlField.Type.TEXT));
+    pgCqlQuery.addField(
+        new PgCqlField("method", PgCqlField.Type.TEXT));
+
+    return new StreamResult(pool, ctx, pgCqlQuery, matchKeyConfigTable)
+        .withArrayProp("matchKeys")
+        .result(row -> Future.succeededFuture(new JsonObject()
             .put("id", row.getString("id"))
             .put("method", row.getString("method"))
             .put("params", row.getJsonObject("params"))
@@ -932,18 +962,18 @@ public class Storage {
   /**
    * Select code module entities keys.
    * @param ctx routing context
-   * @param sqlWhere the SQL WHERE clause
-   * @param sqlOrderBy the SQL ORDER BY clause
    * @return async result
    */
-  public Future<Void> selectCodeModuleEntities(RoutingContext ctx,
-      String sqlWhere, String sqlOrderBy) {
-    String from = moduleTable;
-    if (sqlWhere != null) {
-      from = from + " WHERE " + sqlWhere;
-    }
-    return streamResult(ctx, null, from, sqlOrderBy, "modules",
-        row -> Future.succeededFuture(CodeModuleEntity.CodeModuleBuilder.asJson(row)));
+  public Future<Void> selectCodeModuleEntities(RoutingContext ctx) {
+    PgCqlQuery pgCqlQuery = Util.createPgCqlQuery();
+    pgCqlQuery.addField(
+        new PgCqlField("id", PgCqlField.Type.TEXT));
+    pgCqlQuery.addField(
+        new PgCqlField("function", PgCqlField.Type.TEXT));
+
+    return new StreamResult(pool, ctx, pgCqlQuery, moduleTable)
+        .withArrayProp("modules")
+        .result(row -> Future.succeededFuture(CodeModuleEntity.CodeModuleBuilder.asJson(row)));
   }
 
   //end modules
@@ -991,161 +1021,4 @@ public class Storage {
   }
 
   // end oai config
-
-  private static JsonObject copyWithoutNulls(JsonObject obj) {
-    JsonObject n = new JsonObject();
-    obj.getMap().forEach((key, value) -> {
-      if (value != null) {
-        n.put(key, value);
-      }
-    });
-    return n;
-  }
-
-  static void resultFooter(RoutingContext ctx, RowSet<Row> rowSet, List<String[]> facets,
-      String diagnostic) {
-
-    JsonObject resultInfo = new JsonObject();
-    JsonArray facetArray = new JsonArray();
-    if (rowSet != null) {
-      int pos = 0;
-      Row row = rowSet.iterator().next();
-      int count = row.getInteger(pos);
-      for (String [] facetEntry : facets) {
-        pos++;
-        JsonObject facetObj = null;
-        final String facetType = facetEntry[0];
-        final String facetValue = facetEntry[1];
-        for (int i = 0; i < facetArray.size(); i++) {
-          facetObj = facetArray.getJsonObject(i);
-          if (facetType.equals(facetObj.getString("type"))) {
-            break;
-          }
-          facetObj = null;
-        }
-        if (facetObj == null) {
-          facetObj = new JsonObject();
-          facetObj.put("type", facetType);
-          facetObj.put("facetValues", new JsonArray());
-          facetArray.add(facetObj);
-        }
-        JsonArray facetValues = facetObj.getJsonArray("facetValues");
-        facetValues.add(new JsonObject()
-            .put("value", facetValue)
-            .put("count", row.getInteger(pos)));
-      }
-      resultInfo.put("totalRecords", count);
-    }
-    JsonArray diagnostics = new JsonArray();
-    if (diagnostic != null) {
-      diagnostics.add(new JsonObject().put("message", diagnostic));
-    }
-    resultInfo.put("diagnostics", diagnostics);
-    resultInfo.put("facets", facetArray);
-    ctx.response().write("], \"resultInfo\": " + resultInfo.encode() + "}");
-    ctx.response().end();
-  }
-
-  @java.lang.SuppressWarnings({"squid:S107"})  // too many arguments
-  Future<Void> streamResult(RoutingContext ctx, SqlConnection sqlConnection,
-      String query, String cnt, Tuple tuple, String property, List<String[]> facets,
-      Function<Row, Future<JsonObject>> handler) {
-
-    return sqlConnection.prepare(query)
-        .compose(pq ->
-            sqlConnection.begin().compose(tx -> {
-              ctx.response().setChunked(true);
-              ctx.response().putHeader("Content-Type", "application/json");
-              ctx.response().write("{ \"" + property + "\" : [");
-              AtomicBoolean first = new AtomicBoolean(true);
-              RowStream<Row> stream = pq.createStream(sqlStreamFetchSize, tuple);
-              stream.handler(row -> {
-                stream.pause();
-                Future<JsonObject> f = handler.apply(row);
-                f.onSuccess(response -> {
-                  if (!first.getAndSet(false)) {
-                    ctx.response().write(",");
-                  }
-                  ctx.response().write(copyWithoutNulls(response).encode());
-                  stream.resume();
-                });
-                f.onFailure(e -> {
-                  log.info("failure {}", e.getMessage(), e);
-                  stream.resume();
-                });
-              });
-              stream.endHandler(end -> {
-                Future<RowSet<Row>> cntFuture = cnt != null
-                    ? sqlConnection.preparedQuery(cnt).execute(tuple)
-                    : Future.succeededFuture(null);
-                cntFuture
-                    .onSuccess(cntRes -> resultFooter(ctx, cntRes, facets, null))
-                    .onFailure(f -> {
-                      log.error(f.getMessage(), f);
-                      resultFooter(ctx, null, facets, f.getMessage());
-                    })
-                    .eventually(x -> tx.commit().compose(y -> sqlConnection.close()));
-              });
-              stream.exceptionHandler(e -> {
-                log.error("stream error {}", e.getMessage(), e);
-                resultFooter(ctx, null, facets, e.getMessage());
-                tx.commit().compose(y -> sqlConnection.close());
-              });
-              return Future.succeededFuture();
-            })
-        );
-  }
-
-  Future<Void> streamResult(RoutingContext ctx, String distinct,
-      String from, String orderByClause, String property, Function<Row,
-      Future<JsonObject>> handler) {
-
-    return streamResult(ctx, distinct, distinct, Tuple.tuple(), List.of(from),
-        Collections.emptyList(), orderByClause, property, handler);
-  }
-
-  Future<Void> streamResult(RoutingContext ctx, String distinct,
-      Tuple tuple, String from, String orderByClause, String property,
-      Function<Row, Future<JsonObject>> handler) {
-
-    return streamResult(ctx, distinct, distinct, tuple, List.of(from),
-        Collections.emptyList(), orderByClause, property, handler);
-  }
-
-  @java.lang.SuppressWarnings({"squid:S107"})  // too many arguments
-  Future<Void> streamResult(RoutingContext ctx, String distinctMain,
-      String distinctCount, Tuple tuple, List<String> fromList, List<String[]> facets,
-      String orderByClause, String property, Function<Row, Future<JsonObject>> handler) {
-
-    RequestParameters params = ctx.get(ValidationHandler.REQUEST_CONTEXT_KEY);
-    Integer offset = params.queryParameter("offset").getInteger();
-    Integer limit = params.queryParameter("limit").getInteger();
-    String count = params.queryParameter("count").getString();
-    String query = "SELECT " + (distinctMain != null ? "DISTINCT ON (" + distinctMain + ")" : "")
-        + " * FROM " + fromList.get(0)
-        + (orderByClause == null ?  "" : " ORDER BY " + orderByClause)
-        + " LIMIT " + limit + " OFFSET " + offset;
-    boolean exact = "exact".equals(count);
-    log.info("query={}", query);
-    StringBuilder countQuery = new StringBuilder("SELECT");
-    if (exact) {
-      int pos = 0;
-      for (String from : fromList) {
-        if (pos > 0) {
-          countQuery.append(",\n");
-        }
-        countQuery.append("(SELECT COUNT("
-            + (distinctCount != null ? "DISTINCT " + distinctCount : "*")
-            + ") FROM " + from + ") AS cnt" + pos);
-        pos++;
-      }
-      log.info("cnt={}", countQuery);
-    }
-    String countQueryString = exact ? countQuery.toString() : null;
-    return pool.getConnection()
-        .compose(sqlConnection -> streamResult(ctx, sqlConnection, query, countQueryString,
-            tuple, property, facets, handler)
-            .onFailure(x -> sqlConnection.close()));
-  }
-
 }

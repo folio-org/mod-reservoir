@@ -3,13 +3,12 @@ package org.folio.reservoir.server.storage;
 import io.vertx.core.Future;
 import io.vertx.core.json.JsonObject;
 import io.vertx.ext.web.RoutingContext;
-import io.vertx.ext.web.validation.RequestParameters;
-import io.vertx.ext.web.validation.ValidationHandler;
 import io.vertx.sqlclient.Row;
 import io.vertx.sqlclient.RowIterator;
 import io.vertx.sqlclient.Tuple;
 import org.folio.reservoir.server.data.Source;
 import org.folio.reservoir.server.data.SourceRowMapper;
+import org.folio.reservoir.server.misc.StreamResult;
 import org.folio.reservoir.server.misc.Util;
 import org.folio.tlib.postgres.PgCqlField;
 import org.folio.tlib.postgres.PgCqlQuery;
@@ -35,28 +34,21 @@ public class SourceStorage extends Storage {
   }
 
   /**
-   * Get sources from optional query and produce http response.
+   * Get sources from optional query and produce HTTP response.
    * @param ctx routing context
    * @return async result
    */
   public Future<Void> list(RoutingContext ctx) {
-    RequestParameters params = ctx.get(ValidationHandler.REQUEST_CONTEXT_KEY);
-    PgCqlQuery pgCqlQuery = PgCqlQuery.query();
-    pgCqlQuery.addField(
-        new PgCqlField("cql.allRecords", PgCqlField.Type.ALWAYS_MATCHES));
+    PgCqlQuery pgCqlQuery = Util.createPgCqlQuery();
     pgCqlQuery.addField(
         new PgCqlField("id", PgCqlField.Type.TEXT));
     pgCqlQuery.addField(
         new PgCqlField("version", PgCqlField.Type.NUMBER));
-    pgCqlQuery.parse(Util.getQueryParameter(params));
-
-    String sqlWhere = pgCqlQuery.getWhereClause();
-    String from = sourcesTable;
-    if (sqlWhere != null) {
-      from = from + " WHERE " + sqlWhere;
-    }
-    return streamResult(ctx, null, from, pgCqlQuery.getOrderByClause(), "sources",
-        row -> Future.succeededFuture(JsonObject.mapFrom(SourceRowMapper.INSTANCE.map(row))));
+    return new StreamResult(pool, ctx, pgCqlQuery, sourcesTable)
+        .withArrayProp("sources")
+        .result(row -> Future.succeededFuture(
+            JsonObject.mapFrom(SourceRowMapper.INSTANCE.map(row))
+        ));
   }
 
   /**
