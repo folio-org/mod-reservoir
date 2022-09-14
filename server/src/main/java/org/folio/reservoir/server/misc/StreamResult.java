@@ -134,7 +134,7 @@ public class StreamResult {
 
     return sqlConnection.prepare(query)
         .compose(pq ->
-            sqlConnection.begin().compose(tx -> {
+            sqlConnection.begin().map(tx -> {
               ctx.response().setChunked(true);
               ctx.response().putHeader("Content-Type", "application/json");
               ctx.response().write("{ \"" + property + "\" : [");
@@ -172,7 +172,7 @@ public class StreamResult {
                 resultFooter(null, e.getMessage());
                 tx.commit().compose(y -> sqlConnection.close());
               });
-              return Future.succeededFuture();
+              return null;
             })
         );
   }
