@@ -38,6 +38,9 @@
   <properties>
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
     <graalvm.version>22.1.0</graalvm.version>
+    <vertx-lib.version>2.0.1</vertx-lib.version>
+    <vertx.version>4.3.3</vertx.version>
+    <okapi.version>4.14.4</okapi.version>
   </properties>
 
   <dependencyManagement>
@@ -45,19 +48,19 @@
       <dependency>
         <groupId>io.vertx</groupId>
         <artifactId>vertx-stack-depchain</artifactId>
-        <version>4.3.3</version>
+        <version>${vertx.version}</version>
         <type>pom</type>
         <scope>import</scope>
       </dependency>
       <dependency>
         <groupId>org.folio</groupId>
         <artifactId>vertx-lib</artifactId>
-        <version>2.0.1</version>
+        <version>${vertx-lib.version}</version>
       </dependency>
       <dependency>
         <groupId>org.folio</groupId>
         <artifactId>vertx-lib-pg-testing</artifactId>
-        <version>2.0.1</version>
+        <version>${vertx-lib.version}</version>
       </dependency>
       <dependency>
         <groupId>org.apache.logging.log4j</groupId>
@@ -69,17 +72,17 @@
       <dependency>
         <groupId>org.folio.okapi</groupId>
         <artifactId>okapi-common</artifactId>
-        <version>4.14.4</version>
+        <version>${okapi.version}</version>
       </dependency>
       <dependency>
         <groupId>org.folio.okapi</groupId>
         <artifactId>okapi-core</artifactId>
-        <version>4.14.4</version>
+        <version>${okapi.version}</version>
       </dependency>
       <dependency>
         <groupId>org.folio.okapi</groupId>
         <artifactId>okapi-testing</artifactId>
-        <version>4.14.4</version>
+        <version>${okapi.version}</version>
       </dependency>
       <dependency>
         <groupId>org.z3950.zing</groupId>
