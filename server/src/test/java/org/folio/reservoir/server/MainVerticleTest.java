@@ -75,7 +75,6 @@ import org.testcontainers.containers.PostgreSQLContainer;
 import org.xml.sax.SAXException;
 
 import static org.hamcrest.Matchers.anyOf;
-import static org.hamcrest.Matchers.contains;
 import static org.hamcrest.Matchers.containsString;
 import static org.hamcrest.Matchers.empty;
 import static org.hamcrest.Matchers.endsWith;
