@@ -313,7 +313,7 @@ public final class OaiServerService {
 
     String elem = withMetadata ? "ListRecords" : "ListIdentifiers";
     return conn.prepare(sqlQuery).compose(pq ->
-        conn.begin().compose(tx -> {
+        conn.begin().map(tx -> {
           HttpServerResponse response = ctx.response();
           ClusterRecordStream clusterRecordStream
               = new ClusterRecordStream(ctx.vertx(), storage, conn, response, module, withMetadata);
@@ -350,7 +350,7 @@ public final class OaiServerService {
             log.error("stream error {}", e.getMessage(), e);
             endListResponse(ctx, conn, tx, elem);
           });
-          return Future.succeededFuture();
+          return null;
         })
     );
   }
