@@ -115,6 +115,7 @@ public class StreamResult {
         + " * FROM " + from
         + (orderByClause == null ?  "" : " ORDER BY " + orderByClause)
         + " LIMIT " + limit + " OFFSET " + offset;
+    log.info("query = {}", query);
     boolean exact = "exact".equals(count);
     StringBuilder countQuery = new StringBuilder("SELECT");
     if (exact) {
