@@ -1,4 +1,4 @@
-package org.folio.reservoir.server;
+package org.folio.reservoir.server.misc;
 
 import org.folio.okapi.testing.UtilityClassTester;
 import org.folio.reservoir.server.misc.Util;

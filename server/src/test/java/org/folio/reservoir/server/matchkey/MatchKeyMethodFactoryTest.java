@@ -1,4 +1,4 @@
-package org.folio.reservoir.matchkey;
+package org.folio.reservoir.server.matchkey;
 
 import com.jayway.jsonpath.InvalidPathException;
 import io.vertx.core.Vertx;

@@ -1,4 +1,4 @@
-package org.folio.reservoir.module.impl;
+package org.folio.reservoir.server.module.impl;
 
 import io.vertx.core.Future;
 import io.vertx.core.Vertx;

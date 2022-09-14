@@ -55,7 +55,7 @@ import io.vertx.sqlclient.Tuple;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.awaitility.Awaitility;
-import org.folio.reservoir.module.impl.ModuleScripts;
+import org.folio.reservoir.server.module.impl.ModuleScripts;
 import org.folio.reservoir.server.data.Source;
 import org.folio.reservoir.server.entity.CodeModuleEntity;
 import org.folio.okapi.common.XOkapiHeaders;

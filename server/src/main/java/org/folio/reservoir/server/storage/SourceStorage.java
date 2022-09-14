@@ -9,6 +9,7 @@ import io.vertx.sqlclient.Row;
 import io.vertx.sqlclient.RowIterator;
 import io.vertx.sqlclient.Tuple;
 import org.folio.reservoir.server.data.Source;
+import org.folio.reservoir.server.data.SourceRowMapper;
 import org.folio.reservoir.server.misc.Util;
 import org.folio.tlib.postgres.PgCqlField;
 import org.folio.tlib.postgres.PgCqlQuery;
@@ -55,12 +56,7 @@ public class SourceStorage extends Storage {
       from = from + " WHERE " + sqlWhere;
     }
     return streamResult(ctx, null, from, pgCqlQuery.getOrderByClause(), "sources",
-        row -> {
-          Source source = new Source();
-          source.setId(row.getString("id"));
-          source.setVersion(row.getInteger("version"));
-          return Future.succeededFuture(JsonObject.mapFrom(source));
-        });
+        row -> Future.succeededFuture(JsonObject.mapFrom(SourceRowMapper.INSTANCE.map(row))));
   }
 
   /**
@@ -76,11 +72,7 @@ public class SourceStorage extends Storage {
           if (!iterator.hasNext()) {
             return Future.succeededFuture();
           }
-          Row row = iterator.next();
-          Source source = new Source();
-          source.setId(row.getString("id"));
-          source.setVersion(row.getInteger("version"));
-          return Future.succeededFuture(source);
+          return Future.succeededFuture(SourceRowMapper.INSTANCE.map(iterator.next()));
         });
   }
 

@@ -561,7 +561,7 @@ public class OaiPmhClientService {
    * the same files next time.
    * @param config job config
    */
-  static void moveFromDate(JsonObject config) {
+  public static void moveFromDate(JsonObject config) {
     String from = config.getString("from");
     if (from != null &&  Util.unitsBetween(Util.getOaiNow(), from) < 0) {
       config.put("from", Util.getNextOaiDate(from));

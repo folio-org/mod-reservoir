@@ -1,4 +1,4 @@
-package org.folio.reservoir.matchkey.impl;
+package org.folio.reservoir.server.matchkey.impl;
 
 import io.vertx.core.Vertx;
 import io.vertx.core.http.HttpServer;
