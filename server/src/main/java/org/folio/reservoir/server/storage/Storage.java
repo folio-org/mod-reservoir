@@ -625,8 +625,6 @@ public class Storage {
       from = from + " AND (" + sqlWhere + ")";
     }
     String sqlOrderBy = pgCqlQuery.getOrderByClause();
-    log.info("from = {}", from);
-    log.info("sqlorderby = {}", sqlOrderBy);
     return new StreamResult(pool, ctx, from, sqlOrderBy)
         .withDistinct(clusterRecordTable + ".cluster_id")
         .withTuple(Tuple.of(matchKeyId))
