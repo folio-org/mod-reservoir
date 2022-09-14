@@ -7,7 +7,7 @@ import io.vertx.sqlclient.RowSet;
 import java.time.LocalDateTime;
 import java.time.ZoneOffset;
 import java.time.format.DateTimeFormatter;
-import java.util.Collections;
+import java.util.Comparator;
 import java.util.List;
 import java.util.UUID;
 
@@ -24,7 +24,7 @@ public class ClusterBuilder {
   public static final String RECORDS_LABEL = "records";
 
 
-  private JsonObject clusterJson = new JsonObject();
+  private final JsonObject clusterJson = new JsonObject();
 
   public ClusterBuilder(UUID clusterId) {
     clusterJson.put(CLUSTER_ID_LABEL, clusterId.toString());
@@ -58,20 +58,10 @@ public class ClusterBuilder {
    * @return this
    */
   public ClusterBuilder records(JsonArray records) {
-    Collections.sort((List<JsonObject>) records.getList(), (a, b) -> {
-      int cmp = a.getString(ClusterBuilder.SOURCE_ID_LABEL)
-          .compareTo(b.getString(ClusterBuilder.SOURCE_ID_LABEL));
-      if (cmp != 0) {
-        return cmp;
-      }
-      cmp = a.getInteger(ClusterBuilder.SOURCE_VERSION_LABEL, 0)
-          - b.getInteger(ClusterBuilder.SOURCE_VERSION_LABEL, 0);
-      if (cmp != 0) {
-        return cmp;
-      }
-      return a.getString(ClusterBuilder.LOCAL_ID_LABEL)
-          .compareTo(b.getString(ClusterBuilder.LOCAL_ID_LABEL));
-    });
+    ((List<JsonObject>) records.getList())
+        .sort(Comparator.comparing((JsonObject a) -> a.getString(ClusterBuilder.SOURCE_ID_LABEL))
+            .thenComparingInt(a -> a.getInteger(ClusterBuilder.SOURCE_VERSION_LABEL, 0))
+            .thenComparing(a -> a.getString(ClusterBuilder.LOCAL_ID_LABEL)));
     clusterJson.put(RECORDS_LABEL, records);
     return this;
   }
