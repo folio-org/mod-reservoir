@@ -95,7 +95,6 @@ public class MainVerticleTest {
   static final String OKAPI_URL = "http://localhost:" + OKAPI_PORT;
   static final int MODULE_PORT = 9231;
   static final String MODULE_URL = "http://localhost:" + MODULE_PORT;
-  static String tenant1 = "tenant1";
   static final int CODE_MODULES_PORT = 9235;
   static final int MOCK_PORT = 9232;
   static final int UNUSED_PORT = 9233;
@@ -232,7 +231,7 @@ public class MainVerticleTest {
   @After
   public void after() {
     RestAssured.given()
-        .header(XOkapiHeaders.TENANT, tenant1)
+        .header(XOkapiHeaders.TENANT, TENANT_1)
         .delete("/reservoir/config/oai")
         .then()
         .statusCode(204);
@@ -1766,7 +1765,7 @@ public class MainVerticleTest {
   public void testCodeModulesCRUD() {
     //GET empty list no count
     RestAssured.given()
-        .header(XOkapiHeaders.TENANT, tenant1)
+        .header(XOkapiHeaders.TENANT, TENANT_1)
         .get("/reservoir/config/modules")
         .then().statusCode(200)
         .contentType("application/json")
@@ -1775,7 +1774,7 @@ public class MainVerticleTest {
 
     //GET empty list with count
     RestAssured.given()
-        .header(XOkapiHeaders.TENANT, tenant1)
+        .header(XOkapiHeaders.TENANT, TENANT_1)
         .param("count", "exact")
         .get("/reservoir/config/modules")
         .then().statusCode(200)
@@ -1786,7 +1785,7 @@ public class MainVerticleTest {
     //POST item with bad url and nothing should be created
     CodeModuleEntity badModule = new CodeModuleEntity("empty",  "url", "transform");
     RestAssured.given()
-        .header(XOkapiHeaders.TENANT, tenant1)
+        .header(XOkapiHeaders.TENANT, TENANT_1)
         .header("Content-Type", "application/json")
         .body(badModule.asJson().encode())
         .post("/reservoir/config/modules")
@@ -1796,7 +1795,7 @@ public class MainVerticleTest {
 
     //GET not found item
     RestAssured.given()
-        .header(XOkapiHeaders.TENANT, tenant1)
+        .header(XOkapiHeaders.TENANT, TENANT_1)
         .header("Content-Type", "application/json")
         .get("/reservoir/config/modules/" + module.getId())
         .then().statusCode(404)
@@ -1805,7 +1804,7 @@ public class MainVerticleTest {
 
     //reload - not found item
     RestAssured.given()
-        .header(XOkapiHeaders.TENANT, tenant1)
+        .header(XOkapiHeaders.TENANT, TENANT_1)
         .put("/reservoir/config/modules/" + module.getId() + "/reload")
         .then().statusCode(404)
         .contentType("text/plain")
@@ -1813,7 +1812,7 @@ public class MainVerticleTest {
 
     //POST item
     RestAssured.given()
-        .header(XOkapiHeaders.TENANT, tenant1)
+        .header(XOkapiHeaders.TENANT, TENANT_1)
         .header("Content-Type", "application/json")
         .body(module.asJson().encode())
         .post("/reservoir/config/modules")
@@ -1823,7 +1822,7 @@ public class MainVerticleTest {
 
     //POST same item again
     RestAssured.given()
-        .header(XOkapiHeaders.TENANT, tenant1)
+        .header(XOkapiHeaders.TENANT, TENANT_1)
         .header("Content-Type", "application/json")
         .body(module.asJson().encode())
         .post("/reservoir/config/modules")
@@ -1833,7 +1832,7 @@ public class MainVerticleTest {
 
     //GET posted item
     RestAssured.given()
-        .header(XOkapiHeaders.TENANT, tenant1)
+        .header(XOkapiHeaders.TENANT, TENANT_1)
         .header("Content-Type", "application/json")
         .get("/reservoir/config/modules/" + module.getId())
         .then().statusCode(200)
@@ -1842,13 +1841,13 @@ public class MainVerticleTest {
 
     // reload existing module
     RestAssured.given()
-        .header(XOkapiHeaders.TENANT, tenant1)
+        .header(XOkapiHeaders.TENANT, TENANT_1)
         .put("/reservoir/config/modules/" + module.getId() + "/reload")
         .then().statusCode(204);
 
     //GET item and validate it
     RestAssured.given()
-        .header(XOkapiHeaders.TENANT, tenant1)
+        .header(XOkapiHeaders.TENANT, TENANT_1)
         .get("/reservoir/config/modules")
         .then().statusCode(200)
         .contentType("application/json")
@@ -1859,7 +1858,7 @@ public class MainVerticleTest {
 
     //GET search item and validate
     RestAssured.given()
-        .header(XOkapiHeaders.TENANT, tenant1)
+        .header(XOkapiHeaders.TENANT, TENANT_1)
         .get("/reservoir/config/modules?query=function=" + module.getFunction())
         .then().statusCode(200)
         .contentType("application/json")
@@ -1870,28 +1869,28 @@ public class MainVerticleTest {
 
     //DELETE item
     RestAssured.given()
-        .header(XOkapiHeaders.TENANT, tenant1)
+        .header(XOkapiHeaders.TENANT, TENANT_1)
         .header("Content-Type", "application/json")
         .delete("/reservoir/config/modules/" + module.getId())
         .then().statusCode(204);
 
     //DELETE item again
     RestAssured.given()
-        .header(XOkapiHeaders.TENANT, tenant1)
+        .header(XOkapiHeaders.TENANT, TENANT_1)
         .header("Content-Type", "application/json")
         .delete("/reservoir/config/modules/" + module.getId())
         .then().statusCode(404);
 
     //GET deleted item
     RestAssured.given()
-        .header(XOkapiHeaders.TENANT, tenant1)
+        .header(XOkapiHeaders.TENANT, TENANT_1)
         .header("Content-Type", "application/json")
         .get("/reservoir/config/modules/" + module.getId())
         .then().statusCode(404);
 
     //PUT item to not existing
     RestAssured.given()
-        .header(XOkapiHeaders.TENANT, tenant1)
+        .header(XOkapiHeaders.TENANT, TENANT_1)
         .header("Content-Type", "application/json")
         .body(module.asJson().encode())
         .put("/reservoir/config/modules/" + module.getId())
@@ -1900,7 +1899,7 @@ public class MainVerticleTest {
 
     //POST item again
     RestAssured.given()
-        .header(XOkapiHeaders.TENANT, tenant1)
+        .header(XOkapiHeaders.TENANT, TENANT_1)
         .header("Content-Type", "application/json")
         .body(module.asJson().encode())
         .post("/reservoir/config/modules")
@@ -1910,7 +1909,7 @@ public class MainVerticleTest {
 
     //PUT item to existing
     RestAssured.given()
-        .header(XOkapiHeaders.TENANT, tenant1)
+        .header(XOkapiHeaders.TENANT, TENANT_1)
         .header("Content-Type", "application/json")
         .body(module.asJson().encode())
         .put("/reservoir/config/modules/" + module.getId())
@@ -1919,7 +1918,7 @@ public class MainVerticleTest {
 
     //DELETE item
     RestAssured.given()
-        .header(XOkapiHeaders.TENANT, tenant1)
+        .header(XOkapiHeaders.TENANT, TENANT_1)
         .header("Content-Type", "application/json")
         .delete("/reservoir/config/modules/" + module.getId())
         .then().statusCode(204);
@@ -1929,7 +1928,7 @@ public class MainVerticleTest {
   @Test
   public void testOaiConfigRU() {
     RestAssured.given()
-        .header(XOkapiHeaders.TENANT, tenant1)
+        .header(XOkapiHeaders.TENANT, TENANT_1)
         .get("/reservoir/config/oai")
         .then()
         .statusCode(404);
@@ -1941,7 +1940,7 @@ public class MainVerticleTest {
         .put("repositoryName", "MetaStorage OAI server");
 
     RestAssured.given()
-        .header(XOkapiHeaders.TENANT, tenant1)
+        .header(XOkapiHeaders.TENANT, TENANT_1)
         .header("Content-Type", "application/json")
         .body(oaiConfig.encode())
         .put("/reservoir/config/oai")
@@ -1949,7 +1948,7 @@ public class MainVerticleTest {
         .statusCode(204);
 
     RestAssured.given()
-        .header(XOkapiHeaders.TENANT, tenant1)
+        .header(XOkapiHeaders.TENANT, TENANT_1)
         .get("/reservoir/config/oai")
         .then()
         .statusCode(200)
@@ -1959,7 +1958,7 @@ public class MainVerticleTest {
     oaiConfig.put("badProperty", "not allower");
 
     RestAssured.given()
-        .header(XOkapiHeaders.TENANT, tenant1)
+        .header(XOkapiHeaders.TENANT, TENANT_1)
         .header("Content-Type", "application/json")
         .body(oaiConfig.encode())
         .put("/reservoir/config/oai")
@@ -2220,7 +2219,7 @@ public class MainVerticleTest {
 
       //POST module configuration
       RestAssured.given()
-          .header(XOkapiHeaders.TENANT, tenant1)
+          .header(XOkapiHeaders.TENANT, TENANT_1)
           .header("Content-Type", "application/json")
           .body(module.asJson().encode())
           .post("/reservoir/config/modules")
@@ -2234,7 +2233,7 @@ public class MainVerticleTest {
         .put("transformer", "marc-transformer");
 
     RestAssured.given()
-        .header(XOkapiHeaders.TENANT, tenant1)
+        .header(XOkapiHeaders.TENANT, TENANT_1)
         .header("Content-Type", "application/json")
         .body(oaiConfig.encode())
         .put("/reservoir/config/oai")
@@ -2300,7 +2299,7 @@ public class MainVerticleTest {
 
 
     s = RestAssured.given()
-        .header(XOkapiHeaders.TENANT, tenant1)
+        .header(XOkapiHeaders.TENANT, TENANT_1)
         .param("set", "issn")
         .param("verb", "ListRecords")
         .param("metadataPrefix", "marcxml")
@@ -2314,7 +2313,7 @@ public class MainVerticleTest {
         .put("transformer", "empty");
 
     RestAssured.given()
-        .header(XOkapiHeaders.TENANT, tenant1)
+        .header(XOkapiHeaders.TENANT, TENANT_1)
         .header("Content-Type", "application/json")
         .body(oaiConfig.encode())
         .put("/reservoir/config/oai")
@@ -2322,7 +2321,7 @@ public class MainVerticleTest {
         .statusCode(204);
 
     s = RestAssured.given()
-        .header(XOkapiHeaders.TENANT, tenant1)
+        .header(XOkapiHeaders.TENANT, TENANT_1)
         .param("set", "issn")
         .param("verb", "ListRecords")
         .param("metadataPrefix", "marcxml")
@@ -2337,7 +2336,7 @@ public class MainVerticleTest {
         .put("transformer", "throw");
 
     RestAssured.given()
-        .header(XOkapiHeaders.TENANT, tenant1)
+        .header(XOkapiHeaders.TENANT, TENANT_1)
         .header("Content-Type", "application/json")
         .body(oaiConfig.encode())
         .put("/reservoir/config/oai")
@@ -2345,7 +2344,7 @@ public class MainVerticleTest {
         .statusCode(204);
 
     RestAssured.given()
-        .header(XOkapiHeaders.TENANT, tenant1)
+        .header(XOkapiHeaders.TENANT, TENANT_1)
         .param("set", "issn")
         .param("verb", "ListRecords")
         .param("metadataPrefix", "marcxml")
@@ -2368,7 +2367,7 @@ public class MainVerticleTest {
     JsonObject oaiConfigBadTransformer = new JsonObject()
         .put("transformer", "doesnotexist");
     RestAssured.given()
-        .header(XOkapiHeaders.TENANT, tenant1)
+        .header(XOkapiHeaders.TENANT, TENANT_1)
         .header("Content-Type", "application/json")
         .body(oaiConfigBadTransformer.encode())
         .put("/reservoir/config/oai")
@@ -2376,7 +2375,7 @@ public class MainVerticleTest {
         .statusCode(204);
 
     RestAssured.given()
-        .header(XOkapiHeaders.TENANT, tenant1)
+        .header(XOkapiHeaders.TENANT, TENANT_1)
         .param("set", "issn")
         .param("verb", "ListRecords")
         .param("metadataPrefix", "marcxml")
@@ -2399,7 +2398,7 @@ public class MainVerticleTest {
     JsonObject oaiConfigOff = new JsonObject();
 
     RestAssured.given()
-        .header(XOkapiHeaders.TENANT, tenant1)
+        .header(XOkapiHeaders.TENANT, TENANT_1)
         .header("Content-Type", "application/json")
         .body(oaiConfigOff.encode())
         .put("/reservoir/config/oai")

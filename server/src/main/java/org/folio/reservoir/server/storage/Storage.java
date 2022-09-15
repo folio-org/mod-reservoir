@@ -408,7 +408,8 @@ public class Storage {
     if (no == 3) {
       return Future.succeededFuture();
     }
-    return conn.preparedQuery(q.toString()).execute(Tuple.from(tupleList))
+    return conn.preparedQuery(q.toString())
+        .execute(Tuple.from(tupleList))
         .mapEmpty();
   }
 
