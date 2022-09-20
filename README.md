@@ -11,7 +11,7 @@ A service that provides a clustering storage of metadata for the purpose of cons
 
 This project has three sub-projects:
 
-* `util` -- A library with utilities to normalize MARC to Inventory.
+* `util` -- A library with utilities to convert and normalize XML, JSON and MARC.
 * `server` -- The reservoir storage server. This is the FOLIO module: mod-reservoir
 * `client` -- A client for sending ISO2709/MARCXML records to the server.
 
@@ -19,7 +19,7 @@ This project has three sub-projects:
 
 Requirements:
 
-* Java 17. A later version might very well work
+* Java 17 or later
 * Maven 3.6.3 or later
 * `JAVA_HOME` set, e.g.\
    `export JAVA_HOME=$(readlink -f /usr/bin/javac | sed "s:bin/javac::")`
@@ -28,7 +28,12 @@ Install all components with: `mvn install`
 
 ## Server
 
-Start the server with:
+The server's database connection is configured by setting environment variables:
+`DB_HOST`, `DB_PORT`, `DB_USERNAME`, `DB_PASSWORD`, `DB_DATABASE`,
+`DB_MAXPOOLSIZE`, `DB_SERVER_PEM`.
+
+Once configured, start the server with:
+
 ```
 java -Dport=8081 --module-path=server/target/compiler/ \
   --upgrade-module-path=server/target/compiler/compiler.jar \
@@ -36,15 +41,12 @@ java -Dport=8081 --module-path=server/target/compiler/ \
   -jar server/target/mod-reservoir-server-fat.jar
 ```
 
-The module is configured by setting environment variables:
-`DB_HOST`, `DB_PORT`, `DB_USERNAME`, `DB_PASSWORD`, `DB_DATABASE`,
-`DB_MAXPOOLSIZE`, `DB_SERVER_PEM`.
-
 ## Command-line client
 
 The client is a command-line tool for sending records to the mod-reservoir server.
 
 Run the client with:
+
 ```
 java -jar client/target/mod-reservoir-client-fat.jar [options] [files...]
 ```
@@ -58,6 +60,7 @@ If Okapi is used, then the usual `install` command will do it, but if the
 mod-reservoir module is being run on its own, then that must be done manually.
 
 For example, to prepare the database for tenant `diku` on server running on localhost:8081, use:
+
 ```
 export OKAPI_TENANT=diku
 export OKAPI_URL=http://localhost:8081
@@ -65,6 +68,7 @@ java -jar client/target/mod-reservoir-client-fat.jar --init
 ```
 
 To purge the data, use:
+
 ```
 export OKAPI_TENANT=diku
 export OKAPI_URL=http://localhost:8081
@@ -72,6 +76,7 @@ java -jar client/target/mod-reservoir-client-fat.jar --purge
 ```
 
 To send MARCXML to the same server with defined `sourceId`, use:
+
 ```
 export OKAPI_TENANT=diku
 export OKAPI_URL=http://localhost:8081
@@ -85,6 +90,50 @@ java -jar client/target/mod-reservoir-client-fat.jar \
 ```
 
 The option `--xsl` may be repeated for a sequence of transformations.
+
+## Configuring matchkeys
+
+Once records are loaded, they can be retrieved with:
+
+```
+curl -H"X-Okapi-Tenant: diku" http://localhost:8081/reservoir/records
+```
+
+but to retrieve “clusters”, a matchkey configuration needs to specified first.
+
+A simple matchkey config could use the ‘jsonpath’ method and refer to the FOLIO Inventory fields:
+
+```
+{
+  "id": "title",
+  "method": "jsonpath",
+  "params": {
+    "expr":"$.inventory.instance.title"
+  },
+  "update": "ingest"
+}
+```
+
+Post it to the server with:
+
+```
+curl -H"X-Okapi-Tenant: diku" -H"Content-type: application/json" http://localhost:8081/reservoir/config/matchkeys -d @matchkey-title.json
+```
+
+and then initialize the cluster for this config:
+
+```
+curl -H"X-Okapi-Tenant: diku" -H"Content-type: application/json" http://localhost:8081/reservoir/config/matchkeys/title/initialize
+```
+
+Now you can retrieve/browse the clusters with:
+
+```
+curl -H"X-Okapi-Tenant: diku" http://localhost:8081/reservoir/clusters?matchkeyid=title 
+```
+
+Matchkey configuration must be aligned with the format of stored records. In the above example, stylesheets to convert from MARC to FOLIO were used
+and the example matchkey configuration used FOLIO Inventory fields.
 
 ## OAI-PMH client
 
