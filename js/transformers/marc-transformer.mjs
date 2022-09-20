@@ -1,5 +1,5 @@
         export function transform(clusterStr) {
-          let cluster = JSON.parse(cluster);
+          let cluster = JSON.parse(clusterStr);
           let recs = cluster.records;
           //merge all marc recs
           const out = {};
