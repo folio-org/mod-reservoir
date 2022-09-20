@@ -68,25 +68,25 @@ public class MatchKeyJsonPathTest {
   @Test
   public void matchKeyJsonPathConfigureMarc(TestContext context) {
     MatchKeyMethod m = new MatchKeyJsonPath();
-    m.configure(vertx, new JsonObject().put("expr", "$.marc.fields.010.subfields[*].a"))
+    m.configure(vertx, new JsonObject().put("expr", "$.marc.fields[*].010.subfields[*].a"))
         .onComplete(context.asyncAssertSuccess(s -> {
 
           JsonObject payload = new JsonObject()
               .put("marc", new JsonObject()
                   .put("leader", "00942nam  22002531a 4504")
-                  .put("fields", new JsonObject()
-                      .put("001", "   73209622 //r823")
-                      .put("010", new JsonObject()
+                  .put("fields", new JsonArray()
+                      .add(new JsonObject().put("001", "   73209622 //r823"))
+                      .add(new JsonObject().put("010", new JsonObject()
                           .put("subfields", new JsonArray()
                               .add(new JsonObject().put("b", "73209622"))
                           )
-                      )
-                      .put("245", new JsonObject()
+                      ))
+                      .add(new JsonObject().put("245", new JsonObject()
                           .put("subfields", new JsonArray()
                               .add(new JsonObject().put("a", "The Computer Bible /"))
                               .add(new JsonObject().put("c", "J. Arthur Baird, David Noel Freedman, editors." ))
                           )
-                      )
+                      ))
                   )
               );
           Set<String> keys = new HashSet<>();
@@ -96,20 +96,20 @@ public class MatchKeyJsonPathTest {
           payload = new JsonObject()
               .put("marc", new JsonObject()
                   .put("leader", "00942nam  22002531a 4504")
-                  .put("fields", new JsonObject()
-                      .put("001", "   73209622 //r823")
-                      .put("010", new JsonObject()
+                  .put("fields", new JsonArray()
+                      .add(new JsonObject().put("001", "   73209622 //r823"))
+                      .add(new JsonObject().put("010", new JsonObject()
                           .put("subfields", new JsonArray()
                               .add(new JsonObject().put("a", "73209622"))
                               .add(new JsonObject().put("a", "73209623"))
                           )
-                      )
-                      .put("245", new JsonObject()
+                      ))
+                      .add(new JsonObject().put("245", new JsonObject()
                           .put("subfields", new JsonArray()
                               .add(new JsonObject().put("a", "The Computer Bible /"))
                               .add(new JsonObject().put("c", "J. Arthur Baird, David Noel Freedman, editors." ))
                           )
-                      )
+                      ))
                   ));
           keys.clear();
           m.getKeys(payload, keys);
