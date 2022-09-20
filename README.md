@@ -7,7 +7,7 @@ Version 2.0. See the file "[LICENSE](LICENSE)" for more information.
 
 ## Introduction
 
-A service that provides a clustering storage of metadata for the purpose of consortial re-sharing. Optimized for fast storage and retrieval performance.
+A service that provides a clustering storage of metadata for Data Integration purposes. Optimized for fast storage and retrieval performance.
 
 This project has three sub-projects:
 
@@ -27,6 +27,8 @@ Requirements:
 Install all components with: `mvn install`
 
 ## Server
+
+You will need Postgres 12 or later.
 
 The server's database connection is configured by setting environment variables:
 `DB_HOST`, `DB_PORT`, `DB_USERNAME`, `DB_PASSWORD`, `DB_DATABASE`,
@@ -132,6 +134,30 @@ curl -HX-Okapi-Tenant:$OKAPI_TENANT $OKAPI_URL/reservoir/clusters?matchkeyid=tit
 ```
 
 Matchkey configuration must be aligned with the format of stored records.
+
+While `jsonpath` matchkey method works for simple cases, for more sophisticated matching
+you will want to use the `javascript` method which loads external JavaScript code
+modules (ES modules). Resevervoir ships with a JS module that implements the `goldrush` matching
+algorith from coalliance.org.
+
+```
+cat js/matchkeys/goldrush/goldrush-conf.json
+{
+  "id": "goldrush",
+  "method": "javascript",
+  "params": {
+    "url": "https://raw.githubusercontent.com/folio-org/mod-reservoir/master/js/matchkeys/goldrush/goldrush.mjs"
+  },
+  "update": "ingest"
+}
+```
+
+Load it with:
+
+```
+curl -HX-Okapi-Tenant:$OKAPI_TENANT -HContent-type:application/json \
+ $OKAPI_URL/reservoir/config/matchkeys -d @js/matchkeys/goldrush/goldrush-conf.json
+```
 
 ## OAI-PMH client
 
