@@ -83,32 +83,30 @@ export OKAPI_URL=http://localhost:8081
 export sourceid=lib1
 java -jar client/target/mod-reservoir-client-fat.jar \
   --source $sourceid \
-  --xsl xsl/marc2inventory-instance.xsl \
-  --xsl xsl/holdings-items-cst.xsl \
-  --xsl xsl/library-codes-cst.xsl \
+  --xsl xsl/localid.xsl \
   client/src/test/resources/record10.xml
 ```
 
 The option `--xsl` may be repeated for a sequence of transformations.
 
-## Configuring matchkeys
-
 Once records are loaded, they can be retrieved with:
 
 ```
-curl -H"X-Okapi-Tenant: diku" http://localhost:8081/reservoir/records
+curl -HX-Okapi-Tenant:$OKAPI_TENANT $OKAPI_URL/reservoir/records
 ```
 
-but to retrieve “clusters”, a matchkey configuration needs to specified first.
+## Configuring matchkeys
 
-A simple matchkey config could use the ‘jsonpath’ method and refer to the FOLIO Inventory fields:
+For cluster retrieval, a matchkey configuration needs to specified first.
+
+A simple matchkey config could use the ‘jsonpath’ method and refer to the MARC-in-JSON fields:
 
 ```
 {
   "id": "title",
   "method": "jsonpath",
   "params": {
-    "expr":"$.inventory.instance.title"
+    "expr":"$.marc.fields[*].245.subfields[*].a"
   },
   "update": "ingest"
 }
@@ -117,23 +115,23 @@ A simple matchkey config could use the ‘jsonpath’ method and refer to the FO
 Post it to the server with:
 
 ```
-curl -H"X-Okapi-Tenant: diku" -H"Content-type: application/json" http://localhost:8081/reservoir/config/matchkeys -d @matchkey-title.json
+curl -HX-Okapi-Tenant:$OKAPI_TENANT -HContent-type:application/json \
+ $OKAPI_URL/reservoir/config/matchkeys -d @matchkey-title.json
 ```
 
 and then initialize the cluster for this config:
 
 ```
-curl -H"X-Okapi-Tenant: diku" -H"Content-type: application/json" http://localhost:8081/reservoir/config/matchkeys/title/initialize
+curl -HX-Okapi-Tenant:$OKAPI_TENANT -XPUT $OKAPI_URL/reservoir/config/matchkeys/title/initialize
 ```
 
 Now you can retrieve/browse the clusters with:
 
 ```
-curl -H"X-Okapi-Tenant: diku" http://localhost:8081/reservoir/clusters?matchkeyid=title 
+curl -HX-Okapi-Tenant:$OKAPI_TENANT $OKAPI_URL/reservoir/clusters?matchkeyid=title
 ```
 
-Matchkey configuration must be aligned with the format of stored records. In the above example, stylesheets to convert from MARC to FOLIO were used
-and the example matchkey configuration used FOLIO Inventory fields.
+Matchkey configuration must be aligned with the format of stored records.
 
 ## OAI-PMH client
 
