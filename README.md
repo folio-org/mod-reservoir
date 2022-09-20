@@ -158,7 +158,7 @@ be exposed without the need for a special header with the invoke feature of Okap
 For example:
 
 ```
-curl $OKAPI_URL/_/invoke/tenant/$OKAPI_TENANT/oai?set=title&verb=ListRecords"
+curl "$OKAPI_URL/_/invoke/tenant/$OKAPI_TENANT/oai?set=title&verb=ListRecords"
 
 ```
 (this will only work if Okapi is proxying here)
