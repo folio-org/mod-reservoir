@@ -455,7 +455,7 @@ public class Client {
   }
 
   private static void printGitInfo(Class<Client> clazz) {
-    String appName = "MetaStorage CLI";
+    String appName = "Reservoir CLI";
     InputStream in = clazz.getClassLoader().getResourceAsStream("git.properties");
     if (in != null) {
       try {
