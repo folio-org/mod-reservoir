@@ -83,13 +83,11 @@ export OKAPI_URL=http://localhost:8081
 export sourceid=lib1
 java -jar client/target/mod-reservoir-client-fat.jar \
   --source $sourceid \
-  --xsl xsl/marc2inventory-instance.xsl \
+  --xsl xsl/localid.xsl \
   client/src/test/resources/record10.xml
 ```
 
 The option `--xsl` may be repeated for a sequence of transformations.
-
-## Configuring matchkeys
 
 Once records are loaded, they can be retrieved with:
 
@@ -97,9 +95,11 @@ Once records are loaded, they can be retrieved with:
 curl -HX-Okapi-Tenant:$OKAPI_TENANT $OKAPI_URL/reservoir/records
 ```
 
-but to retrieve “clusters”, a matchkey configuration needs to specified first.
+## Configuring matchkeys
 
-A simple matchkey config could use the ‘jsonpath’ method and refer to the FOLIO Inventory fields:
+For cluster retrieval, a matchkey configuration needs to specified first.
+
+A simple matchkey config could use the ‘jsonpath’ method and refer to the MARC-in-JSON fields:
 
 ```
 {
@@ -131,8 +131,7 @@ Now you can retrieve/browse the clusters with:
 curl -HX-Okapi-Tenant:$OKAPI_TENANT $OKAPI_URL/reservoir/clusters?matchkeyid=title
 ```
 
-Matchkey configuration must be aligned with the format of stored records. In the above example, stylesheets to convert from MARC to FOLIO were used
-and the example matchkey configuration used FOLIO Inventory fields.
+Matchkey configuration must be aligned with the format of stored records.
 
 ## OAI-PMH client
 
