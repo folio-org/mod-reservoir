@@ -67,6 +67,10 @@ export OKAPI_URL=http://localhost:8081
 java -jar client/target/mod-reservoir-client-fat.jar --init
 ```
 
+**Note**: The above mentioned commands are for the server running on localhost.
+For a secured server, the `-HX-Okapi-Token:$OKAPI_TOKEN` is required rather
+than `X-Okapi-Tenant`.
+
 To purge the data, use:
 
 ```
@@ -133,9 +137,40 @@ curl -HX-Okapi-Tenant:$OKAPI_TENANT $OKAPI_URL/reservoir/clusters?matchkeyid=tit
 
 Matchkey configuration must be aligned with the format of stored records.
 
+## OAI-PMH server
+
+For each matchkey configured, an OAI set is offered. The OAI path prefix is
+`/reservoir/oai`. The following verbs are supported:
+`ListIdentifiers`, `ListRecords`, `GetRecord`, `Identify`. Each OAI server
+record corresponds to a cluster.
+
+At this stage, only `metadataPrefix` with value `marcxml` is supported. This
+parameter can be omitted in which case `marcxml` is assumed.
+
+Example, to to fetch "title" clusters via OAI:
+
+```
+curl -HX-Okapi-Tenant:$OKAPI_TENANT "$OKAPI_URL/reservoir/oai?set=title&verb=ListRecords"
+```
+
+No permissions are required for the use of `/reservoir/oai` . The endpoint can therefore
+be exposed without the need for a special header with the invoke feature of Okapi.
+For example:
+
+```
+curl $OKAPI_URL/_/invoke/tenant/$OKAPI_TENANT/oai?set=title&verb=ListRecords"
+
+```
+(this will only work if Okapi is proxying here)
+
+The OAI server up to 1000 identifiers/records at a time. This limit can be
+increased with query parameter `limit`. The service returns resumption token
+until the full set is retrieved.
+
 ## OAI-PMH client
 
-The OAI-PMH client is executing in the server. So it is not an external client.
+The OAI-PMH client is executing in the server. It is an alternative to
+ingesting records via the command-line client mentioned earlier.
 Commands are sent to the server to initiate the client operations.
 
 ### OAI-PMH client configuration
@@ -213,8 +248,6 @@ curl -HX-Okapi-Tenant:$OKAPI_TENANT -XPOST \
   $OKAPI_URL/reservoir/pmh-clients/_all/stop
 ```
 
-**Note**: The abovementioned commands are for the server running on localhost.
-For a real server, the `-HX-Okapi-Token:$OKAPI_TOKEN` is required.
 
 ## Additional information
 
