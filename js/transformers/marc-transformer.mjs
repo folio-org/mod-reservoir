@@ -9,7 +9,7 @@
             let rec = recs[i];
             let marc = rec.payload.marc;
             //collect all marc fields
-            out.fields.push(marc.fields);
+            out.fields.push(...marc.fields);
             //stamp with custom 999 for each member
             out.fields.push(
               {
