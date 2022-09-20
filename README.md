@@ -91,6 +91,49 @@ java -jar client/target/mod-reservoir-client-fat.jar \
 
 The option `--xsl` may be repeated for a sequence of transformations.
 
+## Configuring matchkeys
+
+Once records are loaded, they can be retrieved with:
+
+```
+curl -H"X-Okapi-Tenant: diku" http://localhost:8081/reservoir/records
+```
+
+but to retrieve “clusters”, a matchkey configuration needs to specified first.
+
+A simple matchkey config could use the ‘jsonpath’ method and refer to the FOLIO Inventory fields:
+
+```
+{
+  "id": "title",
+  "method": "jsonpath",
+  "params": {
+    "expr":"$.inventory.instance.title"
+  },
+  "update": "ingest"
+}
+```
+
+Post it to the server with:
+
+```
+curl -H"X-Okapi-Tenant: diku" -H"Content-type: application/json" http://localhost:8081/reservoir/config/matchkeys -d @matchkey-title.json
+```
+
+and then initialize the cluster for this config:
+
+```
+curl -H"X-Okapi-Tenant: diku" -H"Content-type: application/json" http://localhost:8081/reservoir/config/matchkeys/title/initialize
+```
+
+Now you can retrieve/browse the clusters with:
+
+```
+curl -H"X-Okapi-Tenant: diku" http://localhost:8081/reservoir/clusters?matchkeyid=title 
+```
+
+Matchkey configuration must be aligned with the format of stored records. In the above example, stylesheets to convert from MARC to FOLIO were used
+and the example matchkey configuration used FOLIO Inventory fields.
 
 ## OAI-PMH client
 
