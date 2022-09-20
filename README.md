@@ -296,7 +296,6 @@ cat js/transformers/marc-transformer.mjs
           }
           return JSON.stringify(out);
 }
-
 ```
 
 can be installed with:
@@ -304,7 +303,7 @@ can be installed with:
 ```
 curl -HX-Okapi-Tenant:$OKAPI_TENANT -HContent-Type:application/json \
   $OKAPI_URL/reservoir/config/modules -d @js/transformers/marc-transformer.json
-``
+```
 
 and enabled for the OAI-PMH server with:
 
@@ -312,7 +311,6 @@ and enabled for the OAI-PMH server with:
 curl -HX-Okapi-Tenant:$OKAPI_TENANT -HContent-Type:application/json \
   -XPUT $OKAPI_URL/reservoir/config/oai -d'{"transformer":"marc-transformer"}'
 ```
-
 
 
 ## Additional information
