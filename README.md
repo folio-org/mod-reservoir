@@ -7,7 +7,7 @@ Version 2.0. See the file "[LICENSE](LICENSE)" for more information.
 
 ## Introduction
 
-A service that provides a clustering storage of metadata for the purpose of consortial re-sharing. Optimized for fast storage and retrieval performance.
+A service that provides a clustering storage of metadata for Data Integration purposes. Optimized for fast storage and retrieval performance.
 
 This project has three sub-projects:
 
@@ -27,6 +27,8 @@ Requirements:
 Install all components with: `mvn install`
 
 ## Server
+
+You will need Postgres 12 or later.
 
 The server's database connection is configured by setting environment variables:
 `DB_HOST`, `DB_PORT`, `DB_USERNAME`, `DB_PASSWORD`, `DB_DATABASE`,
@@ -137,36 +139,29 @@ curl -HX-Okapi-Tenant:$OKAPI_TENANT $OKAPI_URL/reservoir/clusters?matchkeyid=tit
 
 Matchkey configuration must be aligned with the format of stored records.
 
-## OAI-PMH server
-
-For each matchkey configured, an OAI set is offered. The OAI path prefix is
-`/reservoir/oai`. The following verbs are supported:
-`ListIdentifiers`, `ListRecords`, `GetRecord`, `Identify`. Each OAI server
-record corresponds to a cluster.
-
-At this stage, only `metadataPrefix` with value `marcxml` is supported. This
-parameter can be omitted in which case `marcxml` is assumed.
-
-Example, to to fetch "title" clusters via OAI:
+While `jsonpath` matchkey method works for simple cases, for more sophisticated matching
+you will want to use the `javascript` method which loads external JavaScript code
+modules (ES modules). Resevervoir ships with a JS module that implements the `goldrush` matching
+algorith from coalliance.org.
 
 ```
-curl -HX-Okapi-Tenant:$OKAPI_TENANT "$OKAPI_URL/reservoir/oai?set=title&verb=ListRecords"
+cat js/matchkeys/goldrush/goldrush-conf.json
+{
+  "id": "goldrush",
+  "method": "javascript",
+  "params": {
+    "url": "https://raw.githubusercontent.com/folio-org/mod-reservoir/master/js/matchkeys/goldrush/goldrush.mjs"
+  },
+  "update": "ingest"
+}
 ```
 
-No permissions are required for the use of `/reservoir/oai` . The endpoint can therefore
-be exposed without the need for a special header with the invoke feature of Okapi.
-For example:
+Load it with:
 
 ```
-curl "$OKAPI_URL/_/invoke/tenant/$OKAPI_TENANT/oai?set=title&verb=ListRecords"
-
+curl -HX-Okapi-Tenant:$OKAPI_TENANT -HContent-type:application/json \
+ $OKAPI_URL/reservoir/config/matchkeys -d @js/matchkeys/goldrush/goldrush-conf.json
 ```
-(this will only work if Okapi is proxying here)
-
-The OAI server up to 1000 identifiers/records at a time. This limit can be
-increased with query parameter `limit`. The service returns resumption token
-until the full set is retrieved.
-
 ## OAI-PMH client
 
 The OAI-PMH client is executing in the server. It is an alternative to
@@ -248,6 +243,91 @@ curl -HX-Okapi-Tenant:$OKAPI_TENANT -XPOST \
   $OKAPI_URL/reservoir/pmh-clients/_all/stop
 ```
 
+## OAI-PMH server
+
+For each matchkey configured, an OAI set is offered. The OAI path prefix is
+`/reservoir/oai`. The following verbs are supported:
+`ListIdentifiers`, `ListRecords`, `GetRecord`, `Identify`. Each OAI server
+record corresponds to a cluster.
+
+At this stage, only `metadataPrefix` with value `marcxml` is supported. This
+parameter can be omitted in which case `marcxml` is assumed.
+
+Example, to to fetch "title" clusters via OAI:
+
+```
+curl -HX-Okapi-Tenant:$OKAPI_TENANT "$OKAPI_URL/reservoir/oai?set=title&verb=ListRecords"
+```
+
+No permissions are required for the use of `/reservoir/oai` . The endpoint can therefore
+be exposed without the need for a special header with the invoke feature of Okapi.
+For example:
+
+```
+curl "$OKAPI_URL/_/invoke/tenant/$OKAPI_TENANT/reservoir/oai?set=title&verb=ListRecords"
+
+```
+(this will only work if Okapi is proxying here)
+
+The OAI server up to 1000 identifiers/records at a time. This limit can be
+increased with query parameter `limit`. The service returns resumption token
+until the full set is retrieved.
+
+The OAI-PMH server returns MarcXML and expects that the payload provides MARC-in-JSON format.
+
+## Transformers
+
+Payloads can be converted or normalized using JavaScript Transformers during export.
+
+Example transformer:
+
+```
+cat js/transformers/marc-transformer.mjs 
+        export function transform(clusterStr) {
+          let cluster = JSON.parse(cluster);
+          let recs = cluster.records;
+          //merge all marc recs
+          const out = {};
+          out.leader = 'new leader';
+          out.fields = [];
+          for (let i = 0; i < recs.length; i++) {
+            let rec = recs[i];
+            let marc = rec.payload.marc;
+            //collect all marc fields
+            out.fields.push(marc.fields);
+            //stamp with custom 999 for each member
+            out.fields.push(
+              {
+                '999' : 
+                {
+                  'ind1': '1',
+                  'ind2': '0',
+                  'subfields': [
+                    {'i': rec.globalId },
+                    {'l': rec.localId },
+                    {'s': rec.sourceId }
+                  ]
+                }
+              }
+            );
+          }
+          return JSON.stringify(out);
+}
+```
+
+can be installed with:
+
+```
+curl -HX-Okapi-Tenant:$OKAPI_TENANT -HContent-Type:application/json \
+  $OKAPI_URL/reservoir/config/modules -d @js/transformers/marc-transformer.json
+```
+
+and enabled for the OAI-PMH server with:
+
+```
+curl -HX-Okapi-Tenant:$OKAPI_TENANT -HContent-Type:application/json \
+  -XPUT $OKAPI_URL/reservoir/config/oai -d'{"transformer":"marc-transformer"}'
+```
 
 ## Additional information
 
