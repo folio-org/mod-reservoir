@@ -239,8 +239,81 @@ curl -HX-Okapi-Tenant:$OKAPI_TENANT -XPOST \
   $OKAPI_URL/reservoir/pmh-clients/_all/stop
 ```
 
-**Note**: The abovementioned commands are for the server running on localhost.
-For a real server, the `-HX-Okapi-Token:$OKAPI_TOKEN` is required.
+## OAI-PMH Server
+
+Reservoir server includes OAI-PMH service for exporting clustered records. Each matchkey configuration
+is exposed as a seperate `set`. e.g:
+
+```
+curl -HX-Okapi-Tenant:$OKAPI_TENANT \
+  "$OKAPI_URL/reservoir/oai?verb=ListRecords&set=title"
+```
+
+You can also retrieve individual clusters with:
+
+```
+curl -HX-Okapi-Tenant:$OKAPI_TENANT \
+  "$OKAPI_URL/reservoir/oai?verb=GetRecord&identifier=oai:<cluster UUID>"
+```
+
+The OAI-PMH server returns MarcXML and expects that the payload provides MARC-in-JSON format.
+
+## Transformers
+
+Payloads can be converted or normalized using JavaScript Transformers during export.
+
+Example transformer:
+
+```
+cat js/transformers/marc-transformer.mjs 
+        export function transform(clusterStr) {
+          let cluster = JSON.parse(cluster);
+          let recs = cluster.records;
+          //merge all marc recs
+          const out = {};
+          out.leader = 'new leader';
+          out.fields = [];
+          for (let i = 0; i < recs.length; i++) {
+            let rec = recs[i];
+            let marc = rec.payload.marc;
+            //collect all marc fields
+            out.fields.push(marc.fields);
+            //stamp with custom 999 for each member
+            out.fields.push(
+              {
+                '999' : 
+                {
+                  'ind1': '1',
+                  'ind2': '0',
+                  'subfields': [
+                    {'i': rec.globalId },
+                    {'l': rec.localId },
+                    {'s': rec.sourceId }
+                  ]
+                }
+              }
+            );
+          }
+          return JSON.stringify(out);
+}
+
+```
+
+can be installed with:
+
+```
+curl -HX-Okapi-Tenant:$OKAPI_TENANT -HContent-Type:application/json \
+  $OKAPI_URL/reservoir/config/modules -d @js/transformers/marc-transformer.json
+``
+
+and enabled for the OAI-PMH server with:
+
+```
+curl -HX-Okapi-Tenant:$OKAPI_TENANT -HContent-Type:application/json \
+  -XPUT $OKAPI_URL/reservoir/config/oai -d'{"transformer":"marc-transformer"}'
+```
+
+
 
 ## Additional information
 
