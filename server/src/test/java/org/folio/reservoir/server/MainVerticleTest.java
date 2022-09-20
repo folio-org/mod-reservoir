@@ -3916,9 +3916,9 @@ public class MainVerticleTest {
 
   @Test
   public void sources() {
-    var source = new Source();
-    source.setId("bib1");
-    source.setVersion(3);
+    var source1 = new Source();
+    source1.setId("bib1");
+    source1.setVersion(3);
 
     RestAssured.given()
         .header(XOkapiHeaders.TENANT, TENANT_1)
@@ -3930,29 +3930,29 @@ public class MainVerticleTest {
 
     RestAssured.given()
         .header(XOkapiHeaders.TENANT, TENANT_1)
-        .get("/reservoir/config/sources/" + source.getId())
+        .get("/reservoir/config/sources/" + source1.getId())
         .then().statusCode(404)
         .contentType(ContentType.TEXT)
-        .body(equalTo("Source " + source.getId() + " not found"));
+        .body(equalTo("Source " + source1.getId() + " not found"));
 
     RestAssured.given()
         .header(XOkapiHeaders.TENANT, TENANT_1)
-        .delete("/reservoir/config/sources/" + source.getId())
+        .delete("/reservoir/config/sources/" + source1.getId())
         .then().statusCode(404)
         .contentType(ContentType.TEXT)
-        .body(equalTo("Source " + source.getId() + " not found"));
+        .body(equalTo("Source " + source1.getId() + " not found"));
 
     RestAssured.given()
         .header(XOkapiHeaders.TENANT, TENANT_1)
         .contentType(ContentType.JSON)
-        .body(JsonObject.mapFrom(source).encode())
+        .body(JsonObject.mapFrom(source1).encode())
         .post("/reservoir/config/sources")
         .then().statusCode(204);
 
     RestAssured.given()
         .header(XOkapiHeaders.TENANT, TENANT_1)
         .contentType(ContentType.JSON)
-        .body(JsonObject.mapFrom(source).encode())
+        .body(JsonObject.mapFrom(source1).encode())
         .post("/reservoir/config/sources")
         .then().statusCode(400)
         .contentType(ContentType.TEXT)
@@ -3960,10 +3960,10 @@ public class MainVerticleTest {
 
     RestAssured.given()
         .header(XOkapiHeaders.TENANT, TENANT_1)
-        .get("/reservoir/config/sources/" + source.getId())
+        .get("/reservoir/config/sources/" + source1.getId())
         .then().statusCode(200)
         .contentType(ContentType.JSON)
-        .body(equalTo(JsonObject.mapFrom(source).encode()));
+        .body(equalTo(JsonObject.mapFrom(source1).encode()));
 
     RestAssured.given()
         .header(XOkapiHeaders.TENANT, TENANT_1)
@@ -3972,65 +3972,90 @@ public class MainVerticleTest {
         .contentType(ContentType.JSON)
         .body("resultInfo.totalRecords", is(nullValue()))
         .body("sources", hasSize(1))
-        .body("sources[0].id", is(source.getId()))
-        .body("sources[0].version", is(source.getVersion()));
+        .body("sources[0].id", is(source1.getId()))
+        .body("sources[0].version", is(source1.getVersion()));
 
     RestAssured.given()
         .header(XOkapiHeaders.TENANT, TENANT_1)
-        .param("query", "version==" + source.getVersion())
+        .param("query", "version==" + source1.getVersion())
         .param("count", "exact")
         .get("/reservoir/config/sources")
         .then().statusCode(200)
         .contentType(ContentType.JSON)
         .body("resultInfo.totalRecords", is(1))
         .body("sources", hasSize(1))
-        .body("sources[0].id", is(source.getId()))
-        .body("sources[0].version", is(source.getVersion()));
+        .body("sources[0].id", is(source1.getId()))
+        .body("sources[0].version", is(source1.getVersion()));
 
-    source.setVersion(4);
+    source1.setVersion(4);
     RestAssured.given()
         .header(XOkapiHeaders.TENANT, TENANT_1)
         .contentType(ContentType.JSON)
-        .body(JsonObject.mapFrom(source).encode())
+        .body(JsonObject.mapFrom(source1).encode())
         .put("/reservoir/config/sources/3")
         .then().statusCode(400);
 
     RestAssured.given()
         .header(XOkapiHeaders.TENANT, TENANT_1)
         .contentType(ContentType.JSON)
-        .body(JsonObject.mapFrom(source).encode())
-        .put("/reservoir/config/sources/" + source.getId())
+        .body(JsonObject.mapFrom(source1).encode())
+        .put("/reservoir/config/sources/" + source1.getId())
         .then().statusCode(204);
 
     RestAssured.given()
         .header(XOkapiHeaders.TENANT, TENANT_1)
-        .get("/reservoir/config/sources/" + source.getId())
+        .get("/reservoir/config/sources/" + source1.getId())
         .then().statusCode(200)
         .contentType(ContentType.JSON)
-        .body(equalTo(JsonObject.mapFrom(source).encode()));
+        .body(equalTo(JsonObject.mapFrom(source1).encode()));
 
     RestAssured.given()
         .header(XOkapiHeaders.TENANT, TENANT_1)
-        .delete("/reservoir/config/sources/" + source.getId())
+        .delete("/reservoir/config/sources/" + source1.getId())
         .then().statusCode(204);
 
     RestAssured.given()
         .header(XOkapiHeaders.TENANT, TENANT_1)
-        .get("/reservoir/config/sources/" + source.getId())
+        .get("/reservoir/config/sources/" + source1.getId())
         .then().statusCode(404)
         .contentType(ContentType.TEXT)
-        .body(equalTo("Source " + source.getId() + " not found"));
+        .body(equalTo("Source " + source1.getId() + " not found"));
 
     RestAssured.given()
         .header(XOkapiHeaders.TENANT, TENANT_1)
         .contentType(ContentType.JSON)
-        .body(JsonObject.mapFrom(source).encode())
-        .put("/reservoir/config/sources/" + source.getId())
+        .body(JsonObject.mapFrom(source1).encode())
+        .put("/reservoir/config/sources/" + source1.getId())
         .then().statusCode(204);
 
     RestAssured.given()
         .header(XOkapiHeaders.TENANT, TENANT_1)
-        .delete("/reservoir/config/sources/" + source.getId())
+        .delete("/reservoir/config/sources/" + source1.getId())
+        .then().statusCode(204);
+  }
+
+  @Test
+  public void sources2() {
+    var source2 = new Source();
+    source2.setId("bib1");
+
+    RestAssured.given()
+        .header(XOkapiHeaders.TENANT, TENANT_1)
+        .contentType(ContentType.JSON)
+        .body(JsonObject.mapFrom(source2).encode())
+        .post("/reservoir/config/sources")
+        .then().statusCode(204);
+
+    RestAssured.given()
+        .header(XOkapiHeaders.TENANT, TENANT_1)
+        .get("/reservoir/config/sources/" + source2.getId())
+        .then().statusCode(200)
+        .contentType(ContentType.JSON)
+        .body(equalTo(JsonObject.mapFrom(source2).encode()));
+
+    RestAssured.given()
+        .header(XOkapiHeaders.TENANT, TENANT_1)
+        .delete("/reservoir/config/sources/" + source2.getId())
         .then().statusCode(204);
   }
 
