@@ -97,7 +97,7 @@ curl -HX-Okapi-Tenant:$OKAPI_TENANT $OKAPI_URL/reservoir/records
 
 ## Configuring matchkeys
 
-For cluster retrireval, a matchkey configuration needs to specified first.
+For cluster retrieval, a matchkey configuration needs to specified first.
 
 A simple matchkey config could use the ‘jsonpath’ method and refer to the MARC-in-JSON fields:
 
