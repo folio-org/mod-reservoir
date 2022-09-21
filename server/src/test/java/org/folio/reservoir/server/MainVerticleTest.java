@@ -1937,7 +1937,7 @@ public class MainVerticleTest {
         .put("baseURL", "localhost")
         .put("adminEmail", "admin@localhost")
         .put("transformer", "transform-marc")
-        .put("repositoryName", "MetaStorage OAI server");
+        .put("repositoryName", "Reservoir OAI server");
 
     RestAssured.given()
         .header(XOkapiHeaders.TENANT, TENANT_1)

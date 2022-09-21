@@ -17,3 +17,7 @@ Do 'npm install' in this top-level directory to install and configure ESLint. Do
 There are some sample MARC files in the [test/records](test/records) directory.
 
 The tests are basic at this stage. Do 'npm run test' to process the samples.
+
+### transformers
+
+Example transformer that collects MARC fields from all member records and creates field 999_10 for each withe sourceId, localId and globalId.
