@@ -1,5 +1,5 @@
 {
-  "description": "MetaStorage code module (extensibility)",
+  "description": "Reservoir code module (extensibility)",
   "type": "object",
   "properties": {
     "id": {
