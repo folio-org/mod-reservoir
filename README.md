@@ -69,6 +69,10 @@ export OKAPI_URL=http://localhost:8081
 java -jar client/target/mod-reservoir-client-fat.jar --init
 ```
 
+**Note**: The above mentioned commands are for the server running on localhost.
+For a secured server, the `-HX-Okapi-Token:$OKAPI_TOKEN` is required rather
+than `X-Okapi-Tenant`.
+
 To purge the data, use:
 
 ```
@@ -158,10 +162,10 @@ Load it with:
 curl -HX-Okapi-Tenant:$OKAPI_TENANT -HContent-type:application/json \
  $OKAPI_URL/reservoir/config/matchkeys -d @js/matchkeys/goldrush/goldrush-conf.json
 ```
-
 ## OAI-PMH client
 
-The OAI-PMH client is executing in the server. So it is not an external client.
+The OAI-PMH client is executing in the server. It is an alternative to
+ingesting records via the command-line client mentioned earlier.
 Commands are sent to the server to initiate the client operations.
 
 ### OAI-PMH client configuration
@@ -239,24 +243,45 @@ curl -HX-Okapi-Tenant:$OKAPI_TENANT -XPOST \
   $OKAPI_URL/reservoir/pmh-clients/_all/stop
 ```
 
-## OAI-PMH Server
+## OAI-PMH server
 
-Reservoir server includes OAI-PMH service for exporting clustered records. Each matchkey configuration
-is exposed as a seperate `set`. e.g:
+The path prefix for the OAI server is `/reservoir/oai` and requires no access permissions.
+
+The following OAI-PMH verbs are supported by the server: `ListIdentifiers`, `ListRecords`, `GetRecord`, `Identify`.
+
+At this stage, only `metadataPrefix` with value `marcxml` is supported. This
+parameter can be omitted, in which case `marcxml` is assumed.
+
+Each Reservoir cluster corresponds to an OAI-PMH record and each matchkey configuration corresponds to
+an OAI `set`.
+
+For example, to initiate a harvest of "title" clusters:
 
 ```
-curl -HX-Okapi-Tenant:$OKAPI_TENANT \
-  "$OKAPI_URL/reservoir/oai?verb=ListRecords&set=title"
+curl -HX-Okapi-Tenant:$OKAPI_TENANT "$OKAPI_URL/reservoir/oai?verb=ListRecords&set=title"
 ```
 
-You can also retrieve individual clusters with:
+and to retrieve a particular OAI-PMH record (Reservoir cluster):
 
 ```
 curl -HX-Okapi-Tenant:$OKAPI_TENANT \
   "$OKAPI_URL/reservoir/oai?verb=GetRecord&identifier=oai:<cluster UUID>"
 ```
 
-The OAI-PMH server returns MarcXML and expects that the payload provides MARC-in-JSON format.
+Since no permissions are required for `/reservoir/oai`, the endpoint can be accessed without the need for
+the `X-Okapi-Tenant` and `X-Okapi-Token` headers using the invoke feature of Okapi:
+
+```
+curl "$OKAPI_URL/_/invoke/tenant/$OKAPI_TENANT/reservoir/oai?set=title&verb=ListRecords"
+
+```
+Note: this obviously only works if Okapi is proxying requests to the module
+
+The OAI server delivers 1000 identifiers/records at a time. This limit can be
+increased with a non-standard query parameter `limit`. The service returns resumption token
+until the full set is retrieved.
+
+The OAI-PMH server returns MarcXML and expects that the payload provides MARC-in-JSON format under the `marc` key.
 
 ## Transformers
 
@@ -265,7 +290,7 @@ Payloads can be converted or normalized using JavaScript Transformers during exp
 Example transformer:
 
 ```
-cat js/transformers/marc-transformer.mjs 
+cat js/transformers/marc-transformer.mjs
         export function transform(clusterStr) {
           let cluster = JSON.parse(cluster);
           let recs = cluster.records;
@@ -281,7 +306,7 @@ cat js/transformers/marc-transformer.mjs
             //stamp with custom 999 for each member
             out.fields.push(
               {
-                '999' : 
+                '999' :
                 {
                   'ind1': '1',
                   'ind2': '0',
@@ -311,7 +336,6 @@ and enabled for the OAI-PMH server with:
 curl -HX-Okapi-Tenant:$OKAPI_TENANT -HContent-Type:application/json \
   -XPUT $OKAPI_URL/reservoir/config/oai -d'{"transformer":"marc-transformer"}'
 ```
-
 
 ## Additional information
 
