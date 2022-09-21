@@ -251,9 +251,9 @@ For each matchkey configured, an OAI set is offered. The OAI path prefix is
 record corresponds to a cluster.
 
 At this stage, only `metadataPrefix` with value `marcxml` is supported. This
-parameter can be omitted in which case `marcxml` is assumed.
+parameter can be omitted, in which case `marcxml` is assumed.
 
-Example, to to fetch "title" clusters via OAI:
+Example, to fetch "title" clusters via OAI:
 
 ```
 curl -HX-Okapi-Tenant:$OKAPI_TENANT "$OKAPI_URL/reservoir/oai?set=title&verb=ListRecords"
@@ -269,7 +269,7 @@ curl "$OKAPI_URL/_/invoke/tenant/$OKAPI_TENANT/reservoir/oai?set=title&verb=List
 ```
 (this will only work if Okapi is proxying here)
 
-The OAI server up to 1000 identifiers/records at a time. This limit can be
+The OAI server delivers 1000 identifiers/records at a time. This limit can be
 increased with query parameter `limit`. The service returns resumption token
 until the full set is retrieved.
 
@@ -282,7 +282,7 @@ Payloads can be converted or normalized using JavaScript Transformers during exp
 Example transformer:
 
 ```
-cat js/transformers/marc-transformer.mjs 
+cat js/transformers/marc-transformer.mjs
         export function transform(clusterStr) {
           let cluster = JSON.parse(cluster);
           let recs = cluster.records;
@@ -298,7 +298,7 @@ cat js/transformers/marc-transformer.mjs
             //stamp with custom 999 for each member
             out.fields.push(
               {
-                '999' : 
+                '999' :
                 {
                   'ind1': '1',
                   'ind2': '0',
