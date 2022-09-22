@@ -290,13 +290,14 @@ public class ModuleTest {
 
   @Test
   public void exceptionInInitialize(TestContext context) {
+    String url = HOSTPORT + "/lib/marc-transformer.mjs";
     JsonObject config1 = new JsonObject()
         .put("id", "marc-transformer")
-        .put("url", HOSTPORT + "/lib/marc-transformer.mjs")
+        .put("url", url)
         .put("function", "transform1");
     ModuleCache.getInstance().lookup(vertx, TENANT, config1)
-        .onComplete(context.asyncAssertFailure(e ->
-            assertThat(e.getMessage(), containsString("Invariant contract violation"))));
+        .onComplete(context.asyncAssertFailure(e -> 
+            assertThat(e.getMessage(), containsString("does not include function transform1"))));
   }
 
   @Test
