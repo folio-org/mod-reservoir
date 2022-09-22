@@ -103,7 +103,7 @@ curl -HX-Okapi-Tenant:$OKAPI_TENANT $OKAPI_URL/reservoir/records
 
 ## Configuring matchkeys
 
-For cluster retrieval, a matchkey configuration needs to specified first.
+For cluster retrieval, a matchkey configuration needs to be specified first.
 
 A simple matchkey config could use the ‘jsonpath’ method and refer to the MARC-in-JSON fields:
 
@@ -141,8 +141,8 @@ Matchkey configuration must be aligned with the format of stored records.
 
 While `jsonpath` matchkey method works for simple cases, for more sophisticated matching
 you will want to use the `javascript` method which loads external JavaScript code
-modules (ES modules). Resevervoir ships with a JS module that implements the `goldrush` matching
-algorith from coalliance.org.
+modules (ES modules). Reservoir ships with a JS module that implements the `goldrush` matching
+algorithm from coalliance.org.
 
 ```
 cat js/matchkeys/goldrush/goldrush-conf.json
