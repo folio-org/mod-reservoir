@@ -5,7 +5,9 @@ import io.vertx.core.Vertx;
 import io.vertx.core.json.DecodeException;
 import io.vertx.core.json.JsonObject;
 import io.vertx.ext.web.client.WebClient;
+import io.vertx.ext.web.client.predicate.ErrorConverter;
 import io.vertx.ext.web.client.predicate.ResponsePredicate;
+import java.io.IOException;
 import org.folio.okapi.common.WebClientFactory;
 import org.folio.reservoir.module.Module;
 import org.graalvm.polyglot.Context;
@@ -56,8 +58,13 @@ public class EsModuleImpl implements Module {
   private Future<Value> evalUrl(Vertx vertx, String url) {
     WebClient webClient = WebClientFactory.getWebClient(vertx);
     String moduleName = url.substring(url.lastIndexOf("/") + 1);
+    ErrorConverter converter = ErrorConverter.createFullBody(result -> {
+      return new IOException(
+        String.format("Config error: cannot retrieve transformer at %1s (%2d)",
+         url, result.response().statusCode()));
+    });
     return webClient.getAbs(url)
-        .expect(ResponsePredicate.SC_OK)
+        .expect(ResponsePredicate.create(ResponsePredicate.SC_SUCCESS, converter))
         .send()
         .map(response -> context.eval(Source
           .newBuilder("js", response.bodyAsString(), moduleName)
