@@ -295,8 +295,8 @@ public class ModuleTest {
         .put("url", HOSTPORT + "/lib/marc-transformer.mjs")
         .put("function", "transform1");
     ModuleCache.getInstance().lookup(vertx, TENANT, config1)
-        .onComplete(context.asyncAssertFailure(e ->
-            assertThat(e.getMessage(), containsString("Invariant contract violation"))));
+        .onComplete(context.asyncAssertFailure(e -> 
+            assertThat(e.getMessage(), containsString("does not include function transform1"))));
   }
 
   @Test
