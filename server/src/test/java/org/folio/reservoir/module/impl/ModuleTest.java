@@ -340,5 +340,18 @@ public class ModuleTest {
             assertThat(e.getMessage(), is("module config must include 'id'"))));
   }
 
+  @Test
+  public void moduleSourceNotFound(TestContext context) {
+    String url = HOSTPORT + "/lib/not-found.mjs";
+    JsonObject config1 = new JsonObject()
+        .put("id", "marc-transformer")
+        .put("url", url)
+        .put("function", "transform");
+    ModuleCache.getInstance().lookup(vertx, TENANT, config1)
+        .onComplete(context.asyncAssertFailure(e ->
+            assertThat(e.getMessage(),
+            is("Config error: cannot retrieve transformer at " + url + " (404)"))));
+  }
+
 
 }
