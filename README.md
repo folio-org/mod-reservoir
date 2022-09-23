@@ -55,6 +55,28 @@ java -Dport=8081 --module-path=server/target/compiler/ \
   -jar server/target/mod-reservoir-server-fat.jar
 ```
 
+## Running with Docker
+
+If you feel adventourous and want to run Reservoir in a docker container, build the container first:
+
+```
+docker build -t mod-reservoir:latest .
+```
+
+And run with the server port exposed (`8081` by default):
+
+```
+docker run -e DB_HOST=host.docker.internal \
+  -e DB_USERNAME=folio \
+  -e DB_PASSWORD=folio \
+  -e DB_DATABASE=folio_modules \
+  -p 8081:8081 --name reservoir mod-reservoir:latest
+```
+
+**Note**: The magic host `host.docker.internal` is required to access the DB and may be only available in Docker Desktop. 
+If it's not defined you can specify it by passing `--add-host=host.docker.internal:<docker bridge net IP>` to the run command.
+
+
 ## Command-line client
 
 The client is a command-line tool for sending records to the mod-reservoir server.
