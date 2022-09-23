@@ -58,11 +58,11 @@ public class EsModuleImpl implements Module {
   private Future<Value> evalUrl(Vertx vertx, String url) {
     WebClient webClient = WebClientFactory.getWebClient(vertx);
     String moduleName = url.substring(url.lastIndexOf("/") + 1);
-    ErrorConverter converter = ErrorConverter.createFullBody(result -> {
-      return new IOException(
+    ErrorConverter converter = ErrorConverter.createFullBody(result -> 
+      new IOException(
         String.format("Config error: cannot retrieve transformer at %1s (%2d)",
-         url, result.response().statusCode()));
-    });
+         url, result.response().statusCode()))
+    );
     return webClient.getAbs(url)
         .expect(ResponsePredicate.create(ResponsePredicate.SC_SUCCESS, converter))
         .send()
