@@ -76,6 +76,7 @@ docker run -e DB_HOST=host.docker.internal \
 **Note**: The magic host `host.docker.internal` is required to access the DB and may be only available in Docker Desktop. 
 If it's not defined you can specify it by passing `--add-host=host.docker.internal:<docker bridge net IP>` to the run command.
 
+**Note**: Those docker build and run commands do work as-is with [Colima](https://github.com/abiosoft/colima).
 
 ## Command-line client
 
