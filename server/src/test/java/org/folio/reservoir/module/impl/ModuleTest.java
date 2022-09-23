@@ -290,10 +290,9 @@ public class ModuleTest {
 
   @Test
   public void exceptionInInitialize(TestContext context) {
-    String url = HOSTPORT + "/lib/marc-transformer.mjs";
     JsonObject config1 = new JsonObject()
         .put("id", "marc-transformer")
-        .put("url", url)
+        .put("url", HOSTPORT + "/lib/marc-transformer.mjs")
         .put("function", "transform1");
     ModuleCache.getInstance().lookup(vertx, TENANT, config1)
         .onComplete(context.asyncAssertFailure(e -> 
