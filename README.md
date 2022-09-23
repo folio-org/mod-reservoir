@@ -21,16 +21,28 @@ Requirements:
 
 * Java 17 or later
 * Maven 3.6.3 or later
-* `JAVA_HOME` set, e.g.\
-   `export JAVA_HOME=$(readlink -f /usr/bin/javac | sed "s:bin/javac::")`
+* Docker (unless `-DskipTests` is used)
 
-Install all components with: `mvn install`
+You need `JAVA_HOME` set, e.g.:
+
+   * Linux: `export JAVA_HOME=$(readlink -f /usr/bin/javac | sed "s:bin/javac::")`
+   * macOS: `export JAVA_HOME=$(/usr/libexec/java_home -v 17)`
+
+Build all components with: `mvn install`
 
 ## Server
 
 You will need Postgres 12 or later.
 
-The server's database connection is configured by setting environment variables:
+You can create an empty database and a user with, e.g:
+
+```
+CREATE DATABASE folio_modules;
+CREATE USER folio WITH CREATEROLE PASSWORD 'folio';
+GRANT ALL PRIVILEGES ON DATABASE folio_modules TO folio;
+```
+
+The server's database connection is then configured by setting environment variables:
 `DB_HOST`, `DB_PORT`, `DB_USERNAME`, `DB_PASSWORD`, `DB_DATABASE`,
 `DB_MAXPOOLSIZE`, `DB_SERVER_PEM`.
 
