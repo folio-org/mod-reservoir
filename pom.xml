@@ -37,7 +37,7 @@
 
   <properties>
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-    <graalvm.version>22.1.0</graalvm.version>
+    <graalvm.version>22.2.0</graalvm.version>
     <vertx-lib.version>2.0.1</vertx-lib.version>
     <vertx.version>4.3.3</vertx.version>
     <okapi.version>4.14.4</okapi.version>

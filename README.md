@@ -21,16 +21,28 @@ Requirements:
 
 * Java 17 or later
 * Maven 3.6.3 or later
-* `JAVA_HOME` set, e.g.\
-   `export JAVA_HOME=$(readlink -f /usr/bin/javac | sed "s:bin/javac::")`
+* Docker (unless `-DskipTests` is used)
 
-Install all components with: `mvn install`
+You need `JAVA_HOME` set, e.g.:
+
+   * Linux: `export JAVA_HOME=$(readlink -f /usr/bin/javac | sed "s:bin/javac::")`
+   * macOS: `export JAVA_HOME=$(/usr/libexec/java_home -v 17)`
+
+Build all components with: `mvn install`
 
 ## Server
 
 You will need Postgres 12 or later.
 
-The server's database connection is configured by setting environment variables:
+You can create an empty database and a user with, e.g:
+
+```
+CREATE DATABASE folio_modules;
+CREATE USER folio WITH CREATEROLE PASSWORD 'folio';
+GRANT ALL PRIVILEGES ON DATABASE folio_modules TO folio;
+```
+
+The server's database connection is then configured by setting environment variables:
 `DB_HOST`, `DB_PORT`, `DB_USERNAME`, `DB_PASSWORD`, `DB_DATABASE`,
 `DB_MAXPOOLSIZE`, `DB_SERVER_PEM`.
 
@@ -42,6 +54,29 @@ java -Dport=8081 --module-path=server/target/compiler/ \
   -XX:+UnlockExperimentalVMOptions -XX:+EnableJVMCI \
   -jar server/target/mod-reservoir-server-fat.jar
 ```
+
+## Running with Docker
+
+If you feel adventourous and want to run Reservoir in a docker container, build the container first:
+
+```
+docker build -t mod-reservoir:latest .
+```
+
+And run with the server port exposed (`8081` by default):
+
+```
+docker run -e DB_HOST=host.docker.internal \
+  -e DB_USERNAME=folio \
+  -e DB_PASSWORD=folio \
+  -e DB_DATABASE=folio_modules \
+  -p 8081:8081 --name reservoir mod-reservoir:latest
+```
+
+**Note**: The magic host `host.docker.internal` is required to access the DB and may be only available in Docker Desktop. 
+If it's not defined you can specify it by passing `--add-host=host.docker.internal:<docker bridge net IP>` to the run command.
+
+**Note**: Those docker build and run commands do work as-is with [Colima](https://github.com/abiosoft/colima).
 
 ## Command-line client
 
