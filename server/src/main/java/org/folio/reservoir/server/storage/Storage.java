@@ -187,6 +187,7 @@ public class Storage {
     ).mapEmpty();
   }
 
+  @SuppressWarnings("squid:S107")     // Method has >7 parameters
   Future<Boolean> upsertGlobalRecord(Vertx vertx, SqlConnection conn, String localIdentifier,
       SourceId sourceId, int sourceVersion, JsonObject payload, JsonArray matchKeyConfigs,
       boolean oaiUpdate) {
