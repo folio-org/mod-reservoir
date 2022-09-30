@@ -8,6 +8,7 @@ import io.vertx.ext.web.validation.ValidationHandler;
 import org.folio.okapi.common.HttpResponse;
 import org.folio.reservoir.server.data.Source;
 import org.folio.reservoir.server.storage.SourceStorage;
+import org.folio.reservoir.server.storage.Storage;
 
 public class SourceService {
 
@@ -19,8 +20,7 @@ public class SourceService {
    * @return async result
    */
   public static Future<Void> postSource(RoutingContext ctx) {
-    SourceStorage storage = new SourceStorage(ctx);
-    return storage.insert(ctx.body().asPojo(Source.class))
+    return SourceStorage.insert(new Storage(ctx), ctx.body().asPojo(Source.class))
         .onSuccess(res -> ctx.response().setStatusCode(204).end());
   }
 
@@ -30,7 +30,7 @@ public class SourceService {
    * @return async result
    */
   public static Future<Void> getSources(RoutingContext ctx) {
-    return new SourceStorage(ctx).list(ctx);
+    return SourceStorage.list(new Storage(ctx), ctx);
   }
 
   /**
@@ -39,10 +39,10 @@ public class SourceService {
    * @return async result
    */
   public static Future<Void> getSource(RoutingContext ctx) {
-    SourceStorage storage = new SourceStorage(ctx);
+    Storage storage = new Storage(ctx);
     RequestParameters params = ctx.get(ValidationHandler.REQUEST_CONTEXT_KEY);
     String id = params.pathParameter("id").getString();
-    return storage.get(id)
+    return SourceStorage.get(storage, id)
         .onSuccess(res -> {
           if (res == null) {
             HttpResponse.responseError(ctx, 404, "Source " + id + " not found");
@@ -59,10 +59,10 @@ public class SourceService {
    * @return async result
    */
   public static Future<Void> deleteSource(RoutingContext ctx) {
-    SourceStorage storage = new SourceStorage(ctx);
+    Storage storage = new Storage(ctx);
     RequestParameters params = ctx.get(ValidationHandler.REQUEST_CONTEXT_KEY);
     String id = params.pathParameter("id").getString();
-    return storage.delete(id)
+    return SourceStorage.delete(storage, id)
         .onSuccess(res -> {
           if (Boolean.FALSE.equals(res)) {
             HttpResponse.responseError(ctx, 404, "Source " + id + " not found");
@@ -79,7 +79,7 @@ public class SourceService {
    * @return async result
    */
   public static Future<Void> putSource(RoutingContext ctx) {
-    SourceStorage storage = new SourceStorage(ctx);
+    Storage storage = new Storage(ctx);
     RequestParameters params = ctx.get(ValidationHandler.REQUEST_CONTEXT_KEY);
     String id = params.pathParameter("id").getString();
     Source source = ctx.body().asPojo(Source.class);
@@ -87,7 +87,7 @@ public class SourceService {
       HttpResponse.responseError(ctx, 400, "Source id mismatch");
       return Future.succeededFuture();
     }
-    return storage.update(source)
+    return SourceStorage.update(storage, source)
         .onSuccess(res -> ctx.response().setStatusCode(204).end());
   }
 }

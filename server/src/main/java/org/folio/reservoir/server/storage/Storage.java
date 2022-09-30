@@ -33,6 +33,7 @@ import org.folio.reservoir.server.entity.CodeModuleEntity;
 import org.folio.reservoir.server.matchkey.MatchKeyMethod;
 import org.folio.reservoir.server.misc.StreamResult;
 import org.folio.reservoir.server.misc.Util;
+import org.folio.reservoir.server.service.SourceVersionCheck;
 import org.folio.reservoir.util.LargeJsonReadStream;
 import org.folio.reservoir.util.ReadStreamConsumer;
 import org.folio.reservoir.util.SourceId;
@@ -187,7 +188,8 @@ public class Storage {
   }
 
   Future<Boolean> upsertGlobalRecord(Vertx vertx, SqlConnection conn, String localIdentifier,
-      SourceId sourceId, int sourceVersion, JsonObject payload, JsonArray matchKeyConfigs) {
+      SourceId sourceId, int sourceVersion, JsonObject payload, JsonArray matchKeyConfigs,
+      boolean oaiUpdate) {
 
     UUID startId = UUID.randomUUID();
     return conn.preparedQuery(
@@ -200,22 +202,26 @@ public class Storage {
         )
         .execute(Tuple.of(startId, localIdentifier, sourceId.toString(), sourceVersion, payload))
         .map(rowSet -> rowSet.iterator().next().getUUID("id"))
-        .compose(id -> updateMatchKeyValues(vertx, conn, id, payload, matchKeyConfigs)
+        .compose(id -> updateMatchKeyValues(vertx, conn, id, payload, matchKeyConfigs, oaiUpdate)
             .map(x -> id.equals(startId)));
   }
 
   Future<Void> deleteGlobalRecord(SqlConnection conn, String localIdentifier, SourceId sourceId,
-      int sourceVersion) {
-    String q = "UPDATE " + clusterMetaTable + " AS m"
-        + " SET datestamp = $4"
-        + " FROM " + globalRecordTable + ", " + clusterRecordTable + " AS r"
-        + " WHERE m.cluster_id = r.cluster_id AND r.record_id = id"
-        + " AND local_id = $1 AND source_id = $2 and source_version = $3";
-    return conn.preparedQuery(q)
-        .execute(Tuple.of(localIdentifier, sourceId.toString(), sourceVersion,
-            LocalDateTime.now(ZoneOffset.UTC)))
-        .compose(x -> conn.preparedQuery("DELETE FROM " + globalRecordTable
-                + " WHERE local_id = $1 AND source_id = $2 and source_version = $3")
+      int sourceVersion, boolean oaiUpdate) {
+    Future<Void> f = Future.succeededFuture();
+    if (oaiUpdate) {
+      String q = "UPDATE " + clusterMetaTable + " AS m"
+          + " SET datestamp = $4"
+          + " FROM " + globalRecordTable + ", " + clusterRecordTable + " AS r"
+          + " WHERE m.cluster_id = r.cluster_id AND r.record_id = id"
+          + " AND local_id = $1 AND source_id = $2 and source_version = $3";
+      f = conn.preparedQuery(q)
+          .execute(Tuple.of(localIdentifier, sourceId.toString(), sourceVersion,
+              LocalDateTime.now(ZoneOffset.UTC)))
+          .mapEmpty();
+    }
+    return f.compose(x -> conn.preparedQuery("DELETE FROM " + globalRecordTable
+            + " WHERE local_id = $1 AND source_id = $2 and source_version = $3")
         .execute(Tuple.of(localIdentifier, sourceId.toString(), sourceVersion))
         .mapEmpty());
   }
@@ -226,22 +232,23 @@ public class Storage {
    * @param sourceId source identifier
    * @param sourceVersion source version
    * @param globalRecord global record JSON object
-   * @param matchKeyConfigs match key configrations in use
+   * @param matchKeyConfigs match key configurations in use
+   * @param oaiUpdate whether to update OAI timestamp
    * @return async result with TRUE=inserted, FALSE=updated, null=deleted
    */
   public Future<Boolean> ingestGlobalRecord(Vertx vertx, SourceId sourceId, int sourceVersion,
-      JsonObject globalRecord, JsonArray matchKeyConfigs) {
+      JsonObject globalRecord, JsonArray matchKeyConfigs, boolean oaiUpdate) {
 
     return pool.withTransaction(conn ->
             ingestGlobalRecord(vertx, conn, sourceId, sourceVersion,
-                globalRecord, matchKeyConfigs))
+                globalRecord, matchKeyConfigs, oaiUpdate))
         // addValuesToCluster may fail if for same new match key for parallel operations
         // we recover just once for that. 2nd will find the new value for the one that
         // succeeded.
         .recover(x ->
             pool.withTransaction(conn ->
                 ingestGlobalRecord(vertx, conn, sourceId, sourceVersion,
-                    globalRecord, matchKeyConfigs)));
+                    globalRecord, matchKeyConfigs, oaiUpdate)));
   }
 
   /**
@@ -251,19 +258,20 @@ public class Storage {
    * @param sourceId source identifier
    * @param sourceVersion source version
    * @param globalRecord global record JSON object
-   * @param matchKeyConfigs match key configrations in use
+   * @param matchKeyConfigs match key configurations in use
+   * @param oaiUpdate whether to update OAI timestamp
    * @return async result with TRUE=inserted, FALSE=updated, null=deleted
    */
   Future<Boolean> ingestGlobalRecord(Vertx vertx, SqlConnection conn,
       SourceId sourceId, int sourceVersion, JsonObject globalRecord,
-      JsonArray matchKeyConfigs) {
+      JsonArray matchKeyConfigs, boolean oaiUpdate) {
 
     final String localIdentifier = globalRecord.getString("localId");
     if (localIdentifier == null) {
       return Future.failedFuture("localId required");
     }
     if (Boolean.TRUE.equals(globalRecord.getBoolean("delete"))) {
-      return deleteGlobalRecord(conn, localIdentifier, sourceId, sourceVersion)
+      return deleteGlobalRecord(conn, localIdentifier, sourceId, sourceVersion, oaiUpdate)
           .map(x -> null);
     }
     final JsonObject payload = globalRecord.getJsonObject("payload");
@@ -274,21 +282,21 @@ public class Storage {
       return Future.failedFuture("sourceId required");
     }
     return upsertGlobalRecord(vertx, conn, localIdentifier, sourceId,
-        sourceVersion, payload, matchKeyConfigs);
+        sourceVersion, payload, matchKeyConfigs, oaiUpdate);
   }
 
   Future<Void> updateMatchKeyValues(Vertx vertx, SqlConnection conn, UUID globalId,
-      JsonObject payload, JsonArray matchKeyConfigs) {
+      JsonObject payload, JsonArray matchKeyConfigs, boolean oaiUpdate) {
     List<Future<Void>> futures = new ArrayList<>(matchKeyConfigs.size());
     for (int i = 0; i < matchKeyConfigs.size(); i++) {
       JsonObject matchKeyConfig = matchKeyConfigs.getJsonObject(i);
-      futures.add(updateMatchKeyValues(vertx, conn, globalId, payload, matchKeyConfig));
+      futures.add(updateMatchKeyValues(vertx, conn, globalId, payload, matchKeyConfig, oaiUpdate));
     }
     return GenericCompositeFuture.all(futures).mapEmpty();
   }
 
   Future<Void> updateMatchKeyValues(Vertx vertx, SqlConnection conn, UUID globalId,
-      JsonObject payload, JsonObject matchKeyConfig) {
+      JsonObject payload, JsonObject matchKeyConfig, boolean oaiUpdate) {
 
     String update = matchKeyConfig.getString("update");
     if ("manual".equals(update)) {
@@ -302,18 +310,18 @@ public class Storage {
           Set<String> keys = new HashSet<>();
           matchKeyMethod.getKeys(payload, keys);
           String matchKeyConfigId = matchKeyConfig.getString("id");
-          return updateMatchKeyValues(conn, globalId, matchKeyConfigId, keys);
+          return updateMatchKeyValues(conn, globalId, matchKeyConfigId, keys, oaiUpdate);
         });
   }
 
   Future<Void> updateMatchKeyValues(SqlConnection conn, UUID globalId,
-      String matchKeyConfigId, Collection<String> keys) {
+      String matchKeyConfigId, Collection<String> keys, boolean oaiUpdate) {
 
     Set<String> truncatedKeys = new HashSet<>();
     keys.forEach(k -> truncatedKeys.add(k.length() > MATCHVALUE_MAX_LENGTH
           ? k.substring(0, MATCHVALUE_MAX_LENGTH) : k));
 
-    return updateClusterForRecord(conn, globalId, matchKeyConfigId, truncatedKeys);
+    return updateClusterForRecord(conn, globalId, matchKeyConfigId, truncatedKeys, oaiUpdate);
   }
 
   Future<Set<UUID>> updateClusterValues(SqlConnection conn, UUID newClusterId,
@@ -357,16 +365,19 @@ public class Storage {
   }
 
   Future<Void> updateClusterForRecord(SqlConnection conn, UUID globalId,
-      String matchKeyConfigId, Collection<String> keys) {
+      String matchKeyConfigId, Collection<String> keys, boolean oaiUpdate) {
 
     UUID newClusterId = UUID.randomUUID();
     return updateClusterValues(conn, newClusterId, matchKeyConfigId, keys)
         .compose(clustersFound -> {
           Iterator<UUID> iterator = clustersFound.iterator();
           if (!iterator.hasNext()) {
-            return createMetaEntry(conn, newClusterId, matchKeyConfigId);
+            return oaiUpdate ? createMetaEntry(conn, newClusterId, matchKeyConfigId)
+                : Future.succeededFuture(newClusterId);
           }
-          return updateMetaEntries(conn, clustersFound).compose(c -> {
+          Future<Void> f = oaiUpdate ? updateMetaEntries(conn, clustersFound)
+              : Future.succeededFuture();
+          return f.compose(c -> {
             UUID clusterId = iterator.next();
             if (!iterator.hasNext()) {
               return Future.succeededFuture(clusterId); // exactly one already
@@ -465,13 +476,17 @@ public class Storage {
    * @return async result
    */
   public Future<Void> updateGlobalRecords(Vertx vertx, LargeJsonReadStream request) {
+    SourceVersionCheck sourceVersionCheck = new SourceVersionCheck();
     return pool.withConnection(this::getAvailableMatchConfigs).compose(matchKeyConfigs ->
         new ReadStreamConsumer<JsonObject, Void>()
-            .consume(request, r ->
-                ingestGlobalRecord(
-                    vertx, new SourceId(request.topLevelObject().getString("sourceId")),
-                    request.topLevelObject().getInteger("sourceVersion", 1), r, matchKeyConfigs)
-                    .mapEmpty()));
+            .consume(request, r -> {
+              SourceId sourceId = new SourceId(request.topLevelObject().getString("sourceId"));
+              int updateVersion = request.topLevelObject().getInteger("sourceVersion", 1);
+              return sourceVersionCheck.check(this, sourceId, updateVersion)
+                  .compose(x ->
+                      ingestGlobalRecord(vertx, sourceId, updateVersion, r, matchKeyConfigs, x))
+                  .mapEmpty();
+            }));
   }
 
   /**
@@ -766,7 +781,7 @@ public class Storage {
             UUID globalId = row.getUUID("id");
             Set<String> keys = new HashSet<>();
             method.getKeys(row.getJsonObject("payload"), keys);
-            updateMatchKeyValues(connection, globalId, matchKeyConfigId, keys)
+            updateMatchKeyValues(connection, globalId, matchKeyConfigId, keys, true)
                 .onFailure(e -> log.error(e.getMessage(), e))
                 .onComplete(e -> stream.resume());
           });
@@ -820,9 +835,9 @@ public class Storage {
 
     void newCluster() {
       if (clusterId != null) {
-        matchValuesPerCluster.merge(values.size(), 1, (x, y) -> x + y);
+        matchValuesPerCluster.merge(values.size(), 1, Integer::sum);
         int size = recordIds.size();
-        recordsPerCluster.merge(size, 1, (x, y) -> x + y);
+        recordsPerCluster.merge(size, 1, Integer::sum);
         JsonArray samples = recordsPerClusterSample.computeIfAbsent(size,
             x -> new JsonArray());
         if (samples.size() < 3) {

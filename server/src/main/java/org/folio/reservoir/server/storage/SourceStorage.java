@@ -13,21 +13,19 @@ import org.folio.reservoir.server.misc.Util;
 import org.folio.tlib.postgres.PgCqlField;
 import org.folio.tlib.postgres.PgCqlQuery;
 
-public class SourceStorage extends Storage {
+public class SourceStorage {
 
-  public SourceStorage(RoutingContext routingContext) {
-    super(routingContext);
-  }
-
+  private SourceStorage() {}
 
   /**
    * Insert source; fail if source already exists.
+   * @param storage tenant storage.
    * @param source to be inserted.
    * @return async result.
    */
-  public Future<Void> insert(Source source) {
-    return pool.preparedQuery(
-            "INSERT INTO " + sourcesTable + " (id, version)"
+  public static Future<Void> insert(Storage storage, Source source) {
+    return storage.pool.preparedQuery(
+            "INSERT INTO " + storage.sourcesTable + " (id, version)"
                 + " VALUES ($1, $2)")
         .execute(Tuple.of(source.getId(), source.getVersion()))
         .mapEmpty();
@@ -35,16 +33,17 @@ public class SourceStorage extends Storage {
 
   /**
    * Get sources from optional query and produce HTTP response.
+   * @param storage tenant storage.
    * @param ctx routing context
    * @return async result
    */
-  public Future<Void> list(RoutingContext ctx) {
+  public static Future<Void> list(Storage storage, RoutingContext ctx) {
     PgCqlQuery pgCqlQuery = Util.createPgCqlQuery();
     pgCqlQuery.addField(
         new PgCqlField("id", PgCqlField.Type.TEXT));
     pgCqlQuery.addField(
         new PgCqlField("version", PgCqlField.Type.NUMBER));
-    return new StreamResult(pool, ctx, pgCqlQuery, sourcesTable)
+    return new StreamResult(storage.pool, ctx, pgCqlQuery, storage.sourcesTable)
         .withArrayProp("sources")
         .result(row -> Future.succeededFuture(
             JsonObject.mapFrom(SourceRowMapper.INSTANCE.map(row))
@@ -53,11 +52,12 @@ public class SourceStorage extends Storage {
 
   /**
    * Get source from identifier.
+   * @param storage tenant storage.
    * @param id identifier
    * @return async result with Source if found; null if not found
    */
-  public Future<Source> get(String id) {
-    return pool.preparedQuery("SELECT * FROM " + sourcesTable + " WHERE id = $1")
+  public static Future<Source> get(Storage storage, String id) {
+    return storage.pool.preparedQuery("SELECT * FROM " + storage.sourcesTable + " WHERE id = $1")
         .execute(Tuple.of(id))
         .compose(res -> {
           RowIterator<Row> iterator = res.iterator();
@@ -70,25 +70,27 @@ public class SourceStorage extends Storage {
 
   /**
    * Delete source.
+   * @param storage tenant storage.
    * @param id identifier
    * @return async result with TRUE if source was found and deleted; FALSE if not found
    */
-  public Future<Boolean> delete(String id) {
-    return pool.withConnection(connection ->
+  public static Future<Boolean> delete(Storage storage, String id) {
+    return storage.pool.withConnection(connection ->
         connection.preparedQuery(
-                "DELETE FROM " + sourcesTable + " WHERE id = $1")
+                "DELETE FROM " + storage.sourcesTable + " WHERE id = $1")
             .execute(Tuple.of(id))
             .map(res -> res.rowCount() > 0));
   }
 
   /**
    * Create/Update source.
+   * @param storage tenant storage.
    * @param source source to be created or updated
    * @return async result
    */
-  public Future<Void> update(Source source) {
-    return pool.preparedQuery(
-            "INSERT INTO " + sourcesTable + " (id, version)"
+  public static Future<Void> update(Storage storage, Source source) {
+    return storage.pool.preparedQuery(
+            "INSERT INTO " + storage.sourcesTable + " (id, version)"
                 + " VALUES ($1, $2) ON CONFLICT(id) DO UPDATE SET version = $2")
         .execute(Tuple.of(source.getId(), source.getVersion()))
         .mapEmpty();

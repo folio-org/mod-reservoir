@@ -34,9 +34,11 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.folio.okapi.common.GenericCompositeFuture;
 import org.folio.okapi.common.HttpResponse;
+import org.folio.reservoir.server.data.Source;
 import org.folio.reservoir.server.entity.ClusterBuilder;
 import org.folio.reservoir.server.entity.OaiPmhStatus;
 import org.folio.reservoir.server.misc.Util;
+import org.folio.reservoir.server.storage.SourceStorage;
 import org.folio.reservoir.server.storage.Storage;
 import org.folio.reservoir.util.SourceId;
 import org.folio.reservoir.util.XmlMetadataParserMarcInJson;
@@ -501,7 +503,7 @@ public class OaiPmhClientService {
 
   Future<Boolean> ingestRecord(
       Storage storage, OaiRecord<JsonObject> oaiRecord,
-      SourceId sourceId, int sourceVersion, JsonArray matchKeyConfigs) {
+      SourceId sourceId, int sourceVersion, JsonArray matchKeyConfigs, boolean oaiUpdate) {
     try {
       JsonObject globalRecord = new JsonObject();
       globalRecord.put("localId", oaiRecord.getIdentifier());
@@ -511,7 +513,7 @@ public class OaiPmhClientService {
         globalRecord.put("payload", new JsonObject().put("marc", oaiRecord.getMetadata()));
       }
       return storage.ingestGlobalRecord(vertx, sourceId, sourceVersion,
-          globalRecord, matchKeyConfigs);
+          globalRecord, matchKeyConfigs, oaiUpdate);
     } catch (Exception e) {
       log.error("{}", e.getMessage(), e);
       return Future.failedFuture(e);
@@ -592,6 +594,8 @@ public class OaiPmhClientService {
     AtomicInteger queue = new AtomicInteger();
     AtomicBoolean ended = new AtomicBoolean();
     int sourceVersion = config.getInteger("sourceVersion", 1);
+    SourceVersionCheck sourceVersionCheck = new SourceVersionCheck();
+    Future<Boolean> oaiUpdateFuture = sourceVersionCheck.check(storage, sourceId, sourceVersion);
     StringBuilder resumptionToken = new StringBuilder();
     OaiParserStream<JsonObject> oaiParserStream =
         new OaiParserStream<>(xmlParser,
@@ -607,29 +611,30 @@ public class OaiPmhClientService {
               if (Boolean.FALSE.equals(ended.get()) && queue.get() >= 4) {
                 xmlParser.pause();
               }
-              ingestRecord(storage, oaiRecord, sourceId, sourceVersion,
-                  matchKeyConfigs)
-                  .map(upd -> {
-                    queue.decrementAndGet();
-                    // drain ?
-                    if (queue.get() < 2) {
-                      xmlParser.resume();
-                    }
-                    job.setTotalRecords(job.getTotalRecords() + 1);
-                    job.setLastTotalRecords(job.getLastTotalRecords() + 1);
-                    if (upd == null) {
-                      job.setTotalDeleted(job.getTotalDeleted() + 1);
-                    } else if (Boolean.TRUE.equals(upd)) {
-                      job.setTotalInserted(job.getTotalInserted() + 1);
-                    } else {
-                      job.setTotalUpdated(job.getTotalUpdated() + 1);
-                    }
-                    if (queue.get() == 0 && Boolean.TRUE.equals(ended.get())) {
-                      endResponse(resumptionToken, promise, job);
-                    }
-                    return null;
-                  })
-                  .onFailure(x -> xmlParser.resume());
+              oaiUpdateFuture.compose(oaiUpdate ->
+                  ingestRecord(storage, oaiRecord, sourceId, sourceVersion,
+                      matchKeyConfigs, oaiUpdate)
+                      .map(upd -> {
+                        queue.decrementAndGet();
+                        // drain ?
+                        if (queue.get() < 2) {
+                          xmlParser.resume();
+                        }
+                        job.setTotalRecords(job.getTotalRecords() + 1);
+                        job.setLastTotalRecords(job.getLastTotalRecords() + 1);
+                        if (upd == null) {
+                          job.setTotalDeleted(job.getTotalDeleted() + 1);
+                        } else if (Boolean.TRUE.equals(upd)) {
+                          job.setTotalInserted(job.getTotalInserted() + 1);
+                        } else {
+                          job.setTotalUpdated(job.getTotalUpdated() + 1);
+                        }
+                        if (queue.get() == 0 && Boolean.TRUE.equals(ended.get())) {
+                          endResponse(resumptionToken, promise, job);
+                        }
+                        return null;
+                      })
+                      .onFailure(x -> xmlParser.resume()));
             },
             metadataParser);
     oaiParserStream.exceptionHandler(promise::fail);
