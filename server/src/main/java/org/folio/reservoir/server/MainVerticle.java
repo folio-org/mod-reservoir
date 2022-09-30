@@ -7,6 +7,8 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.folio.okapi.common.Config;
 import org.folio.okapi.common.ModuleVersionReporter;
+import org.folio.reservoir.server.misc.JavaScriptCheck;
+import org.folio.reservoir.server.service.ReservoirService;
 import org.folio.tlib.RouterCreator;
 import org.folio.tlib.api.HealthApi;
 import org.folio.tlib.api.Tenant2Api;

@@ -4,6 +4,7 @@ import io.restassured.RestAssured;
 import io.restassured.builder.RequestSpecBuilder;
 import io.restassured.config.HttpClientConfig;
 import io.restassured.config.RestAssuredConfig;
+import io.restassured.http.ContentType;
 import io.restassured.response.ExtractableResponse;
 import io.restassured.response.Response;
 import io.vertx.core.DeploymentOptions;
@@ -45,7 +46,6 @@ import javax.xml.stream.XMLInputFactory;
 import javax.xml.stream.XMLStreamConstants;
 import javax.xml.stream.XMLStreamException;
 import javax.xml.stream.XMLStreamReader;
-import javax.xml.transform.Source;
 import javax.xml.transform.stream.StreamSource;
 import javax.xml.validation.Schema;
 import javax.xml.validation.SchemaFactory;
@@ -55,9 +55,13 @@ import io.vertx.sqlclient.Tuple;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.awaitility.Awaitility;
-import org.folio.reservoir.module.impl.ModuleScripts;
+import org.folio.reservoir.server.module.impl.ModuleScripts;
+import org.folio.reservoir.server.data.Source;
 import org.folio.reservoir.server.entity.CodeModuleEntity;
 import org.folio.okapi.common.XOkapiHeaders;
+import org.folio.reservoir.server.misc.ResumptionToken;
+import org.folio.reservoir.server.service.OaiPmhClientService;
+import org.folio.reservoir.server.storage.Storage;
 import org.folio.tlib.postgres.testing.TenantPgPoolContainer;
 import org.hamcrest.Matchers;
 import org.junit.After;
@@ -74,6 +78,7 @@ import static org.hamcrest.Matchers.anyOf;
 import static org.hamcrest.Matchers.containsString;
 import static org.hamcrest.Matchers.empty;
 import static org.hamcrest.Matchers.endsWith;
+import static org.hamcrest.Matchers.equalTo;
 import static org.hamcrest.Matchers.greaterThanOrEqualTo;
 import static org.hamcrest.Matchers.hasLength;
 import static org.hamcrest.Matchers.hasSize;
@@ -674,7 +679,7 @@ public class MainVerticleTest {
   static String verifyOaiResponse(String s, String verb, List<String> identifiers, int length, JsonArray expRecords)
       throws XMLStreamException, IOException, SAXException {
     InputStream stream = new ByteArrayInputStream(s.getBytes());
-    Source source = new StreamSource(stream);
+    javax.xml.transform.Source source = new StreamSource(stream);
     oaiSchemaValidator.validate(source);
 
     stream = new ByteArrayInputStream(s.getBytes());
@@ -915,7 +920,7 @@ public class MainVerticleTest {
     RestAssured.given()
         .header(XOkapiHeaders.TENANT, TENANT_1)
         .header("Content-Type", "application/json")
-        .param("query", "sourceId=" + SOURCE_ID_1)
+        .param("query", "sourceId=" + SOURCE_ID_1 + " sortby sourceId")
         .get("/reservoir/records")
         .then().statusCode(200)
         .contentType("application/json")
@@ -925,9 +930,11 @@ public class MainVerticleTest {
         .header(XOkapiHeaders.TENANT, TENANT_1)
         .header("Content-Type", "application/json")
         .param("matchkeyid", "isbn")
+        .param("count", "exact")
         .get("/reservoir/clusters")
         .then().statusCode(200)
         .contentType("application/json")
+        .body("resultInfo.totalRecords", is(2))
         .body("items", hasSize(2))
         .body("items[0].records", hasSize(1))
         .body("items[1].records", hasSize(1))
@@ -2738,6 +2745,111 @@ public class MainVerticleTest {
   }
 
   @Test
+  public void testOaiSourceVersions() {
+    List<String> identifiers = new LinkedList<>();
+    String s;
+
+    createIsbnMatchKey();
+
+    int v1 = 55;
+
+    JsonArray ingest2 = new JsonArray()
+        .add(new JsonObject()
+            .put("localId", "S100")
+            .put("payload", new JsonObject()
+                .put("marc", new JsonObject()
+                    .put("leader", "00914naa  " + v1 + "00337   450 ")
+                )
+                .put("inventory", new JsonObject()
+                    .put("isbn", new JsonArray().add("1"))
+                )
+            )
+        )
+        .add(new JsonObject()
+            .put("localId", "S102")
+            .put("payload", new JsonObject()
+                .put("marc", new JsonObject()
+                    .put("leader", "00914naa  " + v1 + "00337   450 ")
+                )
+                .put("inventory", new JsonObject()
+                    .put("isbn", new JsonArray().add("2"))
+                )
+            )
+        );
+    ingestRecords(ingest2, SOURCE_ID_1, v1);
+
+    s = RestAssured.given()
+        .header(XOkapiHeaders.TENANT, TENANT_1)
+        .param("set", "isbn")
+        .param("verb", "ListRecords")
+        .param("metadataPrefix", "marcxml")
+        .get("/reservoir/oai")
+        .then().statusCode(200)
+        .contentType("text/xml")
+        .extract().body().asString();
+    log.info("OAI 1 = {}", s);
+    verifyOaiResponseRuntime(s, "ListRecords", identifiers, 2, null);
+
+    int v2 = 56;
+
+    JsonArray ingest1b = new JsonArray()
+        .add(new JsonObject()
+            .put("localId", "S100")
+            .put("payload", new JsonObject()
+                .put("marc", new JsonObject()
+                    .put("leader", "00914naa  " + v2 + "00337   450 ")
+                )
+                .put("inventory", new JsonObject()
+                    .put("isbn", new JsonArray().add("1"))
+                )
+            )
+        )
+        .add(new JsonObject()
+            .put("localId", "S102")
+            .put("payload", new JsonObject()
+                .put("marc", new JsonObject()
+                    .put("leader", "00914naa  " + v2 + "00337   450 ")
+                )
+                .put("inventory", new JsonObject()
+                    .put("isbn", new JsonArray().add("3"))
+                )
+            )
+        );
+    ingestRecords(ingest1b, SOURCE_ID_1, v2);
+
+    s = RestAssured.given()
+        .header(XOkapiHeaders.TENANT, TENANT_1)
+        .param("set", "isbn")
+        .param("verb", "ListRecords")
+        .param("metadataPrefix", "marcxml")
+        .get("/reservoir/oai")
+        .then().statusCode(200)
+        .contentType("text/xml")
+        .extract().body().asString();
+    log.info("OAI 2 = {}", s);
+    verifyOaiResponseRuntime(s, "ListRecords", identifiers, 3, null);
+
+    RestAssured.given()
+        .header(XOkapiHeaders.TENANT, TENANT_1)
+        .header("Content-Type", "application/json")
+        .param("query", "sourceId=" + SOURCE_ID_1 + " AND sourceVersion = " + v1)
+        .delete("/reservoir/records")
+        .then().statusCode(204);
+
+    s = RestAssured.given()
+        .header(XOkapiHeaders.TENANT, TENANT_1)
+        .param("set", "isbn")
+        .param("verb", "ListRecords")
+        .param("metadataPrefix", "marcxml")
+        .get("/reservoir/oai")
+        .then().statusCode(200)
+        .contentType("text/xml")
+        .extract().body().asString();
+    log.info("OAI 3 = {}", s);
+    verifyOaiResponseRuntime(s, "ListRecords", identifiers, 3, null);
+  }
+
+  @Test
   public void upgradeDb(TestContext context) {
     String tenant = "tenant2";
     tenantOp(context, tenant, new JsonObject()
@@ -3800,6 +3912,151 @@ public class MainVerticleTest {
         .body("items[0].lastRunningTime", startsWith("0 days 00 hrs 00 mins 0"))
         .body("items[0].config.id", is(PMH_CLIENT_ID))
         .body("items[0].config.sourceId", is(SOURCE_ID_1));
+  }
+
+  @Test
+  public void sources() {
+    var source1 = new Source();
+    source1.setId("bib1");
+    source1.setVersion(3);
+
+    RestAssured.given()
+        .header(XOkapiHeaders.TENANT, TENANT_1)
+        .get("/reservoir/config/sources")
+        .then().statusCode(200)
+        .contentType(ContentType.JSON)
+        .body("resultInfo.totalRecords", is(nullValue()))
+        .body("sources", is(empty()));
+
+    RestAssured.given()
+        .header(XOkapiHeaders.TENANT, TENANT_1)
+        .get("/reservoir/config/sources/" + source1.getId())
+        .then().statusCode(404)
+        .contentType(ContentType.TEXT)
+        .body(equalTo("Source " + source1.getId() + " not found"));
+
+    RestAssured.given()
+        .header(XOkapiHeaders.TENANT, TENANT_1)
+        .delete("/reservoir/config/sources/" + source1.getId())
+        .then().statusCode(404)
+        .contentType(ContentType.TEXT)
+        .body(equalTo("Source " + source1.getId() + " not found"));
+
+    RestAssured.given()
+        .header(XOkapiHeaders.TENANT, TENANT_1)
+        .contentType(ContentType.JSON)
+        .body(JsonObject.mapFrom(source1).encode())
+        .post("/reservoir/config/sources")
+        .then().statusCode(204);
+
+    RestAssured.given()
+        .header(XOkapiHeaders.TENANT, TENANT_1)
+        .contentType(ContentType.JSON)
+        .body(JsonObject.mapFrom(source1).encode())
+        .post("/reservoir/config/sources")
+        .then().statusCode(400)
+        .contentType(ContentType.TEXT)
+        .body(containsString("23505"));
+
+    RestAssured.given()
+        .header(XOkapiHeaders.TENANT, TENANT_1)
+        .get("/reservoir/config/sources/" + source1.getId())
+        .then().statusCode(200)
+        .contentType(ContentType.JSON)
+        .body(equalTo(JsonObject.mapFrom(source1).encode()));
+
+    RestAssured.given()
+        .header(XOkapiHeaders.TENANT, TENANT_1)
+        .get("/reservoir/config/sources")
+        .then().statusCode(200)
+        .contentType(ContentType.JSON)
+        .body("resultInfo.totalRecords", is(nullValue()))
+        .body("sources", hasSize(1))
+        .body("sources[0].id", is(source1.getId()))
+        .body("sources[0].version", is(source1.getVersion()));
+
+    RestAssured.given()
+        .header(XOkapiHeaders.TENANT, TENANT_1)
+        .param("query", "version==" + source1.getVersion())
+        .param("count", "exact")
+        .get("/reservoir/config/sources")
+        .then().statusCode(200)
+        .contentType(ContentType.JSON)
+        .body("resultInfo.totalRecords", is(1))
+        .body("sources", hasSize(1))
+        .body("sources[0].id", is(source1.getId()))
+        .body("sources[0].version", is(source1.getVersion()));
+
+    source1.setVersion(4);
+    RestAssured.given()
+        .header(XOkapiHeaders.TENANT, TENANT_1)
+        .contentType(ContentType.JSON)
+        .body(JsonObject.mapFrom(source1).encode())
+        .put("/reservoir/config/sources/3")
+        .then().statusCode(400);
+
+    RestAssured.given()
+        .header(XOkapiHeaders.TENANT, TENANT_1)
+        .contentType(ContentType.JSON)
+        .body(JsonObject.mapFrom(source1).encode())
+        .put("/reservoir/config/sources/" + source1.getId())
+        .then().statusCode(204);
+
+    RestAssured.given()
+        .header(XOkapiHeaders.TENANT, TENANT_1)
+        .get("/reservoir/config/sources/" + source1.getId())
+        .then().statusCode(200)
+        .contentType(ContentType.JSON)
+        .body(equalTo(JsonObject.mapFrom(source1).encode()));
+
+    RestAssured.given()
+        .header(XOkapiHeaders.TENANT, TENANT_1)
+        .delete("/reservoir/config/sources/" + source1.getId())
+        .then().statusCode(204);
+
+    RestAssured.given()
+        .header(XOkapiHeaders.TENANT, TENANT_1)
+        .get("/reservoir/config/sources/" + source1.getId())
+        .then().statusCode(404)
+        .contentType(ContentType.TEXT)
+        .body(equalTo("Source " + source1.getId() + " not found"));
+
+    RestAssured.given()
+        .header(XOkapiHeaders.TENANT, TENANT_1)
+        .contentType(ContentType.JSON)
+        .body(JsonObject.mapFrom(source1).encode())
+        .put("/reservoir/config/sources/" + source1.getId())
+        .then().statusCode(204);
+
+    RestAssured.given()
+        .header(XOkapiHeaders.TENANT, TENANT_1)
+        .delete("/reservoir/config/sources/" + source1.getId())
+        .then().statusCode(204);
+  }
+
+  @Test
+  public void sources2() {
+    var source2 = new Source();
+    source2.setId("bib1");
+
+    RestAssured.given()
+        .header(XOkapiHeaders.TENANT, TENANT_1)
+        .contentType(ContentType.JSON)
+        .body(JsonObject.mapFrom(source2).encode())
+        .post("/reservoir/config/sources")
+        .then().statusCode(204);
+
+    RestAssured.given()
+        .header(XOkapiHeaders.TENANT, TENANT_1)
+        .get("/reservoir/config/sources/" + source2.getId())
+        .then().statusCode(200)
+        .contentType(ContentType.JSON)
+        .body(equalTo(JsonObject.mapFrom(source2).encode()));
+
+    RestAssured.given()
+        .header(XOkapiHeaders.TENANT, TENANT_1)
+        .delete("/reservoir/config/sources/" + source2.getId())
+        .then().statusCode(204);
   }
 
 }

@@ -4,12 +4,11 @@
   "properties": {
     "id": {
       "type": "string",
-      "description" : "source identifier",
-      "format": "uuid"
+      "description" : "source identifier"
     },
-    "name": {
-      "type": "string",
-      "description": "method"
+    "version": {
+      "type": "integer",
+      "description": "source version"
     }
   },
   "additionalProperties": false,
