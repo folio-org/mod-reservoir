@@ -47,7 +47,7 @@ public class ClusterBuilderTest {
         )
         .add(new JsonObject()
             .put(ClusterBuilder.SOURCE_ID_LABEL, "bib")
-            .put(ClusterBuilder.SOURCE_VERSION_LABEL, 1)
+            .put(ClusterBuilder.SOURCE_VERSION_LABEL, 2)
             .put(ClusterBuilder.LOCAL_ID_LABEL, "002")
             .put(ClusterBuilder.PAYLOAD_LABEL, "d")
 
@@ -59,9 +59,8 @@ public class ClusterBuilderTest {
     JsonObject clusterJson = clusterBuilder.build();
     assertThat(clusterJson, is(expected));
     JsonArray gotRecs = clusterJson.getJsonArray(ClusterBuilder.RECORDS_LABEL);
-    assertThat(gotRecs.getJsonObject(0).getString(ClusterBuilder.PAYLOAD_LABEL), is("b"));
-    assertThat(gotRecs.getJsonObject(1).getString(ClusterBuilder.PAYLOAD_LABEL), is("c"));
+    assertThat(gotRecs.getJsonObject(0).getString(ClusterBuilder.PAYLOAD_LABEL), is("a"));
+    assertThat(gotRecs.getJsonObject(1).getString(ClusterBuilder.PAYLOAD_LABEL), is("b"));
     assertThat(gotRecs.getJsonObject(2).getString(ClusterBuilder.PAYLOAD_LABEL), is("d"));
-    assertThat(gotRecs.getJsonObject(3).getString(ClusterBuilder.PAYLOAD_LABEL), is("a"));
   }
 }

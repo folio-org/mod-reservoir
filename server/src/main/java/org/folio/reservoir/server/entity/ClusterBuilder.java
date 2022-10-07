@@ -7,8 +7,8 @@ import io.vertx.sqlclient.RowSet;
 import java.time.LocalDateTime;
 import java.time.ZoneOffset;
 import java.time.format.DateTimeFormatter;
-import java.util.Collections;
-import java.util.List;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.UUID;
 
 public class ClusterBuilder {
@@ -58,22 +58,39 @@ public class ClusterBuilder {
    * @return this
    */
   public ClusterBuilder records(JsonArray records) {
-    Collections.sort((List<JsonObject>) records.getList(), (a, b) -> {
-      int cmp = a.getString(ClusterBuilder.SOURCE_ID_LABEL)
-          .compareTo(b.getString(ClusterBuilder.SOURCE_ID_LABEL));
-      if (cmp != 0) {
-        return cmp;
-      }
-      cmp = a.getInteger(ClusterBuilder.SOURCE_VERSION_LABEL, 0)
-          - b.getInteger(ClusterBuilder.SOURCE_VERSION_LABEL, 0);
-      if (cmp != 0) {
-        return cmp;
-      }
-      return a.getString(ClusterBuilder.LOCAL_ID_LABEL)
-          .compareTo(b.getString(ClusterBuilder.LOCAL_ID_LABEL));
-    });
+    latest(records);
     clusterJson.put(RECORDS_LABEL, records);
     return this;
+  }
+
+  /**
+   * For each source, keep the latest version.
+   * @param records global records array which is modified by this method
+   */
+  static void latest(JsonArray records) {
+    Map<String,Integer> latestVersion = new HashMap<>();
+    int i;
+    for (i = 0; i < records.size(); i++) {
+      JsonObject a = records.getJsonObject(i);
+      String sourceId = a.getString(ClusterBuilder.SOURCE_ID_LABEL);
+      int v = a.getInteger(ClusterBuilder.SOURCE_VERSION_LABEL, 0);
+      Integer existing = latestVersion.get(sourceId);
+      if (existing == null || v > existing) {
+        latestVersion.put(sourceId, v);
+      }
+    }
+    i = 0;
+    while (i < records.size()) {
+      JsonObject a = records.getJsonObject(i);
+      String sourceId = a.getString(ClusterBuilder.SOURCE_ID_LABEL);
+      int v = a.getInteger(ClusterBuilder.SOURCE_VERSION_LABEL, 0);
+      if (latestVersion.get(sourceId) != v) {
+        records.remove(i);
+        i = 0;
+      } else {
+        i++;
+      }
+    }
   }
 
   /**
