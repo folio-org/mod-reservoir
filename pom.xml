@@ -5,7 +5,7 @@
   <version>0.0.1-SNAPSHOT</version>
   <packaging>pom</packaging>
 
-  <name>Meta Storage</name>
+  <name>Reservoir</name>
   <url>https://github.com/folio-org/mod-reservoir</url>
   <description>Module for shared meta data</description>
   <inceptionYear>2021</inceptionYear>
@@ -37,7 +37,7 @@
 
   <properties>
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-    <graalvm.version>22.1.0</graalvm.version>
+    <graalvm.version>22.2.0</graalvm.version>
   </properties>
 
   <dependencyManagement>

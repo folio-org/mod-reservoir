@@ -7,11 +7,11 @@ Version 2.0. See the file "[LICENSE](LICENSE)" for more information.
 
 ## Introduction
 
-A service that provides a clustering storage of metadata for the purpose of consortial re-sharing. Optimized for fast storage and retrieval performance.
+A service that provides a clustering storage of metadata for Data Integration purposes. Optimized for fast storage and retrieval performance.
 
 This project has three sub-projects:
 
-* `util` -- A library with utilities to normalize MARC to Inventory.
+* `util` -- A library with utilities to convert and normalize XML, JSON and MARC.
 * `server` -- The reservoir storage server. This is the FOLIO module: mod-reservoir
 * `client` -- A client for sending ISO2709/MARCXML records to the server.
 
@@ -19,16 +19,35 @@ This project has three sub-projects:
 
 Requirements:
 
-* Java 17. A later version might very well work
+* Java 17 or later
 * Maven 3.6.3 or later
-* `JAVA_HOME` set, e.g.\
-   `export JAVA_HOME=$(readlink -f /usr/bin/javac | sed "s:bin/javac::")`
+* Docker (unless `-DskipTests` is used)
 
-Install all components with: `mvn install`
+You need `JAVA_HOME` set, e.g.:
+
+   * Linux: `export JAVA_HOME=$(readlink -f /usr/bin/javac | sed "s:bin/javac::")`
+   * macOS: `export JAVA_HOME=$(/usr/libexec/java_home -v 17)`
+
+Build all components with: `mvn install`
 
 ## Server
 
-Start the server with:
+You will need Postgres 12 or later.
+
+You can create an empty database and a user with, e.g:
+
+```
+CREATE DATABASE folio_modules;
+CREATE USER folio WITH CREATEROLE PASSWORD 'folio';
+GRANT ALL PRIVILEGES ON DATABASE folio_modules TO folio;
+```
+
+The server's database connection is then configured by setting environment variables:
+`DB_HOST`, `DB_PORT`, `DB_USERNAME`, `DB_PASSWORD`, `DB_DATABASE`,
+`DB_MAXPOOLSIZE`, `DB_SERVER_PEM`.
+
+Once configured, start the server with:
+
 ```
 java -Dport=8081 --module-path=server/target/compiler/ \
   --upgrade-module-path=server/target/compiler/compiler.jar \
@@ -36,15 +55,35 @@ java -Dport=8081 --module-path=server/target/compiler/ \
   -jar server/target/mod-reservoir-server-fat.jar
 ```
 
-The module is configured by setting environment variables:
-`DB_HOST`, `DB_PORT`, `DB_USERNAME`, `DB_PASSWORD`, `DB_DATABASE`,
-`DB_MAXPOOLSIZE`, `DB_SERVER_PEM`.
+## Running with Docker
+
+If you feel adventourous and want to run Reservoir in a docker container, build the container first:
+
+```
+docker build -t mod-reservoir:latest .
+```
+
+And run with the server port exposed (`8081` by default):
+
+```
+docker run -e DB_HOST=host.docker.internal \
+  -e DB_USERNAME=folio \
+  -e DB_PASSWORD=folio \
+  -e DB_DATABASE=folio_modules \
+  -p 8081:8081 --name reservoir mod-reservoir:latest
+```
+
+**Note**: The magic host `host.docker.internal` is required to access the DB and may be only available in Docker Desktop. 
+If it's not defined you can specify it by passing `--add-host=host.docker.internal:<docker bridge net IP>` to the run command.
+
+**Note**: Those docker build and run commands do work as-is with [Colima](https://github.com/abiosoft/colima).
 
 ## Command-line client
 
 The client is a command-line tool for sending records to the mod-reservoir server.
 
 Run the client with:
+
 ```
 java -jar client/target/mod-reservoir-client-fat.jar [options] [files...]
 ```
@@ -58,13 +97,19 @@ If Okapi is used, then the usual `install` command will do it, but if the
 mod-reservoir module is being run on its own, then that must be done manually.
 
 For example, to prepare the database for tenant `diku` on server running on localhost:8081, use:
+
 ```
 export OKAPI_TENANT=diku
 export OKAPI_URL=http://localhost:8081
 java -jar client/target/mod-reservoir-client-fat.jar --init
 ```
 
+**Note**: The above mentioned commands are for the server running on localhost.
+For a secured server, the `-HX-Okapi-Token:$OKAPI_TOKEN` is required rather
+than `X-Okapi-Tenant`.
+
 To purge the data, use:
+
 ```
 export OKAPI_TENANT=diku
 export OKAPI_URL=http://localhost:8081
@@ -72,23 +117,90 @@ java -jar client/target/mod-reservoir-client-fat.jar --purge
 ```
 
 To send MARCXML to the same server with defined `sourceId`, use:
+
 ```
 export OKAPI_TENANT=diku
 export OKAPI_URL=http://localhost:8081
 export sourceid=lib1
 java -jar client/target/mod-reservoir-client-fat.jar \
   --source $sourceid \
-  --xsl xsl/marc2inventory-instance.xsl \
-  --xsl xsl/holdings-items-cst.xsl \
-  --xsl xsl/library-codes-cst.xsl \
+  --xsl xsl/localid.xsl \
   client/src/test/resources/record10.xml
 ```
 
 The option `--xsl` may be repeated for a sequence of transformations.
 
+Once records are loaded, they can be retrieved with:
+
+```
+curl -HX-Okapi-Tenant:$OKAPI_TENANT $OKAPI_URL/reservoir/records
+```
+
+## Configuring matchkeys
+
+For cluster retrieval, a matchkey configuration needs to be specified first.
+
+A simple matchkey config could use the ‘jsonpath’ method and refer to the MARC-in-JSON fields:
+
+```
+{
+  "id": "title",
+  "method": "jsonpath",
+  "params": {
+    "expr":"$.marc.fields[*].245.subfields[*].a"
+  },
+  "update": "ingest"
+}
+```
+
+Post it to the server with:
+
+```
+curl -HX-Okapi-Tenant:$OKAPI_TENANT -HContent-type:application/json \
+ $OKAPI_URL/reservoir/config/matchkeys -d @matchkey-title.json
+```
+
+and then initialize the cluster for this config:
+
+```
+curl -HX-Okapi-Tenant:$OKAPI_TENANT -XPUT $OKAPI_URL/reservoir/config/matchkeys/title/initialize
+```
+
+Now you can retrieve/browse the clusters with:
+
+```
+curl -HX-Okapi-Tenant:$OKAPI_TENANT $OKAPI_URL/reservoir/clusters?matchkeyid=title
+```
+
+Matchkey configuration must be aligned with the format of stored records.
+
+While `jsonpath` matchkey method works for simple cases, for more sophisticated matching
+you will want to use the `javascript` method which loads external JavaScript code
+modules (ES modules). Reservoir ships with a JS module that implements the `goldrush` matching
+algorithm from coalliance.org.
+
+```
+cat js/matchkeys/goldrush/goldrush-conf.json
+{
+  "id": "goldrush",
+  "method": "javascript",
+  "params": {
+    "url": "https://raw.githubusercontent.com/folio-org/mod-reservoir/master/js/matchkeys/goldrush/goldrush.mjs"
+  },
+  "update": "ingest"
+}
+```
+
+Load it with:
+
+```
+curl -HX-Okapi-Tenant:$OKAPI_TENANT -HContent-type:application/json \
+ $OKAPI_URL/reservoir/config/matchkeys -d @js/matchkeys/goldrush/goldrush-conf.json
+```
 ## OAI-PMH client
 
-The OAI-PMH client is executing in the server. So it is not an external client.
+The OAI-PMH client is executing in the server. It is an alternative to
+ingesting records via the command-line client mentioned earlier.
 Commands are sent to the server to initiate the client operations.
 
 ### OAI-PMH client configuration
@@ -166,8 +278,99 @@ curl -HX-Okapi-Tenant:$OKAPI_TENANT -XPOST \
   $OKAPI_URL/reservoir/pmh-clients/_all/stop
 ```
 
-**Note**: The abovementioned commands are for the server running on localhost.
-For a real server, the `-HX-Okapi-Token:$OKAPI_TOKEN` is required.
+## OAI-PMH server
+
+The path prefix for the OAI server is `/reservoir/oai` and requires no access permissions.
+
+The following OAI-PMH verbs are supported by the server: `ListIdentifiers`, `ListRecords`, `GetRecord`, `Identify`.
+
+At this stage, only `metadataPrefix` with value `marcxml` is supported. This
+parameter can be omitted, in which case `marcxml` is assumed.
+
+Each Reservoir cluster corresponds to an OAI-PMH record and each matchkey configuration corresponds to
+an OAI `set`.
+
+For example, to initiate a harvest of "title" clusters:
+
+```
+curl -HX-Okapi-Tenant:$OKAPI_TENANT "$OKAPI_URL/reservoir/oai?verb=ListRecords&set=title"
+```
+
+and to retrieve a particular OAI-PMH record (Reservoir cluster):
+
+```
+curl -HX-Okapi-Tenant:$OKAPI_TENANT \
+  "$OKAPI_URL/reservoir/oai?verb=GetRecord&identifier=oai:<cluster UUID>"
+```
+
+Since no permissions are required for `/reservoir/oai`, the endpoint can be accessed without the need for
+the `X-Okapi-Tenant` and `X-Okapi-Token` headers using the invoke feature of Okapi:
+
+```
+curl "$OKAPI_URL/_/invoke/tenant/$OKAPI_TENANT/reservoir/oai?set=title&verb=ListRecords"
+
+```
+Note: this obviously only works if Okapi is proxying requests to the module
+
+The OAI server delivers 1000 identifiers/records at a time. This limit can be
+increased with a non-standard query parameter `limit`. The service returns resumption token
+until the full set is retrieved.
+
+The OAI-PMH server returns MarcXML and expects that the payload provides MARC-in-JSON format under the `marc` key.
+
+## Transformers
+
+Payloads can be converted or normalized using JavaScript Transformers during export.
+
+Example transformer:
+
+```
+cat js/transformers/marc-transformer.mjs
+        export function transform(clusterStr) {
+          let cluster = JSON.parse(cluster);
+          let recs = cluster.records;
+          //merge all marc recs
+          const out = {};
+          out.leader = 'new leader';
+          out.fields = [];
+          for (let i = 0; i < recs.length; i++) {
+            let rec = recs[i];
+            let marc = rec.payload.marc;
+            //collect all marc fields
+            out.fields.push(marc.fields);
+            //stamp with custom 999 for each member
+            out.fields.push(
+              {
+                '999' :
+                {
+                  'ind1': '1',
+                  'ind2': '0',
+                  'subfields': [
+                    {'i': rec.globalId },
+                    {'l': rec.localId },
+                    {'s': rec.sourceId }
+                  ]
+                }
+              }
+            );
+          }
+          return JSON.stringify(out);
+}
+```
+
+can be installed with:
+
+```
+curl -HX-Okapi-Tenant:$OKAPI_TENANT -HContent-Type:application/json \
+  $OKAPI_URL/reservoir/config/modules -d @js/transformers/marc-transformer.json
+```
+
+and enabled for the OAI-PMH server with:
+
+```
+curl -HX-Okapi-Tenant:$OKAPI_TENANT -HContent-Type:application/json \
+  -XPUT $OKAPI_URL/reservoir/config/oai -d'{"transformer":"marc-transformer"}'
+```
 
 ## Additional information
 
