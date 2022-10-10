@@ -9,6 +9,7 @@ import java.util.UUID;
 
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.is;
+import static org.hamcrest.Matchers.samePropertyValuesAs;
 
 public class ClusterBuilderTest {
   @Test
@@ -59,8 +60,9 @@ public class ClusterBuilderTest {
     JsonObject clusterJson = clusterBuilder.build();
     assertThat(clusterJson, is(expected));
     JsonArray gotRecs = clusterJson.getJsonArray(ClusterBuilder.RECORDS_LABEL);
-    assertThat(gotRecs.getJsonObject(0).getString(ClusterBuilder.PAYLOAD_LABEL), is("a"));
-    assertThat(gotRecs.getJsonObject(1).getString(ClusterBuilder.PAYLOAD_LABEL), is("b"));
+    System.out.println(gotRecs.encodePrettily());
+    assertThat(gotRecs.getJsonObject(0).getString(ClusterBuilder.PAYLOAD_LABEL), is("b"));
+    assertThat(gotRecs.getJsonObject(1).getString(ClusterBuilder.PAYLOAD_LABEL), is("a"));
     assertThat(gotRecs.getJsonObject(2).getString(ClusterBuilder.PAYLOAD_LABEL), is("d"));
   }
 }

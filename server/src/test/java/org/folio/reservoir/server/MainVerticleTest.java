@@ -2818,7 +2818,8 @@ public class MainVerticleTest {
                     )
                 )
             )
-        );
+        )
+        ;
 
     verifyOaiResponseRuntime(s, "ListRecords", identifiers, 2, expectedIsbn);
 
@@ -2914,8 +2915,7 @@ public class MainVerticleTest {
                     )
                 )
             )
-        )
-    ;
+        );
 
     verifyOaiResponseRuntime(s, "ListRecords", identifiers, 3, expectedIsbn);
 
@@ -2972,8 +2972,7 @@ public class MainVerticleTest {
                     )
                 )
             )
-        )
-    ;
+        );
     verifyOaiResponseRuntime(s, "ListRecords", identifiers, 3, expectedIsbn);
   }
 
