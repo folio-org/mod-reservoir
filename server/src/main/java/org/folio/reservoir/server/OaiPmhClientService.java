@@ -534,7 +534,8 @@ public class OaiPmhClientService {
     return httpClient.request(requestOptions).compose(HttpClientRequest::send);
   }
 
-  static void endResponse(StringBuilder resumptionToken, Promise<Void> promise, OaiPmhStatus job) {
+  static void endResponse(StringBuilder resumptionToken, 
+      String error, Promise<Void> promise, OaiPmhStatus job) {
     JsonObject config = job.getConfig();
     LocalDateTime started = job.getLastStartedTimestampRaw();
     long runningTimeMilli =
@@ -546,7 +547,7 @@ public class OaiPmhClientService {
         || resumptionToken.toString().equals(oldResumptionToken)) {
       moveFromDate(config);
       config.remove(RESUMPTION_TOKEN_LITERAL);
-      promise.fail((String) null);
+      promise.fail(error);
     } else {
       config.put(RESUMPTION_TOKEN_LITERAL, resumptionToken);
       promise.complete();
@@ -623,7 +624,7 @@ public class OaiPmhClientService {
                       job.setTotalUpdated(job.getTotalUpdated() + 1);
                     }
                     if (queue.get() == 0 && Boolean.TRUE.equals(ended.get())) {
-                      endResponse(resumptionToken, promise, job);
+                      endResponse(resumptionToken, null, promise, job);
                     }
                     return null;
                   })
@@ -638,7 +639,7 @@ public class OaiPmhClientService {
         resumptionToken.append(tmp);
       }
       if (queue.get() == 0) {
-        endResponse(resumptionToken, promise, job);
+        endResponse(resumptionToken, oaiParserStream.getError(), promise, job);
       }
     });
     return promise.future();

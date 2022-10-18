@@ -82,6 +82,7 @@ public class OaiParserStreamTest {
         .onComplete(context.asyncAssertSuccess(oaiParserStream -> {
           assertThat(records, empty());
           assertThat(oaiParserStream.getResumptionToken(), nullValue());
+          assertThat(oaiParserStream.getError(), is("noRecordsMatch: The combination of the values of the from, until, set and metadataPrefix arguments returns an empty list"));
         }));
   }
 
