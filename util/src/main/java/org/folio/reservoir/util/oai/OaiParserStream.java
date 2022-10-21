@@ -27,6 +27,10 @@ public class OaiParserStream<T> {
 
   int textLevel;
 
+  String errorText;
+
+  String errorCode;
+
   void setHandleText(Consumer<String> handle) {
     cdata.setLength(0);
     textLevel = level;
@@ -50,6 +54,16 @@ public class OaiParserStream<T> {
    */
   public String getResumptionToken() {
     return resumptionToken;
+  }
+
+  /**
+   * Get OAI-PMH error.
+   * @return the error
+   */
+  public String getError() {
+    return errorCode != null
+      ? errorCode + ": " + errorText
+      : errorText;
   }
 
   public OaiParserStream<T> exceptionHandler(Handler<Throwable> handler) {
@@ -117,6 +131,9 @@ public class OaiParserStream<T> {
         setHandleText(text -> lastRecord.datestamp = text);
       } else if ("identifier".equals(elem)) {
         setHandleText(text -> lastRecord.identifier = text);
+      } else if ("error".equals(elem)) {
+        setHandleText(text -> errorText = text);
+        errorCode = xmlStreamReader.getAttributeValue(null, "code");
       }
     }
   }

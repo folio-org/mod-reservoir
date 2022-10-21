@@ -4041,4 +4041,57 @@ public class MainVerticleTest {
         .body("items[0].config.sourceId", is(SOURCE_ID_1));
   }
 
+  @Test
+  public void oaiPmhClientHttpOaiError() {
+    createIsbnMatchKey();
+
+    JsonObject oaiPmhClient = new JsonObject()
+        .put("url", MOCK_URL + "/mock/oai")
+        .put("set", "isbn")
+        .put("headers", new JsonObject().put(XOkapiHeaders.TENANT, TENANT_1))
+        .put("sourceId", SOURCE_ID_1)
+        .put("id", PMH_CLIENT_ID);
+
+    RestAssured.given()
+        .header(XOkapiHeaders.TENANT, TENANT_1)
+        .header("Content-Type", "application/json")
+        .body(oaiPmhClient.encode())
+        .post("/reservoir/pmh-clients")
+        .then().statusCode(201)
+        .contentType("application/json")
+        .body(Matchers.is(oaiPmhClient.encode()));
+
+    mockBody = """
+      <?xml version="1.0" encoding="UTF-8"?>
+      <OAI-PMH xsi:schemaLocation='http://www.openarchives.org/OAI/2.0/ http://www.openarchives.org/OAI/2.0/OAI-PMH.xsd' 
+        xmlns:xsi='http://www.w3.org/2001/XMLSchema-instance' 
+        xmlns='http://www.openarchives.org/OAI/2.0/'>
+        <responseDate>2022-10-17T18:52:44Z</responseDate>
+        <request metadataPrefix='marc21' set='reshare' verb='ListRecords'>https://arcadiau.bywatersolutions.com/opac/oai.pl</request>
+        <error code='cannotDisseminateFormat'>Dissemination as &apos;marc21&apos; is not supported</error>
+      </OAI-PMH>
+      """;
+    mockContentType = "text/xml";
+    mockStatus = 200;
+
+    RestAssured.given()
+        .header(XOkapiHeaders.TENANT, TENANT_1)
+        .post("/reservoir/pmh-clients/" + PMH_CLIENT_ID + "/start")
+        .then().statusCode(204);
+
+    Awaitility.await().atMost(Duration.ofSeconds(2)).until(() -> harvestCompleted(TENANT_1, PMH_CLIENT_ID));
+
+    RestAssured.given()
+        .header(XOkapiHeaders.TENANT, TENANT_1)
+        .get("/reservoir/pmh-clients/" + PMH_CLIENT_ID + "/status")
+        .then().statusCode(200)
+        .contentType("application/json")
+        .body("items[0].status", is("idle"))
+        .body("items[0].totalRecords", is(0))
+        .body("items[0].totalRequests", is(1))
+        .body("items[0].error", is("cannotDisseminateFormat: Dissemination as 'marc21' is not supported"))
+        .body("items[0].config.id", is(PMH_CLIENT_ID))
+        .body("items[0].config.sourceId", is(SOURCE_ID_1));
+  }
+
 }
