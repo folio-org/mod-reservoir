@@ -506,6 +506,40 @@ paths:
           $ref: "#/components/responses/trait_404"
         "500":
           $ref: "#/components/responses/trait_500"
+  /reservoir/upload/records:
+    parameters:
+      - $ref: headers/okapi-tenant.yaml
+      - $ref: headers/okapi-token.yaml
+      - $ref: headers/okapi-url.yaml
+    post:
+      description: upload records.
+      operationId: uploadGlobalRecords
+      requestBody:
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              properties:
+                sourceId:
+                  type: string
+                sourceVersion:
+                  type: integer
+                localIdPath:
+                  type: string
+                records:
+                  type: string
+                  format: binary
+      responses:
+        "200":
+          description: Records accepted.
+          content:
+            application/json:
+              schema:
+                $ref: schemas/ingestRecordResponse.json
+        "400":
+          $ref: "#/components/responses/trait_400"
+        "500":
+          $ref: "#/components/responses/trait_500"
   # Global Records retrieval and simple ingest
   /reservoir/records:
     parameters:
