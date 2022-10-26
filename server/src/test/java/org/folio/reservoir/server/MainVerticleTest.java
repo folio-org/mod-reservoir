@@ -1,31 +1,16 @@
 package org.folio.reservoir.server;
 
 import io.restassured.RestAssured;
-import io.restassured.builder.RequestSpecBuilder;
-import io.restassured.config.HttpClientConfig;
-import io.restassured.config.RestAssuredConfig;
 import io.restassured.response.ExtractableResponse;
 import io.restassured.response.Response;
-import io.vertx.core.DeploymentOptions;
-import io.vertx.core.Future;
-import io.vertx.core.Vertx;
-import io.vertx.core.http.HttpServer;
 import io.vertx.core.json.JsonArray;
 import io.vertx.core.json.JsonObject;
-import io.vertx.core.net.NetServer;
-import io.vertx.core.net.NetSocket;
 import io.vertx.ext.unit.Async;
 import io.vertx.ext.unit.TestContext;
 import io.vertx.ext.unit.junit.VertxUnitRunner;
-import io.vertx.ext.web.Router;
-import io.vertx.ext.web.client.WebClient;
-import io.vertx.ext.web.client.predicate.ResponsePredicate;
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.io.InputStream;
-import java.net.URL;
-import java.nio.file.Files;
-import java.nio.file.Path;
 import java.time.Clock;
 import java.time.Duration;
 import java.time.Instant;
@@ -40,34 +25,24 @@ import java.util.List;
 import java.util.Set;
 import java.util.UUID;
 import java.util.concurrent.TimeUnit;
-import javax.xml.XMLConstants;
 import javax.xml.stream.XMLInputFactory;
 import javax.xml.stream.XMLStreamConstants;
 import javax.xml.stream.XMLStreamException;
 import javax.xml.stream.XMLStreamReader;
 import javax.xml.transform.Source;
 import javax.xml.transform.stream.StreamSource;
-import javax.xml.validation.Schema;
-import javax.xml.validation.SchemaFactory;
-import javax.xml.validation.Validator;
 
 import io.vertx.sqlclient.Tuple;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.awaitility.Awaitility;
-import org.folio.reservoir.module.impl.ModuleScripts;
 import org.folio.reservoir.server.entity.CodeModuleEntity;
 import org.folio.okapi.common.XOkapiHeaders;
-import org.folio.tlib.postgres.testing.TenantPgPoolContainer;
 import org.hamcrest.Matchers;
 import org.junit.After;
-import org.junit.AfterClass;
 import org.junit.Assert;
-import org.junit.BeforeClass;
-import org.junit.ClassRule;
 import org.junit.Test;
 import org.junit.runner.RunWith;
-import org.testcontainers.containers.PostgreSQLContainer;
 import org.xml.sax.SAXException;
 
 import static org.hamcrest.Matchers.anyOf;
@@ -82,146 +57,12 @@ import static org.hamcrest.Matchers.nullValue;
 import static org.hamcrest.Matchers.startsWith;
 
 @RunWith(VertxUnitRunner.class)
-public class MainVerticleTest {
+public class MainVerticleTest extends TestBase {
   private final static Logger log = LogManager.getLogger("MainVerticleTest");
 
-  static Vertx vertx;
-  static final int OKAPI_PORT = 9230;
-  static final String OKAPI_URL = "http://localhost:" + OKAPI_PORT;
-  static final int MODULE_PORT = 9231;
-  static final String MODULE_URL = "http://localhost:" + MODULE_PORT;
-  static final int CODE_MODULES_PORT = 9235;
-  static final int MOCK_PORT = 9232;
-  static final int UNUSED_PORT = 9233;
-  static final int NET_PORT = 9234;
-  static final String MOCK_URL = "http://localhost:" + MOCK_PORT;
-  static final String TENANT_1 = "tenant1";
-  static final String TENANT_2 = "tenant2";
   static final String PMH_CLIENT_ID = "1";
   static final String SOURCE_ID_1 = "SOURCE-1";
-  static final String MODULE_PREFIX = "mod-reservoir";
-  static final String MODULE_VERSION = "1.0.0";
-  static final String MODULE_ID = MODULE_PREFIX + "-" + MODULE_VERSION;
-
-  static int mockStatus;
-
-  static String mockBody;
-
-  static String mockContentType;
-
-  static Validator oaiSchemaValidator;
-
-  @ClassRule
-  public static PostgreSQLContainer<?> postgresSQLContainer = TenantPgPoolContainer.create();
-
-  @BeforeClass
-  public static void beforeClass(TestContext context) throws IOException, SAXException {
-    URL schemaFile = MainVerticleTest.class.getResource("/OAI-PMH.xsd");
-    SchemaFactory schemaFactory = SchemaFactory.newInstance(XMLConstants.W3C_XML_SCHEMA_NS_URI);
-    Schema schema = schemaFactory.newSchema(schemaFile);
-    oaiSchemaValidator = schema.newValidator();
-
-    vertx = Vertx.vertx();
-    WebClient webClient = WebClient.create(vertx);
-
-    RestAssured.config = RestAssuredConfig.config()
-        .httpClient(HttpClientConfig.httpClientConfig()
-            .setParam("http.socket.timeout", 15000)
-            .setParam("http.connection.timeout", 5000));
-
-    RestAssured.enableLoggingOfRequestAndResponseIfValidationFails();
-    RestAssured.baseURI = OKAPI_URL;
-    RestAssured.requestSpecification = new RequestSpecBuilder().build();
-
-    // deploy okapi
-    DeploymentOptions okapiOptions = new DeploymentOptions();
-    okapiOptions.setConfig(new JsonObject()
-        .put("port", Integer.toString(OKAPI_PORT))
-        .put("mode", "dev")
-    );
-    Future<Void> f = vertx.deployVerticle(new org.folio.okapi.MainVerticle(), okapiOptions).mapEmpty();
-
-    // deploy this module
-    f = f.compose(e -> {
-      DeploymentOptions deploymentOptions = new DeploymentOptions();
-      deploymentOptions.setConfig(new JsonObject().put("port", Integer.toString(MODULE_PORT)));
-      return vertx.deployVerticle(new MainVerticle(), deploymentOptions).mapEmpty();
-    });
-
-    String md = Files.readString(Path.of("../descriptors/ModuleDescriptor-template.json"))
-        .replace("${artifactId}", MODULE_PREFIX)
-        .replace("${version}", MODULE_VERSION);
-    log.info("Module .. {}", md);
-
-    // register module
-    f = f.compose(t ->
-        webClient.postAbs(OKAPI_URL + "/_/proxy/modules")
-            .expect(ResponsePredicate.SC_CREATED)
-            .sendJsonObject(new JsonObject(md))
-            .mapEmpty());
-
-    // tell okapi where our module is running
-    f = f.compose(t ->
-        webClient.postAbs(OKAPI_URL + "/_/discovery/modules")
-            .expect(ResponsePredicate.SC_CREATED)
-            .sendJsonObject(new JsonObject()
-                .put("instId", MODULE_ID)
-                .put("srvcId", MODULE_ID)
-                .put("url", MODULE_URL))
-            .mapEmpty());
-
-    // create tenant 1
-    f = f.compose(t ->
-        webClient.postAbs(OKAPI_URL + "/_/proxy/tenants")
-            .expect(ResponsePredicate.SC_CREATED)
-            .sendJsonObject(new JsonObject().put("id", TENANT_1))
-            .mapEmpty());
-
-    // enable module for tenant 1
-    f = f.compose(e ->
-        webClient.postAbs(OKAPI_URL + "/_/proxy/tenants/" + TENANT_1 + "/install")
-            .expect(ResponsePredicate.SC_OK)
-            .sendJson(new JsonArray().add(new JsonObject()
-                .put("id", MODULE_PREFIX)
-                .put("action", "enable")))
-            .mapEmpty());
-
-    // create tenant 2
-    f = f.compose(t ->
-        webClient.postAbs(OKAPI_URL + "/_/proxy/tenants")
-            .expect(ResponsePredicate.SC_CREATED)
-            .sendJsonObject(new JsonObject().put("id", TENANT_2))
-            .mapEmpty());
-
-    // enable module for tenant 2
-    f = f.compose(e ->
-        webClient.postAbs(OKAPI_URL + "/_/proxy/tenants/" + TENANT_2 + "/install")
-            .expect(ResponsePredicate.SC_OK)
-            .sendJson(new JsonArray().add(new JsonObject()
-                .put("id", MODULE_PREFIX)
-                .put("action", "enable")))
-            .mapEmpty());
-
-    Router router = Router.router(vertx);
-    router.get("/mock/oai").handler(c -> vertx.setTimer(10, x -> {
-      c.response().setStatusCode(mockStatus);
-      c.response().putHeader("Content-Type", mockContentType);
-      c.response().end(mockBody);
-    }));
-    HttpServer httpServer = vertx.createHttpServer().requestHandler(router);
-    f = f.compose(e -> httpServer.listen(MOCK_PORT).mapEmpty());
-    f = f.compose(e -> ModuleScripts.serveModules(vertx, CODE_MODULES_PORT).mapEmpty());
-    NetServer netServer = vertx.createNetServer().connectHandler(NetSocket::close);
-    f = f.compose(x -> netServer.listen(NET_PORT).mapEmpty());
-    f.onComplete(context.asyncAssertSuccess());
-  }
-
-  @AfterClass
-  public static void afterClass(TestContext context) {
-    tenantOp(context, TENANT_1, new JsonObject().put("module_from", MODULE_ID));
-    tenantOp(context, TENANT_2, new JsonObject().put("module_from", MODULE_ID));
-    vertx.close().onComplete(context.asyncAssertSuccess());
-  }
+  static final int UNUSED_PORT = 9233;
 
   @After
   public void after() {
@@ -2915,7 +2756,7 @@ public class MainVerticleTest {
         .body("resultInfo.totalRecords", is(0));
 
     JsonObject oaiPmhClient = new JsonObject()
-        .put("url", "http://localhost:" + OKAPI_PORT + " /reservoir/oai")
+        .put("url", OKAPI_URL + " /reservoir/oai")
         .put("set", "set-1")
         .put("sourceId", "source-1")
         .put("sourceVersion", 17)
@@ -3824,8 +3665,8 @@ public class MainVerticleTest {
 
     mockBody = """
       <?xml version="1.0" encoding="UTF-8"?>
-      <OAI-PMH xsi:schemaLocation='http://www.openarchives.org/OAI/2.0/ http://www.openarchives.org/OAI/2.0/OAI-PMH.xsd' 
-        xmlns:xsi='http://www.w3.org/2001/XMLSchema-instance' 
+      <OAI-PMH xsi:schemaLocation='http://www.openarchives.org/OAI/2.0/ http://www.openarchives.org/OAI/2.0/OAI-PMH.xsd'
+        xmlns:xsi='http://www.w3.org/2001/XMLSchema-instance'
         xmlns='http://www.openarchives.org/OAI/2.0/'>
         <responseDate>2022-10-17T18:52:44Z</responseDate>
         <request metadataPrefix='marc21' set='reshare' verb='ListRecords'>https://arcadiau.bywatersolutions.com/opac/oai.pl</request>

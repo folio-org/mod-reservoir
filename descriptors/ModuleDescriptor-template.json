@@ -340,6 +340,21 @@
           ]
         }
       ]
+    },
+    {
+      "id": "reservoir-upload",
+      "version": "1.0",
+      "handlers": [
+        {
+          "methods": [
+            "POST"
+          ],
+          "pathPattern": "/reservoir/upload/records",
+          "permissionsRequired": [
+            "reservoir-upload.post"
+          ]
+        }
+      ]
     }
   ],
   "requires": [],
@@ -567,6 +582,19 @@
       ]
     },
     {
+      "permissionName": "reservoir-upload.post",
+      "displayName": "reservoir - upload records",
+      "description": "POST upload records via multipart"
+    },
+    {
+      "permissionName": "reservoir-upload.all",
+      "displayName": "reservoir - upload",
+      "description": "upload permissions",
+      "subPermissions": [
+        "reservoir-upload.post"
+      ]
+    },
+    {
       "permissionName": "reservoir.all",
       "displayName": "reservoir - all permissions",
       "description": "All permissions",
@@ -576,7 +604,8 @@
         "reservoir-config-modules.all",
         "reservoir-config-oai.all",
         "reservoir-pmh-clients.all",
-        "reservoir-records.all"
+        "reservoir-records.all",
+        "reservoir-upload.all"
       ]
     }
   ],

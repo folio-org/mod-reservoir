@@ -51,4 +51,10 @@ public class MainVerticle extends AbstractVerticle {
         )
         .onComplete(x -> promise.handle(x.mapEmpty()));
   }
+
+  @Override
+  public void stop(Promise<Void> promise) {
+    TenantPgPool.closeAll()
+        .onComplete(promise);
+  }
 }
