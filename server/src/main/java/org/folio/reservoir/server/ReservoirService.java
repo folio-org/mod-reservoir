@@ -413,7 +413,7 @@ public class ReservoirService implements RouterCreator, TenantInitHooks {
     Throwable t = ctx.failure();
     // both semantic errors and syntax errors are from same pile ... Choosing 400 over 422.
     int statusCode = t.getClass().getName().startsWith("io.vertx.ext.web.validation") ? 400 : 500;
-    failHandler(statusCode, ctx, t.getMessage());
+    failHandler(statusCode, ctx, t);
   }
 
   static void failHandler(int statusCode, RoutingContext ctx, Throwable e) {

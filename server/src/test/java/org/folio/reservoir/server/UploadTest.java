@@ -17,7 +17,7 @@ import static org.hamcrest.Matchers.containsString;
 public class UploadTest extends TestBase {
 
   @Test
-  public void uploadEmpty(TestContext context) {
+  public void uploadOctetStream(TestContext context) {
     WebClient webClient = WebClient.create(vertx);
 
     MultipartForm body = MultipartForm.create()
@@ -45,10 +45,27 @@ public class UploadTest extends TestBase {
 
     webClient.postAbs(OKAPI_URL + "/reservoir/upload/records")
         .putHeader(XOkapiHeaders.TENANT, TENANT_1)
+        .expect(ResponsePredicate.SC_OK)
+        .sendMultipartForm(body)
+        .onComplete(context.asyncAssertSuccess());
+  }
+
+  @Test
+  public void uploadMimeTypePdf(TestContext context) {
+    WebClient webClient = WebClient.create(vertx);
+
+    MultipartForm body = MultipartForm.create()
+        .attribute("sourceId", "SOURCE-1")
+        .attribute("sourceVersion", "1")
+        .attribute("localIdPath", "path")
+        .binaryFileUpload("records", "records.mrc", Buffer.buffer(),  "application/pdf");
+
+    webClient.postAbs(OKAPI_URL + "/reservoir/upload/records")
+        .putHeader(XOkapiHeaders.TENANT, TENANT_1)
         .expect(ResponsePredicate.SC_BAD_REQUEST)
         .sendMultipartForm(body)
         .onComplete(context.asyncAssertSuccess(res ->
-          assertThat(res.bodyAsString(), containsString("File with content type \\Qapplication/octet-stream\\E and name records is missing"))
+            assertThat(res.bodyAsString(), containsString("File with content type \\Qapplication/octet-stream"))
         ));
   }
 

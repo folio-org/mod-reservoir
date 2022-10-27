@@ -529,6 +529,11 @@ paths:
                 records:
                   type: string
                   format: binary
+            encoding:
+              records:
+                # MARC not that common (say .mrc) often defaults to application/octet-stream
+                contentType: application/octet-stream,application/marc,
+                  application/zip,application/gzip,application/xml,test/xml
       responses:
         "200":
           description: Records accepted.
