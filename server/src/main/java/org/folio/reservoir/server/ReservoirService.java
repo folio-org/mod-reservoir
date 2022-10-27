@@ -201,7 +201,7 @@ public class ReservoirService implements RouterCreator, TenantInitHooks {
 
   Future<Void> postConfigMatchKey(RoutingContext ctx) {
     Storage storage = new Storage(ctx);
-    JsonObject request = ctx.getBodyAsJson();
+    JsonObject request = ctx.body().asJsonObject();
     String id = request.getString("id");
     String method = getMethod(request);
     String update = request.getString("update", "ingest");
@@ -230,7 +230,7 @@ public class ReservoirService implements RouterCreator, TenantInitHooks {
 
   Future<Void> putConfigMatchKey(RoutingContext ctx) {
     Storage storage = new Storage(ctx);
-    JsonObject request = ctx.getBodyAsJson();
+    JsonObject request = ctx.body().asJsonObject();
     String id = request.getString("id");
     String method = getMethod(request);
     String update = request.getString("update", "ingest");
@@ -311,7 +311,7 @@ public class ReservoirService implements RouterCreator, TenantInitHooks {
 
   Future<Void> postCodeModule(RoutingContext ctx) {
     Storage storage = new Storage(ctx);
-    CodeModuleEntity e = new CodeModuleEntity.CodeModuleBuilder(ctx.getBodyAsJson()).build();
+    CodeModuleEntity e = new CodeModuleEntity.CodeModuleBuilder(ctx.body().asJsonObject()).build();
 
     ModuleCache.getInstance().purge(TenantUtil.tenant(ctx), e.getId());
     return ModuleCache.getInstance().lookup(ctx.vertx(), TenantUtil.tenant(ctx), e.asJson())
@@ -340,7 +340,7 @@ public class ReservoirService implements RouterCreator, TenantInitHooks {
 
   Future<Void> putCodeModule(RoutingContext ctx) {
     Storage storage = new Storage(ctx);
-    CodeModuleEntity e = new CodeModuleEntity.CodeModuleBuilder(ctx.getBodyAsJson()).build();
+    CodeModuleEntity e = new CodeModuleEntity.CodeModuleBuilder(ctx.body().asJsonObject()).build();
     return ModuleCache.getInstance().lookup(ctx.vertx(), TenantUtil.tenant(ctx), e.asJson())
         .compose(module -> storage.updateCodeModuleEntity(e)
             .onSuccess(res -> {
@@ -389,7 +389,7 @@ public class ReservoirService implements RouterCreator, TenantInitHooks {
 
   Future<Void> putOaiConfig(RoutingContext ctx) {
     Storage storage = new Storage(ctx);
-    JsonObject request = ctx.getBodyAsJson();
+    JsonObject request = ctx.body().asJsonObject();
     return storage.updateOaiConfig(request)
         .onSuccess(res -> {
           if (Boolean.FALSE.equals(res)) {
@@ -489,7 +489,7 @@ public class ReservoirService implements RouterCreator, TenantInitHooks {
           // this endpoint is streaming, and we handle it without OpenAPI and validation
           router.put("/reservoir/records").handler(ctx ->
               putGlobalRecords(ctx).onFailure(cause -> failHandler(400, ctx, cause)));
-          router.mountSubRouter("/", routerBuilder.createRouter());
+          router.route("/*").subRouter(routerBuilder.createRouter());
           return router;
         });
   }
