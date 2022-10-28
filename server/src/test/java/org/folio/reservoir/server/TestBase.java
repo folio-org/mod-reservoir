@@ -47,6 +47,7 @@ public class TestBase {
   protected static final int CODE_MODULES_PORT = 9235;
   protected static final int MOCK_PORT = 9232;
   protected static final int NET_PORT = 9234;
+  protected static final int NEXT_PORT = 9236;
   protected static final String MOCK_URL = "http://localhost:" + MOCK_PORT;
   protected static final String TENANT_1 = "tenant1";
   protected static final String TENANT_2 = "tenant2";

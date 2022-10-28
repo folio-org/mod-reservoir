@@ -7,6 +7,7 @@ import io.vertx.ext.web.client.WebClient;
 import io.vertx.ext.web.client.predicate.ResponsePredicate;
 import io.vertx.ext.web.multipart.MultipartForm;
 import org.folio.okapi.common.XOkapiHeaders;
+import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 
@@ -16,19 +17,27 @@ import static org.hamcrest.Matchers.containsString;
 @RunWith(VertxUnitRunner.class)
 public class UploadTest extends TestBase {
 
+  Buffer marc3Buffer;
+  @Before
+  public void before(TestContext context) {
+        vertx.fileSystem().readFile("src/test/resources/marc3.marc")
+        .onSuccess(x -> marc3Buffer = x)
+        .onComplete(context.asyncAssertSuccess());
+  }
+
   @Test
-  public void uploadOctetStream(TestContext context) {
+  public void uploadMimeTypeOctetStream(TestContext context) {
     WebClient webClient = WebClient.create(vertx);
 
     MultipartForm body = MultipartForm.create()
-        .attribute("sourceId", "SOURCE-1")
-        .attribute("sourceVersion", "1")
-        .attribute("localIdPath", "path")
-        .binaryFileUpload("records", "records.mrc", Buffer.buffer(), "application/octet-stream");
+        .binaryFileUpload("records", "tiny.mrc", Buffer.buffer("01234"), "application/octet-stream");
 
     webClient.postAbs(OKAPI_URL + "/reservoir/upload/records")
-        .putHeader(XOkapiHeaders.TENANT, TENANT_1)
         .expect(ResponsePredicate.SC_OK)
+        .putHeader(XOkapiHeaders.TENANT, TENANT_1)
+        .addQueryParam("sourceId", "SOURCE-1")
+        .addQueryParam("sourceVersion", "1")
+        .addQueryParam("localIdPath", "path")
         .sendMultipartForm(body)
         .onComplete(context.asyncAssertSuccess());
   }
@@ -38,14 +47,14 @@ public class UploadTest extends TestBase {
     WebClient webClient = WebClient.create(vertx);
 
     MultipartForm body = MultipartForm.create()
-        .attribute("sourceId", "SOURCE-1")
-        .attribute("sourceVersion", "1")
-        .attribute("localIdPath", "path")
-        .binaryFileUpload("records", "records.mrc", Buffer.buffer(),  "application/marc");
+        .binaryFileUpload("records", "marc3.mrc", marc3Buffer,  "application/marc");
 
     webClient.postAbs(OKAPI_URL + "/reservoir/upload/records")
-        .putHeader(XOkapiHeaders.TENANT, TENANT_1)
         .expect(ResponsePredicate.SC_OK)
+        .putHeader(XOkapiHeaders.TENANT, TENANT_1)
+        .addQueryParam("sourceId", "SOURCE-1")
+        .addQueryParam("sourceVersion", "1")
+        .addQueryParam("localIdPath", "path")
         .sendMultipartForm(body)
         .onComplete(context.asyncAssertSuccess());
   }
@@ -55,17 +64,17 @@ public class UploadTest extends TestBase {
     WebClient webClient = WebClient.create(vertx);
 
     MultipartForm body = MultipartForm.create()
-        .attribute("sourceId", "SOURCE-1")
-        .attribute("sourceVersion", "1")
-        .attribute("localIdPath", "path")
         .binaryFileUpload("records", "records.mrc", Buffer.buffer(),  "application/pdf");
 
     webClient.postAbs(OKAPI_URL + "/reservoir/upload/records")
-        .putHeader(XOkapiHeaders.TENANT, TENANT_1)
         .expect(ResponsePredicate.SC_BAD_REQUEST)
+        .putHeader(XOkapiHeaders.TENANT, TENANT_1)
+        .addQueryParam("sourceId", "SOURCE-1")
+        .addQueryParam("sourceVersion", "1")
+        .addQueryParam("localIdPath", "path")
         .sendMultipartForm(body)
         .onComplete(context.asyncAssertSuccess(res ->
-            assertThat(res.bodyAsString(), containsString("File with content type \\Qapplication/octet-stream"))
+            assertThat(res.bodyAsString(), containsString("Unsupported content-type: application/pdf"))
         ));
   }
 
