@@ -1,14 +1,11 @@
 package org.folio.reservoir.server;
 
 import io.vertx.core.Future;
-import io.vertx.core.MultiMap;
 import io.vertx.core.Promise;
-import io.vertx.core.http.HttpServerFileUpload;
 import io.vertx.core.http.HttpServerRequest;
 import io.vertx.core.json.JsonObject;
+import io.vertx.core.streams.Pump;
 import io.vertx.ext.web.RoutingContext;
-import io.vertx.ext.web.validation.RequestParameters;
-import io.vertx.ext.web.validation.ValidationHandler;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.folio.okapi.common.HttpResponse;
@@ -34,29 +31,14 @@ public class UploadService {
       try {
         UploadDocument uploadDocument = new UploadDocument(upload.contentType(), upload.filename(),
             sourceId, sourceVersion, localIdPath);
-
-        upload.handler(x -> {
-          uploadDocument.handler(x);
-          log.info("upload handler got {} bytes", x.length());
-        });
-        upload.endHandler(e -> {
-          MultiMap entries = request.formAttributes();
-          entries.forEach((k, v) -> log.info("form {}={}", k, v));
-          uploadDocument.endHandler();
-          log.info("End upload");
-        });
+        Pump pump = Pump.pump(upload, uploadDocument);
+        pump.start();
       } catch (Exception e) {
         promise.tryFail(e);
       }
     });
-    request.handler(x -> {
-      log.info("Got {} bytes", x.length());
-    });
-    request.handler(x -> log.info("request handler got {}", x.length()));
     request.endHandler(e -> {
       if (promise.tryComplete()) {
-        MultiMap entries = request.formAttributes();
-        entries.forEach((k, v) -> log.info("form {}={}", k, v));
         JsonObject res = new JsonObject();
         HttpResponse.responseJson(ctx, 200).end(res.encode());
       }
