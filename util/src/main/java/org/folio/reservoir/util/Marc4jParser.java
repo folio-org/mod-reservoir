@@ -90,36 +90,48 @@ public class Marc4jParser implements ReadStream<Record>, Handler<Buffer> {
     return this;
   }
 
-  private Record getNext() {
-    if (pendingBuffer.length() < 24) {
-      return null;
+  private int getNext(int sz) {
+    if (pendingBuffer.length() - sz < 24) {
+      return 0;
     }
-    String lead = pendingBuffer.getString(0, 5);
-    int length = Integer.parseInt(lead);
-    if (length < 24 || pendingBuffer.length() < length) {
-      return null;
+    // skip up to 5 non-digit bytes (bad data)
+    for (int i = 0; i < 5; i++) {
+      byte leadByte = pendingBuffer.getByte(sz);
+      if (leadByte >= '0' && leadByte <= '9') {
+        String lead = pendingBuffer.getString(sz, sz + 5);
+        int length = Integer.parseInt(lead);
+        return length < 24 || pendingBuffer.length() - sz < length ? 0 : length;
+      }
+      sz++;
     }
-    InputStream inputStream = new ByteArrayInputStream(pendingBuffer.getBytes(0, length));
-    pendingBuffer = pendingBuffer.getBuffer(length, pendingBuffer.length());
-    MarcReader marcReader = new MarcPermissiveStreamReader(inputStream, true, true);
-    return marcReader.next();
+    return 0;
   }
 
   private void checkPending()  {
     if (!emitting) {
       emitting = true;
       try {
+        int sz = 0;
         while (demand > 0L) {
-          Record record = getNext();
-          if (record == null) {
+          int add = getNext(sz);
+          if (add == 0) {
             break;
           }
+          sz += add;
           if (demand != Long.MAX_VALUE) {
             --demand;
           }
-          if (eventHandler != null) {
-            eventHandler.handle(record);
+        }
+        if (sz > 0) {
+          InputStream inputStream = new ByteArrayInputStream(pendingBuffer.getBytes(0, sz));
+          MarcReader marcReader = new MarcPermissiveStreamReader(inputStream, true, true);
+          while (marcReader.hasNext()) {
+            Record r = marcReader.next();
+            if (eventHandler != null) {
+              eventHandler.handle(r);
+            }
           }
+          pendingBuffer = pendingBuffer.getBuffer(sz, pendingBuffer.length());
         }
         if (ended) {
           Handler<Void> handler = endHandler;
