@@ -32,7 +32,7 @@ public class UploadTest extends TestBase {
     MultipartForm body = MultipartForm.create()
         .binaryFileUpload("records", "tiny.mrc", Buffer.buffer("01234"), "application/octet-stream");
 
-    webClient.postAbs(OKAPI_URL + "/reservoir/upload/records")
+    webClient.postAbs(OKAPI_URL + "/reservoir/upload")
         .expect(ResponsePredicate.SC_OK)
         .putHeader(XOkapiHeaders.TENANT, TENANT_1)
         .addQueryParam("sourceId", "SOURCE-1")
@@ -49,7 +49,7 @@ public class UploadTest extends TestBase {
     MultipartForm body = MultipartForm.create()
         .binaryFileUpload("records", "marc3.mrc", marc3Buffer,  "application/marc");
 
-    webClient.postAbs(OKAPI_URL + "/reservoir/upload/records")
+    webClient.postAbs(OKAPI_URL + "/reservoir/upload")
         .expect(ResponsePredicate.SC_OK)
         .putHeader(XOkapiHeaders.TENANT, TENANT_1)
         .addQueryParam("sourceId", "SOURCE-1")
@@ -66,7 +66,7 @@ public class UploadTest extends TestBase {
     MultipartForm body = MultipartForm.create()
         .binaryFileUpload("records", "records.mrc", Buffer.buffer(),  "application/pdf");
 
-    webClient.postAbs(OKAPI_URL + "/reservoir/upload/records")
+    webClient.postAbs(OKAPI_URL + "/reservoir/upload")
         .expect(ResponsePredicate.SC_BAD_REQUEST)
         .putHeader(XOkapiHeaders.TENANT, TENANT_1)
         .addQueryParam("sourceId", "SOURCE-1")

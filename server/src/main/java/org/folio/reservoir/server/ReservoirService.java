@@ -488,7 +488,7 @@ public class ReservoirService implements RouterCreator, TenantInitHooks {
           // this endpoint is streaming, and we handle it without OpenAPI and validation
           router.put("/reservoir/records").handler(ctx ->
               putGlobalRecords(ctx).onFailure(cause -> failHandler(400, ctx, cause)));
-          router.post("/reservoir/upload/records").handler(ctx ->
+          router.post("/reservoir/upload").handler(ctx ->
               uploadService.uploadRecords(ctx).onFailure(cause -> failHandler(400, ctx, cause)));
           router.route("/*").subRouter(routerBuilder.createRouter());
           return router;

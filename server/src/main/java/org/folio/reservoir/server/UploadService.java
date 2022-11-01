@@ -2,17 +2,35 @@ package org.folio.reservoir.server;
 
 import io.vertx.core.Future;
 import io.vertx.core.Promise;
+import io.vertx.core.buffer.Buffer;
 import io.vertx.core.http.HttpServerRequest;
 import io.vertx.core.json.JsonObject;
-import io.vertx.core.streams.Pump;
+import io.vertx.core.streams.ReadStream;
 import io.vertx.ext.web.RoutingContext;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.folio.okapi.common.HttpResponse;
+import org.folio.reservoir.util.Marc4jParser;
 
 public class UploadService {
 
   private static final Logger log = LogManager.getLogger(UploadService.class);
+
+  private void uploadOctetStream(Promise<Void> promise, ReadStream<Buffer> upload) {
+    try {
+      Marc4jParser marc4jParser = new Marc4jParser(upload);
+      upload.endHandler(x -> marc4jParser.end());
+      marc4jParser.exceptionHandler(e -> {
+        log.error("marc4jParser exception", e);
+        promise.tryFail(e);
+      });
+      marc4jParser.handler(r -> log.error("Got record leader={}", r.getLeader()));
+      marc4jParser.endHandler(e -> log.error("All records processed"));
+    } catch (Exception e) {
+      log.error("upload exception", e);
+      promise.tryFail(e);
+    }
+  }
 
   /**
    * non-OpenAPI upload records service handler.
@@ -28,13 +46,13 @@ public class UploadService {
     String localIdPath = request.getParam("localIdPath");
     Promise<Void> promise = Promise.promise();
     request.uploadHandler(upload -> {
-      try {
-        UploadDocument uploadDocument = new UploadDocument(upload.contentType(), upload.filename(),
-            sourceId, sourceVersion, localIdPath);
-        Pump pump = Pump.pump(upload, uploadDocument);
-        pump.start();
-      } catch (Exception e) {
-        promise.tryFail(e);
+      switch (upload.contentType()) {
+        case "application/octet-stream":
+        case "application/marc":
+          uploadOctetStream(promise, upload);
+          break;
+        default:
+          promise.tryFail("Unsupported content-type: " + upload.contentType());
       }
     });
     request.endHandler(e -> {

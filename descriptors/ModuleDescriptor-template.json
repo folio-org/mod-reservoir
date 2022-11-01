@@ -349,7 +349,7 @@
           "methods": [
             "POST"
           ],
-          "pathPattern": "/reservoir/upload/records",
+          "pathPattern": "/reservoir/upload",
           "permissionsRequired": [
             "reservoir-upload.post"
           ]
