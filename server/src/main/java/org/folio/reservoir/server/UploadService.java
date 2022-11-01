@@ -19,7 +19,6 @@ public class UploadService {
   private void uploadOctetStream(Promise<Void> promise, ReadStream<Buffer> upload) {
     try {
       Marc4jParser marc4jParser = new Marc4jParser(upload);
-      upload.endHandler(x -> marc4jParser.end());
       marc4jParser.exceptionHandler(e -> {
         log.error("marc4jParser exception", e);
         promise.tryFail(e);
