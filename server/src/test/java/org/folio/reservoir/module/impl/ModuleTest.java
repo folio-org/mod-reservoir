@@ -6,6 +6,9 @@ import io.vertx.core.json.JsonArray;
 import io.vertx.core.json.JsonObject;
 import io.vertx.ext.unit.TestContext;
 import io.vertx.ext.unit.junit.VertxUnitRunner;
+
+import java.util.Collection;
+import java.util.HashSet;
 import java.util.UUID;
 import org.folio.reservoir.module.ModuleCache;
 import org.folio.reservoir.server.entity.ClusterBuilder;
@@ -295,6 +298,7 @@ public class ModuleTest {
         .put("url", HOSTPORT + "/lib/marc-transformer.mjs")
         .put("function", "transform1");
     ModuleCache.getInstance().lookup(vertx, TENANT, config1)
+        .compose(m -> m.execute(null).eventually(x -> m.terminate()))
         .onComplete(context.asyncAssertFailure(e -> 
             assertThat(e.getMessage(), containsString("does not include function transform1"))));
   }
@@ -317,7 +321,7 @@ public class ModuleTest {
         .put("function", "transform");
     ModuleCache.getInstance().lookup(vertx, TENANT, config1)
         .onComplete(context.asyncAssertFailure(e ->
-            assertThat(e.getMessage(), is("Module config must include 'url'"))));
+            assertThat(e.getMessage(), is("Module config must include 'url' or 'script'"))));
   }
 
   @Test
@@ -326,8 +330,7 @@ public class ModuleTest {
         .put("id", "marc-transformer")
         .put("url", HOSTPORT + "/lib/marc-transformer.mjs");
     ModuleCache.getInstance().lookup(vertx, TENANT, config1)
-        .onComplete(context.asyncAssertFailure(e ->
-            assertThat(e.getMessage(), is("Module config must include 'function'"))));
+        .onComplete(context.asyncAssertSuccess());
   }
 
   @Test
@@ -350,7 +353,150 @@ public class ModuleTest {
     ModuleCache.getInstance().lookup(vertx, TENANT, config1)
         .onComplete(context.asyncAssertFailure(e ->
             assertThat(e.getMessage(),
-            is("Config error: cannot retrieve transformer at " + url + " (404)"))));
+            is("Config error: cannot retrieve module 'marc-transformer' at " + url + " (404)"))));
+  }
+
+  @Test
+  public void testJsonPathModule(TestContext context) {
+    Collection<String> expected = new HashSet<>();
+    expected.add("source-1 title");
+
+    JsonObject payload = new JsonObject()
+        .put("marc", new JsonObject()
+          .put("leader", "leader-1")
+          .put("fields", new JsonArray()
+              .add(new JsonObject()
+                  .put("245", new JsonObject()
+                      .put("subfields", new JsonArray()
+                          .add(new JsonObject().put("a", "source-1 title"))
+                      )
+                  )
+              )
+              .add(new JsonObject()
+                  .put("998", new JsonObject()
+                      .put("subfields", new JsonArray()
+                          .add(new JsonObject().put("x", "source-1 location"))
+                      )
+                  )
+              )
+          )
+      );
+
+    JsonObject config = new JsonObject()
+      .put("id", "matchkey-title")
+      .put("type", "jsonpath")
+      .put("script", "$.marc.fields[*].245.subfields[*].a");
+
+    ModuleCache.getInstance()
+      .lookup(vertx, TENANT, config)
+      .map(m -> m.executeAsCollection(payload))
+      .onComplete(context.asyncAssertSuccess(result -> context.assertEquals(expected, result)));
+
+  }
+
+  @Test
+  public void testInlineJsMatchkeyModule(TestContext context) {
+    Collection<String> expected = new HashSet<>();
+    expected.add("73209629");
+    expected.add("73209623");
+
+    JsonObject payload = new JsonObject()
+        .put("identifiers", new JsonArray()
+            .add(new JsonObject()
+                .put("isbn", "73209629"))
+            .add(new JsonObject()
+                .put("isbn", "73209623"))
+
+        );
+
+    JsonObject config = new JsonObject()
+      .put("id", "matchkey-isbn")
+      .put("type", "javascript")
+      .put("script", "x => {"
+      + "var identifiers = JSON.parse(x).identifiers;"
+      + "const isbn = [];"
+      + "for (i = 0; i < identifiers.length; i++) {"
+      + "  isbn.push(identifiers[i].isbn);"
+      + "}"
+      + "return isbn;"
+      + "}");
+
+    ModuleCache.getInstance()
+      .lookup(vertx, TENANT, config)
+      .map(m -> m.executeAsCollection(payload))
+      .onComplete(context.asyncAssertSuccess(result -> context.assertEquals(expected, result)));
+
+  }
+
+  @Test
+  public void testJsMatchkeyModuleNoFunction(TestContext context) {
+
+    JsonObject config = new JsonObject()
+      .put("id", "matchkey-isbn")
+      .put("type", "javascript")
+      .put("url", HOSTPORT + "/lib/matchkey-isbn.mjs");
+
+    ModuleCache.getInstance()
+      .lookup(vertx, TENANT, config)
+      .map(m -> m.executeAsCollection(new JsonObject()))
+      .onComplete(context.asyncAssertFailure(e -> 
+        assertThat(e.getMessage(), is("JS url modules require 'function' defined in config or by caller"))));
+
+  }
+
+  @Test
+  public void testJsMatchkeyModuleFunctionInConfig(TestContext context) {
+    Collection<String> expected = new HashSet<>();
+    expected.add("73209629");
+    expected.add("73209623");
+
+    JsonObject payload = new JsonObject()
+        .put("identifiers", new JsonArray()
+            .add(new JsonObject()
+                .put("isbn", "73209629"))
+            .add(new JsonObject()
+                .put("isbn", "73209623"))
+
+        );
+
+    JsonObject config = new JsonObject()
+      .put("id", "matchkey-isbn")
+      .put("type", "javascript")
+      .put("url", HOSTPORT + "/lib/matchkey-isbn.mjs")
+      .put("function", "matchkey");
+
+    ModuleCache.getInstance()
+      .lookup(vertx, TENANT, config)
+      .map(m -> m.executeAsCollection(payload))
+      .onComplete(context.asyncAssertSuccess(result -> context.assertEquals(expected, result)));
+
+  }
+
+  @Test
+  public void testJsMatchkeyModuleFunctionByCaller(TestContext context) {
+    Collection<String> expected = new HashSet<>();
+    expected.add("73209629");
+    expected.add("73209623");
+
+    JsonObject payload = new JsonObject()
+        .put("identifiers", new JsonArray()
+            .add(new JsonObject()
+                .put("isbn", "73209629"))
+            .add(new JsonObject()
+                .put("isbn", "73209623"))
+
+        );
+
+    JsonObject config = new JsonObject()
+      .put("id", "matchkey-isbn")
+      .put("type", "javascript")
+      .put("url", HOSTPORT + "/lib/matchkey-isbn.mjs");
+
+    ModuleCache.getInstance()
+      .lookup(vertx, TENANT, config)
+      .map(m -> m.executeAsCollection("matchkey", payload))
+      .onComplete(context.asyncAssertSuccess(result -> context.assertEquals(expected, result)));
+
   }
 
 

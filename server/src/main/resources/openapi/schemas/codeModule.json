@@ -4,19 +4,28 @@
   "properties": {
     "id": {
       "type": "string",
-      "description" : "local module identifier"
+      "description" : "local identifier of the module, name"
+    },
+    "type": {
+      "type": "string",
+      "description": "type of the module'",
+      "enum": ["jsonpath", "javascript"]
     },
     "url": {
       "type": "string",
-      "description": "HTTP URL of the module (e.g GitHub raw/usercontent)"
+      "description": "HTTP URL of the module e.g GitHub url, required if no 'script' specified"
+    },
+    "script": {
+      "type": "string",
+      "description": "inline contents of the code module"
     },
     "function": {
       "type": "string",
-      "description": "name of the exported function to be invoked, with JSONObjectString -> JSONObjectString signature"
+      "description": "default function, used if not specified at call site"
     }
   },
   "additionalProperties": false,
   "required": [
-    "id", "url", "function"
+    "id"
   ]
 }

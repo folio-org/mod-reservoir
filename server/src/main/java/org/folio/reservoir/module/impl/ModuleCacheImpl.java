@@ -33,6 +33,18 @@ public class ModuleCacheImpl implements ModuleCache {
 
   }
 
+  private Module createInstance(String type) {
+    if (type == null) {
+      type = "";
+    }
+    switch (type) {
+      case "jsonpath": return new ModuleJsonPath();
+      case "javascript": return new ModuleJavaScript();
+      case "": return new ModuleJavaScript();
+      default: throw new IllegalArgumentException("Unknown module type '" + type + "'");
+    }
+  }
+
   @Override
   public Future<Module> lookup(Vertx vertx, String tenantId, JsonObject config) {
     String moduleId = config.getString("id");
@@ -48,7 +60,7 @@ public class ModuleCacheImpl implements ModuleCache {
       entry.module.terminate();
       entries.remove(cacheKey);
     }
-    Module module = new EsModuleImpl();
+    Module module = createInstance(config.getString("type"));
     return module.initialize(vertx, config).map(x -> {
       CacheEntry e = new CacheEntry(module, config);
       entries.put(cacheKey, e);
