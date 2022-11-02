@@ -3,11 +3,14 @@ package org.folio.reservoir.server.entity;
 import io.vertx.core.json.JsonObject;
 import io.vertx.sqlclient.Row;
 import io.vertx.sqlclient.Tuple;
+import java.util.Objects;
 
 public class CodeModuleEntity {
   private final String id;
+  private final String type;
   private final String url;
   private final String function;
+  private final String script;
 
   /**
    * Create code module entity from arguments.
@@ -15,18 +18,28 @@ public class CodeModuleEntity {
    * @param url url to the module
    * @param function function exported by the module
    */
-  public CodeModuleEntity(String id, String url, String function) {
+  public CodeModuleEntity(String id, String type, String url, String function, String script) {
     this.id = id;
+    this.type = type;
     this.url = url;
     this.function = function;
+    this.script = script;
   }
-
+  
   /**
    * Return the id.
    * @return the id
    */
   public String getId() {
     return id;
+  }
+  
+  /**
+   * Type of the module, e.g jsonpath or javascript.
+   * @return the type
+   */
+  public String getType() {
+    return type;
   }
 
   /**
@@ -36,7 +49,7 @@ public class CodeModuleEntity {
   public String getUrl() {
     return url;
   }
-
+  
   /**
    * Return the function name.
    * @return the function
@@ -44,6 +57,16 @@ public class CodeModuleEntity {
   public String getFunction() {
     return function;
   }
+  
+
+  /**
+   * Inline code script.
+   * @return the script
+   */
+  public String getScript() {
+    return script;
+  }
+  
 
   /**
    * Encode the entity as JSON.
@@ -51,27 +74,65 @@ public class CodeModuleEntity {
    */
   public JsonObject asJson() {
     return new JsonObject()
-      .put(CodeModuleBuilder.ID_FIELD, id)
-      .put(CodeModuleBuilder.URL_FIELD, url)
-      .put(CodeModuleBuilder.FUNCTION_FIELD, function);
+    .put(CodeModuleBuilder.ID_FIELD, id)
+    .put(CodeModuleBuilder.TYPE_FIELD, type)
+    .put(CodeModuleBuilder.URL_FIELD, url)
+    .put(CodeModuleBuilder.FUNCTION_FIELD, function)
+    .put(CodeModuleBuilder.SCRIPT_FIELD, script);
   }
-
+  
   /**
    * Encode the entity as Tuple.
    * @return Tuple object
    */
   public Tuple asTuple() {
-    return Tuple.of(id, url, function);
+    return Tuple.of(id, type, url, function, script);
   }
 
+
+  /* (non-Javadoc)
+   * @see java.lang.Object#hashCode()
+   */
+  
+  @Override
+  public int hashCode() {
+    return Objects.hash(id, type, url, function, script);
+  }
+
+  /* (non-Javadoc)
+   * @see java.lang.Object#equals(java.lang.Object)
+   */
+  
+  @Override
+  public boolean equals(Object obj) {
+    if (this == obj) {
+      return true;
+    }
+    if (obj == null) {
+      return false;
+    }
+    if (getClass() != obj.getClass()) {
+      return false;
+    }
+    CodeModuleEntity other = (CodeModuleEntity) obj;
+    return Objects.equals(id, other.id) 
+        && Objects.equals(type, other.type) 
+        && Objects.equals(url, other.url)
+        && Objects.equals(function, other.function) 
+        && Objects.equals(script, other.script);
+  }
 
   public static class CodeModuleBuilder {
 
     public static final String ID_FIELD = "id";
 
+    public static final String TYPE_FIELD = "type";
+    
     public static final String URL_FIELD = "url";
-
+    
     public static final String FUNCTION_FIELD = "function";
+    
+    public static final String SCRIPT_FIELD = "script";
 
     private final JsonObject json;
 
@@ -88,6 +149,11 @@ public class CodeModuleEntity {
       json = asJson(row);
     }
 
+    public CodeModuleBuilder type(String type) {
+      json.put(TYPE_FIELD, type);
+      return this;
+    }
+
     public CodeModuleBuilder url(String url) {
       json.put(URL_FIELD, url);
       return this;
@@ -98,6 +164,11 @@ public class CodeModuleEntity {
       return this;
     }
 
+    public CodeModuleBuilder script(String script) {
+      json.put(SCRIPT_FIELD, script);
+      return this;
+    }
+
     /**
      * Build the entity.
      * @return entity
@@ -105,8 +176,10 @@ public class CodeModuleEntity {
     public CodeModuleEntity build() {
       return new CodeModuleEntity(
         json.getString(ID_FIELD),
+        json.getString(TYPE_FIELD),
         json.getString(URL_FIELD),
-        json.getString(FUNCTION_FIELD)
+        json.getString(FUNCTION_FIELD),
+        json.getString(SCRIPT_FIELD)
       );
     }
 
@@ -125,8 +198,10 @@ public class CodeModuleEntity {
     public static JsonObject asJson(Row row) {
       return new JsonObject()
         .put(ID_FIELD, row.getString(ID_FIELD))
+        .put(TYPE_FIELD, row.getString(TYPE_FIELD))
         .put(URL_FIELD, row.getString(URL_FIELD))
-        .put(FUNCTION_FIELD, row.getString(FUNCTION_FIELD));
+        .put(FUNCTION_FIELD, row.getString(FUNCTION_FIELD))
+        .put(SCRIPT_FIELD, row.getString(SCRIPT_FIELD));
     }
 
     /**
@@ -137,11 +212,15 @@ public class CodeModuleEntity {
     public static JsonObject asJson(JsonObject source) {
       return new JsonObject()
         .put(ID_FIELD, source.getString(ID_FIELD))
+        .put(TYPE_FIELD, source.getString(TYPE_FIELD))
         .put(URL_FIELD, source.getString(URL_FIELD))
-        .put(FUNCTION_FIELD, source.getString(FUNCTION_FIELD));
+        .put(FUNCTION_FIELD, source.getString(FUNCTION_FIELD))
+        .put(SCRIPT_FIELD, source.getString(SCRIPT_FIELD));
     }
 
 
   }
+
+
 
 }

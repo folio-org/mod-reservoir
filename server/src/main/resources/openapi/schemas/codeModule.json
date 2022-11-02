@@ -15,13 +15,13 @@
       "type": "string",
       "description": "HTTP URL of the module e.g GitHub url, required if no 'script' specified"
     },
-    "script": {
-      "type": "string",
-      "description": "inline contents of the code module"
-    },
     "function": {
       "type": "string",
       "description": "default function, used if not specified at call site"
+    },
+    "script": {
+      "type": "string",
+      "description": "inline contents of the code module"
     }
   },
   "additionalProperties": false,

@@ -7,6 +7,7 @@ import java.util.HashMap;
 import java.util.Map;
 import org.folio.reservoir.module.Module;
 import org.folio.reservoir.module.ModuleCache;
+import org.folio.reservoir.server.entity.CodeModuleEntity;
 
 public class ModuleCacheImpl implements ModuleCache {
 
@@ -24,11 +25,11 @@ public class ModuleCacheImpl implements ModuleCache {
 
   private class CacheEntry {
     private final Module module;
-    private final JsonObject config;
+    private final CodeModuleEntity entity;
 
-    CacheEntry(Module module, JsonObject config) {
+    CacheEntry(Module module, CodeModuleEntity entity) {
       this.module = module;
-      this.config = config;
+      this.entity = entity;
     }
 
   }
@@ -46,23 +47,23 @@ public class ModuleCacheImpl implements ModuleCache {
   }
 
   @Override
-  public Future<Module> lookup(Vertx vertx, String tenantId, JsonObject config) {
-    String moduleId = config.getString("id");
+  public Future<Module> lookup(Vertx vertx, String tenantId, CodeModuleEntity entity) {
+    String moduleId = entity.getId();
     if (moduleId == null) {
       return Future.failedFuture("module config must include 'id'");
     }
     String cacheKey = tenantId + ":" + moduleId;
     CacheEntry entry = entries.get(cacheKey);
     if (entry != null) {
-      if (entry.config.equals(config)) {
+      if (entry.entity.equals(entity)) {
         return Future.succeededFuture(entry.module);
       }
       entry.module.terminate();
       entries.remove(cacheKey);
     }
-    Module module = createInstance(config.getString("type"));
-    return module.initialize(vertx, config).map(x -> {
-      CacheEntry e = new CacheEntry(module, config);
+    Module module = createInstance(entity.getType());
+    return module.initialize(vertx, entity).map(x -> {
+      CacheEntry e = new CacheEntry(module, entity);
       entries.put(cacheKey, e);
       return module;
     });

@@ -12,6 +12,7 @@ import java.util.Collection;
 import java.util.HashSet;
 import org.folio.okapi.common.WebClientFactory;
 import org.folio.reservoir.module.Module;
+import org.folio.reservoir.server.entity.CodeModuleEntity;
 import org.graalvm.polyglot.Context;
 import org.graalvm.polyglot.Source;
 import org.graalvm.polyglot.Value;
@@ -24,17 +25,17 @@ public class ModuleJavaScript implements Module {
   private Context context;
 
   @Override
-  public Future<Void> initialize(Vertx vertx, JsonObject config) {
-    id = config.getString("id");
+  public Future<Void> initialize(Vertx vertx, CodeModuleEntity entity) {
+    id = entity.getId();
     if (id == null || id.isEmpty()) {
       return Future.failedFuture(
         new IllegalArgumentException("Module config must include 'id'"));
     }
-    String url = config.getString("url");
-    String script = config.getString("script");
+    String url = entity.getUrl();
+    String script = entity.getScript();
     if (url != null && !url.isEmpty()) {
       //url always points to an ES module
-      defaultFunctionName = config.getString("function");
+      defaultFunctionName = entity.getFunction();
       final boolean isModule = url.endsWith("mjs");
       if (!isModule) {
         return Future.failedFuture(new IllegalArgumentException(

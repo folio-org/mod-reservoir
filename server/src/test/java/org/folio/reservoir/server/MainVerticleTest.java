@@ -1776,7 +1776,7 @@ public class MainVerticleTest {
         .body("resultInfo.totalRecords", is(0));
 
     //POST item with bad url and nothing should be created
-    CodeModuleEntity badModule = new CodeModuleEntity("empty",  "url", "transform");
+    CodeModuleEntity badModule = new CodeModuleEntity("empty", "no-type", "url", "transform", "no script");
     RestAssured.given()
         .header(XOkapiHeaders.TENANT, TENANT_1)
         .header("Content-Type", "application/json")
@@ -1784,7 +1784,7 @@ public class MainVerticleTest {
         .post("/reservoir/config/modules")
         .then().statusCode(400);
 
-    CodeModuleEntity module = new CodeModuleEntity("empty",  "http://localhost:" + CODE_MODULES_PORT + "/lib/empty.mjs", "transform");
+    CodeModuleEntity module = new CodeModuleEntity("empty", "javascript", "http://localhost:" + CODE_MODULES_PORT + "/lib/empty.mjs", "transform", "");
 
     //GET not found item
     RestAssured.given()
@@ -1809,7 +1809,8 @@ public class MainVerticleTest {
         .header("Content-Type", "application/json")
         .body(module.asJson().encode())
         .post("/reservoir/config/modules")
-        .then().statusCode(201)
+        .then()
+        .statusCode(201)
         .contentType("application/json")
         .body(Matchers.is(module.asJson().encode()));
 
@@ -2208,7 +2209,7 @@ public class MainVerticleTest {
     //configure transformers
     for (String m : List.of("marc-transformer", "empty", "throw")) {
       CodeModuleEntity module = new CodeModuleEntity(
-          m, "http://localhost:" + CODE_MODULES_PORT + "/lib/" + m + ".mjs", "transform");
+          m, "javascript", "http://localhost:" + CODE_MODULES_PORT + "/lib/" + m + ".mjs", "transform", "");
 
       //POST module configuration
       RestAssured.given()

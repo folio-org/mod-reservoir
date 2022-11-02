@@ -10,14 +10,15 @@ import java.util.Collection;
 import java.util.HashSet;
 import java.util.List;
 import org.folio.reservoir.module.Module;
+import org.folio.reservoir.server.entity.CodeModuleEntity;
 
 public class ModuleJsonPath implements Module {
 
   JsonPath jsonPath;
 
   @Override
-  public Future<Void> initialize(Vertx vertx, JsonObject config) {
-    String script = config.getString("script");
+  public Future<Void> initialize(Vertx vertx, CodeModuleEntity entity) {
+    String script = entity.getScript();
     if (script == null) {
       return Future.failedFuture("module config must include 'script'");
     }

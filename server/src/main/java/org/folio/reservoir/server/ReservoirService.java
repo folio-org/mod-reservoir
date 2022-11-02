@@ -65,7 +65,7 @@ public class ReservoirService implements RouterCreator, TenantInitHooks {
             return Future.succeededFuture();
           }
           ModuleCache.getInstance().purge(TenantUtil.tenant(ctx), id);
-          return ModuleCache.getInstance().lookup(vertx, TenantUtil.tenant(ctx), res.asJson())
+          return ModuleCache.getInstance().lookup(vertx, TenantUtil.tenant(ctx), res)
                   .onSuccess(x -> ctx.response().setStatusCode(204).end());
         })
         .mapEmpty();
@@ -314,7 +314,7 @@ public class ReservoirService implements RouterCreator, TenantInitHooks {
     CodeModuleEntity e = new CodeModuleEntity.CodeModuleBuilder(ctx.getBodyAsJson()).build();
 
     ModuleCache.getInstance().purge(TenantUtil.tenant(ctx), e.getId());
-    return ModuleCache.getInstance().lookup(ctx.vertx(), TenantUtil.tenant(ctx), e.asJson())
+    return ModuleCache.getInstance().lookup(ctx.vertx(), TenantUtil.tenant(ctx), e)
         .compose(module -> storage.insertCodeModuleEntity(e).onSuccess(res ->
             HttpResponse.responseJson(ctx, 201)
                 .putHeader("Location", ctx.request().absoluteURI() + "/" + e.getId())
@@ -341,7 +341,7 @@ public class ReservoirService implements RouterCreator, TenantInitHooks {
   Future<Void> putCodeModule(RoutingContext ctx) {
     Storage storage = new Storage(ctx);
     CodeModuleEntity e = new CodeModuleEntity.CodeModuleBuilder(ctx.getBodyAsJson()).build();
-    return ModuleCache.getInstance().lookup(ctx.vertx(), TenantUtil.tenant(ctx), e.asJson())
+    return ModuleCache.getInstance().lookup(ctx.vertx(), TenantUtil.tenant(ctx), e)
         .compose(module -> storage.updateCodeModuleEntity(e)
             .onSuccess(res -> {
               if (Boolean.FALSE.equals(res)) {

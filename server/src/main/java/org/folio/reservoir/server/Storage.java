@@ -169,8 +169,14 @@ public class Storage {
                 + clusterValueTable + "(cluster_id)",
             CREATE_IF_NO_EXISTS + moduleTable
                 + "(id VARCHAR NOT NULL PRIMARY KEY,"
+                + " type VARCHAR,"
                 + " url VARCHAR, "
-                + " function VARCHAR)",
+                + " function VARCHAR,"
+                + " script VARCHAR)",
+            "ALTER TABLE " + moduleTable + " ADD COLUMN IF NOT EXISTS"
+                + " type VARCHAR",
+            "ALTER TABLE " + moduleTable + " ADD COLUMN IF NOT EXISTS"
+                + " script VARCHAR",
             CREATE_IF_NO_EXISTS + oaiConfigTable
                 + "(id VARCHAR NOT NULL PRIMARY KEY,"
                 + " config JSONB NOT NULL)",
@@ -868,8 +874,8 @@ public class Storage {
   public Future<Void> insertCodeModuleEntity(CodeModuleEntity module) {
 
     return pool.preparedQuery(
-            "INSERT INTO " + moduleTable + " (id, url, function)"
-                + " VALUES ($1, $2, $3)")
+            "INSERT INTO " + moduleTable + " (id, type, url, function, script)"
+                + " VALUES ($1, $2, $3, $4, $5)")
         .execute(module.asTuple())
         .mapEmpty();
   }
@@ -883,7 +889,7 @@ public class Storage {
 
     return pool.preparedQuery(
             "UPDATE " + moduleTable
-                + " SET url = $2, function = $3 WHERE id = $1")
+                + " SET type = $2, url = $3, function = $4, script = $5 WHERE id = $1")
         .execute(module.asTuple())
         .map(res -> res.rowCount() > 0);
   }
