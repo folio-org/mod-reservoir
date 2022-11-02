@@ -112,10 +112,8 @@ public class IngestWriteStream implements WriteStream<JsonObject> {
   @Override
   public void end(Handler<AsyncResult<Void>> handler) {
     if (ops.get() == 0) {
-      log.info("end1");
       handler.handle(Future.succeededFuture());
     } else {
-      log.info("end2");
       endHandler = handler;
     }
   }

@@ -29,7 +29,9 @@ public class UploadService {
     Promise<Void> promise = Promise.promise();
     try {
       Marc4jParser marc4jParser = new Marc4jParser(upload);
-      ingestWriteStream.drainHandler(x -> marc4jParser.resume());
+      if (ingestWriteStream != null) {
+        ingestWriteStream.drainHandler(x -> marc4jParser.resume());
+      }
       AtomicInteger number = new AtomicInteger();
       marc4jParser.exceptionHandler(e -> {
         log.error("marc4jParser exception", e);
@@ -39,14 +41,16 @@ public class UploadService {
         if (number.incrementAndGet() < 10) {
           log.info("Got record leader={} controlnumber={}", r.getLeader(),
               r.getControlNumber().trim());
+        } else if (number.get() % 10000 == 0) {
+          log.info("Processed {}", number.get());
         }
-        ingestWriteStream.write(r)
-            .onSuccess(c -> {
-              if (ingestWriteStream.writeQueueFull()) {
-                marc4jParser.pause();
-              }
-            })
-            .onFailure(e -> promise.tryFail(e));
+        if (ingestWriteStream != null) {
+          if (ingestWriteStream.writeQueueFull()) {
+            marc4jParser.pause();
+          }
+          ingestWriteStream.write(r)
+              .onFailure(e -> promise.tryFail(e));
+        }
       });
       marc4jParser.endHandler(e -> {
         log.info("{} records processed", number.get());
@@ -74,8 +78,10 @@ public class UploadService {
       String sourceId = request.getParam("sourceId");
       String sourceVersion = request.getParam("sourceVersion", "1");
       // TODO String localIdPath = request.getParam("localIdPath");
+      final boolean ingest = request.getParam("ingest", "true").equals("true");
       IngestWriteStream ingestWriteStream = new IngestWriteStream(ctx.vertx(), storage,
           new SourceId(sourceId), Integer.parseInt(sourceVersion));
+      ingestWriteStream.setWriteQueueMaxSize(100);
       List<Future<Void>> futures = new ArrayList<>();
       request.setExpectMultipart(true);
       request.exceptionHandler(e -> futures.add(new FailedFuture(e)));
@@ -83,7 +89,7 @@ public class UploadService {
         switch (upload.contentType()) {
           case "application/octet-stream":
           case "application/marc":
-            futures.add(uploadOctetStream(upload, ingestWriteStream));
+            futures.add(uploadOctetStream(upload, ingest ? ingestWriteStream : null));
             break;
           default:
             futures.add(new FailedFuture("Unsupported content-type: " + upload.contentType()));
@@ -115,9 +121,9 @@ public class UploadService {
     try {
       log.info("uploadRaw");
       HttpServerRequest request = ctx.request();
-      List<Future<Void>> futures = new ArrayList<>();
       request.setExpectMultipart(true);
-      request.exceptionHandler(e -> futures.add(new FailedFuture(e)));
+      Promise<Void> promise = Promise.promise();
+      request.exceptionHandler(e -> promise.tryFail(e));
       request.uploadHandler(upload -> {
         AtomicLong sz = new AtomicLong();
         switch (upload.contentType()) {
@@ -129,14 +135,13 @@ public class UploadService {
             });
             break;
           default:
-            futures.add(new FailedFuture("Unsupported content-type: " + upload.contentType()));
+            promise.tryFail("Unsupported content-type: " + upload.contentType());
         }
       });
-      Promise<Void> promise = Promise.promise();
       request.endHandler(e1 -> {
         JsonObject res = new JsonObject();
         HttpResponse.responseJson(ctx, 200).end(res.encode());
-        promise.complete();
+        promise.tryComplete();
       });
       return promise.future();
     } catch (Exception e) {
