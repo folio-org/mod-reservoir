@@ -12,6 +12,7 @@ import org.graalvm.polyglot.Context;
 import org.graalvm.polyglot.Source;
 import org.graalvm.polyglot.Value;
 
+@Deprecated
 public class MatchKeyJavaScript implements MatchKeyMethod {
 
   Value getKeysFunction;

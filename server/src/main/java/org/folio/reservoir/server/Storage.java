@@ -33,6 +33,8 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.folio.okapi.common.GenericCompositeFuture;
 import org.folio.reservoir.matchkey.MatchKeyMethod;
+import org.folio.reservoir.module.Module;
+import org.folio.reservoir.module.ModuleCache;
 import org.folio.reservoir.server.entity.ClusterBuilder;
 import org.folio.reservoir.server.entity.CodeModuleEntity;
 import org.folio.reservoir.util.LargeJsonReadStream;
@@ -135,9 +137,12 @@ public class Storage {
                 + " (source_id, source_version)",
             CREATE_IF_NO_EXISTS + matchKeyConfigTable
                 + "(id VARCHAR NOT NULL PRIMARY KEY,"
+                + " matcher VARCHAR, "
                 + " method VARCHAR, "
                 + " update VARCHAR, "
                 + " params JSONB)",
+            "ALTER TABLE " + matchKeyConfigTable + " ADD COLUMN IF NOT EXISTS"
+                + " matcher VARCHAR",
             CREATE_IF_NO_EXISTS + clusterMetaTable
                 + "(cluster_id uuid NOT NULL PRIMARY KEY,"
                 + " match_key_config_id VARCHAR NOT NULL,"
@@ -295,16 +300,30 @@ public class Storage {
     if ("manual".equals(update)) {
       return Future.succeededFuture();
     }
-    String methodName = matchKeyConfig.getString("method");
-    JsonObject params = matchKeyConfig.getJsonObject("params");
-    String id = matchKeyConfig.getString("id");
-    return MatchKeyMethod.get(vertx, tenant, id, methodName, params)
-        .compose(matchKeyMethod -> {
-          Set<String> keys = new HashSet<>();
-          matchKeyMethod.getKeys(payload, keys);
-          String matchKeyConfigId = matchKeyConfig.getString("id");
-          return updateMatchKeyValues(conn, globalId, matchKeyConfigId, keys);
-        });
+    String matchkeyId = matchKeyConfig.getString("id");
+    String matcher = matchKeyConfig.getString("matcher");
+    if (matcher != null && !matcher.isEmpty()) {
+      return selectCodeModuleEntity(conn, matcher)
+        .compose(entity -> {
+          if (entity == null) {
+            return Future.failedFuture(
+              "Cannot update matchkey: module '" + matcher + "' does not exist");
+          }
+          return ModuleCache.getInstance().lookup(vertx, tenant, entity);
+        })
+        .compose(module ->
+            updateMatchKeyValues(conn, globalId, matchkeyId, module.executeAsCollection(payload)));
+    } else {
+      String methodName = matchKeyConfig.getString("method");
+      JsonObject params = matchKeyConfig.getJsonObject("params");
+      return MatchKeyMethod.get(vertx, tenant, matchkeyId, methodName, params)
+          .compose(matchKeyMethod -> {
+            Set<String> keys = new HashSet<>();
+            matchKeyMethod.getKeys(payload, keys);
+            String matchKeyConfigId = matchKeyConfig.getString("id");
+            return updateMatchKeyValues(conn, globalId, matchKeyConfigId, keys);
+          });
+    }
   }
 
   Future<Void> updateMatchKeyValues(SqlConnection conn, UUID globalId,
@@ -488,6 +507,7 @@ public class Storage {
           res.forEach(row ->
               matchConfigs.add(new JsonObject()
                   .put("id", row.getString("id"))
+                  .put("matcher", row.getString("matcher"))
                   .put("method", row.getString("method"))
                   .put("params", row.getJsonObject("params"))
                   .put("update", row.getString("update"))
@@ -631,13 +651,13 @@ public class Storage {
    * @param update strategy
    * @return async result
    */
-  public Future<Void> insertMatchKeyConfig(String id, String method, JsonObject params,
-      String update) {
+  public Future<Void> insertMatchKeyConfig(String id, String matcher, String method,
+      JsonObject params, String update) {
 
     return pool.preparedQuery(
-        "INSERT INTO " + matchKeyConfigTable + " (id, method, params, update)"
-            + " VALUES ($1, $2, $3, $4)")
-        .execute(Tuple.of(id, method, params, update))
+        "INSERT INTO " + matchKeyConfigTable + " (id, matcher, method, params, update)"
+            + " VALUES ($1, $2, $3, $4, $5)")
+        .execute(Tuple.of(id, matcher, method, params, update))
         .mapEmpty();
   }
 
@@ -649,13 +669,13 @@ public class Storage {
    * @param update strategy
    * @return async result with TRUE if updated; FALSE if not found
    */
-  public Future<Boolean> updateMatchKeyConfig(String id, String method, JsonObject params,
-      String update) {
+  public Future<Boolean> updateMatchKeyConfig(String id, String matcher, String method,
+      JsonObject params, String update) {
 
     return pool.preparedQuery(
             "UPDATE " + matchKeyConfigTable
-                + " SET method = $2, params = $3, update = $4 WHERE id = $1")
-        .execute(Tuple.of(id, method, params, update))
+                + " SET matcher = $2, method = $3, params = $4, update = $5 WHERE id = $1")
+        .execute(Tuple.of(id, matcher, method, params, update))
         .map(res -> res.rowCount() > 0);
   }
 
@@ -681,6 +701,7 @@ public class Storage {
           Row row = iterator.next();
           return new JsonObject()
               .put("id", row.getString("id"))
+              .put("matcher", row.getString("matcher"))
               .put("method", row.getString("method"))
               .put("params", row.getJsonObject("params"))
               .put("update", row.getString("update"));
@@ -715,14 +736,15 @@ public class Storage {
     return streamResult(ctx, null, from, sqlOrderBy, "matchKeys",
         row -> Future.succeededFuture(new JsonObject()
             .put("id", row.getString("id"))
+            .put("matcher", row.getString("matcher"))
             .put("method", row.getString("method"))
             .put("params", row.getJsonObject("params"))
             .put("update", row.getString("update"))
         ));
   }
 
-  Future<JsonObject> recalculateMatchKeyValueTable(SqlConnection connection, MatchKeyMethod method,
-      String matchKeyConfigId) {
+  Future<JsonObject> recalculateMatchKeyValueTable(SqlConnection connection, Module module,
+      MatchKeyMethod method, String matchKeyConfigId) {
 
     String query = "SELECT * FROM " + globalRecordTable;
     AtomicInteger totalRecords = new AtomicInteger();
@@ -735,11 +757,18 @@ public class Storage {
             totalRecords.incrementAndGet();
 
             UUID globalId = row.getUUID("id");
-            Set<String> keys = new HashSet<>();
-            method.getKeys(row.getJsonObject("payload"), keys);
-            updateMatchKeyValues(connection, globalId, matchKeyConfigId, keys)
-                .onFailure(e -> log.error(e.getMessage(), e))
-                .onComplete(e -> stream.resume());
+            if (module != null) {
+              updateMatchKeyValues(connection, globalId, matchKeyConfigId,
+                  module.executeAsCollection(row.getJsonObject("payload")))
+                  .onFailure(e -> log.error(e.getMessage(), e))
+                  .onComplete(e -> stream.resume());
+            } else {
+              Set<String> keys = new HashSet<>();
+              method.getKeys(row.getJsonObject("payload"), keys);
+              updateMatchKeyValues(connection, globalId, matchKeyConfigId, keys)
+                  .onFailure(e -> log.error(e.getMessage(), e))
+                  .onComplete(e -> stream.resume());
+            }
           });
           stream.endHandler(end -> {
             tx.commit();
@@ -772,10 +801,24 @@ public class Storage {
                 return Future.succeededFuture();
               }
               Row row = iterator.next();
-              String method = row.getString("method");
-              JsonObject params = row.getJsonObject("params");
-              return MatchKeyMethod.get(vertx, tenant, id, method, params).compose(matchKeyMethod ->
-                  recalculateMatchKeyValueTable(connection, matchKeyMethod, id));
+              String matcher = row.getString("matcher");
+              if (matcher != null && !matcher.isEmpty()) {
+                return selectCodeModuleEntity(connection, id)
+                  .compose(entity -> {
+                    if (entity == null) {
+                      return Future.failedFuture(
+                        "Cannot initialize matchkey: module '" + matcher + "' does not exist");
+                    }
+                    return ModuleCache.getInstance().lookup(vertx, tenant, entity);
+                  })
+                  .compose(module -> recalculateMatchKeyValueTable(connection, module, null, id));
+              } else {
+                String method = row.getString("method");
+                JsonObject params = row.getJsonObject("params");
+                return MatchKeyMethod.get(vertx, tenant, id, method, params)
+                    .compose(matchKeyMethod ->
+                        recalculateMatchKeyValueTable(connection, null, matchKeyMethod, id));
+              }
             })
     );
   }
@@ -900,13 +943,22 @@ public class Storage {
    * @return code module entity if found; null if not found
    */
   public Future<CodeModuleEntity> selectCodeModuleEntity(String id) {
+    return pool.withConnection(conn -> selectCodeModuleEntity(conn, id));
+  }
+
+  /**
+   * Select code module entity from storage.
+   * @param id code module id; null takes any first config
+   * @return code module entity if found; null if not found
+   */
+  public Future<CodeModuleEntity> selectCodeModuleEntity(SqlConnection conn, String id) {
     String sql = "SELECT * FROM " + moduleTable;
     List<String> tupleList = new ArrayList<>();
     if (id != null) {
       sql = sql + " WHERE id = $1";
       tupleList.add(id);
     }
-    return pool.preparedQuery(sql)
+    return conn.preparedQuery(sql)
         .execute(Tuple.from(tupleList))
         .map(res -> {
           RowIterator<Row> iterator = res.iterator();

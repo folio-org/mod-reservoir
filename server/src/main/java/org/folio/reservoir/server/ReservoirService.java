@@ -193,10 +193,25 @@ public class ReservoirService implements RouterCreator, TenantInitHooks {
 
   static String getMethod(JsonObject config) {
     String method = config.getString("method");
-    if (MatchKeyMethodFactory.get(method) == null) {
+    if (method != null && !method.isEmpty() && MatchKeyMethodFactory.get(method) == null) {
       throw new IllegalArgumentException("Non-existing method '" + method + "'");
     }
     return method;
+  }
+
+  static Future<String> checkMatcher(Storage storage, JsonObject config) {
+    String matcher = config.getString("matcher");
+    if (matcher != null && !matcher.isEmpty()) {
+      return storage.selectCodeModuleEntity(matcher)
+        .compose(entity -> {
+          if (entity == null) {
+            return Future.failedFuture("Matcher '" + matcher + "' is not defined");
+          }
+          return Future.succeededFuture(matcher);
+        });
+    } else {
+      return Future.succeededFuture(null);
+    }
   }
 
   Future<Void> postConfigMatchKey(RoutingContext ctx) {
@@ -206,11 +221,14 @@ public class ReservoirService implements RouterCreator, TenantInitHooks {
     String method = getMethod(request);
     String update = request.getString("update", "ingest");
     JsonObject params = request.getJsonObject("params");
-    return storage.insertMatchKeyConfig(id, method, params, update).onSuccess(res ->
-        HttpResponse.responseJson(ctx, 201)
+    return checkMatcher(storage, request)
+        .compose(matcher ->
+            storage.insertMatchKeyConfig(id, matcher, method, params, update))
+        .onSuccess(res ->
+          HttpResponse.responseJson(ctx, 201)
             .putHeader("Location", ctx.request().absoluteURI() + "/" + id)
             .end(request.encode())
-    );
+        );
   }
 
   Future<Void> getConfigMatchKey(RoutingContext ctx) {
@@ -235,7 +253,8 @@ public class ReservoirService implements RouterCreator, TenantInitHooks {
     String method = getMethod(request);
     String update = request.getString("update", "ingest");
     JsonObject params = request.getJsonObject("params");
-    return storage.updateMatchKeyConfig(id, method, params, update)
+    return checkMatcher(storage, request)
+       .compose(matcher -> storage.updateMatchKeyConfig(id, matcher, method, params, update))
         .onSuccess(res -> {
           if (Boolean.FALSE.equals(res)) {
             matchKeyNotFound(ctx, id);
@@ -267,6 +286,8 @@ public class ReservoirService implements RouterCreator, TenantInitHooks {
         new PgCqlField("id", PgCqlField.Type.TEXT));
     pgCqlQuery.addField(
         new PgCqlField("method", PgCqlField.Type.TEXT));
+    pgCqlQuery.addField(
+        new PgCqlField("matcher", PgCqlField.Type.TEXT));
 
     RequestParameters params = ctx.get(ValidationHandler.REQUEST_CONTEXT_KEY);
     pgCqlQuery.parse(Util.getQueryParameter(params));

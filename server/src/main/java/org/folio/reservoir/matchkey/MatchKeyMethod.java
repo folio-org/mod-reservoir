@@ -5,6 +5,7 @@ import io.vertx.core.Vertx;
 import io.vertx.core.json.JsonObject;
 import java.util.Collection;
 
+@Deprecated
 public interface MatchKeyMethod {
 
   /**

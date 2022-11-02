@@ -8,6 +8,7 @@ import java.util.Map;
 import org.folio.reservoir.matchkey.impl.MatchKeyJavaScript;
 import org.folio.reservoir.matchkey.impl.MatchKeyJsonPath;
 
+@Deprecated
 public final class MatchKeyMethodFactory {
 
   private MatchKeyMethodFactory() {

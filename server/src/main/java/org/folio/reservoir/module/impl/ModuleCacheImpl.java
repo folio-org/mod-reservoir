@@ -2,7 +2,6 @@ package org.folio.reservoir.module.impl;
 
 import io.vertx.core.Future;
 import io.vertx.core.Vertx;
-import io.vertx.core.json.JsonObject;
 import java.util.HashMap;
 import java.util.Map;
 import org.folio.reservoir.module.Module;
