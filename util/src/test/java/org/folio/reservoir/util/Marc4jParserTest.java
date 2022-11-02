@@ -37,12 +37,12 @@ public class Marc4jParserTest {
         .map(asyncFile -> new Marc4jParser(asyncFile));
   }
 
-  Future<List<Record>> eventsFromFile(String fname) {
-    List<Record> events = new ArrayList<>();
+  Future<List<Record>> getRecordsFromFile(String fname) {
+    List<Record> records = new ArrayList<>();
     return marc4jParserFromFile(fname).compose(xmlParser -> {
       Promise<List<Record>> promise = Promise.promise();
-      xmlParser.handler(events::add);
-      xmlParser.endHandler(e -> promise.complete(events));
+      xmlParser.handler(records::add);
+      xmlParser.endHandler(e -> promise.complete(records));
       xmlParser.exceptionHandler(e -> promise.tryFail(e));
       return promise.future();
     });
@@ -50,7 +50,7 @@ public class Marc4jParserTest {
 
   @Test
   public void marc3(TestContext context) {
-    eventsFromFile("marc3.marc").onComplete(context.asyncAssertSuccess(records -> {
+    getRecordsFromFile("marc3.marc").onComplete(context.asyncAssertSuccess(records -> {
       assertThat(records, hasSize(3));
       assertThat(records.get(0).getControlNumber(), is("   73209622 //r823"));
       assertThat(records.get(1).getControlNumber(), is("   11224466 "));

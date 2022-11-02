@@ -1,6 +1,7 @@
 package org.folio.reservoir.server;
 
 import io.vertx.core.buffer.Buffer;
+import io.vertx.core.json.JsonObject;
 import io.vertx.ext.unit.TestContext;
 import io.vertx.ext.unit.junit.VertxUnitRunner;
 import io.vertx.ext.web.client.WebClient;
@@ -13,14 +14,16 @@ import org.junit.runner.RunWith;
 
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.containsString;
+import static org.hamcrest.Matchers.is;
 
 @RunWith(VertxUnitRunner.class)
 public class UploadTest extends TestBase {
 
   Buffer marc3Buffer;
+
   @Before
   public void before(TestContext context) {
-        vertx.fileSystem().readFile("src/test/resources/marc3.marc")
+    vertx.fileSystem().readFile("src/test/resources/marc3.marc")
         .onSuccess(x -> marc3Buffer = x)
         .onComplete(context.asyncAssertSuccess());
   }
@@ -44,9 +47,7 @@ public class UploadTest extends TestBase {
 
   @Test
   public void uploadMimeTypeApplicationMarc(TestContext context) {
-    WebClient webClient = WebClient.create(vertx);
-
-    MultipartForm body = MultipartForm.create()
+    MultipartForm requestForm = MultipartForm.create()
         .binaryFileUpload("records", "marc3.mrc", marc3Buffer,  "application/marc");
 
     webClient.postAbs(OKAPI_URL + "/reservoir/upload")
@@ -55,7 +56,18 @@ public class UploadTest extends TestBase {
         .addQueryParam("sourceId", "SOURCE-1")
         .addQueryParam("sourceVersion", "1")
         .addQueryParam("localIdPath", "path")
-        .sendMultipartForm(body)
+        .sendMultipartForm(requestForm)
+        .compose(c1 ->
+            webClient.getAbs(OKAPI_URL + "/reservoir/records")
+                .expect(ResponsePredicate.SC_OK)
+                .putHeader(XOkapiHeaders.TENANT, TENANT_1)
+                .send()
+        )
+        .map(res -> {
+          JsonObject responseBody = res.bodyAsJsonObject();
+          assertThat(responseBody.getJsonArray("items").size(), is(3));
+          return null;
+        })
         .onComplete(context.asyncAssertSuccess());
   }
 
@@ -64,7 +76,7 @@ public class UploadTest extends TestBase {
     WebClient webClient = WebClient.create(vertx);
 
     MultipartForm body = MultipartForm.create()
-        .binaryFileUpload("records", "records.mrc", Buffer.buffer(),  "application/pdf");
+        .binaryFileUpload("records", "records.mrc", Buffer.buffer("0"),  "application/pdf");
 
     webClient.postAbs(OKAPI_URL + "/reservoir/upload")
         .expect(ResponsePredicate.SC_BAD_REQUEST)

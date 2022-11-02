@@ -40,6 +40,7 @@ import java.nio.file.Path;
 public class TestBase {
   protected final static Logger log = LogManager.getLogger("TestBase");
   protected static Vertx vertx;
+  protected static WebClient webClient;
   protected static final int OKAPI_PORT = 9230;
   protected static final String OKAPI_URL = "http://localhost:" + OKAPI_PORT;
   protected static final int MODULE_PORT = 9231;
@@ -83,7 +84,7 @@ public class TestBase {
     oaiSchemaValidator = schema.newValidator();
 
     vertx = Vertx.vertx();
-    WebClient webClient = WebClient.create(vertx);
+    webClient = WebClient.create(vertx);
 
     RestAssured.config = RestAssuredConfig.config()
         .httpClient(HttpClientConfig.httpClientConfig()
