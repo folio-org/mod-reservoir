@@ -10,7 +10,11 @@ import java.util.Collection;
 import java.util.List;
 import org.folio.reservoir.matchkey.MatchKeyMethod;
 
-@Deprecated
+/**
+ * Don't use this.
+ * @deprecated for removal
+ */
+@Deprecated(forRemoval = true, since = "1.0")
 public class MatchKeyJsonPath implements MatchKeyMethod {
 
   JsonPath jsonPath;
