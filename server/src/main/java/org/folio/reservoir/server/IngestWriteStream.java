@@ -1,5 +1,8 @@
 package org.folio.reservoir.server;
 
+import com.jayway.jsonpath.JsonPath;
+import com.jayway.jsonpath.PathNotFoundException;
+import com.jayway.jsonpath.ReadContext;
 import io.vertx.core.AsyncResult;
 import io.vertx.core.Future;
 import io.vertx.core.Handler;
@@ -8,6 +11,7 @@ import io.vertx.core.json.JsonArray;
 import io.vertx.core.json.JsonObject;
 import io.vertx.core.streams.WriteStream;
 import java.io.ByteArrayOutputStream;
+import java.util.List;
 import java.util.concurrent.atomic.AtomicInteger;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -29,13 +33,16 @@ public class IngestWriteStream implements WriteStream<JsonObject> {
   Handler<Void> drainHandler;
   JsonArray matchKeyConfigs;
   AtomicInteger ops = new AtomicInteger();
+  final JsonPath jsonPath;
   int queueSize = 5;
 
-  IngestWriteStream(Vertx vertx, Storage storage, SourceId sourceId, int sourceVersion) {
+  IngestWriteStream(Vertx vertx, Storage storage, SourceId sourceId, int sourceVersion,
+      String localIdPath) {
     this.vertx = vertx;
     this.storage = storage;
     this.sourceId = sourceId;
     this.sourceVersion = sourceVersion;
+    jsonPath = localIdPath == null ? null : JsonPath.compile(localIdPath);
   }
 
   @Override
@@ -90,11 +97,17 @@ public class IngestWriteStream implements WriteStream<JsonObject> {
         JsonObject marc = new JsonObject(out.toString());
         writer.close();
         // TODO consider delete records
-        // TODO localId path
+        String localIdValue = null;
+        JsonObject payload = new JsonObject().put("marc", marc);
+        if (jsonPath != null) {
+          localIdValue = getLocalIdValue(jsonPath, payload);
+        }
+        if (localIdValue == null) {
+          localIdValue = marcRecord.getControlNumber();
+        }
         globalRecord.complete(new JsonObject()
-            .put("localId", marcRecord.getControlNumber().trim())
-            .put("payload", new JsonObject()
-                .put("marc", marc)));
+            .put("localId", localIdValue.trim())
+            .put("payload", payload));
       } catch (Exception e) {
         globalRecord.tryFail(e);
       }
@@ -134,4 +147,24 @@ public class IngestWriteStream implements WriteStream<JsonObject> {
     drainHandler = handler;
     return this;
   }
+
+  static String getLocalIdValue(JsonPath jsonPath, JsonObject payload) {
+    ReadContext ctx = JsonPath.parse(payload.encode());
+    try {
+      Object o = ctx.read(jsonPath);
+      if (o instanceof String string) {
+        return string;
+      } else if (o instanceof List<?> list) {
+        for (Object m : list) {
+          if (m instanceof String string) {
+            return string;
+          }
+        }
+      }
+    } catch (PathNotFoundException e) {
+      // ignored.
+    }
+    return null;
+  }
+
 }

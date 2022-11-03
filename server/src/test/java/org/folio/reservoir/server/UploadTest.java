@@ -29,7 +29,7 @@ public class UploadTest extends TestBase {
   }
 
   @Test
-  public void uploadMimeTypeOctetStream(TestContext context) {
+  public void uploadOctetStream(TestContext context) {
     WebClient webClient = WebClient.create(vertx);
 
     MultipartForm body = MultipartForm.create()
@@ -46,7 +46,7 @@ public class UploadTest extends TestBase {
   }
 
   @Test
-  public void uploadMimeTypeApplicationMarc(TestContext context) {
+  public void uploadIso2709WithIngest(TestContext context) {
     MultipartForm requestForm = MultipartForm.create()
         .binaryFileUpload("records", "marc3.mrc", marc3Buffer,  "application/marc");
 
@@ -55,7 +55,7 @@ public class UploadTest extends TestBase {
         .putHeader(XOkapiHeaders.TENANT, TENANT_1)
         .addQueryParam("sourceId", "SOURCE-1")
         .addQueryParam("sourceVersion", "1")
-        .addQueryParam("localIdPath", "path")
+        .addQueryParam("localIdPath",  "$.marc.fields[*].001")
         .sendMultipartForm(requestForm)
         .compose(c1 ->
             webClient.getAbs(OKAPI_URL + "/reservoir/records")
@@ -72,7 +72,22 @@ public class UploadTest extends TestBase {
   }
 
   @Test
-  public void uploadMimeTypePdf(TestContext context) {
+  public void uploadIso2709WithoutIngest(TestContext context) {
+    MultipartForm requestForm = MultipartForm.create()
+        .binaryFileUpload("records", "marc3.mrc", marc3Buffer,  "application/marc");
+
+    webClient.postAbs(OKAPI_URL + "/reservoir/upload")
+        .expect(ResponsePredicate.SC_OK)
+        .putHeader(XOkapiHeaders.TENANT, TENANT_1)
+        .addQueryParam("sourceId", "SOURCE-1")
+        .addQueryParam("sourceVersion", "1")
+        .addQueryParam("ingest", "false")
+        .sendMultipartForm(requestForm)
+        .onComplete(context.asyncAssertSuccess());
+  }
+
+  @Test
+  public void uploadPdf(TestContext context) {
     WebClient webClient = WebClient.create(vertx);
 
     MultipartForm body = MultipartForm.create()
@@ -88,6 +103,22 @@ public class UploadTest extends TestBase {
         .onComplete(context.asyncAssertSuccess(res ->
             assertThat(res.bodyAsString(), containsString("Unsupported content-type: application/pdf"))
         ));
+  }
+
+  @Test
+  public void uploadRaw(TestContext context) {
+    MultipartForm requestForm = MultipartForm.create()
+        .binaryFileUpload("records", "marc3.mrc", marc3Buffer,  "application/marc");
+
+    webClient.postAbs(OKAPI_URL + "/reservoir/upload")
+        .expect(ResponsePredicate.SC_OK)
+        .putHeader(XOkapiHeaders.TENANT, TENANT_1)
+        .addQueryParam("sourceId", "SOURCE-1")
+        .addQueryParam("sourceVersion", "1")
+        .addQueryParam("localIdPath", "path")
+        .addQueryParam("raw", "true")
+        .sendMultipartForm(requestForm)
+        .onComplete(context.asyncAssertSuccess());
   }
 
 }

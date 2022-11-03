@@ -490,8 +490,6 @@ public class ReservoirService implements RouterCreator, TenantInitHooks {
               putGlobalRecords(ctx).onFailure(cause -> failHandler(400, ctx, cause)));
           router.post("/reservoir/upload").handler(ctx ->
               uploadService.uploadRecords(ctx).onFailure(cause -> failHandler(400, ctx, cause)));
-          router.post("/reservoir/raw").handler(ctx ->
-              uploadService.uploadRaw(ctx).onFailure(cause -> failHandler(400, ctx, cause)));
           router.route("/*").subRouter(routerBuilder.createRouter());
           return router;
         });

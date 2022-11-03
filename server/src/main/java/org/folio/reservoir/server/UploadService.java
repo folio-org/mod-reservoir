@@ -77,10 +77,11 @@ public class UploadService {
       HttpServerRequest request = ctx.request();
       String sourceId = request.getParam("sourceId");
       String sourceVersion = request.getParam("sourceVersion", "1");
-      // TODO String localIdPath = request.getParam("localIdPath");
+      String localIdPath = request.getParam("localIdPath");
       final boolean ingest = request.getParam("ingest", "true").equals("true");
+      final boolean raw = request.getParam("raw", "false").equals("true");
       IngestWriteStream ingestWriteStream = new IngestWriteStream(ctx.vertx(), storage,
-          new SourceId(sourceId), Integer.parseInt(sourceVersion));
+          new SourceId(sourceId), Integer.parseInt(sourceVersion), localIdPath);
       ingestWriteStream.setWriteQueueMaxSize(100);
       List<Future<Void>> futures = new ArrayList<>();
       request.setExpectMultipart(true);
@@ -89,7 +90,15 @@ public class UploadService {
         switch (upload.contentType()) {
           case "application/octet-stream":
           case "application/marc":
-            futures.add(uploadOctetStream(upload, ingest ? ingestWriteStream : null));
+            if (raw) {
+              AtomicLong sz = new AtomicLong();
+              upload.handler(x -> sz.addAndGet(x.length()));
+              upload.endHandler(end -> {
+                log.info("Total size {}", sz.get());
+              });
+            } else {
+              futures.add(uploadOctetStream(upload, ingest ? ingestWriteStream : null));
+            }
             break;
           default:
             futures.add(new FailedFuture("Unsupported content-type: " + upload.contentType()));
@@ -106,43 +115,6 @@ public class UploadService {
                   }))
           )
       );
-      return promise.future();
-    } catch (Exception e) {
-      return Future.failedFuture(e);
-    }
-  }
-
-  /**
-   * Upload without parsing MARC records.
-   * @param ctx routing context
-   * @return async result
-   */
-  public Future<Void> uploadRaw(RoutingContext ctx) {
-    try {
-      log.info("uploadRaw");
-      HttpServerRequest request = ctx.request();
-      request.setExpectMultipart(true);
-      Promise<Void> promise = Promise.promise();
-      request.exceptionHandler(e -> promise.tryFail(e));
-      request.uploadHandler(upload -> {
-        AtomicLong sz = new AtomicLong();
-        switch (upload.contentType()) {
-          case "application/octet-stream":
-          case "application/marc":
-            upload.handler(x -> sz.addAndGet(x.length()));
-            upload.endHandler(end -> {
-              log.info("Total size {}", sz.get());
-            });
-            break;
-          default:
-            promise.tryFail("Unsupported content-type: " + upload.contentType());
-        }
-      });
-      request.endHandler(e1 -> {
-        JsonObject res = new JsonObject();
-        HttpResponse.responseJson(ctx, 200).end(res.encode());
-        promise.tryComplete();
-      });
       return promise.future();
     } catch (Exception e) {
       return Future.failedFuture(e);
