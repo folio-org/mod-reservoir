@@ -802,7 +802,7 @@ public class Storage {
               }
               Row row = iterator.next();
               String matcher = row.getString("matcher");
-              if (matcher != null && !matcher.isEmpty()) {
+              if (matcher != null) {
                 return selectCodeModuleEntity(connection, id)
                   .compose(entity -> {
                     if (entity == null) {
