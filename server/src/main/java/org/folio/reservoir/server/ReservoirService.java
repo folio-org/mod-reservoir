@@ -201,7 +201,7 @@ public class ReservoirService implements RouterCreator, TenantInitHooks {
 
   static Future<String> checkMatcher(Storage storage, JsonObject config) {
     String matcher = config.getString("matcher");
-    if (matcher != null && !matcher.isEmpty()) {
+    if (matcher != null) {
       return storage.selectCodeModuleEntity(matcher)
         .compose(entity -> {
           if (entity == null) {
