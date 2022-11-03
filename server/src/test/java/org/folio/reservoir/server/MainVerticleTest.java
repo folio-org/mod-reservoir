@@ -1221,11 +1221,33 @@ public class MainVerticleTest {
   }
 
   void createIssnMatchKey() {
+    JsonObject issnMatcher = new JsonObject()
+        .put("id", "issn-matcher")
+        .put("type", "jsonpath")
+        .put("script", "$.inventory.issn[*]");
+
+    JsonObject issnMatcherOut = new JsonObject()
+        .put("id", "issn-matcher")
+        .put("type", "jsonpath")
+        .put("url", null)
+        .put("function", null)
+        .put("script", "$.inventory.issn[*]");
+
+    //post module first
+    RestAssured.given()
+        .header(XOkapiHeaders.TENANT, TENANT_1)
+        .header("Content-Type", "application/json")
+        .body(issnMatcher.encode())
+        .post("/reservoir/config/modules")
+        .then()
+        //.statusCode(201)
+        //.contentType("application/json")
+        .body(Matchers.is(issnMatcherOut.encode()));
+    
     JsonObject matchKey = new JsonObject()
         .put("id", "issn")
-        .put("method", "jsonpath")
-        // update = ingest is the default
-        .put("params", new JsonObject().put("expr", "$.inventory.issn[*]"));
+        .put("matcher", "issn-matcher");
+
     RestAssured.given()
         .header(XOkapiHeaders.TENANT, TENANT_1)
         .header("Content-Type", "application/json")
@@ -1234,6 +1256,18 @@ public class MainVerticleTest {
         .then().statusCode(201)
         .contentType("application/json")
         .body(Matchers.is(matchKey.encode()));
+  }
+
+  void deleteIssnMatchKey() {
+    RestAssured.given()
+      .header(XOkapiHeaders.TENANT, TENANT_1)
+      .delete("/reservoir/config/modules/issn-matcher")
+      .then().statusCode(204);
+
+    RestAssured.given()
+      .header(XOkapiHeaders.TENANT, TENANT_1)
+      .delete("/reservoir/config/matchkeys/issn")
+      .then().statusCode(204);
   }
 
   JsonObject createIsbnMatchKey() {
@@ -1306,10 +1340,7 @@ public class MainVerticleTest {
         .delete("/reservoir/records")
         .then().statusCode(204);
 
-    RestAssured.given()
-        .header(XOkapiHeaders.TENANT, TENANT_1)
-        .delete("/reservoir/config/matchkeys/issn")
-        .then().statusCode(204);
+    deleteIssnMatchKey();
   }
 
   @Test
@@ -1345,10 +1376,7 @@ public class MainVerticleTest {
         .delete("/reservoir/records")
         .then().statusCode(204);
 
-    RestAssured.given()
-        .header(XOkapiHeaders.TENANT, TENANT_1)
-        .delete("/reservoir/config/matchkeys/issn")
-        .then().statusCode(204);
+    deleteIssnMatchKey();
   }
 
   @Test
@@ -1511,10 +1539,8 @@ public class MainVerticleTest {
         .header(XOkapiHeaders.TENANT, TENANT_1)
         .delete("/reservoir/config/matchkeys/isbn")
         .then().statusCode(204);
-    RestAssured.given()
-        .header(XOkapiHeaders.TENANT, TENANT_1)
-        .delete("/reservoir/config/matchkeys/issn")
-        .then().statusCode(204);
+
+    deleteIssnMatchKey();
   }
 
   @Test
@@ -2647,10 +2673,8 @@ public class MainVerticleTest {
         .header(XOkapiHeaders.TENANT, TENANT_1)
         .delete("/reservoir/config/matchkeys/isbn")
         .then().statusCode(204);
-    RestAssured.given()
-        .header(XOkapiHeaders.TENANT, TENANT_1)
-        .delete("/reservoir/config/matchkeys/issn")
-        .then().statusCode(204);
+    
+    deleteIssnMatchKey();
   }
 
   @Test
