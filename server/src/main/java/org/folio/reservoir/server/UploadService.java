@@ -69,8 +69,14 @@ public class UploadService {
       log.error("marc4jParser exception", e);
       promise.tryFail(e);
     });
+    AtomicInteger number = new AtomicInteger();
     marcXmlParser.handler(marcInJson -> {
-      log.info("marc-in-json: {}", marcInJson.encodePrettily());
+      if (number.incrementAndGet() < 10) {
+        log.info("Got record controlnumber={}", marcInJson.getJsonArray("fields")
+            .getJsonObject(0).getString("001"));
+      } else if (number.get() % 10000 == 0) {
+        log.info("Processed {}", number.get());
+      }
       if (ingestWriteStream != null) {
         if (ingestWriteStream.writeQueueFull()) {
           marcXmlParser.pause();
@@ -82,7 +88,10 @@ public class UploadService {
             .onFailure(e -> promise.tryFail(e));
       }
     });
-    marcXmlParser.endHandler(e -> promise.tryComplete());
+    marcXmlParser.endHandler(e -> {
+      log.info("{} records processed", number.get());
+      promise.tryComplete();
+    });
     return promise.future();
   }
 
@@ -122,6 +131,7 @@ public class UploadService {
             case "application/marc":
               futures.add(uploadOctetStream(upload, ingest ? ingestWriteStream : null));
               break;
+            case "application/xml":
             case "text/xml":
               futures.add(uploadXmlStream(upload, ingest ? ingestWriteStream : null));
               break;
