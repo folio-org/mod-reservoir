@@ -143,7 +143,7 @@ can be implemented using `jsonpath`, for simple matching rules, or `javascript` 
 complexity. 
 
 To configure a matcher, first load an appropriate code module, e.g a simple `jsonpath`
-matcher that works for __Marc-in-Json__ payload could be defined this:
+module with a matcher that works for __Marc-in-Json__ payload could be defined like this:
 
 ```
 cat title-matcher.json
