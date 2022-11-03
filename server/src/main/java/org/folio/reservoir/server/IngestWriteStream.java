@@ -28,7 +28,6 @@ public class IngestWriteStream implements WriteStream<JsonObject> {
   final Storage storage;
   final Vertx vertx;
   Handler<Throwable> exceptionHandler;
-
   Handler<AsyncResult<Void>> endHandler;
   Handler<Void> drainHandler;
   JsonArray matchKeyConfigs;
@@ -62,6 +61,13 @@ public class IngestWriteStream implements WriteStream<JsonObject> {
       });
     }
     return future
+        .onSuccess(x -> {
+          // TODO consider delete records
+          if (jsonPath != null) {
+            String v = getLocalIdValue(jsonPath, globalRecord.getJsonObject("payload"));
+            globalRecord.put("localId", v.trim());
+          }
+        })
         .compose(y -> storage.ingestGlobalRecord(vertx, sourceId, sourceVersion,
             globalRecord, matchKeyConfigs)
         .onComplete(x -> {
@@ -96,18 +102,10 @@ public class IngestWriteStream implements WriteStream<JsonObject> {
         writer.write(marcRecord);
         JsonObject marc = new JsonObject(out.toString());
         writer.close();
-        // TODO consider delete records
-        String localIdValue = null;
-        JsonObject payload = new JsonObject().put("marc", marc);
-        if (jsonPath != null) {
-          localIdValue = getLocalIdValue(jsonPath, payload);
-        }
-        if (localIdValue == null) {
-          localIdValue = marcRecord.getControlNumber();
-        }
         globalRecord.complete(new JsonObject()
-            .put("localId", localIdValue.trim())
-            .put("payload", payload));
+            .put("localId", marcRecord.getControlNumber().trim())
+            .put("payload", new JsonObject()
+                .put("marc", marc)));
       } catch (Exception e) {
         globalRecord.tryFail(e);
       }

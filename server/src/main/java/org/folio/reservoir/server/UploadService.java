@@ -17,7 +17,9 @@ import org.apache.logging.log4j.Logger;
 import org.folio.okapi.common.GenericCompositeFuture;
 import org.folio.okapi.common.HttpResponse;
 import org.folio.reservoir.util.Marc4jParser;
+import org.folio.reservoir.util.MarcXmlParserToJson;
 import org.folio.reservoir.util.SourceId;
+import org.folio.reservoir.util.XmlParser;
 
 public class UploadService {
 
@@ -27,39 +29,60 @@ public class UploadService {
       IngestWriteStream ingestWriteStream) {
     log.info("uploadOctetStream");
     Promise<Void> promise = Promise.promise();
-    try {
-      Marc4jParser marc4jParser = new Marc4jParser(upload);
-      if (ingestWriteStream != null) {
-        ingestWriteStream.drainHandler(x -> marc4jParser.resume());
-      }
-      AtomicInteger number = new AtomicInteger();
-      marc4jParser.exceptionHandler(e -> {
-        log.error("marc4jParser exception", e);
-        promise.tryFail(e);
-      });
-      marc4jParser.handler(r -> {
-        if (number.incrementAndGet() < 10) {
-          log.info("Got record leader={} controlnumber={}", r.getLeader(),
-              r.getControlNumber().trim());
-        } else if (number.get() % 10000 == 0) {
-          log.info("Processed {}", number.get());
-        }
-        if (ingestWriteStream != null) {
-          if (ingestWriteStream.writeQueueFull()) {
-            marc4jParser.pause();
-          }
-          ingestWriteStream.write(r)
-              .onFailure(e -> promise.tryFail(e));
-        }
-      });
-      marc4jParser.endHandler(e -> {
-        log.info("{} records processed", number.get());
-        promise.tryComplete();
-      });
-    } catch (Exception e) {
-      log.error("upload exception", e);
-      promise.tryFail(e);
+    Marc4jParser marc4jParser = new Marc4jParser(upload);
+    if (ingestWriteStream != null) {
+      ingestWriteStream.drainHandler(x -> marc4jParser.resume());
     }
+    AtomicInteger number = new AtomicInteger();
+    marc4jParser.exceptionHandler(e -> {
+      log.error("marc4jParser exception", e);
+      promise.tryFail(e);
+    });
+    marc4jParser.handler(r -> {
+      if (number.incrementAndGet() < 10) {
+        log.info("Got record leader={} controlnumber={}", r.getLeader(),
+            r.getControlNumber().trim());
+      } else if (number.get() % 10000 == 0) {
+        log.info("Processed {}", number.get());
+      }
+      if (ingestWriteStream != null) {
+        if (ingestWriteStream.writeQueueFull()) {
+          marc4jParser.pause();
+        }
+        ingestWriteStream.write(r)
+            .onFailure(e -> promise.tryFail(e));
+      }
+    });
+    marc4jParser.endHandler(e -> {
+      log.info("{} records processed", number.get());
+      promise.tryComplete();
+    });
+    return promise.future();
+  }
+
+  private Future<Void> uploadXmlStream(ReadStream<Buffer> upload,
+      IngestWriteStream ingestWriteStream) {
+    Promise<Void> promise = Promise.promise();
+    XmlParser xmlParser = XmlParser.newParser(upload);
+    MarcXmlParserToJson marcXmlParser = new MarcXmlParserToJson(xmlParser);
+    marcXmlParser.exceptionHandler(e -> {
+      log.error("marc4jParser exception", e);
+      promise.tryFail(e);
+    });
+    marcXmlParser.handler(marcInJson -> {
+      log.info("marc-in-json: {}", marcInJson.encodePrettily());
+      if (ingestWriteStream != null) {
+        if (ingestWriteStream.writeQueueFull()) {
+          marcXmlParser.pause();
+        }
+        JsonObject globalRecord = new JsonObject()
+            .put("payload", new JsonObject()
+                    .put("marc", marcInJson));
+        ingestWriteStream.write(globalRecord)
+            .onFailure(e -> promise.tryFail(e));
+      }
+    });
+    marcXmlParser.endHandler(e -> promise.tryComplete());
     return promise.future();
   }
 
@@ -87,21 +110,24 @@ public class UploadService {
       request.setExpectMultipart(true);
       request.exceptionHandler(e -> futures.add(new FailedFuture(e)));
       request.uploadHandler(upload -> {
-        switch (upload.contentType()) {
-          case "application/octet-stream":
-          case "application/marc":
-            if (raw) {
-              AtomicLong sz = new AtomicLong();
-              upload.handler(x -> sz.addAndGet(x.length()));
-              upload.endHandler(end -> {
-                log.info("Total size {}", sz.get());
-              });
-            } else {
+        if (raw) {
+          AtomicLong sz = new AtomicLong();
+          upload.handler(x -> sz.addAndGet(x.length()));
+          upload.endHandler(end -> {
+            log.info("Total size {}", sz.get());
+          });
+        } else {
+          switch (upload.contentType()) {
+            case "application/octet-stream":
+            case "application/marc":
               futures.add(uploadOctetStream(upload, ingest ? ingestWriteStream : null));
-            }
-            break;
-          default:
-            futures.add(new FailedFuture("Unsupported content-type: " + upload.contentType()));
+              break;
+            case "text/xml":
+              futures.add(uploadXmlStream(upload, ingest ? ingestWriteStream : null));
+              break;
+            default:
+              futures.add(new FailedFuture("Unsupported content-type: " + upload.contentType()));
+          }
         }
       });
       Promise<Void> promise = Promise.promise();
