@@ -193,7 +193,7 @@ public class ReservoirService implements RouterCreator, TenantInitHooks {
 
   static String getMethod(JsonObject config) {
     String method = config.getString("method");
-    if (method != null && !method.isEmpty() && MatchKeyMethodFactory.get(method) == null) {
+    if (method != null && MatchKeyMethodFactory.get(method) == null) {
       throw new IllegalArgumentException("Non-existing method '" + method + "'");
     }
     return method;
