@@ -12,11 +12,13 @@
     },
     "method": {
       "type": "string",
-      "description": "DEPRECATED: use 'matcher' instead"
+      "description": "DEPRECATED: use 'matcher' instead",
+      "deprecated": true
     },
     "params": {
       "type": "object",
-      "description": "DEPRECATED: use 'matcher' instead"
+      "description": "DEPRECATED: use 'matcher' instead",
+      "deprecated": true
     },
     "update": {
       "type": "string",
