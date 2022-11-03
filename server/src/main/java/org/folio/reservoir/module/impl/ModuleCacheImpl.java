@@ -35,7 +35,7 @@ public class ModuleCacheImpl implements ModuleCache {
 
   private Module createInstance(String type) {
     if (type == null) {
-      type = "";
+      type = "javascript";
     }
     switch (type) {
       case "jsonpath": return new ModuleJsonPath();
