@@ -803,7 +803,7 @@ public class Storage {
               Row row = iterator.next();
               String matcher = row.getString("matcher");
               if (matcher != null) {
-                return selectCodeModuleEntity(connection, id)
+                return selectCodeModuleEntity(connection, matcher)
                   .compose(entity -> {
                     if (entity == null) {
                       return Future.failedFuture(

@@ -1220,7 +1220,11 @@ public class MainVerticleTest {
         .body(is("MatchKey " + id + " not found"));
   }
 
-  void createIssnMatchKey() {
+  JsonObject createIssnMatchKey() {
+    return createIssnMatchKey("ingest");
+  }
+
+  JsonObject createIssnMatchKey(String update) {
     JsonObject issnMatcher = new JsonObject()
         .put("id", "issn-matcher")
         .put("type", "jsonpath")
@@ -1246,7 +1250,8 @@ public class MainVerticleTest {
     
     JsonObject matchKey = new JsonObject()
         .put("id", "issn")
-        .put("matcher", "issn-matcher");
+        .put("matcher", "issn-matcher")
+        .put("update", update);
 
     RestAssured.given()
         .header(XOkapiHeaders.TENANT, TENANT_1)
@@ -1256,6 +1261,8 @@ public class MainVerticleTest {
         .then().statusCode(201)
         .contentType("application/json")
         .body(Matchers.is(matchKey.encode()));
+
+    return matchKey;
   }
 
   void deleteIssnMatchKey() {
@@ -1732,6 +1739,63 @@ public class MainVerticleTest {
         .header(XOkapiHeaders.TENANT, TENANT_1)
         .delete("/reservoir/config/matchkeys/" + matchKey.getString("id"))
         .then().statusCode(204);
+  }
+
+  @Test
+  public void testMatchKeysInitIssn() {
+    JsonObject matchKey = createIssnMatchKey("manual");
+
+    JsonArray records1 = new JsonArray()
+        .add(new JsonObject()
+            .put("localId", "S101")
+            .put("payload", new JsonObject()
+                .put("marc", new JsonObject().put("leader", "00914naa  0101   450 "))
+                .put("inventory", new JsonObject().put("issn", new JsonArray().add("1")))
+            )
+        )
+        .add(new JsonObject()
+            .put("localId", "S102")
+            .put("payload", new JsonObject()
+                .put("marc", new JsonObject().put("leader", "00914naa  0102   450 "))
+                .put("inventory", new JsonObject().put("issn", new JsonArray().add("2")))
+            )
+        );
+    ingestRecords(records1, SOURCE_ID_1);
+
+    // populate first time
+    RestAssured.given()
+        .header(XOkapiHeaders.TENANT, TENANT_1)
+        .header("Content-Type", "application/json")
+        .body(matchKey.encode())
+        .put("/reservoir/config/matchkeys/" + matchKey.getString("id") + "/initialize")
+        .then().statusCode(200)
+        .contentType("application/json")
+        .body("totalRecords", is(2))
+    ;
+
+    RestAssured.given()
+        .header(XOkapiHeaders.TENANT, TENANT_1)
+        .header("Content-Type", "application/json")
+        .param("query", "sourceId=" + SOURCE_ID_1)
+        .get("/reservoir/records")
+        .then().statusCode(200)
+        .contentType("application/json")
+        .body("items", hasSize(2));
+
+    String s = RestAssured.given()
+        .header(XOkapiHeaders.TENANT, TENANT_1)
+        .header("Content-Type", "application/json")
+        .param("matchkeyid", matchKey.getString("id"))
+        .get("/reservoir/clusters")
+        .then().statusCode(200)
+        .contentType("application/json")
+        .body("items", hasSize(2))
+        .body("items[0].records", hasSize(1))
+        .body("items[1].records", hasSize(1))
+        .extract().body().asString();
+
+    deleteIssnMatchKey();
+    
   }
 
   @Test
