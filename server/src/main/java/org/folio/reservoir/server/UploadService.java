@@ -66,7 +66,7 @@ public class UploadService {
     XmlParser xmlParser = XmlParser.newParser(upload);
     MarcXmlParserToJson marcXmlParser = new MarcXmlParserToJson(xmlParser);
     marcXmlParser.exceptionHandler(e -> {
-      log.error("marc4jParser exception", e);
+      log.error("marcXmlParser exception", e);
       promise.tryFail(e);
     });
     AtomicInteger number = new AtomicInteger();
