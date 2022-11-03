@@ -136,20 +136,21 @@ Once records are loaded, they can be retrieved with:
 curl -HX-Okapi-Tenant:$OKAPI_TENANT $OKAPI_URL/reservoir/records
 ```
 
-## Configuring matchkeys
+## Configuring matchers
 
-For cluster retrieval, a matchkey configuration needs to be specified first.
+Records in Reservoir are clustered according to rules expressed in a `matcher`. Matchers
+can be implemented using `jsonpath`, for simple matching rules, or `javascript` for abitrary
+complexity. 
 
-A simple matchkey config could use the ‘jsonpath’ method and refer to the MARC-in-JSON fields:
+To configure a matcher, first load an appropriate code module, e.g a simple `jsonpath`
+matcher that works for __Marc-in-Json__ payload could be defined this:
 
 ```
+cat title-matcher.json
 {
-  "id": "title",
-  "method": "jsonpath",
-  "params": {
-    "expr":"$.marc.fields[*].245.subfields[*].a"
-  },
-  "update": "ingest"
+  "id": "title-matcher",
+  "type": "jsonpath",
+  "script": "$.marc.fields[*].245.subfields[*].a"
 }
 ```
 
@@ -157,37 +158,51 @@ Post it to the server with:
 
 ```
 curl -HX-Okapi-Tenant:$OKAPI_TENANT -HContent-type:application/json \
- $OKAPI_URL/reservoir/config/matchkeys -d @matchkey-title.json
+ $OKAPI_URL/reservoir/config/modules -d @title-matcher.json
 ```
 
-and then initialize the cluster for this config:
+Next, create a pool and reference this matcher to apply the method for clustering:
+
+```
+cat title-pool.json
+{
+  "id": "title",
+  "matcher": "title-matcher",
+  "update": "ingest"
+}
+```
+
+Post the pool configuration to the server with:
+
+```
+curl -HX-Okapi-Tenant:$OKAPI_TENANT -HContent-type:application/json \
+ $OKAPI_URL/reservoir/config/matchkeys -d @title-pool.json
+```
+
+and then initialize the pool for this config:
 
 ```
 curl -HX-Okapi-Tenant:$OKAPI_TENANT -XPUT $OKAPI_URL/reservoir/config/matchkeys/title/initialize
 ```
 
-Now you can retrieve/browse the clusters with:
+Now, you can retrieve individual record clusters from this pool with:
 
 ```
 curl -HX-Okapi-Tenant:$OKAPI_TENANT $OKAPI_URL/reservoir/clusters?matchkeyid=title
 ```
 
-Matchkey configuration must be aligned with the format of stored records.
+Obviously, matcher configuration must be aligned with the format of stored records.
 
-While `jsonpath` matchkey method works for simple cases, for more sophisticated matching
-you will want to use the `javascript` method which loads external JavaScript code
-modules (ES modules). Reservoir ships with a JS module that implements the `goldrush` matching
+Reservoir ships with a JS module that implements the `goldrush` matching
 algorithm from coalliance.org.
 
 ```
 cat js/matchkeys/goldrush/goldrush-conf.json
 {
-  "id": "goldrush",
-  "method": "javascript",
-  "params": {
-    "url": "https://raw.githubusercontent.com/folio-org/mod-reservoir/master/js/matchkeys/goldrush/goldrush.mjs"
-  },
-  "update": "ingest"
+  "id": "goldrush-matcher",
+  "type": "javascript",
+  "url": "https://raw.githubusercontent.com/folio-org/mod-reservoir/master/js/matchkeys/goldrush/goldrush.mjs"
+  "function": "matchkey"
 }
 ```
 
@@ -195,8 +210,26 @@ Load it with:
 
 ```
 curl -HX-Okapi-Tenant:$OKAPI_TENANT -HContent-type:application/json \
- $OKAPI_URL/reservoir/config/matchkeys -d @js/matchkeys/goldrush/goldrush-conf.json
+ $OKAPI_URL/reservoir/config/modules -d @js/matchkeys/goldrush/goldrush-conf.json
 ```
+
+And create a corresponding pool with:
+
+```
+cat goldrush-pool.json
+{
+  "id": "goldrush",
+  "matcher": "goldrush-matcher",
+  "update": "ingest"
+}
+```
+post:
+
+```
+curl -HX-Okapi-Tenant:$OKAPI_TENANT -HContent-type:application/json \
+ $OKAPI_URL/reservoir/config/matchkeys -d @goldrush-pool.json
+```
+
 ## OAI-PMH client
 
 The OAI-PMH client is executing in the server. It is an alternative to
@@ -358,6 +391,7 @@ cat js/transformers/marc-transformer.mjs
 }
 ```
 
+Transformers just like matchers are `code modules` and the above marc transformer
 can be installed with:
 
 ```
