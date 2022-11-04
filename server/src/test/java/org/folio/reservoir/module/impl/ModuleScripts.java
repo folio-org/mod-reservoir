@@ -67,6 +67,17 @@ public class ModuleScripts {
     }
     """;
 
+  final static String TEST_SCRIPT_MK_ISBN = """
+    export function matchkey(x) {
+      let identifiers = JSON.parse(x).identifiers;
+      const isbn = [];
+      for (let i = 0; i < identifiers.length; i++) {
+        isbn.push(identifiers[i].isbn);
+      }
+      return isbn;
+    }
+    """;
+
   static void respondPlain(RoutingContext ctx, String script) {
     HttpServerResponse response = ctx.response();
     response.setStatusCode(200);
@@ -81,6 +92,7 @@ public class ModuleScripts {
     router.get("/lib/throw.mjs").handler(ctx -> respondPlain(ctx, TEST_SCRIPT_THROW));
     router.get("/lib/bad-json.mjs").handler(ctx -> respondPlain(ctx, TEST_SCRIPT_BAD_JSON));
     router.get("/lib/empty.mjs").handler(ctx -> respondPlain(ctx, TEST_SCRIPT_EMPTY));
+    router.get("/lib/matchkey-isbn.mjs").handler(ctx -> respondPlain(ctx, TEST_SCRIPT_MK_ISBN));
     HttpServer httpServer = vertx.createHttpServer();
     return httpServer.requestHandler(router).listen(port);
   }

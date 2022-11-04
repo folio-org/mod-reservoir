@@ -277,7 +277,7 @@ public final class OaiService {
                   return Future.failedFuture("Transformer not found: " + transformer);
                 }
                 return ModuleCache.getInstance().lookup(
-                    ctx.vertx(), TenantUtil.tenant(ctx), module.asJson());
+                    ctx.vertx(), TenantUtil.tenant(ctx), module);
               });
         });
   }
