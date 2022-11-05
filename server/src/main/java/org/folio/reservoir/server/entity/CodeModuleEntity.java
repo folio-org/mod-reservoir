@@ -13,7 +13,7 @@ public class CodeModuleEntity {
    * Remove it.
    * @deprecated remove it
    */
-  @Deprecated(forRemoval = true, since = "1.0")
+  @Deprecated(forRemoval = false, since = "1.0")
   private final String function;
   private final String script;
 
@@ -154,7 +154,7 @@ public class CodeModuleEntity {
      * Remove it.
      * @deprecated remove it
      */
-    @Deprecated(forRemoval = true, since = "1.0")
+    @Deprecated(forRemoval = false, since = "1.0")
     public static final String FUNCTION_FIELD = "function";
     
     public static final String SCRIPT_FIELD = "script";

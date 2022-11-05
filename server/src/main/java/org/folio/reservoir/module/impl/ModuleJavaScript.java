@@ -19,7 +19,11 @@ import org.graalvm.polyglot.Value;
 
 public class ModuleJavaScript implements Module {
   private String id;
-  @Deprecated(forRemoval = true, since = "1.0")
+  /**
+   * Remove this.
+   * @deprecated remove this
+   */
+  @Deprecated(forRemoval = false, since = "1.0")
   private String defaultFunctionName;
   private Value module;
   private Value function;
