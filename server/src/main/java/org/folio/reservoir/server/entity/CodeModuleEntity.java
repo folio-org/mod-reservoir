@@ -9,7 +9,11 @@ public class CodeModuleEntity {
   private final String id;
   private final String type;
   private final String url;
-  @Deprecated
+  /**
+   * Remove it.
+   * @deprecated remove it
+   */
+  @Deprecated(forRemoval = true, since = "1.0")
   private final String function;
   private final String script;
 
@@ -146,7 +150,11 @@ public class CodeModuleEntity {
     public static final String TYPE_FIELD = "type";
     
     public static final String URL_FIELD = "url";
-    @Deprecated
+    /**
+     * Remove it.
+     * @deprecated remove it
+     */
+    @Deprecated(forRemoval = true, since = "1.0")
     public static final String FUNCTION_FIELD = "function";
     
     public static final String SCRIPT_FIELD = "script";

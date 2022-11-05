@@ -452,7 +452,7 @@ public class MainVerticleTest {
     }
 
   @Test
-  public void matchKeysOK() {
+  public void testMatchkeysCrudWithMethod() {
     RestAssured.given()
         .header(XOkapiHeaders.TENANT, TENANT_1)
         .param("count", "none")
