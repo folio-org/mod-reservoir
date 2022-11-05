@@ -9,6 +9,7 @@ public class CodeModuleEntity {
   private final String id;
   private final String type;
   private final String url;
+  @Deprecated
   private final String function;
   private final String script;
 
@@ -67,18 +68,34 @@ public class CodeModuleEntity {
     return script;
   }
   
+  private static void put(JsonObject json, boolean omitNull, String key, Object value) {
+    if (omitNull && value == null) {
+      return;
+    }
+    json.put(key, value);
+  }
 
   /**
    * Encode the entity as JSON.
    * @return JSON object
    */
   public JsonObject asJson() {
-    return new JsonObject()
-    .put(CodeModuleBuilder.ID_FIELD, id)
-    .put(CodeModuleBuilder.TYPE_FIELD, type)
-    .put(CodeModuleBuilder.URL_FIELD, url)
-    .put(CodeModuleBuilder.FUNCTION_FIELD, function)
-    .put(CodeModuleBuilder.SCRIPT_FIELD, script);
+    return asJson(false);
+  }
+
+  /**
+   * Encode the entity as JSON.
+   * @omitNull omit null values if true
+   * @return JSON object
+   */
+  public JsonObject asJson(boolean omitNull) {
+    JsonObject json = new JsonObject();
+    put(json, omitNull, CodeModuleBuilder.ID_FIELD, id);
+    put(json, omitNull, CodeModuleBuilder.TYPE_FIELD, type);
+    put(json, omitNull, CodeModuleBuilder.URL_FIELD, url);
+    put(json, omitNull, CodeModuleBuilder.FUNCTION_FIELD, function);
+    put(json, omitNull, CodeModuleBuilder.SCRIPT_FIELD, script);
+    return json;
   }
   
   /**
@@ -129,7 +146,7 @@ public class CodeModuleEntity {
     public static final String TYPE_FIELD = "type";
     
     public static final String URL_FIELD = "url";
-    
+    @Deprecated
     public static final String FUNCTION_FIELD = "function";
     
     public static final String SCRIPT_FIELD = "script";
