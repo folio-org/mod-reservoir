@@ -17,13 +17,10 @@ import org.graalvm.polyglot.Context;
 import org.graalvm.polyglot.Source;
 import org.graalvm.polyglot.Value;
 
+@SuppressWarnings({"squid:S5738","squid:S1123"})
 public class ModuleJavaScript implements Module {
   private String id;
-  /**
-   * Remove this.
-   * @deprecated remove this
-   */
-  @Deprecated(forRemoval = false, since = "1.0")
+  @Deprecated(forRemoval = true, since = "1.0")
   private String defaultFunctionName;
   private Value module;
   private Value function;
