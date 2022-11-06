@@ -114,7 +114,7 @@ public class MarcXmlParserToJson implements ReadStream<JsonObject>, Handler<XMLS
 
   private ReadStream<JsonObject> checkDemand() {
     if (demand == 0L) {
-      stream.resume();
+      stream.pause();
     } else {
       stream.resume();
     }
