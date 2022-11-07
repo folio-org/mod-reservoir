@@ -2839,7 +2839,10 @@ public class MainVerticleTest {
                     .put("isbn", new JsonArray().add("1"))
                 )
             )
-        )
+        );
+    ingestRecords(ingest1b, SOURCE_ID_1, v2);
+
+    ingest1b = new JsonArray()
         .add(new JsonObject()
             .put("localId", "S102")
             .put("payload", new JsonObject()
