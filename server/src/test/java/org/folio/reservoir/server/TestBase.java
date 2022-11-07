@@ -19,12 +19,9 @@ import io.vertx.ext.web.client.predicate.ResponsePredicate;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.folio.reservoir.module.impl.ModuleScripts;
-import org.folio.tlib.postgres.TenantPgPool;
-import org.folio.tlib.postgres.impl.TenantPgPoolImpl;
 import org.folio.tlib.postgres.testing.TenantPgPoolContainer;
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
-import org.junit.ClassRule;
 import org.testcontainers.containers.PostgreSQLContainer;
 import org.xml.sax.SAXException;
 
@@ -48,7 +45,6 @@ public class TestBase {
   protected static final int CODE_MODULES_PORT = 9235;
   protected static final int MOCK_PORT = 9232;
   protected static final int NET_PORT = 9234;
-  protected static final int NEXT_PORT = 9236;
   protected static final String MOCK_URL = "http://localhost:" + MOCK_PORT;
   protected static final String TENANT_1 = "tenant1";
   protected static final String TENANT_2 = "tenant2";
