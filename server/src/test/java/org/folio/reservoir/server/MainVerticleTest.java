@@ -2757,7 +2757,10 @@ public class MainVerticleTest {
                     .put("isbn", new JsonArray().add("1"))
                 )
             )
-        )
+        );
+    ingestRecords(ingest2, SOURCE_ID_1, v1);
+
+    ingest2 = new JsonArray()
         .add(new JsonObject()
             .put("localId", "S102")
             .put("payload", new JsonObject()
@@ -4063,8 +4066,8 @@ public class MainVerticleTest {
 
     mockBody = """
       <?xml version="1.0" encoding="UTF-8"?>
-      <OAI-PMH xsi:schemaLocation='http://www.openarchives.org/OAI/2.0/ http://www.openarchives.org/OAI/2.0/OAI-PMH.xsd' 
-        xmlns:xsi='http://www.w3.org/2001/XMLSchema-instance' 
+      <OAI-PMH xsi:schemaLocation='http://www.openarchives.org/OAI/2.0/ http://www.openarchives.org/OAI/2.0/OAI-PMH.xsd'
+        xmlns:xsi='http://www.w3.org/2001/XMLSchema-instance'
         xmlns='http://www.openarchives.org/OAI/2.0/'>
         <responseDate>2022-10-17T18:52:44Z</responseDate>
         <request metadataPrefix='marc21' set='reshare' verb='ListRecords'>https://arcadiau.bywatersolutions.com/opac/oai.pl</request>
