@@ -5,7 +5,6 @@ import io.vertx.core.Promise;
 import io.vertx.core.Vertx;
 import io.vertx.core.buffer.Buffer;
 import io.vertx.core.file.OpenOptions;
-import io.vertx.core.streams.ReadStream;
 import io.vertx.ext.unit.TestContext;
 import io.vertx.ext.unit.junit.VertxUnitRunner;
 import org.junit.After;
@@ -187,8 +186,33 @@ public class Marc4jParserTest {
   }
 
   @Test
+  public void testBadMarc2(TestContext context) {
+    MemoryReadStream rs = new MemoryReadStream(Buffer.buffer("x00024" + "9".repeat(19)), null, null, Buffer.buffer(), 0, vertx);
+    Marc4jParser parser = new Marc4jParser(rs);
+    Promise<Void> promise = Promise.promise();
+    parser.exceptionHandler(promise::tryFail);
+    parser.endHandler(x -> promise.complete());
+    rs.run();
+    promise.future()
+        .onComplete(context.asyncAssertFailure(
+            e -> assertThat(e.getMessage(), is("Premature end of file encountered"))));
+  }
+
+  @Test
+  public void testSkipLength(TestContext context) {
+    MemoryReadStream rs = new MemoryReadStream(Buffer.buffer("x00025" + "9".repeat(19)), null, null, Buffer.buffer(), 0, vertx);
+    Marc4jParser parser = new Marc4jParser(rs);
+    Promise<Void> promise = Promise.promise();
+    parser.exceptionHandler(promise::tryFail);
+    parser.endHandler(x -> promise.complete());
+    rs.run();
+    promise.future()
+        .onComplete(context.asyncAssertSuccess());
+  }
+
+  @Test
   public void testSkipLead(TestContext context) {
-    MemoryReadStream rs = new MemoryReadStream(Buffer.buffer("x00025"), null, null, Buffer.buffer(), 0, vertx);
+    MemoryReadStream rs = new MemoryReadStream(Buffer.buffer("_" + "x".repeat(24)), null, null, Buffer.buffer(), 0, vertx);
     Marc4jParser parser = new Marc4jParser(rs);
     Promise<Void> promise = Promise.promise();
     parser.exceptionHandler(promise::tryFail);

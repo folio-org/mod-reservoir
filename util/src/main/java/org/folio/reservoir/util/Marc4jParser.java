@@ -2,7 +2,6 @@ package org.folio.reservoir.util;
 
 import io.vertx.core.Handler;
 import io.vertx.core.buffer.Buffer;
-import io.vertx.core.json.DecodeException;
 import io.vertx.core.streams.ReadStream;
 import java.io.ByteArrayInputStream;
 import java.io.InputStream;
@@ -85,16 +84,17 @@ public class Marc4jParser implements ReadStream<Record>, Handler<Buffer> {
   }
 
   int getNext(int sz) {
-    if (pendingBuffer.length() - sz < 24) {
-      return 0;
-    }
     // skip up to 5 non-digit bytes (bad data)
     for (int i = 0; i < 5; i++) {
+      int remain = pendingBuffer.length() - sz;
+      if (remain < 24) {
+        break;
+      }
       byte leadByte = pendingBuffer.getByte(sz);
       if (leadByte >= '0' && leadByte <= '9') {
         String lead = pendingBuffer.getString(sz, sz + 5);
         int length = Integer.parseInt(lead);
-        return length < 24 || pendingBuffer.length() - sz < length ? 0 : length;
+        return remain < length ? 0 : length;
       }
       sz++;
     }
