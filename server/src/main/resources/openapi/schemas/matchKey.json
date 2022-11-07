@@ -6,13 +6,19 @@
       "type": "string",
       "description" : "match key identifier"
     },
+    "matcher": {
+      "type": "string",
+      "description": "matcher module ID"
+    },
     "method": {
       "type": "string",
-      "description": "method"
+      "description": "DEPRECATED: use 'matcher' instead",
+      "deprecated": true
     },
     "params": {
       "type": "object",
-      "description": "parameter references"
+      "description": "DEPRECATED: use 'matcher' instead",
+      "deprecated": true
     },
     "update": {
       "type": "string",
@@ -22,6 +28,6 @@
   },
   "additionalProperties": false,
   "required": [
-    "id", "method", "params"
+    "id"
   ]
 }

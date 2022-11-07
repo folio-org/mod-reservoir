@@ -66,7 +66,7 @@ public class ReservoirService implements RouterCreator, TenantInitHooks {
             return Future.succeededFuture();
           }
           ModuleCache.getInstance().purge(TenantUtil.tenant(ctx), id);
-          return ModuleCache.getInstance().lookup(vertx, TenantUtil.tenant(ctx), res.asJson())
+          return ModuleCache.getInstance().lookup(vertx, TenantUtil.tenant(ctx), res)
                   .onSuccess(x -> ctx.response().setStatusCode(204).end());
         })
         .mapEmpty();
@@ -193,10 +193,25 @@ public class ReservoirService implements RouterCreator, TenantInitHooks {
 
   static String getMethod(JsonObject config) {
     String method = config.getString("method");
-    if (MatchKeyMethodFactory.get(method) == null) {
+    if (method != null && MatchKeyMethodFactory.get(method) == null) {
       throw new IllegalArgumentException("Non-existing method '" + method + "'");
     }
     return method;
+  }
+
+  static Future<String> checkMatcher(Storage storage, JsonObject config) {
+    String matcher = config.getString("matcher");
+    if (matcher != null) {
+      return storage.selectCodeModuleEntity(matcher)
+        .compose(entity -> {
+          if (entity == null) {
+            return Future.failedFuture("Matcher '" + matcher + "' is not defined");
+          }
+          return Future.succeededFuture(matcher);
+        });
+    } else {
+      return Future.succeededFuture(null);
+    }
   }
 
   Future<Void> postConfigMatchKey(RoutingContext ctx) {
@@ -206,11 +221,14 @@ public class ReservoirService implements RouterCreator, TenantInitHooks {
     String method = getMethod(request);
     String update = request.getString("update", "ingest");
     JsonObject params = request.getJsonObject("params");
-    return storage.insertMatchKeyConfig(id, method, params, update).onSuccess(res ->
-        HttpResponse.responseJson(ctx, 201)
+    return checkMatcher(storage, request)
+        .compose(matcher ->
+            storage.insertMatchKeyConfig(id, matcher, method, params, update))
+        .onSuccess(res ->
+          HttpResponse.responseJson(ctx, 201)
             .putHeader("Location", ctx.request().absoluteURI() + "/" + id)
             .end(request.encode())
-    );
+        );
   }
 
   Future<Void> getConfigMatchKey(RoutingContext ctx) {
@@ -235,7 +253,8 @@ public class ReservoirService implements RouterCreator, TenantInitHooks {
     String method = getMethod(request);
     String update = request.getString("update", "ingest");
     JsonObject params = request.getJsonObject("params");
-    return storage.updateMatchKeyConfig(id, method, params, update)
+    return checkMatcher(storage, request)
+       .compose(matcher -> storage.updateMatchKeyConfig(id, matcher, method, params, update))
         .onSuccess(res -> {
           if (Boolean.FALSE.equals(res)) {
             matchKeyNotFound(ctx, id);
@@ -267,6 +286,8 @@ public class ReservoirService implements RouterCreator, TenantInitHooks {
         new PgCqlField("id", PgCqlField.Type.TEXT));
     definition.addField(
         new PgCqlField("method", PgCqlField.Type.TEXT));
+    definition.addField(
+        new PgCqlField("matcher", PgCqlField.Type.TEXT));
 
     RequestParameters params = ctx.get(ValidationHandler.REQUEST_CONTEXT_KEY);
     PgCqlQuery pgCqlQuery = definition.parse(Util.getQueryParameter(params));
@@ -314,7 +335,7 @@ public class ReservoirService implements RouterCreator, TenantInitHooks {
     CodeModuleEntity e = new CodeModuleEntity.CodeModuleBuilder(ctx.body().asJsonObject()).build();
 
     ModuleCache.getInstance().purge(TenantUtil.tenant(ctx), e.getId());
-    return ModuleCache.getInstance().lookup(ctx.vertx(), TenantUtil.tenant(ctx), e.asJson())
+    return ModuleCache.getInstance().lookup(ctx.vertx(), TenantUtil.tenant(ctx), e)
         .compose(module -> storage.insertCodeModuleEntity(e).onSuccess(res ->
             HttpResponse.responseJson(ctx, 201)
                 .putHeader("Location", ctx.request().absoluteURI() + "/" + e.getId())
@@ -341,7 +362,7 @@ public class ReservoirService implements RouterCreator, TenantInitHooks {
   Future<Void> putCodeModule(RoutingContext ctx) {
     Storage storage = new Storage(ctx);
     CodeModuleEntity e = new CodeModuleEntity.CodeModuleBuilder(ctx.body().asJsonObject()).build();
-    return ModuleCache.getInstance().lookup(ctx.vertx(), TenantUtil.tenant(ctx), e.asJson())
+    return ModuleCache.getInstance().lookup(ctx.vertx(), TenantUtil.tenant(ctx), e)
         .compose(module -> storage.updateCodeModuleEntity(e)
             .onSuccess(res -> {
               if (Boolean.FALSE.equals(res)) {
