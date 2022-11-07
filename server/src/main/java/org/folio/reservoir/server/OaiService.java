@@ -23,8 +23,9 @@ import java.util.concurrent.atomic.AtomicInteger;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.folio.okapi.common.HttpResponse;
-import org.folio.reservoir.module.Module;
 import org.folio.reservoir.module.ModuleCache;
+import org.folio.reservoir.module.ModuleExecutable;
+import org.folio.reservoir.module.ModuleInvocation;
 import org.folio.reservoir.server.entity.ClusterBuilder;
 import org.folio.reservoir.util.JsonToMarcXml;
 import org.folio.reservoir.util.MarcInJsonUtil;
@@ -188,9 +189,9 @@ public final class OaiService {
       }
       ResumptionToken resumptionToken = new ResumptionToken(conf.getString("id"), until);
       sqlQuery.append(" ORDER BY datestamp, cluster_id");
-      return getTransformerModule(storage, ctx)
-          .compose(module -> storage.getPool().getConnection().compose(conn ->
-              listRecordsResponse(ctx, module, storage, conn, sqlQuery.toString(),
+      return getTransformer(storage, ctx)
+          .compose(transformer -> storage.getPool().getConnection().compose(conn ->
+              listRecordsResponse(ctx, transformer, storage, conn, sqlQuery.toString(),
                   Tuple.from(tupleList), limit, withMetadata, resumptionToken)
           ));
     });
@@ -261,23 +262,25 @@ public final class OaiService {
     return JsonToMarcXml.convert(combinedMarc);
   }
 
-  static Future<Module> getTransformerModule(Storage storage, RoutingContext ctx) {
+  static Future<ModuleExecutable> getTransformer(Storage storage, RoutingContext ctx) {
     return storage.selectOaiConfig()
         .compose(oaiCfg -> {
           if (oaiCfg == null) {
             return Future.succeededFuture(null);
           }
-          String transformer = oaiCfg.getString("transformer");
-          if (transformer == null) {
+          String transformerProp = oaiCfg.getString("transformer");
+          if (transformerProp == null) {
             return Future.succeededFuture(null);
           }
-          return storage.selectCodeModuleEntity(transformer)
-              .compose(module -> {
-                if (module == null) {
-                  return Future.failedFuture("Transformer not found: " + transformer);
+          ModuleInvocation invocation = new ModuleInvocation(transformerProp);
+          return storage.selectCodeModuleEntity(invocation.getModuleName())
+              .compose(entity -> {
+                if (entity == null) {
+                  return Future.failedFuture("Transformer module '" 
+                    + invocation.getModuleName() + "' not found");
                 }
-                return ModuleCache.getInstance().lookup(
-                    ctx.vertx(), TenantUtil.tenant(ctx), module);
+                return ModuleCache.getInstance().lookup(ctx.vertx(), TenantUtil.tenant(ctx), entity)
+                          .map(mod -> new ModuleExecutable(mod, invocation));
               });
         });
   }
@@ -298,16 +301,16 @@ public final class OaiService {
   }
 
   @java.lang.SuppressWarnings({"squid:S107"})  // too many arguments
-  static Future<Void> listRecordsResponse(RoutingContext ctx, Module module, Storage storage,
-      SqlConnection conn, String sqlQuery, Tuple tuple, Integer limit, boolean withMetadata,
-      ResumptionToken token) {
+  static Future<Void> listRecordsResponse(RoutingContext ctx, ModuleExecutable transformer,
+      Storage storage, SqlConnection conn, String sqlQuery, Tuple tuple, Integer limit,
+      boolean withMetadata, ResumptionToken token) {
 
     String elem = withMetadata ? "ListRecords" : "ListIdentifiers";
     return conn.prepare(sqlQuery).compose(pq ->
         conn.begin().compose(tx -> {
           HttpServerResponse response = ctx.response();
-          ClusterRecordStream clusterRecordStream
-              = new ClusterRecordStream(ctx.vertx(), storage, conn, response, module, withMetadata);
+          ClusterRecordStream clusterRecordStream = new ClusterRecordStream(
+              ctx.vertx(), storage, conn, response, transformer, withMetadata);
           RowStream<Row> stream = pq.createStream(100, tuple);
           AtomicInteger cnt = new AtomicInteger();
           clusterRecordStream.drainHandler(x -> stream.resume());
@@ -354,7 +357,7 @@ public final class OaiService {
     }
     UUID clusterId = decodeOaiIdentifier(identifier);
     Storage storage = new Storage(ctx);
-    return getTransformerModule(storage, ctx).compose(module -> {
+    return getTransformer(storage, ctx).compose(transformer -> {
       String sqlQuery = "SELECT * FROM " + storage.getClusterMetaTable() + " WHERE cluster_id = $1";
       return storage.getPool()
           .withConnection(conn -> conn.preparedQuery(sqlQuery)
@@ -367,8 +370,8 @@ public final class OaiService {
                 Row row = iterator.next();
                 ClusterRecordItem cr = new ClusterRecordItem(row);
                 HttpServerResponse response = ctx.response();
-                ClusterRecordStream clusterRecordStream
-                    = new ClusterRecordStream(ctx.vertx(), storage, conn, response, module, true);
+                ClusterRecordStream clusterRecordStream = new ClusterRecordStream(
+                    ctx.vertx(), storage, conn, response, transformer, true);
                 return clusterRecordStream.getClusterRecordMetadata(cr)
                     .map(buf -> {
                       oaiHeader(ctx);

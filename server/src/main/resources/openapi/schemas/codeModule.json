@@ -17,7 +17,8 @@
     },
     "function": {
       "type": "string",
-      "description": "default function, used if not specified at call site"
+      "description": "DEPRECATED: do not use, specify function during invocation",
+      "deprecated": true
     },
     "script": {
       "type": "string",

@@ -33,8 +33,9 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.folio.okapi.common.GenericCompositeFuture;
 import org.folio.reservoir.matchkey.MatchKeyMethod;
-import org.folio.reservoir.module.Module;
 import org.folio.reservoir.module.ModuleCache;
+import org.folio.reservoir.module.ModuleExecutable;
+import org.folio.reservoir.module.ModuleInvocation;
 import org.folio.reservoir.server.entity.ClusterBuilder;
 import org.folio.reservoir.server.entity.CodeModuleEntity;
 import org.folio.reservoir.util.LargeJsonReadStream;
@@ -301,18 +302,21 @@ public class Storage {
       return Future.succeededFuture();
     }
     String matchkeyId = matchKeyConfig.getString("id");
-    String matcher = matchKeyConfig.getString("matcher");
-    if (matcher != null && !matcher.isEmpty()) {
-      return selectCodeModuleEntity(conn, matcher)
+    String matcherProp = matchKeyConfig.getString("matcher");
+    if (matcherProp != null) {
+      ModuleInvocation invocation = new ModuleInvocation(matcherProp);
+      return selectCodeModuleEntity(conn, invocation.getModuleName())
         .compose(entity -> {
           if (entity == null) {
             return Future.failedFuture(
-              "Cannot update matchkey: module '" + matcher + "' does not exist");
+              "Module '" + invocation.getModuleName() 
+                + "' does not exist for '" + invocation + "'");
           }
           return ModuleCache.getInstance().lookup(vertx, tenant, entity);
         })
         .compose(module ->
-            updateMatchKeyValues(conn, globalId, matchkeyId, module.executeAsCollection(payload)));
+            updateMatchKeyValues(conn, globalId, matchkeyId, 
+              new ModuleExecutable(module, invocation).executeAsCollection(payload)));
     } else {
       String methodName = matchKeyConfig.getString("method");
       JsonObject params = matchKeyConfig.getJsonObject("params");
@@ -743,8 +747,8 @@ public class Storage {
         ));
   }
 
-  Future<JsonObject> recalculateMatchKeyValueTable(SqlConnection connection, Module module,
-      MatchKeyMethod method, String matchKeyConfigId) {
+  Future<JsonObject> recalculateMatchKeyValueTable(SqlConnection connection,
+      ModuleExecutable matcher, MatchKeyMethod method, String matchKeyConfigId) {
 
     String query = "SELECT * FROM " + globalRecordTable;
     AtomicInteger totalRecords = new AtomicInteger();
@@ -755,11 +759,10 @@ public class Storage {
           stream.handler(row -> {
             stream.pause();
             totalRecords.incrementAndGet();
-
             UUID globalId = row.getUUID("id");
-            if (module != null) {
+            if (matcher != null) {
               updateMatchKeyValues(connection, globalId, matchKeyConfigId,
-                  module.executeAsCollection(row.getJsonObject("payload")))
+                  matcher.executeAsCollection(row.getJsonObject("payload")))
                   .onFailure(e -> log.error(e.getMessage(), e))
                   .onComplete(e -> stream.resume());
             } else {
@@ -801,17 +804,20 @@ public class Storage {
                 return Future.succeededFuture();
               }
               Row row = iterator.next();
-              String matcher = row.getString("matcher");
-              if (matcher != null) {
-                return selectCodeModuleEntity(connection, matcher)
+              String matcherProp = row.getString("matcher");
+              if (matcherProp != null) {
+                ModuleInvocation invocation = new ModuleInvocation(matcherProp);
+                return selectCodeModuleEntity(connection, invocation.getModuleName())
                   .compose(entity -> {
                     if (entity == null) {
                       return Future.failedFuture(
-                        "Cannot initialize matchkey: module '" + matcher + "' does not exist");
+                        "Module '" + invocation.getModuleName() 
+                          + "' does not exist for '" + invocation + "'");
                     }
                     return ModuleCache.getInstance().lookup(vertx, tenant, entity);
                   })
-                  .compose(module -> recalculateMatchKeyValueTable(connection, module, null, id));
+                  .compose(module -> recalculateMatchKeyValueTable(connection, 
+                      new ModuleExecutable(module, invocation), null, id));
               } else {
                 String method = row.getString("method");
                 JsonObject params = row.getJsonObject("params");

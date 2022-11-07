@@ -19,7 +19,7 @@ import java.util.HashSet;
 import java.util.Set;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-import org.folio.reservoir.module.Module;
+import org.folio.reservoir.module.ModuleExecutable;
 import org.folio.reservoir.server.entity.ClusterBuilder;
 import org.folio.reservoir.util.JsonToMarcXml;
 
@@ -40,7 +40,7 @@ public class ClusterRecordStream implements WriteStream<ClusterRecordItem> {
 
   Handler<Throwable> exceptionHandler;
 
-  Module module;
+  ModuleExecutable transformer;
 
   WriteStream<Buffer> response;
 
@@ -52,9 +52,9 @@ public class ClusterRecordStream implements WriteStream<ClusterRecordItem> {
 
   ClusterRecordStream(
       Vertx vertx, Storage storage, SqlConnection connection,
-      WriteStream<Buffer> response, Module module, boolean withMetadata) {
+      WriteStream<Buffer> response, ModuleExecutable transformer, boolean withMetadata) {
     this.response = response;
-    this.module = module;
+    this.transformer = transformer;
     this.withMetadata = withMetadata;
     this.storage = storage;
     this.connection = connection;
@@ -91,13 +91,13 @@ public class ClusterRecordStream implements WriteStream<ClusterRecordItem> {
           Future<String> future;
           if (cb == null) {
             future = Future.succeededFuture(null); // deleted record
-          } else if (module == null) {
+          } else if (transformer == null) {
             future = Future.succeededFuture(getMetadataJava(cb.build()));
           } else {
-            JsonObject build = cb.build();
+            JsonObject cluster = cb.build();
             future = vertx.executeBlocking(prom -> {
               try {
-                prom.handle(module.execute(build).map(JsonToMarcXml::convert));
+                prom.handle(transformer.execute(cluster).map(JsonToMarcXml::convert));
               } catch (Exception e) {
                 prom.fail(e);
               }
