@@ -152,8 +152,9 @@ public class Marc4jParser implements ReadStream<Record>, Handler<Buffer> {
   }
 
   private void marc4jpending(int sz) {
-    try {
-      InputStream inputStream = new ByteArrayInputStream(pendingBuffer.getBytes(0, sz));
+    try (
+        InputStream inputStream = new ByteArrayInputStream(pendingBuffer.getBytes(0, sz));
+    ) {
       MarcReader marcReader = new MarcPermissiveStreamReader(inputStream, true, true);
       while (marcReader.hasNext()) {
         Record r = marcReader.next();
