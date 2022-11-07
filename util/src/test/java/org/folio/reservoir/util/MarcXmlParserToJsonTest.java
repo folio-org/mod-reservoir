@@ -133,6 +133,7 @@ public class MarcXmlParserToJsonTest {
     marcXmlParserFromFile("marc3.xml")
         .map(parser -> {
           parser.end();
+          parser.endHandler(x -> {});
           parser.end();
           return null;
         })

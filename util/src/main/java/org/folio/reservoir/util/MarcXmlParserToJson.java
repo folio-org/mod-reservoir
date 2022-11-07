@@ -127,7 +127,9 @@ public class MarcXmlParserToJson implements ReadStream<JsonObject>, Handler<XMLS
 
   @Override
   public ReadStream<JsonObject> endHandler(Handler<Void> handler) {
-    endHandler = handler;
+    if (!ended) {
+      endHandler = handler;
+    }
     return this;
   }
 

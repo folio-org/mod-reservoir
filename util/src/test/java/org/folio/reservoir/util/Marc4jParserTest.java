@@ -147,6 +147,7 @@ public class Marc4jParserTest {
     marc4jParserFromFile("marc3.marc")
         .map(parser -> {
           parser.end();
+          parser.endHandler(x -> {});
           parser.end();
           return null;
         })
@@ -211,6 +212,18 @@ public class Marc4jParserTest {
   @Test
   public void testSkipLead(TestContext context) {
     MemoryReadStream rs = new MemoryReadStream(Buffer.buffer("!" + "x".repeat(24)), null, null, Buffer.buffer(), 0, vertx);
+    Marc4jParser parser = new Marc4jParser(rs);
+    Promise<Void> promise = Promise.promise();
+    parser.exceptionHandler(promise::tryFail);
+    parser.endHandler(x -> promise.complete());
+    rs.run();
+    promise.future()
+        .onComplete(context.asyncAssertSuccess());
+  }
+
+  @Test
+  public void testAllLeadBad(TestContext context) {
+    MemoryReadStream rs = new MemoryReadStream(Buffer.buffer("!".repeat(5) + "9".repeat(20)), null, null, Buffer.buffer(), 0, vertx);
     Marc4jParser parser = new Marc4jParser(rs);
     Promise<Void> promise = Promise.promise();
     parser.exceptionHandler(promise::tryFail);
