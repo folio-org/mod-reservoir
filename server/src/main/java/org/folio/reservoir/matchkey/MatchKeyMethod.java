@@ -5,6 +5,11 @@ import io.vertx.core.Vertx;
 import io.vertx.core.json.JsonObject;
 import java.util.Collection;
 
+/**
+ * Don't use this.
+ * @deprecated for removal
+ */
+@Deprecated(forRemoval = true, since = "1.0")
 public interface MatchKeyMethod {
 
   /**
