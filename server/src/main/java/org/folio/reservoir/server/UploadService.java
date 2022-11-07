@@ -117,7 +117,7 @@ public class UploadService {
       ingestWriteStream.setWriteQueueMaxSize(100);
       List<Future<Void>> futures = new ArrayList<>();
       request.setExpectMultipart(true);
-      request.exceptionHandler(e -> futures.add(new FailedFuture<Void>(e)));
+      request.exceptionHandler(e -> futures.add(new FailedFuture<>(e)));
       request.uploadHandler(upload -> {
         if (raw) {
           AtomicLong sz = new AtomicLong();
@@ -132,7 +132,7 @@ public class UploadService {
               futures.add(uploadXmlStream(upload, ingest ? ingestWriteStream : null));
               break;
             default:
-              futures.add(new FailedFuture("Unsupported content-type: " + upload.contentType()));
+              futures.add(new FailedFuture<>("Unsupported content-type: " + upload.contentType()));
           }
         }
       });

@@ -108,21 +108,24 @@ public class Marc4jParser implements ReadStream<Record>, Handler<Buffer> {
   }
 
   private void checkPending()  {
-    if (!emitting) {
-      emitting = true;
-      try {
-        int sz = 0;
-        while (demand > 0L) {
-          int add = getNext(sz);
-          if (add == 0) {
-            break;
-          }
-          sz += add;
-          if (demand != Long.MAX_VALUE) {
-            --demand;
-          }
+    if (emitting) {
+      return;
+    }
+    emitting = true;
+    try {
+      int sz = 0;
+      while (demand > 0L) {
+        int add = getNext(sz);
+        if (add == 0) {
+          break;
         }
-        if (sz > 0) {
+        sz += add;
+        if (demand != Long.MAX_VALUE) {
+          --demand;
+        }
+      }
+      if (sz > 0) {
+        try {
           InputStream inputStream = new ByteArrayInputStream(pendingBuffer.getBytes(0, sz));
           MarcReader marcReader = new MarcPermissiveStreamReader(inputStream, true, true);
           while (marcReader.hasNext()) {
@@ -132,29 +135,35 @@ public class Marc4jParser implements ReadStream<Record>, Handler<Buffer> {
             }
           }
           pendingBuffer = pendingBuffer.getBuffer(sz, pendingBuffer.length());
-        }
-        if (ended) {
-          Handler<Void> handler = endHandler;
-          endHandler = null;
-          if (handler != null) {
-            handler.handle(null);
-          }
-        } else {
-          if (demand == 0L) {
-            stream.pause();
+        } catch (Exception e) {
+          if (exceptionHandler != null) {
+            exceptionHandler.handle(e);
           } else {
-            stream.resume();
+            throw new DecodeException(e.getMessage(), e);
           }
         }
-      } catch (Exception e) {
-        if (exceptionHandler != null) {
-          exceptionHandler.handle(e);
-        } else {
-          throw new DecodeException(e.getMessage(), e);
-        }
-      } finally {
-        emitting = false;
       }
+      if (ended) {
+        Handler<Void> handler = endHandler;
+        endHandler = null;
+        if (handler != null) {
+          handler.handle(null);
+        }
+      } else {
+        if (demand == 0L) {
+          stream.pause();
+        } else {
+          stream.resume();
+        }
+      }
+    } catch (Exception e) {
+      if (exceptionHandler != null) {
+        exceptionHandler.handle(e);
+      } else {
+        throw new DecodeException(e.getMessage(), e);
+      }
+    } finally {
+      emitting = false;
     }
   }
 
