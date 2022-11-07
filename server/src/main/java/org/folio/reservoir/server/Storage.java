@@ -303,7 +303,7 @@ public class Storage {
     }
     String matchkeyId = matchKeyConfig.getString("id");
     String matcherProp = matchKeyConfig.getString("matcher");
-    if (matcherProp != null && !matcherProp.isEmpty()) {
+    if (matcherProp != null) {
       ModuleInvocation invocation = new ModuleInvocation(matcherProp);
       return selectCodeModuleEntity(conn, invocation.getModuleName())
         .compose(entity -> {
