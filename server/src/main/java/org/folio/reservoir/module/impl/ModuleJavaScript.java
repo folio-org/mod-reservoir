@@ -17,8 +17,10 @@ import org.graalvm.polyglot.Context;
 import org.graalvm.polyglot.Source;
 import org.graalvm.polyglot.Value;
 
+@SuppressWarnings({"squid:S5738","squid:S1123"})
 public class ModuleJavaScript implements Module {
   private String id;
+  @Deprecated(forRemoval = true, since = "1.0")
   private String defaultFunctionName;
   private Value module;
   private Value function;
@@ -78,8 +80,11 @@ public class ModuleJavaScript implements Module {
   private Value getFunction(String functionName) {
     if (module != null) {
       if (functionName == null) {
-        throw new IllegalArgumentException(
-          "JS url modules require 'function' defined in config or by caller");
+        if (defaultFunctionName == null) {
+          throw new IllegalArgumentException(
+            "JS url modules require 'function' defined in config or by caller");
+        }
+        functionName = defaultFunctionName;
       }
       Value v = module.getMember(functionName);
       if (v == null || !v.canExecute()) {
@@ -93,12 +98,6 @@ public class ModuleJavaScript implements Module {
       throw new IllegalStateException("uninitialized");
     }
   }
-
-  @Override
-  public Future<JsonObject> execute(JsonObject input) {
-    return execute(defaultFunctionName, input);
-  }
-
   
   @Override
   public Future<JsonObject> execute(String functionName, JsonObject input) {
@@ -114,11 +113,6 @@ public class ModuleJavaScript implements Module {
       return Future.failedFuture(
         "Function " + functionName + " of module " + id + " must return JSON string");
     }
-  }
-    
-  @Override
-  public Collection<String> executeAsCollection(JsonObject input) {
-    return executeAsCollection(defaultFunctionName, input);
   }
 
   @Override

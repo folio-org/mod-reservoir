@@ -80,7 +80,6 @@ import static org.hamcrest.Matchers.hasSize;
 import static org.hamcrest.Matchers.is;
 import static org.hamcrest.Matchers.nullValue;
 import static org.hamcrest.Matchers.startsWith;
-import static org.junit.Assert.fail;
 
 @RunWith(VertxUnitRunner.class)
 public class MainVerticleTest {
@@ -407,11 +406,53 @@ public class MainVerticleTest {
             .post("/reservoir/config/matchkeys")
             .then().statusCode(400)
             .contentType("text/plain")
-            .body(Matchers.is("Matcher 'not-exists' is not defined"));
+            .body(Matchers.is("Matcher module 'not-exists' does not exist"));
+    }
+
+    @Test
+    public void testMatchKeysExistingMatcherModuleWithInvocation() {
+        JsonObject module = new JsonObject()
+            .put("id", "exists")
+            .put("type", "jsonpath")
+            .put("script", "$.marc");
+
+        RestAssured.given()
+            .header(XOkapiHeaders.TENANT, TENANT_1)
+            .header("Content-Type", "application/json")
+            .body(module.encode())
+            .post("/reservoir/config/modules")
+            .then()
+            .statusCode(201)
+            .contentType("application/json");
+
+        JsonObject matchKey = new JsonObject()
+            .put("id", "works")
+            .put("matcher", "exists::function");
+
+        RestAssured.given()
+            .header(XOkapiHeaders.TENANT, TENANT_1)
+            .header("Content-Type", "application/json")
+            .body(matchKey.encode())
+            .post("/reservoir/config/matchkeys")
+            .then()
+            .statusCode(201)
+            .contentType("application/json");
+
+        RestAssured.given()
+            .header(XOkapiHeaders.TENANT, TENANT_1)
+            .header("Content-Type", "application/json")
+            .delete("/reservoir/config/matchkeys/" + matchKey.getString("id"))
+            .then().statusCode(204);
+
+        RestAssured.given()
+            .header(XOkapiHeaders.TENANT, TENANT_1)
+            .header("Content-Type", "application/json")
+            .delete("/reservoir/config/modules/" + module.getString("id"))
+            .then().statusCode(204);        
     }
 
   @Test
-  public void matchKeysOK() {
+  public void testMatchkeysCrudWithMethod() {
     RestAssured.given()
         .header(XOkapiHeaders.TENANT, TENANT_1)
         .param("count", "none")
@@ -530,12 +571,6 @@ public class MainVerticleTest {
         .header("Content-Type", "application/json")
         .delete("/reservoir/config/matchkeys/" + matchKey.getString("id"))
         .then().statusCode(204);
-
-    RestAssured.given()
-        .header(XOkapiHeaders.TENANT, TENANT_1)
-        .header("Content-Type", "application/json")
-        .delete("/reservoir/config/matchkeys/" + matchKey.getString("id"))
-        .then().statusCode(404);
 
     RestAssured.given()
         .header(XOkapiHeaders.TENANT, TENANT_1)
@@ -2071,7 +2106,10 @@ public class MainVerticleTest {
         .post("/reservoir/config/modules")
         .then().statusCode(400);
 
-    CodeModuleEntity module = new CodeModuleEntity("empty", "javascript", "http://localhost:" + CODE_MODULES_PORT + "/lib/empty.mjs", "transform", "");
+    CodeModuleEntity module = new CodeModuleEntity("empty", "javascript", 
+            "http://localhost:" + CODE_MODULES_PORT + "/lib/empty.mjs",
+            "transform",
+            "");
 
     //GET not found item
     RestAssured.given()
@@ -2495,22 +2533,23 @@ public class MainVerticleTest {
     //configure transformers
     for (String m : List.of("marc-transformer", "empty", "throw")) {
       CodeModuleEntity module = new CodeModuleEntity(
-          m, "javascript", "http://localhost:" + CODE_MODULES_PORT + "/lib/" + m + ".mjs", "transform", "");
+          m, "javascript", "http://localhost:" + CODE_MODULES_PORT + "/lib/" + m + ".mjs", null,  "");
 
       //POST module configuration
       RestAssured.given()
           .header(XOkapiHeaders.TENANT, TENANT_1)
           .header("Content-Type", "application/json")
-          .body(module.asJson().encode())
+          .body(module.asJson(true).encode())
           .post("/reservoir/config/modules")
-          .then().statusCode(201)
+          .then()
+          .statusCode(201)
           .contentType("application/json")
           .body(Matchers.is(module.asJson().encode()));
     }
 
     //PUT oai configuration
     JsonObject oaiConfig = new JsonObject()
-        .put("transformer", "marc-transformer");
+        .put("transformer", "marc-transformer::transform");
 
     RestAssured.given()
         .header(XOkapiHeaders.TENANT, TENANT_1)
@@ -2590,7 +2629,7 @@ public class MainVerticleTest {
     verifyOaiResponse(s, "ListRecords", identifiers, 1, expectedIssn2);
 
     oaiConfig = new JsonObject()
-        .put("transformer", "empty");
+        .put("transformer", "empty::transform");
 
     RestAssured.given()
         .header(XOkapiHeaders.TENANT, TENANT_1)
@@ -2613,7 +2652,7 @@ public class MainVerticleTest {
     verifyOaiResponse(s, "ListRecords", identifiers, 1, null);
 
     oaiConfig = new JsonObject()
-        .put("transformer", "throw");
+        .put("transformer", "throw::transform");
 
     RestAssured.given()
         .header(XOkapiHeaders.TENANT, TENANT_1)
@@ -2662,7 +2701,7 @@ public class MainVerticleTest {
         .get("/reservoir/oai")
         .then().statusCode(500)
         .contentType("text/plain")
-        .body(is("Transformer not found: doesnotexist"));
+        .body(is("Transformer module 'doesnotexist' not found"));
 
     RestAssured.given()
         .header(XOkapiHeaders.TENANT, TENANT_1)
@@ -2672,7 +2711,7 @@ public class MainVerticleTest {
         .get("/reservoir/oai")
         .then().statusCode(500)
         .contentType("text/plain")
-        .body(is("Transformer not found: doesnotexist"));
+        .body(is("Transformer module 'doesnotexist' not found"));
 
     //PUT disable the transformer
     JsonObject oaiConfigOff = new JsonObject();
