@@ -3062,6 +3062,251 @@ public class MainVerticleTest {
   }
 
   @Test
+  public void testOaiSourceVersions() {
+    List<String> identifiers = new LinkedList<>();
+    String s;
+
+    createIsbnMatchKey();
+
+    int v1 = 55;
+
+    JsonArray ingest2 = new JsonArray()
+        .add(new JsonObject()
+            .put("localId", "S100")
+            .put("payload", new JsonObject()
+                .put("marc", new JsonObject()
+                    .put("leader", "00914naa  " + v1 + "00337   450 ")
+                )
+                .put("inventory", new JsonObject()
+                    .put("isbn", new JsonArray().add("1"))
+                )
+            )
+        );
+    ingestRecords(ingest2, SOURCE_ID_1, v1);
+
+    ingest2 = new JsonArray()
+        .add(new JsonObject()
+            .put("localId", "S102")
+            .put("payload", new JsonObject()
+                .put("marc", new JsonObject()
+                    .put("leader", "00914naa  " + v1 + "00337   450 ")
+                )
+                .put("inventory", new JsonObject()
+                    .put("isbn", new JsonArray().add("2"))
+                )
+            )
+        );
+    ingestRecords(ingest2, SOURCE_ID_1, v1);
+
+    s = RestAssured.given()
+        .header(XOkapiHeaders.TENANT, TENANT_1)
+        .param("set", "isbn")
+        .param("verb", "ListRecords")
+        .param("metadataPrefix", "marcxml")
+        .get("/reservoir/oai")
+        .then().statusCode(200)
+        .contentType("text/xml")
+        .extract().body().asString();
+    log.info("OAI 1 = {}", s);
+
+    JsonArray expectedIsbn = new JsonArray()
+        .add(new JsonObject()
+            .put("leader", "00914naa  5500337   450 ")
+            .put("fields", new JsonArray()
+                .add(new JsonObject()
+                    .put("999", new JsonObject()
+                        .put("ind1", "1")
+                        .put("ind2", "0")
+                        .put("subfields", new JsonArray()
+                            .add(new JsonObject().put("i", "DO_NOT_ASSERT"))
+                            .add(new JsonObject().put("m", "1"))
+                            .add(new JsonObject().put("l", "S100"))
+                            .add(new JsonObject().put("s", "SOURCE-1"))
+                            .add(new JsonObject().put("v", "55"))
+                        )
+                    )
+                )
+            )
+        )
+        .add(new JsonObject()
+            .put("leader", "00914naa  5500337   450 ")
+            .put("fields", new JsonArray()
+                .add(new JsonObject()
+                    .put("999", new JsonObject()
+                        .put("ind1", "1")
+                        .put("ind2", "0")
+                        .put("subfields", new JsonArray()
+                            .add(new JsonObject().put("i", "DO_NOT_ASSERT"))
+                            .add(new JsonObject().put("m", "2"))
+                            .add(new JsonObject().put("l", "S102"))
+                            .add(new JsonObject().put("s", "SOURCE-1"))
+                            .add(new JsonObject().put("v", "55"))
+                        )
+                    )
+                )
+            )
+        )
+        ;
+
+    verifyOaiResponseRuntime(s, "ListRecords", identifiers, 2, expectedIsbn);
+
+    int v2 = 56;
+
+    JsonArray ingest1b = new JsonArray()
+        .add(new JsonObject()
+            .put("localId", "S100")
+            .put("payload", new JsonObject()
+                .put("marc", new JsonObject()
+                    .put("leader", "00914naa  " + v2 + "00337   450 ")
+                )
+                .put("inventory", new JsonObject()
+                    .put("isbn", new JsonArray().add("1"))
+                )
+            )
+        );
+    ingestRecords(ingest1b, SOURCE_ID_1, v2);
+
+    ingest1b = new JsonArray()
+        .add(new JsonObject()
+            .put("localId", "S102")
+            .put("payload", new JsonObject()
+                .put("marc", new JsonObject()
+                    .put("leader", "00914naa  " + v2 + "00337   450 ")
+                )
+                .put("inventory", new JsonObject()
+                    .put("isbn", new JsonArray().add("3"))
+                )
+            )
+        );
+    ingestRecords(ingest1b, SOURCE_ID_1, v2);
+
+    s = RestAssured.given()
+        .header(XOkapiHeaders.TENANT, TENANT_1)
+        .param("set", "isbn")
+        .param("verb", "ListRecords")
+        .param("metadataPrefix", "marcxml")
+        .get("/reservoir/oai")
+        .then().statusCode(200)
+        .contentType("text/xml")
+        .extract().body().asString();
+    log.info("OAI 2 = {}", s);
+
+    expectedIsbn = new JsonArray()
+        .add(new JsonObject()
+            .put("leader", "00914naa  5500337   450 ")
+            .put("fields", new JsonArray()
+                .add(new JsonObject()
+                    .put("999", new JsonObject()
+                        .put("ind1", "1")
+                        .put("ind2", "0")
+                        .put("subfields", new JsonArray()
+                            .add(new JsonObject().put("i", "DO_NOT_ASSERT"))
+                            .add(new JsonObject().put("m", "2"))
+                            .add(new JsonObject().put("l", "S102"))
+                            .add(new JsonObject().put("s", "SOURCE-1"))
+                            .add(new JsonObject().put("v", "55"))
+                        )
+                    )
+                )
+            )
+        )
+        .add(new JsonObject()
+            .put("leader", "00914naa  5600337   450 ")
+            .put("fields", new JsonArray()
+                .add(new JsonObject()
+                    .put("999", new JsonObject()
+                        .put("ind1", "1")
+                        .put("ind2", "0")
+                        .put("subfields", new JsonArray()
+                            .add(new JsonObject().put("i", "DO_NOT_ASSERT"))
+                            .add(new JsonObject().put("m", "1"))
+                            .add(new JsonObject().put("l", "S100"))
+                            .add(new JsonObject().put("s", "SOURCE-1"))
+                            .add(new JsonObject().put("v", "56"))
+                        )
+                    )
+                )
+            )
+        )
+        .add(new JsonObject()
+            .put("leader", "00914naa  5600337   450 ")
+            .put("fields", new JsonArray()
+                .add(new JsonObject()
+                    .put("999", new JsonObject()
+                        .put("ind1", "1")
+                        .put("ind2", "0")
+                        .put("subfields", new JsonArray()
+                            .add(new JsonObject().put("i", "DO_NOT_ASSERT"))
+                            .add(new JsonObject().put("m", "3"))
+                            .add(new JsonObject().put("l", "S102"))
+                            .add(new JsonObject().put("s", "SOURCE-1"))
+                            .add(new JsonObject().put("v", "56"))
+                        )
+                    )
+                )
+            )
+        );
+
+    verifyOaiResponseRuntime(s, "ListRecords", identifiers, 3, expectedIsbn);
+
+    RestAssured.given()
+        .header(XOkapiHeaders.TENANT, TENANT_1)
+        .header("Content-Type", "application/json")
+        .param("query", "sourceId=" + SOURCE_ID_1 + " AND sourceVersion = " + v1)
+        .delete("/reservoir/records")
+        .then().statusCode(204);
+
+    s = RestAssured.given()
+        .header(XOkapiHeaders.TENANT, TENANT_1)
+        .param("set", "isbn")
+        .param("verb", "ListRecords")
+        .param("metadataPrefix", "marcxml")
+        .get("/reservoir/oai")
+        .then().statusCode(200)
+        .contentType("text/xml")
+        .extract().body().asString();
+    log.info("OAI 3 = {}", s);
+    expectedIsbn = new JsonArray()
+        .add(new JsonObject()
+            .put("leader", "00914naa  5600337   450 ")
+            .put("fields", new JsonArray()
+                .add(new JsonObject()
+                    .put("999", new JsonObject()
+                        .put("ind1", "1")
+                        .put("ind2", "0")
+                        .put("subfields", new JsonArray()
+                            .add(new JsonObject().put("i", "DO_NOT_ASSERT"))
+                            .add(new JsonObject().put("m", "1"))
+                            .add(new JsonObject().put("l", "S100"))
+                            .add(new JsonObject().put("s", "SOURCE-1"))
+                            .add(new JsonObject().put("v", "56"))
+                        )
+                    )
+                )
+            )
+        )
+        .add(new JsonObject()
+            .put("leader", "00914naa  5600337   450 ")
+            .put("fields", new JsonArray()
+                .add(new JsonObject()
+                    .put("999", new JsonObject()
+                        .put("ind1", "1")
+                        .put("ind2", "0")
+                        .put("subfields", new JsonArray()
+                            .add(new JsonObject().put("i", "DO_NOT_ASSERT"))
+                            .add(new JsonObject().put("m", "3"))
+                            .add(new JsonObject().put("l", "S102"))
+                            .add(new JsonObject().put("s", "SOURCE-1"))
+                            .add(new JsonObject().put("v", "56"))
+                        )
+                    )
+                )
+            )
+        );
+    verifyOaiResponseRuntime(s, "ListRecords", identifiers, 3, expectedIsbn);
+  }
+
+  @Test
   public void upgradeDb(TestContext context) {
     String tenant = "tenant2";
     tenantOp(context, tenant, new JsonObject()
@@ -4148,8 +4393,8 @@ public class MainVerticleTest {
 
     mockBody = """
       <?xml version="1.0" encoding="UTF-8"?>
-      <OAI-PMH xsi:schemaLocation='http://www.openarchives.org/OAI/2.0/ http://www.openarchives.org/OAI/2.0/OAI-PMH.xsd' 
-        xmlns:xsi='http://www.w3.org/2001/XMLSchema-instance' 
+      <OAI-PMH xsi:schemaLocation='http://www.openarchives.org/OAI/2.0/ http://www.openarchives.org/OAI/2.0/OAI-PMH.xsd'
+        xmlns:xsi='http://www.w3.org/2001/XMLSchema-instance'
         xmlns='http://www.openarchives.org/OAI/2.0/'>
         <responseDate>2022-10-17T18:52:44Z</responseDate>
         <request metadataPrefix='marc21' set='reshare' verb='ListRecords'>https://arcadiau.bywatersolutions.com/opac/oai.pl</request>
