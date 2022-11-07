@@ -27,18 +27,8 @@ public class ModuleJsonPath implements Module {
   }
 
   @Override
-  public Future<JsonObject> execute(JsonObject input) {
-    return execute(null, input);
-  }
-
-  @Override
   public Future<JsonObject> execute(String function, JsonObject input) {
     throw new UnsupportedOperationException("only executeAsCollection supported for type=jsonpath");
-  }
-  
-  @Override
-  public Collection<String> executeAsCollection(JsonObject input) {
-    return executeAsCollection(null, input);
   }
 
   @Override

@@ -10,13 +10,9 @@ public interface Module {
 
   Future<Void> initialize(Vertx vertx, CodeModuleEntity entity);
 
-  Future<JsonObject> execute(String function, JsonObject input);
-  
-  Future<JsonObject> execute(JsonObject input);
+  Future<JsonObject> execute(String symbol, JsonObject input);
 
-  Collection<String> executeAsCollection(String function, JsonObject input);
-  
-  Collection<String> executeAsCollection(JsonObject input);
+  Collection<String> executeAsCollection(String symbol, JsonObject input);
 
   Future<Void> terminate();
 

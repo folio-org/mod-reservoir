@@ -8,7 +8,7 @@
     },
     "matcher": {
       "type": "string",
-      "description": "matcher module ID"
+      "description": "matcher module invocation: 'moduleId<::function>' where <::function> is optional"
     },
     "method": {
       "type": "string",

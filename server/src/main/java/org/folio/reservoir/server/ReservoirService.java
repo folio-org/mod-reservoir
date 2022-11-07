@@ -18,6 +18,7 @@ import org.apache.logging.log4j.Logger;
 import org.folio.okapi.common.HttpResponse;
 import org.folio.reservoir.matchkey.MatchKeyMethodFactory;
 import org.folio.reservoir.module.ModuleCache;
+import org.folio.reservoir.module.ModuleInvocation;
 import org.folio.reservoir.server.entity.CodeModuleEntity;
 import org.folio.reservoir.util.LargeJsonReadStream;
 import org.folio.tlib.RouterCreator;
@@ -200,14 +201,16 @@ public class ReservoirService implements RouterCreator, TenantInitHooks {
   }
 
   static Future<String> checkMatcher(Storage storage, JsonObject config) {
-    String matcher = config.getString("matcher");
-    if (matcher != null) {
-      return storage.selectCodeModuleEntity(matcher)
+    String matcherProp = config.getString("matcher");
+    if (matcherProp != null) {
+      ModuleInvocation invocation = new ModuleInvocation(matcherProp);
+      return storage.selectCodeModuleEntity(invocation.getModuleName())
         .compose(entity -> {
           if (entity == null) {
-            return Future.failedFuture("Matcher '" + matcher + "' is not defined");
+            return Future.failedFuture("Matcher module '" + invocation.getModuleName() 
+              + "' does not exist");
           }
-          return Future.succeededFuture(matcher);
+          return Future.succeededFuture(matcherProp);
         });
     } else {
       return Future.succeededFuture(null);

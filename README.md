@@ -202,7 +202,6 @@ cat js/matchkeys/goldrush/goldrush-conf.json
   "id": "goldrush-matcher",
   "type": "javascript",
   "url": "https://raw.githubusercontent.com/folio-org/mod-reservoir/master/js/matchkeys/goldrush/goldrush.mjs"
-  "function": "matchkey"
 }
 ```
 
@@ -219,7 +218,7 @@ And create a corresponding pool with:
 cat goldrush-pool.json
 {
   "id": "goldrush",
-  "matcher": "goldrush-matcher",
+  "matcher": "goldrush-matcher::matchkey",
   "update": "ingest"
 }
 ```
@@ -403,7 +402,7 @@ and enabled for the OAI-PMH server with:
 
 ```
 curl -HX-Okapi-Tenant:$OKAPI_TENANT -HContent-Type:application/json \
-  -XPUT $OKAPI_URL/reservoir/config/oai -d'{"transformer":"marc-transformer"}'
+  -XPUT $OKAPI_URL/reservoir/config/oai -d'{"transformer":"marc-transformer::transform"}'
 ```
 
 ## Additional information
