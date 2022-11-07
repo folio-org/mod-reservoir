@@ -536,10 +536,20 @@ public class Storage {
         + " WHERE m.cluster_id = r.cluster_id AND r.record_id = id";
     if (sqlWhere != null) {
       q = q + " AND " + sqlWhere;
+      if (sqlWhere.contains("source_version=")) {
+        // if limit by source version, then update timestamp only if this cluster only
+        // contains the source_version and not others. The datestamp for cluster was
+        // already updated on update during ingest.
+        q = q + " AND NOT EXISTS (SELECT 1 FROM "
+            + globalRecordTable + ", " + clusterRecordTable + " AS r"
+            + " WHERE m.cluster_id = r.cluster_id AND r.record_id = id"
+            + " AND " + sqlWhere.replace("source_version=", "source_version!=") + ")";
+      }
     }
     return pool.preparedQuery(q)
         .execute(Tuple.of(LocalDateTime.now(ZoneOffset.UTC)))
-        .compose(x -> {
+        .compose(rowSet -> {
+          log.info("Number of meta records updated = {}", rowSet.rowCount());
           String from = globalRecordTable;
           if (sqlWhere != null) {
             from = from + " WHERE " + sqlWhere;
