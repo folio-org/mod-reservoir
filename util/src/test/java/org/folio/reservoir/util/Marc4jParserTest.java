@@ -212,7 +212,7 @@ public class Marc4jParserTest {
 
   @Test
   public void testSkipLead(TestContext context) {
-    MemoryReadStream rs = new MemoryReadStream(Buffer.buffer("_" + "x".repeat(24)), null, null, Buffer.buffer(), 0, vertx);
+    MemoryReadStream rs = new MemoryReadStream(Buffer.buffer("!" + "x".repeat(24)), null, null, Buffer.buffer(), 0, vertx);
     Marc4jParser parser = new Marc4jParser(rs);
     Promise<Void> promise = Promise.promise();
     parser.exceptionHandler(promise::tryFail);

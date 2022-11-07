@@ -20,8 +20,19 @@ public class MarcXmlParserToJson implements ReadStream<JsonObject>, Handler<XMLS
   private int level;
   final XmlMetadataParserMarcInJson parserMarcInJson = new XmlMetadataParserMarcInJson();
 
+  /**
+   * Creates stream conversion from MARCXML collection to MARC-in-JSON.
+   * @param stream XmlParser stream.
+   */
   public MarcXmlParserToJson(ReadStream<XMLStreamReader> stream) {
     this.stream = stream;
+    stream.handler(this);
+    stream.endHandler(v -> end());
+    stream.exceptionHandler(e -> {
+      if (exceptionHandler != null) {
+        exceptionHandler.handle(e);
+      }
+    });
   }
 
   @Override
@@ -75,19 +86,6 @@ public class MarcXmlParserToJson implements ReadStream<JsonObject>, Handler<XMLS
   @Override
   public ReadStream<JsonObject> handler(Handler<JsonObject> handler) {
     eventHandler = handler;
-    if (handler != null) {
-      stream.handler(this);
-      stream.endHandler(v -> end());
-      stream.exceptionHandler(e -> {
-        if (exceptionHandler != null) {
-          exceptionHandler.handle(e);
-        }
-      });
-    } else {
-      stream.handler(null);
-      stream.endHandler(null);
-      stream.exceptionHandler(null);
-    }
     return this;
   }
 
