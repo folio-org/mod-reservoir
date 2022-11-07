@@ -13,16 +13,12 @@ import io.vertx.core.streams.WriteStream;
 import java.io.ByteArrayOutputStream;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicInteger;
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
 import org.folio.reservoir.util.SourceId;
 import org.marc4j.MarcJsonWriter;
 import org.marc4j.converter.impl.AnselToUnicode;
 import org.marc4j.marc.Record;
 
 public class IngestWriteStream implements WriteStream<JsonObject> {
-
-  private static final Logger log = LogManager.getLogger(IngestWriteStream.class);
   final SourceId sourceId;
   final int sourceVersion;
   final Storage storage;
@@ -52,6 +48,10 @@ public class IngestWriteStream implements WriteStream<JsonObject> {
 
   @Override
   public Future<Void> write(JsonObject globalRecord) {
+    final JsonObject payload = globalRecord.getJsonObject("payload");
+    if (payload == null) {
+      return Future.failedFuture("Missing payload");
+    }
     Future<Void> future = Future.succeededFuture();
     ops.incrementAndGet();
     if (matchKeyConfigs == null) {
@@ -62,19 +62,23 @@ public class IngestWriteStream implements WriteStream<JsonObject> {
     }
     return future
         .onSuccess(x -> {
-          // TODO consider delete records
+          JsonObject marc = payload.getJsonObject("marc");
+          if (marc != null) {
+            String leader = marc.getString("leader");
+            if (leader.length() >= 24 && leader.charAt(5) == 'd') {
+              globalRecord.put("delete", true);
+            }
+          }
           if (jsonPath != null) {
-            String v = getLocalIdValue(jsonPath, globalRecord.getJsonObject("payload"));
+            String v = getLocalIdValue(jsonPath, payload);
             globalRecord.put("localId", v.trim());
           }
         })
         .compose(y -> storage.ingestGlobalRecord(vertx, sourceId, sourceVersion,
             globalRecord, matchKeyConfigs)
         .onComplete(x -> {
-          if (ops.decrementAndGet() == queueSize / 2) {
-            if (drainHandler != null) {
-              drainHandler.handle(null);
-            }
+          if (ops.decrementAndGet() == queueSize / 2 && drainHandler != null) {
+            drainHandler.handle(null);
           }
           if (ops.get() == 0 && endHandler != null) {
             endHandler.handle(Future.succeededFuture());

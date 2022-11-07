@@ -50,7 +50,7 @@ public class UploadService {
           marc4jParser.pause();
         }
         ingestWriteStream.write(r)
-            .onFailure(e -> promise.tryFail(e));
+            .onFailure(promise::tryFail);
       }
     });
     marc4jParser.endHandler(e -> {
@@ -85,7 +85,7 @@ public class UploadService {
             .put("payload", new JsonObject()
                     .put("marc", marcInJson));
         ingestWriteStream.write(globalRecord)
-            .onFailure(e -> promise.tryFail(e));
+            .onFailure(promise::tryFail);
       }
     });
     marcXmlParser.endHandler(e -> {
@@ -117,22 +117,18 @@ public class UploadService {
       ingestWriteStream.setWriteQueueMaxSize(100);
       List<Future<Void>> futures = new ArrayList<>();
       request.setExpectMultipart(true);
-      request.exceptionHandler(e -> futures.add(new FailedFuture(e)));
+      request.exceptionHandler(e -> futures.add(new FailedFuture<Void>(e)));
       request.uploadHandler(upload -> {
         if (raw) {
           AtomicLong sz = new AtomicLong();
           upload.handler(x -> sz.addAndGet(x.length()));
-          upload.endHandler(end -> {
-            log.info("Total size {}", sz.get());
-          });
+          upload.endHandler(end -> log.info("Total size {}", sz.get()));
         } else {
           switch (upload.contentType()) {
-            case "application/octet-stream":
-            case "application/marc":
+            case "application/octet-stream", "application/marc":
               futures.add(uploadOctetStream(upload, ingest ? ingestWriteStream : null));
               break;
-            case "application/xml":
-            case "text/xml":
+            case "application/xml", "text/xml":
               futures.add(uploadXmlStream(upload, ingest ? ingestWriteStream : null));
               break;
             default:
