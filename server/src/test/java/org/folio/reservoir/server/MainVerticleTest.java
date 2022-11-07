@@ -1620,7 +1620,7 @@ public class MainVerticleTest extends TestBase {
         .contentType("application/json")
         .body("items", hasSize(2));
 
-    String s = RestAssured.given()
+    RestAssured.given()
         .header(XOkapiHeaders.TENANT, TENANT_1)
         .header("Content-Type", "application/json")
         .param("matchkeyid", matchKey.getString("id"))
@@ -1633,7 +1633,6 @@ public class MainVerticleTest extends TestBase {
         .extract().body().asString();
 
     deleteIssnMatchKey();
-
   }
 
   @Test

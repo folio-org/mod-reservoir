@@ -33,6 +33,13 @@ public class Marc4jParser implements ReadStream<Record>, Handler<Buffer> {
    */
   public Marc4jParser(ReadStream<Buffer> stream) {
     this.stream = stream;
+    stream.handler(this);
+    stream.endHandler(v -> end());
+    stream.exceptionHandler(e -> {
+      if (exceptionHandler != null) {
+        exceptionHandler.handle(e);
+      }
+    });
     pendingBuffer = Buffer.buffer();
   }
 
@@ -45,19 +52,6 @@ public class Marc4jParser implements ReadStream<Record>, Handler<Buffer> {
   @Override
   public ReadStream<Record> handler(Handler<Record> handler) {
     eventHandler = handler;
-    if (handler != null) {
-      stream.handler(this);
-      stream.endHandler(v -> end());
-      stream.exceptionHandler(e -> {
-        if (exceptionHandler != null) {
-          exceptionHandler.handle(e);
-        }
-      });
-    } else {
-      stream.handler(null);
-      stream.endHandler(null);
-      stream.exceptionHandler(null);
-    }
     return this;
   }
 
@@ -90,7 +84,7 @@ public class Marc4jParser implements ReadStream<Record>, Handler<Buffer> {
     return this;
   }
 
-  private int getNext(int sz) {
+  int getNext(int sz) {
     if (pendingBuffer.length() - sz < 24) {
       return 0;
     }
@@ -143,8 +137,6 @@ public class Marc4jParser implements ReadStream<Record>, Handler<Buffer> {
     } catch (Exception e) {
       if (exceptionHandler != null) {
         exceptionHandler.handle(e);
-      } else {
-        throw new DecodeException(e.getMessage(), e);
       }
     } finally {
       emitting = false;
