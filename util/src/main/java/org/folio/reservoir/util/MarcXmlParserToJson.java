@@ -18,6 +18,8 @@ public class MarcXmlParserToJson implements ReadStream<JsonObject>, Handler<XMLS
   private Handler<JsonObject> eventHandler;
   private Handler<Void> endHandler;
   private int level;
+
+  private boolean ended;
   final XmlMetadataParserMarcInJson parserMarcInJson = new XmlMetadataParserMarcInJson();
 
   /**
@@ -43,43 +45,47 @@ public class MarcXmlParserToJson implements ReadStream<JsonObject>, Handler<XMLS
 
   @Override
   public void handle(XMLStreamReader xmlStreamReader) {
-    int e = xmlStreamReader.getEventType();
-    if (XMLStreamConstants.START_ELEMENT == e) {
-      level++;
-      String elem = xmlStreamReader.getLocalName();
-      if (level < 2) {
-        if (!"collection".equals(elem)) {
-          exceptionHandler.handle(
-              new DecodeException("Expected <collection> as root tag. Got " + elem));
-        }
-      } else  { // skip collection, but supply record and below
-        if (level == 2) {
-          if (!"record".equals(elem)) {
-            exceptionHandler.handle(
-                new DecodeException("Expected <record> as 2nd-level. Got " + elem));
+    try {
+      int e = xmlStreamReader.getEventType();
+      if (XMLStreamConstants.START_ELEMENT == e) {
+        level++;
+        String elem = xmlStreamReader.getLocalName();
+        if (level < 2) {
+          if (!"collection".equals(elem)) {
+            throw new DecodeException("Expected <collection> as root tag. Got " + elem);
           }
-          parserMarcInJson.init();
+        } else { // skip collection, but supply record and below
+          if (level == 2) {
+            if (!"record".equals(elem)) {
+              throw new DecodeException("Expected <record> as 2nd-level. Got " + elem);
+            }
+            parserMarcInJson.init();
+          }
+          parserMarcInJson.handle(xmlStreamReader);
         }
+      } else if (XMLStreamConstants.END_ELEMENT == e) {
+        level--;
+        if (level >= 1) { // in record and below
+          parserMarcInJson.handle(xmlStreamReader);
+        }
+        if (level == 1) { // record end
+          if (demand == 0L) {
+            stream.pause();
+          } else if (demand != Long.MAX_VALUE) {
+            --demand;
+            stream.resume();
+          }
+          if (eventHandler != null) {
+            eventHandler.handle(parserMarcInJson.result());
+          }
+        }
+      } else if (level >= 2) { // pass c-data and stuff when in collection/record .
         parserMarcInJson.handle(xmlStreamReader);
       }
-    } else if (XMLStreamConstants.END_ELEMENT == e) {
-      level--;
-      if (level >= 1) { // in record and below
-        parserMarcInJson.handle(xmlStreamReader);
+    } catch (Exception ex) {
+      if (exceptionHandler != null) {
+        exceptionHandler.handle(ex);
       }
-      if (level == 1) { // record end
-        if (demand == 0L) {
-          stream.pause();
-        } else if (demand != Long.MAX_VALUE) {
-          --demand;
-          stream.resume();
-        }
-        if (eventHandler != null) {
-          eventHandler.handle(parserMarcInJson.result());
-        }
-      }
-    } else if (level >= 2) { // pass c-data and stuff when in collection/record .
-      parserMarcInJson.handle(xmlStreamReader);
     }
   }
 
@@ -125,7 +131,11 @@ public class MarcXmlParserToJson implements ReadStream<JsonObject>, Handler<XMLS
     return this;
   }
 
-  private void end() {
+  void end() {
+    if (ended) {
+      throw new IllegalStateException("Parsing already done");
+    }
+    ended = true;
     if (endHandler != null) {
       endHandler.handle(null);
     }

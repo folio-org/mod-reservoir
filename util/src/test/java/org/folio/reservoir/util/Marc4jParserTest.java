@@ -142,7 +142,6 @@ public class Marc4jParserTest {
             e -> assertThat(e.getMessage(), is("Parsing already done"))));
   }
 
-
   @Test
   public void testDoubleEnd(TestContext context) {
     marc4jParserFromFile("marc3.marc")
@@ -169,7 +168,6 @@ public class Marc4jParserTest {
         .onComplete(context.asyncAssertFailure(
             e -> assertThat(e.getMessage(), is("handler exception"))));
   }
-
 
   @Test
   public void testBadMarc(TestContext context) {
