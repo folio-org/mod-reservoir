@@ -1,8 +1,7 @@
 package org.folio.reservoir.server;
 
 import io.restassured.RestAssured;
-import io.restassured.response.ExtractableResponse;
-import io.restassured.response.Response;
+import io.vertx.core.Future;
 import io.vertx.core.json.JsonArray;
 import io.vertx.core.json.JsonObject;
 import io.vertx.ext.unit.Async;
@@ -11,6 +10,8 @@ import io.vertx.ext.unit.junit.VertxUnitRunner;
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.time.Clock;
 import java.time.Duration;
 import java.time.Instant;
@@ -32,6 +33,7 @@ import javax.xml.stream.XMLStreamReader;
 import javax.xml.transform.Source;
 import javax.xml.transform.stream.StreamSource;
 
+import io.vertx.ext.web.client.predicate.ResponsePredicate;
 import io.vertx.sqlclient.Tuple;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -93,46 +95,6 @@ public class MainVerticleTest extends TestBase {
     RestAssured.given()
         .header(XOkapiHeaders.TENANT, TENANT_2)
         .delete("/reservoir/pmh-clients/" + PMH_CLIENT_ID);
-  }
-
-  /**
-   * Test utility for calling tenant init
-   *
-   * @param context          test context
-   * @param tenant           tenant that we're dealing with.
-   * @param tenantAttributes tenant attributes as it would come from Okapi install.
-   */
-  static void tenantOp(TestContext context, String tenant, JsonObject tenantAttributes) {
-    ExtractableResponse<Response> response = RestAssured.given()
-        .baseUri(MODULE_URL)
-        .header(XOkapiHeaders.TENANT, tenant)
-        .header("Content-Type", "application/json")
-        .body(tenantAttributes.encode())
-        .post("/_/tenant")
-        .then().statusCode(201)
-        .header("Content-Type", is("application/json"))
-        .body("tenant", is(tenant))
-        .extract();
-
-    String location = response.header("Location");
-    JsonObject tenantJob = new JsonObject(response.asString());
-    context.assertEquals("/_/tenant/" + tenantJob.getString("id"), location);
-
-    response = RestAssured.given()
-        .baseUri(MODULE_URL)
-        .header(XOkapiHeaders.TENANT, tenant)
-        .get(location + "?wait=10000")
-        .then().statusCode(200)
-        .extract();
-
-    context.assertTrue(response.path("complete"));
-    context.assertEquals(null, response.path("error"));
-
-    RestAssured.given()
-        .baseUri(MODULE_URL)
-        .header(XOkapiHeaders.TENANT, tenant)
-        .delete(location)
-        .then().statusCode(204);
   }
 
   @Test
@@ -289,7 +251,7 @@ public class MainVerticleTest extends TestBase {
             .header(XOkapiHeaders.TENANT, TENANT_1)
             .header("Content-Type", "application/json")
             .delete("/reservoir/config/modules/" + module.getString("id"))
-            .then().statusCode(204);        
+            .then().statusCode(204);
     }
 
   @Test
@@ -1123,7 +1085,7 @@ public class MainVerticleTest extends TestBase {
         //.statusCode(201)
         //.contentType("application/json")
         .body(Matchers.is(issnMatcherOut.encode()));
-    
+
     JsonObject matchKey = new JsonObject()
         .put("id", "issn")
         .put("matcher", "issn-matcher")
@@ -1671,7 +1633,7 @@ public class MainVerticleTest extends TestBase {
         .extract().body().asString();
 
     deleteIssnMatchKey();
-    
+
   }
 
   @Test
@@ -1947,7 +1909,7 @@ public class MainVerticleTest extends TestBase {
         .post("/reservoir/config/modules")
         .then().statusCode(400);
 
-    CodeModuleEntity module = new CodeModuleEntity("empty", "javascript", 
+    CodeModuleEntity module = new CodeModuleEntity("empty", "javascript",
             "http://localhost:" + CODE_MODULES_PORT + "/lib/empty.mjs",
             "transform",
             "");
@@ -2617,7 +2579,7 @@ public class MainVerticleTest extends TestBase {
         .header(XOkapiHeaders.TENANT, TENANT_1)
         .delete("/reservoir/config/matchkeys/isbn")
         .then().statusCode(204);
-    
+
     deleteIssnMatchKey();
   }
 
@@ -3148,13 +3110,38 @@ public class MainVerticleTest extends TestBase {
   }
 
   @Test
-  public void upgradeDb(TestContext context) {
-    String tenant = "tenant2";
-    tenantOp(context, tenant, new JsonObject()
-        .put("module_to", MODULE_ID));
-    tenantOp(context, tenant, new JsonObject()
-        .put("module_from", MODULE_ID)
-        .put("module_to", MODULE_PREFIX + "-1.0.1"));
+  public void upgradeDb(TestContext context) throws IOException {
+    String nextModule = MODULE_PREFIX + "-1.0.1";
+    String md = Files.readString(Path.of("../descriptors/ModuleDescriptor-template.json"))
+        .replace("${artifactId}", MODULE_PREFIX)
+        .replace("${version}", "1.0.1");
+
+    Future<Void> f = Future.succeededFuture();
+
+    f = f.compose(t ->
+        webClient.postAbs(OKAPI_URL + "/_/proxy/modules")
+            .expect(ResponsePredicate.SC_CREATED)
+            .sendJsonObject(new JsonObject(md))
+            .mapEmpty());
+
+    f = f.compose(t ->
+        webClient.postAbs(OKAPI_URL + "/_/discovery/modules")
+            .expect(ResponsePredicate.SC_CREATED)
+            .sendJsonObject(new JsonObject()
+                .put("instId", nextModule)
+                .put("srvcId", nextModule)
+                .put("url", MODULE_URL))
+            .mapEmpty());
+
+    f = f.compose(t -> webClient.postAbs(OKAPI_URL + "/_/proxy/tenants/" + TENANT_1 + "/install")
+        .expect(ResponsePredicate.SC_OK)
+        .sendJson(new JsonArray().add(new JsonObject()
+            .put("from", MODULE_ID)
+            .put("id", nextModule)
+            .put("action", "enable")))
+        .mapEmpty());
+
+    f.onComplete(context.asyncAssertSuccess());
   }
 
   @Test
