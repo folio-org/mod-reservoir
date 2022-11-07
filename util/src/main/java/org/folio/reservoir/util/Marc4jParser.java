@@ -126,21 +126,13 @@ public class Marc4jParser implements ReadStream<Record>, Handler<Buffer> {
       }
       if (sz > 0) {
         try {
-          InputStream inputStream = new ByteArrayInputStream(pendingBuffer.getBytes(0, sz));
-          MarcReader marcReader = new MarcPermissiveStreamReader(inputStream, true, true);
-          while (marcReader.hasNext()) {
-            Record r = marcReader.next();
-            if (eventHandler != null) {
-              eventHandler.handle(r);
-            }
-          }
-          pendingBuffer = pendingBuffer.getBuffer(sz, pendingBuffer.length());
+          marc4jpending(sz);
         } catch (Exception e) {
           if (exceptionHandler != null) {
             exceptionHandler.handle(e);
-          } else {
-            throw new DecodeException(e.getMessage(), e);
           }
+        } finally {
+          pendingBuffer = pendingBuffer.getBuffer(sz, pendingBuffer.length());
         }
       }
       if (ended) {
@@ -164,6 +156,17 @@ public class Marc4jParser implements ReadStream<Record>, Handler<Buffer> {
       }
     } finally {
       emitting = false;
+    }
+  }
+
+  private void marc4jpending(int sz) {
+    InputStream inputStream = new ByteArrayInputStream(pendingBuffer.getBytes(0, sz));
+    MarcReader marcReader = new MarcPermissiveStreamReader(inputStream, true, true);
+    while (marcReader.hasNext()) {
+      Record r = marcReader.next();
+      if (eventHandler != null) {
+        eventHandler.handle(r);
+      }
     }
   }
 
