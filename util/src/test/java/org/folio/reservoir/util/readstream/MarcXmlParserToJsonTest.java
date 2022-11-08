@@ -222,5 +222,18 @@ public class MarcXmlParserToJsonTest {
     promise.future().onComplete(context.asyncAssertSuccess());
   }
 
+  @Test
+  public void testExceptionInStream(TestContext context) {
+    MemoryReadStream rs = new MemoryReadStream(null, vertx);
+    MarcXmlParserToJson parser = new MarcXmlParserToJson(XmlParser.newParser(rs));
+    Promise<Void> promise = Promise.promise();
+    parser.exceptionHandler(promise::tryFail);
+    parser.endHandler(x -> promise.complete());
+    rs.run();
+    promise.future()
+        .onComplete(context.asyncAssertFailure(
+            e -> assertThat(e.getMessage(), is("Cannot invoke \"io.vertx.core.buffer.Buffer.getBytes()\" because \"buffer\" is null"))));
+  }
+
 
 }

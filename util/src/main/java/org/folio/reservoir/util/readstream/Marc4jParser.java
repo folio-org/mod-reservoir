@@ -136,7 +136,6 @@ public class Marc4jParser implements ReadStream<Record>, Handler<Buffer> {
         }
       }
     } catch (Exception e) {
-      System.out.println("exception 2");
       if (exceptionHandler != null) {
         exceptionHandler.handle(e);
       }
