@@ -75,7 +75,7 @@ public class Marc4jParserTest {
   }
 
   @Test
-  public void testEndHandlerException(TestContext context) {
+  public void testEndHandlerExceptionWithExceptionHandler(TestContext context) {
     marc4jParserFromFile()
         .compose(parser -> {
           Promise<Void> promise = Promise.promise();
@@ -86,6 +86,20 @@ public class Marc4jParserTest {
           return promise.future();
         })
         .onComplete(context.asyncAssertFailure(e -> assertThat(e.getMessage(), is("end exception"))));
+  }
+
+  @Test
+  public void testEndHandlerExceptionNoExceptionHandler(TestContext context) {
+    marc4jParserFromFile()
+        .compose(parser -> {
+          Promise<Void> promise = Promise.promise();
+          parser.endHandler(x -> {
+            promise.tryFail("must stop");
+            throw new RuntimeException("end exception");
+          });
+          return promise.future();
+        })
+        .onComplete(context.asyncAssertFailure(e -> assertThat(e.getMessage(), is("must stop"))));
   }
 
   @Test
@@ -181,6 +195,17 @@ public class Marc4jParserTest {
         .onComplete(context.asyncAssertFailure(
             e -> assertThat(e.getMessage(), is("Index -1 out of bounds for length 0"))));
 
+  }
+
+  @Test
+  public void testBadMarcNoExceptionHandler(TestContext context) {
+    MemoryReadStream rs = new MemoryReadStream(Buffer.buffer("x00025" + "9".repeat(20)), vertx);
+    Marc4jParser parser = new Marc4jParser(rs);
+    Promise<Void> promise = Promise.promise();
+    parser.endHandler(x -> promise.complete());
+    rs.run();
+    promise.future()
+        .onComplete(context.asyncAssertSuccess());
   }
 
   @Test

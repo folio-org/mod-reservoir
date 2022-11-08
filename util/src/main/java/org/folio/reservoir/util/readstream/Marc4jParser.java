@@ -2,6 +2,7 @@ package org.folio.reservoir.util.readstream;
 
 import io.vertx.core.Handler;
 import io.vertx.core.buffer.Buffer;
+import io.vertx.core.json.DecodeException;
 import io.vertx.core.streams.ReadStream;
 import java.io.ByteArrayInputStream;
 import java.io.InputStream;
@@ -135,6 +136,7 @@ public class Marc4jParser implements ReadStream<Record>, Handler<Buffer> {
         }
       }
     } catch (Exception e) {
+      System.out.println("exception 2");
       if (exceptionHandler != null) {
         exceptionHandler.handle(e);
       }
