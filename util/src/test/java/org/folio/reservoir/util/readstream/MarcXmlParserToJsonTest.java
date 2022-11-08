@@ -78,7 +78,7 @@ public class MarcXmlParserToJsonTest {
   }
 
   @Test
-  public void testEndHandlerException(TestContext context) {
+  public void testEndHandlerExceptionWithExceptionHandler(TestContext context) {
     marcXmlParserFromFile()
         .compose(parser -> {
           Promise<Void> promise = Promise.promise();
@@ -89,6 +89,20 @@ public class MarcXmlParserToJsonTest {
           return promise.future();
         })
         .onComplete(context.asyncAssertFailure(e -> assertThat(e.getMessage(), is("end exception"))));
+  }
+
+  @Test
+  public void testEndHandlerExceptionWithoutExceptionHandler(TestContext context) {
+    marcXmlParserFromFile()
+        .compose(parser -> {
+          Promise<Void> promise = Promise.promise();
+          parser.endHandler(x -> {
+            promise.tryFail("must stop");
+            throw new RuntimeException("end exception");
+          });
+          return promise.future();
+        })
+        .onComplete(context.asyncAssertFailure(e -> assertThat(e.getMessage(), is("must stop"))));
   }
 
   @Test
