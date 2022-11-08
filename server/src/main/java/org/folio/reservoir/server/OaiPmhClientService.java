@@ -39,9 +39,9 @@ import org.folio.reservoir.server.entity.OaiPmhStatus;
 import org.folio.reservoir.util.SourceId;
 import org.folio.reservoir.util.XmlMetadataParserMarcInJson;
 import org.folio.reservoir.util.XmlMetadataStreamParser;
-import org.folio.reservoir.util.XmlParser;
 import org.folio.reservoir.util.oai.OaiParserStream;
 import org.folio.reservoir.util.oai.OaiRecord;
+import org.folio.reservoir.util.readstream.XmlParser;
 
 public class OaiPmhClientService {
 
@@ -534,7 +534,7 @@ public class OaiPmhClientService {
     return httpClient.request(requestOptions).compose(HttpClientRequest::send);
   }
 
-  static void endResponse(StringBuilder resumptionToken, 
+  static void endResponse(StringBuilder resumptionToken,
       String error, Promise<Void> promise, OaiPmhStatus job) {
     JsonObject config = job.getConfig();
     LocalDateTime started = job.getLastStartedTimestampRaw();

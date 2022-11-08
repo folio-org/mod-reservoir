@@ -1,4 +1,4 @@
-package org.folio.reservoir.util;
+package org.folio.reservoir.util.readstream;
 
 import io.vertx.core.Handler;
 import io.vertx.core.Vertx;
@@ -17,6 +17,10 @@ public class MemoryReadStream implements ReadStream<Buffer> {
   boolean paused;
   Handler<Buffer> handler;
   Handler<Void> endHandler;
+
+  public MemoryReadStream(Buffer preBuffer, Vertx vertx) {
+    this(preBuffer, null, null, Buffer.buffer(), 0, vertx);
+  }
 
   public MemoryReadStream(Buffer preBuffer, Buffer repeatBuffer, Buffer sepBuffer, Buffer postBuffer, int no, Vertx vertx) {
     this.preBuffer = preBuffer;

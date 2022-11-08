@@ -1,4 +1,4 @@
-package org.folio.reservoir.util;
+package org.folio.reservoir.util.readstream;
 
 import io.vertx.core.Handler;
 import io.vertx.core.json.DecodeException;
@@ -6,6 +6,7 @@ import io.vertx.core.json.JsonObject;
 import io.vertx.core.streams.ReadStream;
 import javax.xml.stream.XMLStreamConstants;
 import javax.xml.stream.XMLStreamReader;
+import org.folio.reservoir.util.XmlMetadataParserMarcInJson;
 
 /**
  * Converts MARCXML collection to MARC-in-JSON stream.

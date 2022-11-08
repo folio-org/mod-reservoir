@@ -1,4 +1,4 @@
-package org.folio.reservoir.util;
+package org.folio.reservoir.util.readstream;
 
 import com.fasterxml.aalto.AsyncByteArrayFeeder;
 import com.fasterxml.aalto.AsyncXMLInputFactory;

@@ -1,4 +1,4 @@
-package org.folio.reservoir.util;
+package org.folio.reservoir.util.readstream;
 
 import io.vertx.core.Future;
 import io.vertx.core.Promise;
@@ -9,6 +9,8 @@ import io.vertx.ext.unit.junit.VertxUnitRunner;
 import java.util.ArrayList;
 import java.util.LinkedList;
 import java.util.List;
+
+import org.folio.reservoir.util.readstream.XmlParser;
 import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;

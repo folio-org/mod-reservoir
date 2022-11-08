@@ -20,7 +20,7 @@ import org.folio.reservoir.matchkey.MatchKeyMethodFactory;
 import org.folio.reservoir.module.ModuleCache;
 import org.folio.reservoir.module.ModuleInvocation;
 import org.folio.reservoir.server.entity.CodeModuleEntity;
-import org.folio.reservoir.util.LargeJsonReadStream;
+import org.folio.reservoir.util.readstream.LargeJsonReadStream;
 import org.folio.tlib.RouterCreator;
 import org.folio.tlib.TenantInitHooks;
 import org.folio.tlib.postgres.PgCqlDefinition;
@@ -207,7 +207,7 @@ public class ReservoirService implements RouterCreator, TenantInitHooks {
       return storage.selectCodeModuleEntity(invocation.getModuleName())
         .compose(entity -> {
           if (entity == null) {
-            return Future.failedFuture("Matcher module '" + invocation.getModuleName() 
+            return Future.failedFuture("Matcher module '" + invocation.getModuleName()
               + "' does not exist");
           }
           return Future.succeededFuture(matcherProp);

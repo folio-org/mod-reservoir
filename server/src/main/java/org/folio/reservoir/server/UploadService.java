@@ -16,10 +16,10 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.folio.okapi.common.GenericCompositeFuture;
 import org.folio.okapi.common.HttpResponse;
-import org.folio.reservoir.util.Marc4jParser;
-import org.folio.reservoir.util.MarcXmlParserToJson;
 import org.folio.reservoir.util.SourceId;
-import org.folio.reservoir.util.XmlParser;
+import org.folio.reservoir.util.readstream.Marc4jParser;
+import org.folio.reservoir.util.readstream.MarcXmlParserToJson;
+import org.folio.reservoir.util.readstream.XmlParser;
 
 public class UploadService {
 
