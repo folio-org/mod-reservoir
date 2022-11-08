@@ -211,6 +211,18 @@ public class MarcXmlParserToJsonTest {
             e -> assertThat(e.getMessage(), is("Expected <record> as 2nd-level. Got y"))));
   }
 
+
+  @Test
+  public void testNoRecordElementNoExceptionHandler(TestContext context) {
+    MemoryReadStream rs = new MemoryReadStream(Buffer.buffer("<collec"), null, null, Buffer.buffer("tion><y/></collection>"), 0, vertx);
+    MarcXmlParserToJson parser = new MarcXmlParserToJson(XmlParser.newParser(rs));
+    Promise<Void> promise = Promise.promise();
+    parser.endHandler(x -> promise.complete());
+    rs.run();
+    promise.future()
+        .onComplete(context.asyncAssertSuccess());
+  }
+
   @Test
   public void testEmptyCollection(TestContext context) {
     MemoryReadStream rs = new MemoryReadStream(Buffer.buffer("<collection>ignored</collection>"), vertx);
