@@ -269,4 +269,16 @@ public class Marc4jParserTest {
         .onComplete(context.asyncAssertFailure(
             e -> assertThat(e.getMessage(), is("Cannot read field \"buffer\" because \"impl\" is null"))));
   }
+
+  @Test
+  public void testExceptionInStreamNoExceptionHandler(TestContext context) {
+    MemoryReadStream rs = new MemoryReadStream(null, vertx);
+    Marc4jParser parser = new Marc4jParser(rs);
+    Promise<Void> promise = Promise.promise();
+    parser.endHandler(x -> promise.complete());
+    rs.run();
+    promise.future()
+        .onComplete(context.asyncAssertSuccess());
+  }
+
 }
