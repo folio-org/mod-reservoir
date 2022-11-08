@@ -22,6 +22,10 @@ public class MemoryReadStream implements ReadStream<Buffer> {
     this(preBuffer, null, null, Buffer.buffer(), 0, vertx);
   }
 
+  public MemoryReadStream(Buffer preBuffer, Buffer repeatBuffer, int no, Vertx vertx) {
+    this(preBuffer, repeatBuffer, Buffer.buffer(), Buffer.buffer(), no, vertx);
+  }
+
   public MemoryReadStream(Buffer preBuffer, Buffer repeatBuffer, Buffer sepBuffer, Buffer postBuffer, int no, Vertx vertx) {
     this.preBuffer = preBuffer;
     this.repeatBuffer = repeatBuffer;

@@ -36,23 +36,24 @@ public class Marc4jParserTest {
 
   Future<Marc4jParser> marc4jParserFromFile(String fname) {
     return vertx.fileSystem().open(fname, new OpenOptions())
-        .map(asyncFile -> new Marc4jParser(asyncFile));
+        .map(Marc4jParser::new);
   }
 
-  Future<List<Record>> getRecordsFromFile(String fname) {
-    List<Record> records = new ArrayList<>();
-    return marc4jParserFromFile(fname).compose(xmlParser -> {
-      Promise<List<Record>> promise = Promise.promise();
-      xmlParser.handler(records::add);
-      xmlParser.endHandler(e -> promise.complete(records));
-      xmlParser.exceptionHandler(e -> promise.tryFail(e));
-      return promise.future();
-    });
+  Future<Marc4jParser> marc4jParserFromFile() {
+    return marc4jParserFromFile("marc3.marc");
   }
 
   @Test
   public void marc3(TestContext context) {
-    getRecordsFromFile("marc3.marc")
+    marc4jParserFromFile()
+        .compose(xmlParser -> {
+          List<Record> records = new ArrayList<>();
+          Promise<List<Record>> promise = Promise.promise();
+          xmlParser.handler(records::add);
+          xmlParser.endHandler(e -> promise.complete(records));
+          xmlParser.exceptionHandler(promise::tryFail);
+          return promise.future();
+        })
         .onComplete(context.asyncAssertSuccess(records -> {
           assertThat(records, hasSize(3));
           assertThat(records.get(0).getControlNumber(), is("   73209622 //r823"));
@@ -63,13 +64,11 @@ public class Marc4jParserTest {
 
   @Test
   public void testEndHandler(TestContext context) {
-    marc4jParserFromFile("marc3.marc")
+    marc4jParserFromFile()
         .compose(parser -> {
           Promise<Void> promise = Promise.promise();
           parser.exceptionHandler(promise::tryFail);
-          parser.endHandler(x -> {
-            promise.tryComplete();
-          });
+          parser.endHandler(x -> promise.tryComplete());
           return promise.future();
         })
         .onComplete(context.asyncAssertSuccess());
@@ -77,7 +76,7 @@ public class Marc4jParserTest {
 
   @Test
   public void testEndHandlerException(TestContext context) {
-    marc4jParserFromFile("marc3.marc")
+    marc4jParserFromFile()
         .compose(parser -> {
           Promise<Void> promise = Promise.promise();
           parser.exceptionHandler(promise::tryFail);
@@ -91,7 +90,7 @@ public class Marc4jParserTest {
 
   @Test
   public void testHandler(TestContext context) {
-    marc4jParserFromFile("marc3.marc")
+    marc4jParserFromFile()
         .compose(parser -> {
           Promise<Void> promise = Promise.promise();
           AtomicInteger cnt = new AtomicInteger();
@@ -108,7 +107,7 @@ public class Marc4jParserTest {
 
   @Test
   public void testPauseFetch(TestContext context) {
-    marc4jParserFromFile("marc3.marc")
+    marc4jParserFromFile()
         .compose(parser -> {
           parser.fetch(1);
           parser.pause();
@@ -130,7 +129,7 @@ public class Marc4jParserTest {
 
   @Test
   public void testEmitted(TestContext context) {
-    marc4jParserFromFile("marc3.marc")
+    marc4jParserFromFile()
         .compose(parser -> {
           Promise<Void> promise = Promise.promise();
           parser.exceptionHandler(promise::tryFail);
@@ -144,7 +143,7 @@ public class Marc4jParserTest {
 
   @Test
   public void testDoubleEnd(TestContext context) {
-    marc4jParserFromFile("marc3.marc")
+    marc4jParserFromFile()
         .map(parser -> {
           parser.end();
           parser.endHandler(x -> {});
@@ -157,7 +156,7 @@ public class Marc4jParserTest {
 
   @Test
   public void exceptionInHandler(TestContext context) {
-    marc4jParserFromFile("marc3.marc").compose(parser -> {
+    marc4jParserFromFile().compose(parser -> {
           Promise<Void> promise = Promise.promise();
           parser.handler(r -> {
             throw new RuntimeException("handler exception");
@@ -186,7 +185,7 @@ public class Marc4jParserTest {
 
   @Test
   public void testBadMarc2(TestContext context) {
-    MemoryReadStream rs = new MemoryReadStream(Buffer.buffer("x00024" + "9".repeat(19)), vertx);
+    MemoryReadStream rs = new MemoryReadStream(Buffer.buffer("x00024"), Buffer.buffer("9"), 19, vertx);
     Marc4jParser parser = new Marc4jParser(rs);
     Promise<Void> promise = Promise.promise();
     parser.exceptionHandler(promise::tryFail);
@@ -199,7 +198,7 @@ public class Marc4jParserTest {
 
   @Test
   public void testSkipLength(TestContext context) {
-    MemoryReadStream rs = new MemoryReadStream(Buffer.buffer("x00025" + "9".repeat(19)), vertx);
+    MemoryReadStream rs = new MemoryReadStream(Buffer.buffer("x00025"), Buffer.buffer("9"), 19, vertx);
     Marc4jParser parser = new Marc4jParser(rs);
     Promise<Void> promise = Promise.promise();
     parser.exceptionHandler(promise::tryFail);
@@ -223,7 +222,7 @@ public class Marc4jParserTest {
 
   @Test
   public void testAllLeadBad(TestContext context) {
-    MemoryReadStream rs = new MemoryReadStream(Buffer.buffer("!".repeat(5) + "9".repeat(20)), vertx);
+    MemoryReadStream rs = new MemoryReadStream(Buffer.buffer("!".repeat(5) + "9".repeat(23)), vertx);
     Marc4jParser parser = new Marc4jParser(rs);
     Promise<Void> promise = Promise.promise();
     parser.exceptionHandler(promise::tryFail);
