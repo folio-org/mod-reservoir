@@ -269,5 +269,4 @@ public class Marc4jParserTest {
         .onComplete(context.asyncAssertFailure(
             e -> assertThat(e.getMessage(), is("Cannot read field \"buffer\" because \"impl\" is null"))));
   }
-
 }

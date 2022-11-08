@@ -2,9 +2,9 @@ package org.folio.reservoir.util.readstream;
 
 import io.vertx.core.Handler;
 import io.vertx.core.buffer.Buffer;
-import io.vertx.core.json.DecodeException;
 import io.vertx.core.streams.ReadStream;
 import java.io.ByteArrayInputStream;
+import java.io.IOException;
 import java.io.InputStream;
 import org.marc4j.MarcPermissiveStreamReader;
 import org.marc4j.MarcReader;
@@ -144,7 +144,7 @@ public class Marc4jParser implements ReadStream<Record>, Handler<Buffer> {
     }
   }
 
-  private void marc4jpending(int sz) {
+  private void marc4jpending(int sz) throws IOException {
     try (
         InputStream inputStream = new ByteArrayInputStream(pendingBuffer.getBytes(0, sz))
     ) {
@@ -154,10 +154,6 @@ public class Marc4jParser implements ReadStream<Record>, Handler<Buffer> {
         if (eventHandler != null) {
           eventHandler.handle(r);
         }
-      }
-    } catch (Exception e) {
-      if (exceptionHandler != null) {
-        exceptionHandler.handle(e);
       }
     } finally {
       pendingBuffer = pendingBuffer.getBuffer(sz, pendingBuffer.length());
