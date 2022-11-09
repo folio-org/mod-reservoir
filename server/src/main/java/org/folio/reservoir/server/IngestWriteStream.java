@@ -10,13 +10,9 @@ import io.vertx.core.Vertx;
 import io.vertx.core.json.JsonArray;
 import io.vertx.core.json.JsonObject;
 import io.vertx.core.streams.WriteStream;
-import java.io.ByteArrayOutputStream;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicInteger;
 import org.folio.reservoir.util.SourceId;
-import org.marc4j.MarcJsonWriter;
-import org.marc4j.converter.impl.AnselToUnicode;
-import org.marc4j.marc.Record;
 
 public class IngestWriteStream implements WriteStream<JsonObject> {
   final SourceId sourceId;
@@ -30,14 +26,16 @@ public class IngestWriteStream implements WriteStream<JsonObject> {
   AtomicInteger ops = new AtomicInteger();
   final JsonPath jsonPath;
   int queueSize = 5;
+  final String payloadElement;
 
   IngestWriteStream(Vertx vertx, Storage storage, SourceId sourceId, int sourceVersion,
-      String localIdPath) {
+      String localIdPath, String payloadElement) {
     this.vertx = vertx;
     this.storage = storage;
     this.sourceId = sourceId;
     this.sourceVersion = sourceVersion;
     jsonPath = localIdPath == null ? null : JsonPath.compile(localIdPath);
+    this.payloadElement = payloadElement;
   }
 
   @Override
@@ -47,11 +45,9 @@ public class IngestWriteStream implements WriteStream<JsonObject> {
   }
 
   @Override
-  public Future<Void> write(JsonObject globalRecord) {
-    final JsonObject payload = globalRecord.getJsonObject("payload");
-    if (payload == null) {
-      return Future.failedFuture("Missing payload");
-    }
+  public Future<Void> write(JsonObject payloadContent) {
+    final JsonObject payload = new JsonObject().put(payloadElement, payloadContent);
+    final JsonObject globalRecord = new JsonObject().put("payload", payload);
     Future<Void> future = Future.succeededFuture();
     ops.incrementAndGet();
     if (matchKeyConfigs == null) {
@@ -61,7 +57,7 @@ public class IngestWriteStream implements WriteStream<JsonObject> {
       });
     }
     return future
-        .onSuccess(x -> {
+        .compose(x -> {
           JsonObject marc = payload.getJsonObject("marc");
           if (marc != null) {
             String leader = marc.getString("leader");
@@ -69,13 +65,15 @@ public class IngestWriteStream implements WriteStream<JsonObject> {
               globalRecord.put("delete", true);
             }
           }
-          if (jsonPath != null) {
-            String v = getLocalIdValue(jsonPath, payload);
+          String v = jsonPath != null
+              ? getLocalIdFromJsonPath(jsonPath, payload)
+              : getLocalIdFromMarc(marc);
+          if (v != null) {
             globalRecord.put("localId", v.trim());
           }
+          return storage.ingestGlobalRecord(vertx, sourceId, sourceVersion,
+              globalRecord, matchKeyConfigs);
         })
-        .compose(y -> storage.ingestGlobalRecord(vertx, sourceId, sourceVersion,
-            globalRecord, matchKeyConfigs)
         .onComplete(x -> {
           if (ops.decrementAndGet() == queueSize / 2 && drainHandler != null) {
             drainHandler.handle(null);
@@ -84,39 +82,7 @@ public class IngestWriteStream implements WriteStream<JsonObject> {
             endHandler.handle(Future.succeededFuture());
           }
         })
-        .mapEmpty());
-  }
-
-  /**
-   * Write marc record to stream.
-   * @param marcRecord marc4j record
-   * @return async result
-   */
-  public Future<Void> write(Record marcRecord) {
-    ops.incrementAndGet();
-    return vertx.<JsonObject>executeBlocking(globalRecord -> {
-      try {
-        ByteArrayOutputStream out = new ByteArrayOutputStream();
-        MarcJsonWriter writer = new MarcJsonWriter(out);
-        char charCodingScheme = marcRecord.getLeader().getCharCodingScheme();
-        if (charCodingScheme == ' ') {
-          marcRecord.getLeader().setCharCodingScheme('a');
-          writer.setConverter(new AnselToUnicode());
-        }
-        writer.write(marcRecord);
-        JsonObject marc = new JsonObject(out.toString());
-        writer.close();
-        globalRecord.complete(new JsonObject()
-            .put("localId", marcRecord.getControlNumber().trim())
-            .put("payload", new JsonObject()
-                .put("marc", marc)));
-      } catch (Exception e) {
-        globalRecord.tryFail(e);
-      }
-    }).compose(globalRecord -> {
-      ops.decrementAndGet();
-      return write(globalRecord);
-    });
+        .mapEmpty();
   }
 
   @Override
@@ -150,7 +116,7 @@ public class IngestWriteStream implements WriteStream<JsonObject> {
     return this;
   }
 
-  static String getLocalIdValue(JsonPath jsonPath, JsonObject payload) {
+  static String getLocalIdFromJsonPath(JsonPath jsonPath, JsonObject payload) {
     ReadContext ctx = JsonPath.parse(payload.encode());
     try {
       Object o = ctx.read(jsonPath);
@@ -167,6 +133,21 @@ public class IngestWriteStream implements WriteStream<JsonObject> {
       // ignored.
     }
     return null;
+  }
+
+  static String getLocalIdFromMarc(JsonObject marc) {
+    if (marc == null) {
+      return null;
+    }
+    JsonArray fields = marc.getJsonArray("fields");
+    if (fields == null && fields.isEmpty()) {
+      return null;
+    }
+    JsonObject f001 = fields.getJsonObject(0);
+    if (f001 == null) {
+      return null;
+    }
+    return f001.getString("001");
   }
 
 }

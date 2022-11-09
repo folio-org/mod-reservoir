@@ -17,7 +17,7 @@ import org.apache.logging.log4j.Logger;
 import org.folio.okapi.common.GenericCompositeFuture;
 import org.folio.okapi.common.HttpResponse;
 import org.folio.reservoir.util.SourceId;
-import org.folio.reservoir.util.readstream.Marc4jParser;
+import org.folio.reservoir.util.readstream.Marc4ParserToJson;
 import org.folio.reservoir.util.readstream.MarcXmlParserToJson;
 import org.folio.reservoir.util.readstream.XmlParser;
 
@@ -29,31 +29,31 @@ public class UploadService {
       IngestWriteStream ingestWriteStream) {
     log.info("uploadOctetStream");
     Promise<Void> promise = Promise.promise();
-    Marc4jParser marc4jParser = new Marc4jParser(upload);
+    Marc4ParserToJson marc4ParserToJson = new Marc4ParserToJson(upload);
     if (ingestWriteStream != null) {
-      ingestWriteStream.drainHandler(x -> marc4jParser.resume());
+      ingestWriteStream.drainHandler(x -> marc4ParserToJson.resume());
     }
     AtomicInteger number = new AtomicInteger();
-    marc4jParser.exceptionHandler(e -> {
+    marc4ParserToJson.exceptionHandler(e -> {
       log.error("marc4jParser exception", e);
       promise.tryFail(e);
     });
-    marc4jParser.handler(r -> {
+    marc4ParserToJson.handler(r -> {
       if (number.incrementAndGet() < 10) {
-        log.info("Got record leader={} controlnumber={}", r.getLeader(),
-            r.getControlNumber().trim());
+        log.info("Got record controlnumber={}", r.getJsonArray("fields")
+            .getJsonObject(0).getString("001"));
       } else if (number.get() % 10000 == 0) {
         log.info("Processed {}", number.get());
       }
       if (ingestWriteStream != null) {
         if (ingestWriteStream.writeQueueFull()) {
-          marc4jParser.pause();
+          marc4ParserToJson.pause();
         }
         ingestWriteStream.write(r)
             .onFailure(promise::tryFail);
       }
     });
-    marc4jParser.endHandler(e -> {
+    marc4ParserToJson.endHandler(e -> {
       log.info("{} records processed", number.get());
       promise.tryComplete();
     });
@@ -81,10 +81,7 @@ public class UploadService {
         if (ingestWriteStream.writeQueueFull()) {
           marcXmlParser.pause();
         }
-        JsonObject globalRecord = new JsonObject()
-            .put("payload", new JsonObject()
-                    .put("marc", marcInJson));
-        ingestWriteStream.write(globalRecord)
+        ingestWriteStream.write(marcInJson)
             .onFailure(promise::tryFail);
       }
     });
@@ -113,7 +110,7 @@ public class UploadService {
       final boolean ingest = request.getParam("ingest", "true").equals("true");
       final boolean raw = request.getParam("raw", "false").equals("true");
       IngestWriteStream ingestWriteStream = new IngestWriteStream(ctx.vertx(), storage,
-          new SourceId(sourceId), Integer.parseInt(sourceVersion), localIdPath);
+          new SourceId(sourceId), Integer.parseInt(sourceVersion), localIdPath, "marc");
       ingestWriteStream.setWriteQueueMaxSize(100);
       List<Future<Void>> futures = new ArrayList<>();
       request.setExpectMultipart(true);
