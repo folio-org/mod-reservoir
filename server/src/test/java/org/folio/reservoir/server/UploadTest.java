@@ -24,6 +24,8 @@ public class UploadTest extends TestBase {
 
   Buffer marc3xmlBuffer;
 
+  Buffer marc1xmlBuffer;
+
   @Before
   public void before(TestContext context) {
     FileSystem fileSystem = vertx.fileSystem();
@@ -32,6 +34,8 @@ public class UploadTest extends TestBase {
         .onSuccess(x -> marc3marcBuffer = x)
         .compose(x -> fileSystem.readFile("src/test/resources/marc3.xml"))
         .onSuccess(x -> marc3xmlBuffer = x)
+        .compose(x -> fileSystem.readFile("src/test/resources/marc1-delete.xml"))
+        .onSuccess(x -> marc1xmlBuffer = x)
         .onComplete(context.asyncAssertSuccess());
   }
 
@@ -95,16 +99,19 @@ public class UploadTest extends TestBase {
 
   @Test
   public void uploadMarcXml(TestContext context) {
-    MultipartForm requestForm = MultipartForm.create()
+    MultipartForm requestForm1 = MultipartForm.create()
         .binaryFileUpload("records", "marc3.xml", marc3xmlBuffer,  "text/xml");
+    MultipartForm requestForm2 = MultipartForm.create()
+        .binaryFileUpload("records", "marc1-delete.xml", marc1xmlBuffer,  "text/xml");
 
+    // upload 3 new records
     webClient.postAbs(OKAPI_URL + "/reservoir/upload")
         .expect(ResponsePredicate.SC_OK)
         .putHeader(XOkapiHeaders.TENANT, TENANT_1)
         .addQueryParam("sourceId", "SOURCE-2")
         .addQueryParam("sourceVersion", "1")
         .addQueryParam("localIdPath",  "$.marc.fields[*].001")
-        .sendMultipartForm(requestForm)
+        .sendMultipartForm(requestForm1)
         .compose(c1 ->
             webClient.getAbs(OKAPI_URL + "/reservoir/records")
                 .addQueryParam("query", "sourceId = \"SOURCE-2\"")
@@ -115,6 +122,27 @@ public class UploadTest extends TestBase {
         .map(res -> {
           JsonObject responseBody = res.bodyAsJsonObject();
           assertThat(responseBody.getJsonArray("items").size(), is(3));
+          return null;
+        })
+        .compose(c1 ->
+            // upload 1 "delete" record
+            webClient.postAbs(OKAPI_URL + "/reservoir/upload")
+                .expect(ResponsePredicate.SC_OK)
+                .putHeader(XOkapiHeaders.TENANT, TENANT_1)
+                .addQueryParam("sourceId", "SOURCE-2")
+                .addQueryParam("sourceVersion", "1")
+                .addQueryParam("localIdPath",  "$.marc.fields[*].001")
+                .sendMultipartForm(requestForm2))
+        .compose(c1 ->
+            webClient.getAbs(OKAPI_URL + "/reservoir/records")
+                .addQueryParam("query", "sourceId = \"SOURCE-2\"")
+                .expect(ResponsePredicate.SC_OK)
+                .putHeader(XOkapiHeaders.TENANT, TENANT_1)
+                .send()
+        )
+        .map(res -> {
+          JsonObject responseBody = res.bodyAsJsonObject();
+          assertThat(responseBody.getJsonArray("items").size(), is(2));
           return null;
         })
         .onComplete(context.asyncAssertSuccess());
