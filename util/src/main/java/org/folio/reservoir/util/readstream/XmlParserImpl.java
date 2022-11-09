@@ -25,9 +25,9 @@ public class XmlParserImpl implements XmlParser {
 
   private Handler<Void> endHandler;
 
-  private ReadStream<Buffer> stream;
+  private final ReadStream<Buffer> stream;
 
-  private AsyncXMLStreamReader<AsyncByteArrayFeeder> parser;
+  private final AsyncXMLStreamReader<AsyncByteArrayFeeder> parser;
 
   XmlParserImpl(ReadStream<Buffer> stream) {
     AsyncXMLInputFactory factory = new InputFactoryImpl();
