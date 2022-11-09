@@ -130,11 +130,7 @@ public class IngestWriteStream implements WriteStream<JsonObject> {
     if (fields == null || fields.isEmpty()) {
       return null;
     }
-    JsonObject f001 = fields.getJsonObject(0);
-    if (f001 == null) {
-      return null;
-    }
-    return f001.getString("001");
+    return fields.getJsonObject(0).getString("001");
   }
 
 }
