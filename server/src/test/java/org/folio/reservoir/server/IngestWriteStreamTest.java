@@ -19,6 +19,7 @@ import static org.hamcrest.MatcherAssert.assertThat;
 public class IngestWriteStreamTest {
 
   static Vertx vertx;
+
   @BeforeClass
   public static void beforeClass() {
     vertx = Vertx.vertx();
@@ -34,19 +35,26 @@ public class IngestWriteStreamTest {
     assertThat(IngestWriteStream.getLocalIdFromMarc(null), nullValue());
     assertThat(IngestWriteStream.getLocalIdFromMarc(new JsonObject()), nullValue());
     assertThat(IngestWriteStream.getLocalIdFromMarc(new JsonObject().put("fields", new JsonArray())), nullValue());
-    Assert.assertThrows(ClassCastException.class,
-        () -> IngestWriteStream.getLocalIdFromMarc(new JsonObject().put("fields", "2")));
-    Assert.assertThrows(ClassCastException.class,
-        () -> IngestWriteStream.getLocalIdFromMarc(new JsonObject().put("fields", new JsonArray().add("1"))));
-    assertThat(IngestWriteStream.getLocalIdFromMarc(
-        new JsonObject().put("fields", new JsonArray().add(new JsonObject().put("002", "3"))))
-        , nullValue());
-    assertThat(IngestWriteStream.getLocalIdFromMarc(
-            new JsonObject().put("fields", new JsonArray().add(new JsonObject().put("001", null))))
-        , nullValue());
-    assertThat(IngestWriteStream.getLocalIdFromMarc(
-            new JsonObject().put("fields", new JsonArray().add(new JsonObject().put("001", "1234"))))
-        , is("1234"));
-  }
+    {
+      JsonObject t = new JsonObject().put("fields", "2");
+      Assert.assertThrows(ClassCastException.class, () -> IngestWriteStream.getLocalIdFromMarc(t));
+    }
+    {
+      JsonObject t = new JsonObject().put("fields", new JsonArray().add("1"));
+      Assert.assertThrows(ClassCastException.class, () -> IngestWriteStream.getLocalIdFromMarc(t));
+    }
 
+    {
+      JsonObject t = new JsonObject().put("fields", new JsonArray().add(new JsonObject().put("002", "3")));
+      assertThat(IngestWriteStream.getLocalIdFromMarc(t), nullValue());
+    }
+    {
+      JsonObject t = new JsonObject().put("fields", new JsonArray().add(new JsonObject().put("001", null)));
+      assertThat(IngestWriteStream.getLocalIdFromMarc(t), nullValue());
+    }
+    {
+      JsonObject t = new JsonObject().put("fields", new JsonArray().add(new JsonObject().put("001", "1234")));
+      assertThat(IngestWriteStream.getLocalIdFromMarc(t), is("1234"));
+    }
+  }
 }
