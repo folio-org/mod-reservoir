@@ -26,6 +26,13 @@ public class ModuleJsonPath implements Module {
     return Future.succeededFuture();
   }
 
+  public ModuleJsonPath() {
+  }
+
+  public ModuleJsonPath(String script) {
+    jsonPath = JsonPath.compile(script);
+  }
+
   @Override
   public Future<JsonObject> execute(String function, JsonObject input) {
     throw new UnsupportedOperationException("only executeAsCollection supported for type=jsonpath");
@@ -61,5 +68,5 @@ public class ModuleJsonPath implements Module {
     jsonPath = null;
     return Future.succeededFuture();
   }
-  
+
 }

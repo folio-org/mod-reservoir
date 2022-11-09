@@ -31,10 +31,7 @@ public class UploadService {
       ingestWriteStream.drainHandler(x -> upload.resume());
     }
     AtomicInteger number = new AtomicInteger();
-    upload.exceptionHandler(e -> {
-      log.error("marc4jParser exception", e);
-      promise.tryFail(e);
-    });
+    upload.exceptionHandler(e -> promise.tryFail(e));
     upload.handler(r -> {
       if (number.incrementAndGet() < 10) {
         log.info("Got record controlnumber={}", r.getJsonArray("fields")
