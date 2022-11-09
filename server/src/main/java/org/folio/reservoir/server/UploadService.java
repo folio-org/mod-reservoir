@@ -2,7 +2,6 @@ package org.folio.reservoir.server;
 
 import io.vertx.core.Future;
 import io.vertx.core.Promise;
-import io.vertx.core.buffer.Buffer;
 import io.vertx.core.http.HttpServerRequest;
 import io.vertx.core.impl.future.FailedFuture;
 import io.vertx.core.json.JsonObject;
@@ -25,20 +24,18 @@ public class UploadService {
 
   private static final Logger log = LogManager.getLogger(UploadService.class);
 
-  private Future<Void> uploadOctetStream(ReadStream<Buffer> upload,
+  private Future<Void> uploadMarcStream(ReadStream<JsonObject> upload,
       IngestWriteStream ingestWriteStream) {
-    log.info("uploadOctetStream");
     Promise<Void> promise = Promise.promise();
-    Marc4ParserToJson marc4ParserToJson = new Marc4ParserToJson(upload);
     if (ingestWriteStream != null) {
-      ingestWriteStream.drainHandler(x -> marc4ParserToJson.resume());
+      ingestWriteStream.drainHandler(x -> upload.resume());
     }
     AtomicInteger number = new AtomicInteger();
-    marc4ParserToJson.exceptionHandler(e -> {
+    upload.exceptionHandler(e -> {
       log.error("marc4jParser exception", e);
       promise.tryFail(e);
     });
-    marc4ParserToJson.handler(r -> {
+    upload.handler(r -> {
       if (number.incrementAndGet() < 10) {
         log.info("Got record controlnumber={}", r.getJsonArray("fields")
             .getJsonObject(0).getString("001"));
@@ -47,45 +44,13 @@ public class UploadService {
       }
       if (ingestWriteStream != null) {
         if (ingestWriteStream.writeQueueFull()) {
-          marc4ParserToJson.pause();
+          upload.pause();
         }
         ingestWriteStream.write(r)
             .onFailure(promise::tryFail);
       }
     });
-    marc4ParserToJson.endHandler(e -> {
-      log.info("{} records processed", number.get());
-      promise.tryComplete();
-    });
-    return promise.future();
-  }
-
-  private Future<Void> uploadXmlStream(ReadStream<Buffer> upload,
-      IngestWriteStream ingestWriteStream) {
-    Promise<Void> promise = Promise.promise();
-    XmlParser xmlParser = XmlParser.newParser(upload);
-    MarcXmlParserToJson marcXmlParser = new MarcXmlParserToJson(xmlParser);
-    marcXmlParser.exceptionHandler(e -> {
-      log.error("marcXmlParser exception", e);
-      promise.tryFail(e);
-    });
-    AtomicInteger number = new AtomicInteger();
-    marcXmlParser.handler(marcInJson -> {
-      if (number.incrementAndGet() < 10) {
-        log.info("Got record controlnumber={}", marcInJson.getJsonArray("fields")
-            .getJsonObject(0).getString("001"));
-      } else if (number.get() % 10000 == 0) {
-        log.info("Processed {}", number.get());
-      }
-      if (ingestWriteStream != null) {
-        if (ingestWriteStream.writeQueueFull()) {
-          marcXmlParser.pause();
-        }
-        ingestWriteStream.write(marcInJson)
-            .onFailure(promise::tryFail);
-      }
-    });
-    marcXmlParser.endHandler(e -> {
+    upload.endHandler(e -> {
       log.info("{} records processed", number.get());
       promise.tryComplete();
     });
@@ -121,15 +86,20 @@ public class UploadService {
           upload.handler(x -> sz.addAndGet(x.length()));
           upload.endHandler(end -> log.info("Total size {}", sz.get()));
         } else {
+          ReadStream<JsonObject> parser = null;
           switch (upload.contentType()) {
             case "application/octet-stream", "application/marc":
-              futures.add(uploadOctetStream(upload, ingest ? ingestWriteStream : null));
+              parser = new Marc4ParserToJson(upload);
               break;
             case "application/xml", "text/xml":
-              futures.add(uploadXmlStream(upload, ingest ? ingestWriteStream : null));
+              XmlParser xmlParser = XmlParser.newParser(upload);
+              parser = new MarcXmlParserToJson(xmlParser);
               break;
             default:
               futures.add(new FailedFuture<>("Unsupported content-type: " + upload.contentType()));
+          }
+          if (parser != null) {
+            futures.add(uploadMarcStream(parser, ingest ? ingestWriteStream : null));
           }
         }
       });
