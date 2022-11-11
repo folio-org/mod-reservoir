@@ -8,13 +8,13 @@ import java.io.ByteArrayOutputStream;
 import org.marc4j.MarcJsonWriter;
 import org.marc4j.converter.impl.AnselToUnicode;
 
-public class Marc4ParserToJson implements ReadStream<JsonObject> {
+public class MarcToJsonParser implements ReadStream<JsonObject> {
 
   Marc4jParser marc4jParser;
 
   Handler<Throwable> exceptionHandler;
 
-  public Marc4ParserToJson(ReadStream<Buffer> stream) {
+  public MarcToJsonParser(ReadStream<Buffer> stream) {
     marc4jParser = new Marc4jParser(stream);
   }
 

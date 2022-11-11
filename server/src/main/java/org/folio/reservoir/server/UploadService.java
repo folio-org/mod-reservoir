@@ -16,7 +16,7 @@ import org.apache.logging.log4j.Logger;
 import org.folio.okapi.common.GenericCompositeFuture;
 import org.folio.okapi.common.HttpResponse;
 import org.folio.reservoir.util.SourceId;
-import org.folio.reservoir.util.readstream.Marc4ParserToJson;
+import org.folio.reservoir.util.readstream.MarcToJsonParser;
 import org.folio.reservoir.util.readstream.MarcXmlParserToJson;
 import org.folio.reservoir.util.readstream.XmlParser;
 
@@ -90,7 +90,7 @@ public class UploadService {
           log.info("Content-Type: {}", upload.contentType());
           switch (upload.contentType()) {
             case "application/octet-stream", "application/marc":
-              parser = new Marc4ParserToJson(upload);
+              parser = new MarcToJsonParser(upload);
               break;
             case "application/xml", "text/xml":
               XmlParser xmlParser = XmlParser.newParser(upload);

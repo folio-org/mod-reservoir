@@ -21,7 +21,7 @@ import static org.hamcrest.Matchers.hasSize;
 import static org.hamcrest.Matchers.is;
 
 @RunWith(VertxUnitRunner.class)
-public class Marc4ParserToJsonTest {
+public class MarcToJsonParserTest {
   Vertx vertx;
   @Before
   public void before() {
@@ -33,12 +33,12 @@ public class Marc4ParserToJsonTest {
     vertx.close().onComplete(context.asyncAssertSuccess());
   }
 
-  Future<Marc4ParserToJson> marc4ParserToXmlFromFile(String fname) {
+  Future<MarcToJsonParser> marc4ParserToXmlFromFile(String fname) {
     return vertx.fileSystem().open(fname, new OpenOptions())
-        .map(Marc4ParserToJson::new);
+        .map(MarcToJsonParser::new);
   }
 
-  Future<Marc4ParserToJson> marc4ParserToXmlFromFile() {
+  Future<MarcToJsonParser> marc4ParserToXmlFromFile() {
     return marc4ParserToXmlFromFile("marc3.marc");
   }
 
