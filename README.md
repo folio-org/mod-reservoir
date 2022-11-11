@@ -73,7 +73,7 @@ docker run -e DB_HOST=host.docker.internal \
   -p 8081:8081 --name reservoir mod-reservoir:latest
 ```
 
-**Note**: The magic host `host.docker.internal` is required to access the DB and may be only available in Docker Desktop. 
+**Note**: The magic host `host.docker.internal` is required to access the DB and may be only available in Docker Desktop.
 If it's not defined you can specify it by passing `--add-host=host.docker.internal:<docker bridge net IP>` to the run command.
 
 **Note**: Those docker build and run commands do work as-is with [Colima](https://github.com/abiosoft/colima).
@@ -104,7 +104,7 @@ export OKAPI_URL=http://localhost:8081
 java -jar client/target/mod-reservoir-client-fat.jar --init
 ```
 
-**Note**: The above mentioned commands are for the server running on localhost.
+**Note**: The above-mentioned commands are for the server running on localhost.
 For a secured server, the `-HX-Okapi-Token:$OKAPI_TOKEN` is required rather
 than `X-Okapi-Tenant`.
 
@@ -140,7 +140,7 @@ curl -HX-Okapi-Tenant:$OKAPI_TENANT $OKAPI_URL/reservoir/records
 
 Records in Reservoir are clustered according to rules expressed in a `matcher`. Matchers
 can be implemented using `jsonpath`, for simple matching rules, or `javascript` for abitrary
-complexity. 
+complexity.
 
 To configure a matcher, first load an appropriate code module, e.g a simple `jsonpath`
 module with a matcher that works for __Marc-in-Json__ payload could be defined like this:
@@ -403,6 +403,34 @@ and enabled for the OAI-PMH server with:
 ```
 curl -HX-Okapi-Tenant:$OKAPI_TENANT -HContent-Type:application/json \
   -XPUT $OKAPI_URL/reservoir/config/oai -d'{"transformer":"marc-transformer::transform"}'
+```
+
+### Ingest via multipart/form-data
+
+Yet another ingesting alternative is importing via HTTP multipart/form-data at endpoint `/reservoir/upload`.
+
+The named form element `records` is recognized; other names are ignored.
+Remaining configuration is triggered by headers (such as `X-Okapi-Token`) and query parameters.
+
+Currently, two formats are supported.
+
+ * MARC/ISO2709 concatenated records, triggered by Content-Type `application/octet-stream`.
+ * MARCXML collection, triggered by Content-Type `application/xml` or `text/xml`.
+
+The following query parameters are recognized:
+
+ * `sourceId`: required parameter for specifying the source identifier.
+ * `sourceVersion` : optional paramater for specifying source version (default is 1)
+
+These query parameters are for debugging and performance testing only:
+
+ * `ingest` optional boolean parameter to determine whether ingesting is to take place (default `true`)
+ * `raw` optional boolean parameter to determine whether to just pipe the stream (default `false`)
+
+For example to ingest a set of MARCXML records via curl from sourceId `BIB1`:
+
+```
+  curl -HX-Okapi-Tenant:$OKAPI_TENANT -Frecords=records100k.xml $OKAPI_URL/reservoir/upload?sourceId=BIB1
 ```
 
 ## Additional information
