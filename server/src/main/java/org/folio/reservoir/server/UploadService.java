@@ -87,6 +87,7 @@ public class UploadService {
           upload.endHandler(end -> log.info("Total size {}", sz.get()));
         } else {
           ReadStream<JsonObject> parser = null;
+          log.info("Content-Type: {}", upload.contentType());
           switch (upload.contentType()) {
             case "application/octet-stream", "application/marc":
               parser = new Marc4ParserToJson(upload);
