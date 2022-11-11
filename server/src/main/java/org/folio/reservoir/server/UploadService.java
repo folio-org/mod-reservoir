@@ -67,6 +67,9 @@ public class UploadService {
       Storage storage = new Storage(ctx);
       HttpServerRequest request = ctx.request();
       String sourceId = request.getParam("sourceId");
+      if (sourceId == null) {
+        return Future.failedFuture("sourceId is a required parameter");
+      }
       String sourceVersion = request.getParam("sourceVersion", "1");
       String localIdPath = request.getParam("localIdPath");
       final boolean ingest = request.getParam("ingest", "true").equals("true");
