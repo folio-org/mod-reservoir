@@ -183,4 +183,33 @@ public class UploadTest extends TestBase {
         .onComplete(context.asyncAssertSuccess());
   }
 
+  @Test
+  public void uploadMissingSourceId(TestContext context) {
+    MultipartForm requestForm = MultipartForm.create()
+        .binaryFileUpload("records", "marc3.mrc", marc3marcBuffer,  "application/marc");
+
+    webClient.postAbs(OKAPI_URL + "/reservoir/upload")
+        .expect(ResponsePredicate.SC_BAD_REQUEST)
+        .putHeader(XOkapiHeaders.TENANT, TENANT_1)
+        .sendMultipartForm(requestForm)
+        .onComplete(context.asyncAssertSuccess(res -> {
+          assertThat(res.bodyAsString(), is("sourceId is a required parameter"));
+        }));
+  }
+
+  @Test
+  public void uploadMissingTenant(TestContext context) {
+    MultipartForm requestForm = MultipartForm.create()
+        .binaryFileUpload("records", "marc3.mrc", marc3marcBuffer,  "application/marc");
+
+    webClient.postAbs(MODULE_URL + "/reservoir/upload")
+        .expect(ResponsePredicate.SC_BAD_REQUEST)
+        .addQueryParam("sourceId", "SOURCE-1")
+        .addQueryParam("sourceVersion", "1")
+        .sendMultipartForm(requestForm)
+        .onComplete(context.asyncAssertSuccess(res -> {
+          assertThat(res.bodyAsString(), is("X-Okapi-Tenant header is missing"));
+        }));
+  }
+
 }
