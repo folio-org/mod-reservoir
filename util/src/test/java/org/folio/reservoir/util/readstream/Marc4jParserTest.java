@@ -5,9 +5,11 @@ import io.vertx.core.Promise;
 import io.vertx.core.Vertx;
 import io.vertx.core.buffer.Buffer;
 import io.vertx.core.file.OpenOptions;
+import io.vertx.core.json.DecodeException;
 import io.vertx.ext.unit.TestContext;
 import io.vertx.ext.unit.junit.VertxUnitRunner;
 import org.junit.After;
+import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -242,19 +244,19 @@ public class Marc4jParserTest {
     parser.endHandler(x -> promise.complete());
     rs.run();
     promise.future()
-        .onComplete(context.asyncAssertSuccess());
+        .onComplete(context.asyncAssertFailure());
   }
 
   @Test
   public void testAllLeadBad(TestContext context) {
-    MemoryReadStream rs = new MemoryReadStream(Buffer.buffer("!".repeat(5) + "9".repeat(23)), vertx);
+    MemoryReadStream rs = new MemoryReadStream(Buffer.buffer("!".repeat(4) + "9".repeat(23)), vertx);
     Marc4jParser parser = new Marc4jParser(rs);
     Promise<Void> promise = Promise.promise();
     parser.exceptionHandler(promise::tryFail);
     parser.endHandler(x -> promise.complete());
     rs.run();
     promise.future()
-        .onComplete(context.asyncAssertSuccess());
+        .onComplete(context.asyncAssertFailure());
   }
 
   @Test
@@ -279,6 +281,22 @@ public class Marc4jParserTest {
     rs.run();
     promise.future()
         .onComplete(context.asyncAssertSuccess());
+  }
+
+  static int getNext(String b) {
+    return Marc4jParser.getNext(Buffer.buffer(b), 0);
+  }
+
+  @Test
+  public void getNextTest() {
+    assertThat(getNext("0000"), is(0));
+    assertThat(getNext("x0000"), is(0));
+    assertThat(getNext("xxx0000"), is(0));
+    Assert.assertThrows(DecodeException.class, () -> getNext("xxxxx00000"));
+    Assert.assertThrows(DecodeException.class, () -> getNext("x00023"));
+    assertThat(getNext("x00024" + "0".repeat(18)), is(0));
+    assertThat(getNext("x00024" + "0".repeat(18)), is(0));
+    assertThat(getNext("x00024" + "0".repeat(19)), is(24));
   }
 
 }

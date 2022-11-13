@@ -214,19 +214,19 @@ public class MarcToJsonParserTest {
     parser.endHandler(x -> promise.complete());
     rs.run();
     promise.future()
-        .onComplete(context.asyncAssertSuccess());
+        .onComplete(context.asyncAssertFailure());
   }
 
   @Test
   public void testAllLeadBad(TestContext context) {
-    MemoryReadStream rs = new MemoryReadStream(Buffer.buffer("!".repeat(5) + "9".repeat(23)), vertx);
+    MemoryReadStream rs = new MemoryReadStream(Buffer.buffer("!".repeat(4) + "9".repeat(23)), vertx);
     Marc4jParser parser = new Marc4jParser(rs);
     Promise<Void> promise = Promise.promise();
     parser.exceptionHandler(promise::tryFail);
     parser.endHandler(x -> promise.complete());
     rs.run();
     promise.future()
-        .onComplete(context.asyncAssertSuccess());
+        .onComplete(context.asyncAssertFailure());
   }
 
   @Test

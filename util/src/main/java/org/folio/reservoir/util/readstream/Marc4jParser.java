@@ -2,6 +2,7 @@ package org.folio.reservoir.util.readstream;
 
 import io.vertx.core.Handler;
 import io.vertx.core.buffer.Buffer;
+import io.vertx.core.json.DecodeException;
 import io.vertx.core.streams.ReadStream;
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
@@ -84,22 +85,25 @@ public class Marc4jParser implements ReadStream<Record>, Handler<Buffer> {
     return this;
   }
 
-  int getNext(int sz) {
-    // skip up to 5 non-digit bytes (bad data)
-    for (int i = 0; i < 5; i++) {
-      int remain = pendingBuffer.length() - sz;
-      if (remain < 24) {
-        break;
+  static int getNext(Buffer pendingBuffer, int offset) {
+    // skip up to 4 non-digit bytes (bad data)
+    for (int i = 0; i < 4; i++) {
+      int remain = pendingBuffer.length() - offset;
+      if (remain < 5) { // need at least 5 bytes for MARC header
+        return 0;
       }
-      byte leadByte = pendingBuffer.getByte(sz);
+      byte leadByte = pendingBuffer.getByte(offset);
       if (leadByte >= '0' && leadByte <= '9') {
-        String lead = pendingBuffer.getString(sz, sz + 5);
+        String lead = pendingBuffer.getString(offset, offset + 5);
         int length = Integer.parseInt(lead);
-        return remain < length ? 0 : length;
+        if (length < 24) {
+          throw new DecodeException("Bad MARC length");
+        }
+        return remain >= length ? length : 0;
       }
-      sz++;
+      offset++;
     }
-    return 0;
+    throw new DecodeException("Missing MARC header");
   }
 
   private void checkPending()  {
@@ -110,7 +114,7 @@ public class Marc4jParser implements ReadStream<Record>, Handler<Buffer> {
     try {
       int sz = 0;
       while (demand > 0L) {
-        int add = getNext(sz);
+        int add = getNext(pendingBuffer, sz);
         if (add == 0) {
           break;
         }
@@ -137,6 +141,7 @@ public class Marc4jParser implements ReadStream<Record>, Handler<Buffer> {
       }
     } catch (Exception e) {
       if (exceptionHandler != null) {
+        stream.handler(null); // only interested in first error
         exceptionHandler.handle(e);
       }
     } finally {
