@@ -89,8 +89,8 @@ public class Marc4jParser implements ReadStream<Record>, Handler<Buffer> {
    * Check if we have a complete MARC-record at buffer and return its length.
    * @param buffer memory buffer with presumably ISO2709 data
    * @param offset inspect at this offset and onwards.
-   * @return 0 buffer does not hold complete MARC buffer; otherwise
-   * return length of MARC record at buffer at offset.
+   * @return 0 if buffer is incomplete (not a complete MARC record); otherwise
+   *     return length of MARC record at buffer at offset.
    * @throws DecodeException if not a MARC record at offset
    */
   static int getNext(Buffer buffer, int offset) {
