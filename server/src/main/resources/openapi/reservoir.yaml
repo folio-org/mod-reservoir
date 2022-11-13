@@ -511,6 +511,23 @@ paths:
       - $ref: headers/okapi-tenant.yaml
       - $ref: headers/okapi-token.yaml
       - $ref: headers/okapi-url.yaml
+      - in: query
+        name: sourceId
+        required: true
+        description: source identifier (library ID)
+        schema:
+          type: string
+      - in: query
+        name: sourceVersion
+        description: source version
+        schema:
+          type: integer
+          default: 1
+      - in: query
+        name: localIdPath
+        description: JSON-path for where local identifier is fetched from
+        schema:
+          type: string
     post:
       description: upload files.
       operationId: uploadFiles
@@ -520,12 +537,6 @@ paths:
             schema:
               type: object
               properties:
-                sourceId:
-                  type: string
-                sourceVersion:
-                  type: integer
-                localIdPath:
-                  type: string
                 records:
                   type: string
                   format: binary
@@ -533,7 +544,7 @@ paths:
               records:
                 # MARC not that common (say .mrc) often defaults to application/octet-stream
                 contentType: application/octet-stream,application/marc,
-                  application/zip,application/gzip,application/xml,text/xml
+                  application/xml,text/xml
       responses:
         "200":
           description: Records accepted.
