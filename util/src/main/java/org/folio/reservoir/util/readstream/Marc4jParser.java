@@ -85,16 +85,24 @@ public class Marc4jParser implements ReadStream<Record>, Handler<Buffer> {
     return this;
   }
 
-  static int getNext(Buffer pendingBuffer, int offset) {
+  /**
+   * Check if we have a complete MARC-record at buffer and return its length.
+   * @param buffer memory buffer with presumably ISO2709 data
+   * @param offset inspect at this offset and onwards.
+   * @return 0 buffer does not hold complete MARC buffer; otherwise
+   * return length of MARC record at buffer at offset.
+   * @throws DecodeException if not a MARC record at offset
+   */
+  static int getNext(Buffer buffer, int offset) {
     // skip up to 4 non-digit bytes (bad data)
     for (int i = 0; i < 4; i++) {
-      int remain = pendingBuffer.length() - offset;
+      int remain = buffer.length() - offset;
       if (remain < 5) { // need at least 5 bytes for MARC header
         return 0;
       }
-      byte leadByte = pendingBuffer.getByte(offset);
+      byte leadByte = buffer.getByte(offset);
       if (leadByte >= '0' && leadByte <= '9') {
-        String lead = pendingBuffer.getString(offset, offset + 5);
+        String lead = buffer.getString(offset, offset + 5);
         int length = Integer.parseInt(lead);
         if (length < 24) {
           throw new DecodeException("Bad MARC length");
@@ -124,6 +132,7 @@ public class Marc4jParser implements ReadStream<Record>, Handler<Buffer> {
         }
       }
       if (sz > 0) {
+        // have one or more MARC record to be parsed by Marc4j
         marc4jpending(sz);
       }
       if (ended) {
