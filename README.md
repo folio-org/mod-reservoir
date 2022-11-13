@@ -9,7 +9,7 @@ Version 2.0. See the file "[LICENSE](LICENSE)" for more information.
 
 A service that provides a clustering storage of metadata for Data Integration purposes. Optimized for fast storage and retrieval performance.
 
-This project has three sub-projects:
+This project has three subprojects:
 
 * `util` -- A library with utilities to convert and normalize XML, JSON and MARC.
 * `server` -- The reservoir storage server. This is the FOLIO module: mod-reservoir
