@@ -89,15 +89,15 @@ public class UploadService {
           ReadStream<JsonObject> parser = null;
           log.info("Content-Type: {}", upload.contentType());
           switch (upload.contentType()) {
-            case "application/octet-stream", "application/marc":
-              parser = new MarcToJsonParser(upload);
-              break;
-            case "application/xml", "text/xml":
+            case "application/octet-stream", "application/marc" ->
+                parser = new MarcToJsonParser(upload);
+            case "application/xml", "text/xml" -> {
               XmlParser xmlParser = XmlParser.newParser(upload);
               parser = new MarcXmlParserToJson(xmlParser);
-              break;
-            default:
-              futures.add(new FailedFuture<>("Unsupported content-type: " + upload.contentType()));
+            }
+            default -> futures.add(
+                new FailedFuture<>("Unsupported content-type: " + upload.contentType())
+            );
           }
           if (parser != null) {
             futures.add(uploadMarcStream(parser, ingest ? ingestWriteStream : null));
