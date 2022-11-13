@@ -420,7 +420,10 @@ Currently, two formats are supported.
 The following query parameters are recognized:
 
  * `sourceId`: required parameter for specifying the source identifier.
- * `sourceVersion` : optional paramater for specifying source version (default is 1)
+ * `sourceVersion` : optional parameter for specifying source version
+    (default is 1)
+ * `localIdPath` : optional parameter for specifying where to fetch local identifier
+    (default is `$.marc.fields[*].001`)
 
 These query parameters are for debugging and performance testing only:
 
