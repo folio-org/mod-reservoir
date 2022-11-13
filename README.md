@@ -457,7 +457,7 @@ and the additional module metadata.
 
 API descriptions:
 
- * [OpenAPI](server/src/main/resources/openapi/)
+ * [OpenAPI](server/src/main/resources/openapi/reservoir.yaml)
  * [Schemas](server/src/main/resources/openapi/schemas/)
 
 Generated [API documentation](https://dev.folio.org/reference/api/#mod-reservoir).
