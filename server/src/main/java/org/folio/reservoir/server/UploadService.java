@@ -91,10 +91,8 @@ public class UploadService {
           switch (upload.contentType()) {
             case "application/octet-stream", "application/marc" ->
                 parser = new MarcToJsonParser(upload);
-            case "application/xml", "text/xml" -> {
-              XmlParser xmlParser = XmlParser.newParser(upload);
-              parser = new MarcXmlParserToJson(xmlParser);
-            }
+            case "application/xml", "text/xml" ->
+                parser = new MarcXmlParserToJson(XmlParser.newParser(upload));
             default -> futures.add(
                 new FailedFuture<>("Unsupported content-type: " + upload.contentType())
             );
