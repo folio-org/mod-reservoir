@@ -6,7 +6,6 @@ import io.vertx.core.json.JsonObject;
 import io.vertx.core.streams.ReadStream;
 import java.io.ByteArrayOutputStream;
 import org.marc4j.MarcJsonWriter;
-import org.marc4j.converter.impl.AnselToUnicode;
 
 public class MarcToJsonParser implements ReadStream<JsonObject> {
 
