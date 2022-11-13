@@ -31,11 +31,6 @@ public class MarcToJsonParser implements ReadStream<JsonObject> {
       try {
         ByteArrayOutputStream out = new ByteArrayOutputStream();
         MarcJsonWriter writer = new MarcJsonWriter(out);
-        char charCodingScheme = marcRecord.getLeader().getCharCodingScheme();
-        if (charCodingScheme == ' ') {
-          marcRecord.getLeader().setCharCodingScheme('a');
-          writer.setConverter(new AnselToUnicode());
-        }
         writer.write(marcRecord);
         JsonObject marc = new JsonObject(out.toString());
         writer.close();
