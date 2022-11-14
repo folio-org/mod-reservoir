@@ -57,7 +57,7 @@ java -Dport=8081 --module-path=server/target/compiler/ \
 
 ## Running with Docker
 
-If you feel adventourous and want to run Reservoir in a docker container, build the container first:
+If you feel adventurous and want to run Reservoir in a docker container, build the container first:
 
 ```
 docker build -t mod-reservoir:latest .
@@ -139,7 +139,7 @@ curl -HX-Okapi-Tenant:$OKAPI_TENANT $OKAPI_URL/reservoir/records
 ## Configuring matchers
 
 Records in Reservoir are clustered according to rules expressed in a `matcher`. Matchers
-can be implemented using `jsonpath`, for simple matching rules, or `javascript` for abitrary
+can be implemented using `jsonpath`, for simple matching rules, or `javascript` for arbitrary
 complexity.
 
 To configure a matcher, first load an appropriate code module, e.g a simple `jsonpath`
