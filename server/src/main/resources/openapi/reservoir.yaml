@@ -529,8 +529,8 @@ paths:
         schema:
           type: string
     post:
-      description: upload files.
-      operationId: uploadFiles
+      description: Upload MARC binary and MARCXML records.
+      operationId: uploadRecords
       requestBody:
         content:
           multipart/form-data:

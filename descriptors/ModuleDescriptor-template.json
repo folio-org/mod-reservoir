@@ -584,7 +584,7 @@
     {
       "permissionName": "reservoir-upload.post",
       "displayName": "reservoir - upload records",
-      "description": "POST upload records via multipart"
+      "description": "Upload MARC binary and MARCXML records"
     },
     {
       "permissionName": "reservoir-upload.all",
