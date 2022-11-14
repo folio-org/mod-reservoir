@@ -38,6 +38,10 @@
       <groupId>com.fasterxml</groupId>
       <artifactId>aalto-xml</artifactId>
     </dependency>
+    <dependency>
+      <groupId>org.marc4j</groupId>
+      <artifactId>marc4j</artifactId>
+    </dependency>
     <!-- Test dependencies -->
     <dependency>
       <groupId>junit</groupId>

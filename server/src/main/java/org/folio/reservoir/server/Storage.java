@@ -38,9 +38,9 @@ import org.folio.reservoir.module.ModuleExecutable;
 import org.folio.reservoir.module.ModuleInvocation;
 import org.folio.reservoir.server.entity.ClusterBuilder;
 import org.folio.reservoir.server.entity.CodeModuleEntity;
-import org.folio.reservoir.util.LargeJsonReadStream;
 import org.folio.reservoir.util.ReadStreamConsumer;
 import org.folio.reservoir.util.SourceId;
+import org.folio.reservoir.util.readstream.LargeJsonReadStream;
 import org.folio.tlib.postgres.TenantPgPool;
 import org.folio.tlib.util.TenantUtil;
 
@@ -309,13 +309,13 @@ public class Storage {
         .compose(entity -> {
           if (entity == null) {
             return Future.failedFuture(
-              "Module '" + invocation.getModuleName() 
+              "Module '" + invocation.getModuleName()
                 + "' does not exist for '" + invocation + "'");
           }
           return ModuleCache.getInstance().lookup(vertx, tenant, entity);
         })
         .compose(module ->
-            updateMatchKeyValues(conn, globalId, matchkeyId, 
+            updateMatchKeyValues(conn, globalId, matchkeyId,
               new ModuleExecutable(module, invocation).executeAsCollection(payload)));
     } else {
       String methodName = matchKeyConfig.getString("method");
@@ -821,12 +821,12 @@ public class Storage {
                   .compose(entity -> {
                     if (entity == null) {
                       return Future.failedFuture(
-                        "Module '" + invocation.getModuleName() 
+                        "Module '" + invocation.getModuleName()
                           + "' does not exist for '" + invocation + "'");
                     }
                     return ModuleCache.getInstance().lookup(vertx, tenant, entity);
                   })
-                  .compose(module -> recalculateMatchKeyValueTable(connection, 
+                  .compose(module -> recalculateMatchKeyValueTable(connection,
                       new ModuleExecutable(module, invocation), null, id));
               } else {
                 String method = row.getString("method");

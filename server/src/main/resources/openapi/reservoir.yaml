@@ -506,6 +506,56 @@ paths:
           $ref: "#/components/responses/trait_404"
         "500":
           $ref: "#/components/responses/trait_500"
+  /reservoir/upload:
+    parameters:
+      - $ref: headers/okapi-tenant.yaml
+      - $ref: headers/okapi-token.yaml
+      - $ref: headers/okapi-url.yaml
+      - in: query
+        name: sourceId
+        required: true
+        description: source identifier (library ID)
+        schema:
+          type: string
+      - in: query
+        name: sourceVersion
+        description: source version
+        schema:
+          type: integer
+          default: 1
+      - in: query
+        name: localIdPath
+        description: JSON-path for where local identifier is fetched from
+        schema:
+          type: string
+    post:
+      description: Upload MARC binary and MARCXML records.
+      operationId: uploadRecords
+      requestBody:
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              properties:
+                records:
+                  type: string
+                  format: binary
+            encoding:
+              records:
+                # MARC not that common (say .mrc) often defaults to application/octet-stream
+                contentType: application/octet-stream,application/marc,
+                  application/xml,text/xml
+      responses:
+        "200":
+          description: Records accepted.
+          content:
+            application/json:
+              schema:
+                $ref: schemas/ingestRecordResponse.json
+        "400":
+          $ref: "#/components/responses/trait_400"
+        "500":
+          $ref: "#/components/responses/trait_500"
   # Global Records retrieval and simple ingest
   /reservoir/records:
     parameters:

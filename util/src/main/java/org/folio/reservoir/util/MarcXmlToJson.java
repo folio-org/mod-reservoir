@@ -29,7 +29,7 @@ public final class MarcXmlToJson {
   }
 
   /**
-   * Convert MARCXML to MARC-in-JSON from XMLStreamReader.
+   * Convert one MARCXML instance to MARC-in-JSON from XMLStreamReader.
    * @param xmlStreamReader were the MARC-XML is read from
    * @return JSON object.
    */
