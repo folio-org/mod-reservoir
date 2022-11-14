@@ -433,7 +433,7 @@ These query parameters are for debugging and performance testing only:
 For example to ingest a set of MARCXML records via curl from sourceId `BIB1`:
 
 ```
-  curl -HX-Okapi-Tenant:$OKAPI_TENANT -Frecords=records100k.xml $OKAPI_URL/reservoir/upload?sourceId=BIB1
+  curl -HX-Okapi-Tenant:$OKAPI_TENANT -Frecords=@records100k.xml $OKAPI_URL/reservoir/upload?sourceId=BIB1
 ```
 
 ## Additional information
