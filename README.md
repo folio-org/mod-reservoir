@@ -405,7 +405,7 @@ curl -HX-Okapi-Tenant:$OKAPI_TENANT -HContent-Type:application/json \
   -XPUT $OKAPI_URL/reservoir/config/oai -d'{"transformer":"marc-transformer::transform"}'
 ```
 
-### Ingest via multipart/form-data
+## Ingest via multipart/form-data
 
 Yet another ingesting alternative is importing via HTTP multipart/form-data at endpoint `/reservoir/upload`.
 
