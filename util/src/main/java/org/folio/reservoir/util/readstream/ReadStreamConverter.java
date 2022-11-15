@@ -2,7 +2,6 @@ package org.folio.reservoir.util.readstream;
 
 import io.vertx.core.Handler;
 import io.vertx.core.streams.ReadStream;
-import java.io.IOException;
 
 public abstract class ReadStreamConverter<T,V> implements ReadStream<T>, Handler<V> {
 
