@@ -2,6 +2,7 @@ package org.folio.reservoir.util.readstream;
 
 import io.vertx.core.Handler;
 import io.vertx.core.streams.ReadStream;
+import java.io.IOException;
 
 public abstract class ReadStreamConverter<T,V> implements ReadStream<T>, Handler<V> {
 
@@ -79,9 +80,6 @@ public abstract class ReadStreamConverter<T,V> implements ReadStream<T>, Handler
     checkPending();
   }
 
-  @Override
-  public abstract void handle(V value);
-
   void checkPending()  {
     if (emitting) {
       return;
@@ -112,6 +110,6 @@ public abstract class ReadStreamConverter<T,V> implements ReadStream<T>, Handler
     }
   }
 
-  abstract void handlePending() throws Exception;
+  abstract void handlePending();
 
 }

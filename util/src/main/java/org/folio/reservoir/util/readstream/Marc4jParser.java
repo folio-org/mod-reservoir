@@ -1,12 +1,12 @@
 package org.folio.reservoir.util.readstream;
 
-import io.vertx.core.Handler;
 import io.vertx.core.buffer.Buffer;
 import io.vertx.core.json.DecodeException;
 import io.vertx.core.streams.ReadStream;
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.UncheckedIOException;
 import org.marc4j.MarcPermissiveStreamReader;
 import org.marc4j.MarcReader;
 import org.marc4j.marc.Record;
@@ -52,7 +52,7 @@ public class Marc4jParser extends ReadStreamConverter<Record, Buffer> {
     throw new DecodeException("Missing MARC header");
   }
 
-  void handlePending() throws Exception {
+  void handlePending() {
     // pick as many MARC buffers as possible and pass only one buffer to Marc4j
     int sz = 0;
     while (demand > 0L) {
@@ -71,7 +71,7 @@ public class Marc4jParser extends ReadStreamConverter<Record, Buffer> {
     }
   }
 
-  private void marc4jpending(int sz) throws IOException {
+  private void marc4jpending(int sz) {
     try (
         InputStream inputStream = new ByteArrayInputStream(pendingBuffer.getBytes(0, sz))
     ) {
@@ -82,6 +82,8 @@ public class Marc4jParser extends ReadStreamConverter<Record, Buffer> {
           eventHandler.handle(r);
         }
       }
+    } catch (IOException e) {
+      throw new UncheckedIOException(e);
     } finally {
       pendingBuffer = pendingBuffer.getBuffer(sz, pendingBuffer.length());
     }

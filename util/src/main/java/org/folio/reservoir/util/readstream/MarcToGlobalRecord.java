@@ -26,6 +26,13 @@ public class MarcToGlobalRecord extends ReadStreamConverter<JsonObject, JsonObje
     return MarcInJsonUtil.lookupMarcDataField(marc, "004", null, null) != null;
   }
 
+  /**
+   * Return next global record.
+   * @return null if input is incomplete; global record JSON object otherwise.
+   */
+
+  // S5413 'List.remove()' should not be used in ascending 'for' loops
+  @java.lang.SuppressWarnings({"squid:S5413"})
   JsonObject getNext() {
     if (marc.isEmpty()) {
       return null;
@@ -54,6 +61,7 @@ public class MarcToGlobalRecord extends ReadStreamConverter<JsonObject, JsonObje
     if (i > 1) {
       JsonArray holdings = new JsonArray();
       for (int j = 1; j < i; j++) {
+        // j < marcSize so this is safe S5413
         holdings.add(marc.remove(0)); // remove each mfhd
       }
       payload.put("marcHoldings", holdings);
