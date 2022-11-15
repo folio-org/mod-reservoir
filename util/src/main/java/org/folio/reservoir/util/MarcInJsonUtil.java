@@ -56,7 +56,7 @@ public final class MarcInJsonUtil {
    * Lookup marc field.
    * @param marc MARC-in-JSON object
    * @param tag marc tag, such as "245"
-   * @param ind1 indicator1 in match ; null for any
+   * @param ind1 indicator1 in match; null for any
    * @param ind2 indicator2 in match; null for any
    * @return subfields array if found; null otherwise
    */
@@ -70,10 +70,15 @@ public final class MarcInJsonUtil {
       JsonObject field = fields.getJsonObject(i);
       for (String f : field.fieldNames()) {
         if (f.equals(tag)) {
-          JsonObject field2 = field.getJsonObject(tag);
-          if ((ind1 == null || ind1.equals(field2.getString("ind1")))
-              && (ind2 == null || ind2.equals(field2.getString("ind2")))) {
-            return field2.getJsonArray(SUBFIELDS_LABEL);
+          Object tagObject = field.getValue(tag);
+          if (tagObject instanceof String tagObjectString) {
+            return new JsonArray().add(tagObjectString);
+          }
+          if (tagObject instanceof JsonObject tagJsonObject) {
+            if ((ind1 == null || ind1.equals(tagJsonObject.getString("ind1")))
+                && (ind2 == null || ind2.equals(tagJsonObject.getString("ind2")))) {
+              return tagJsonObject.getJsonArray(SUBFIELDS_LABEL);
+            }
           }
         }
       }

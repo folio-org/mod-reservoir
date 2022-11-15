@@ -11,21 +11,7 @@ import org.marc4j.MarcPermissiveStreamReader;
 import org.marc4j.MarcReader;
 import org.marc4j.marc.Record;
 
-public class Marc4jParser implements ReadStream<Record>, Handler<Buffer> {
-  private long demand = Long.MAX_VALUE;
-
-  private boolean ended;
-
-  private boolean emitting;
-
-  private Handler<Throwable> exceptionHandler;
-
-  private Handler<Record> eventHandler;
-
-  private Handler<Void> endHandler;
-
-  private final ReadStream<Buffer> stream;
-
+public class Marc4jParser extends ReadStreamConverter<Record, Buffer> {
   private Buffer pendingBuffer;
 
   /**
@@ -33,56 +19,8 @@ public class Marc4jParser implements ReadStream<Record>, Handler<Buffer> {
    * @param stream ISO2709 encoded byte stream
    */
   public Marc4jParser(ReadStream<Buffer> stream) {
-    this.stream = stream;
-    stream.handler(this);
-    stream.endHandler(v -> end());
-    stream.exceptionHandler(e -> {
-      if (exceptionHandler != null) {
-        exceptionHandler.handle(e);
-      }
-    });
+    super(stream);
     pendingBuffer = Buffer.buffer();
-  }
-
-  @Override
-  public ReadStream<Record> exceptionHandler(Handler<Throwable> handler) {
-    exceptionHandler = handler;
-    return this;
-  }
-
-  @Override
-  public ReadStream<Record> handler(Handler<Record> handler) {
-    eventHandler = handler;
-    return this;
-  }
-
-  @Override
-  public ReadStream<Record> pause() {
-    demand = 0L;
-    return this;
-  }
-
-  @Override
-  public ReadStream<Record> resume() {
-    return fetch(Long.MAX_VALUE);
-  }
-
-  @Override
-  public ReadStream<Record> fetch(long l) {
-    demand += l;
-    if (demand < 0L) {
-      demand = Long.MAX_VALUE;
-    }
-    checkPending();
-    return this;
-  }
-
-  @Override
-  public ReadStream<Record> endHandler(Handler<Void> handler) {
-    if (!ended) {
-      endHandler = handler;
-    }
-    return this;
   }
 
   /**
@@ -114,47 +52,22 @@ public class Marc4jParser implements ReadStream<Record>, Handler<Buffer> {
     throw new DecodeException("Missing MARC header");
   }
 
-  private void checkPending()  {
-    if (emitting) {
-      return;
+  void handlePending() throws Exception {
+    // pick as many MARC buffers as possible and pass only one buffer to Marc4j
+    int sz = 0;
+    while (demand > 0L) {
+      int add = getNext(pendingBuffer, sz);
+      if (add == 0) {
+        break;
+      }
+      sz += add;
+      if (demand != Long.MAX_VALUE) {
+        --demand;
+      }
     }
-    emitting = true;
-    try {
-      int sz = 0;
-      while (demand > 0L) {
-        int add = getNext(pendingBuffer, sz);
-        if (add == 0) {
-          break;
-        }
-        sz += add;
-        if (demand != Long.MAX_VALUE) {
-          --demand;
-        }
-      }
-      if (sz > 0) {
-        // have one or more MARC record to be parsed by Marc4j
-        marc4jpending(sz);
-      }
-      if (ended) {
-        Handler<Void> handler = endHandler;
-        endHandler = null;
-        if (handler != null) {
-          handler.handle(null);
-        }
-      } else {
-        if (demand == 0L) {
-          stream.pause();
-        } else {
-          stream.resume();
-        }
-      }
-    } catch (Exception e) {
-      if (exceptionHandler != null) {
-        stream.handler(null); // only interested in first error
-        exceptionHandler.handle(e);
-      }
-    } finally {
-      emitting = false;
+    if (sz > 0) {
+      // have one or more MARC record to be parsed by Marc4j
+      marc4jpending(sz);
     }
   }
 
@@ -177,17 +90,6 @@ public class Marc4jParser implements ReadStream<Record>, Handler<Buffer> {
   @Override
   public void handle(Buffer buffer) {
     this.pendingBuffer.appendBuffer(buffer);
-    checkPending();
-  }
-
-  /**
-   * Signal end-of-stream.
-   */
-  public void end() {
-    if (ended) {
-      throw new IllegalStateException("Parsing already done");
-    }
-    ended = true;
     checkPending();
   }
 

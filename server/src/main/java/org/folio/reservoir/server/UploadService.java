@@ -57,7 +57,7 @@ public class UploadService {
   /**
    * non-OpenAPI upload records service handler.
    *
-   * <p>Do not produce http response in case of failures.
+   * <p>Does not produce http response in case of failures.
    * @param ctx routing context
    * @return async result
    */
