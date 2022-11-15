@@ -74,11 +74,10 @@ public final class MarcInJsonUtil {
           if (tagObject instanceof String tagObjectString) {
             return new JsonArray().add(tagObjectString);
           }
-          if (tagObject instanceof JsonObject tagJsonObject) {
-            if ((ind1 == null || ind1.equals(tagJsonObject.getString("ind1")))
-                && (ind2 == null || ind2.equals(tagJsonObject.getString("ind2")))) {
-              return tagJsonObject.getJsonArray(SUBFIELDS_LABEL);
-            }
+          if (tagObject instanceof JsonObject tagJsonObject
+              && (ind1 == null || ind1.equals(tagJsonObject.getString("ind1")))
+              && (ind2 == null || ind2.equals(tagJsonObject.getString("ind2")))) {
+            return tagJsonObject.getJsonArray(SUBFIELDS_LABEL);
           }
         }
       }

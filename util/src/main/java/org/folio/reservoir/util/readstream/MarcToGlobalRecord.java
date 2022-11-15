@@ -30,7 +30,6 @@ public class MarcToGlobalRecord extends ReadStreamConverter<JsonObject, JsonObje
    * Return next global record.
    * @return null if input is incomplete; global record JSON object otherwise.
    */
-
   // S5413 'List.remove()' should not be used in ascending 'for' loops
   @java.lang.SuppressWarnings({"squid:S5413"})
   JsonObject getNext() {
