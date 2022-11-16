@@ -25,16 +25,14 @@ public class IngestWriteStream implements WriteStream<JsonObject> {
   AtomicInteger ops = new AtomicInteger();
   final ModuleJsonPath moduleJsonPath;
   int queueSize = 5;
-  final String payloadElement;
 
   IngestWriteStream(Vertx vertx, Storage storage, SourceId sourceId, int sourceVersion,
-      String localIdPath, String payloadElement) {
+      String localIdPath) {
     this.vertx = vertx;
     this.storage = storage;
     this.sourceId = sourceId;
     this.sourceVersion = sourceVersion;
     moduleJsonPath = localIdPath == null ? null : new ModuleJsonPath(localIdPath);
-    this.payloadElement = payloadElement;
   }
 
   @Override
@@ -44,8 +42,7 @@ public class IngestWriteStream implements WriteStream<JsonObject> {
   }
 
   @Override
-  public Future<Void> write(JsonObject payloadContent) {
-    final JsonObject payload = new JsonObject().put(payloadElement, payloadContent);
+  public Future<Void> write(JsonObject payload) {
     final JsonObject globalRecord = new JsonObject().put("payload", payload);
     Future<Void> future = Future.succeededFuture();
     ops.incrementAndGet();

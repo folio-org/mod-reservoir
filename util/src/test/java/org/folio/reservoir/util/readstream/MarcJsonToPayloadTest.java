@@ -7,20 +7,20 @@ import io.vertx.core.file.OpenOptions;
 import io.vertx.core.json.JsonObject;
 import io.vertx.ext.unit.TestContext;
 import io.vertx.ext.unit.junit.VertxUnitRunner;
+import java.util.ArrayList;
+import java.util.List;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 
-import java.util.ArrayList;
-import java.util.List;
-
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.hasSize;
 import static org.hamcrest.Matchers.is;
+import static org.hamcrest.Matchers.startsWith;
 
 @RunWith(VertxUnitRunner.class)
-public class MarcToGlobalRecordTest {
+public class MarcJsonToPayloadTest {
   Vertx vertx;
 
   @Before
@@ -33,14 +33,9 @@ public class MarcToGlobalRecordTest {
     vertx.close().onComplete(context.asyncAssertSuccess());
   }
 
-  Future<MarcToGlobalRecord> marcFromFile(String fname) {
+  Future<MarcJsonToPayload> marcFromFile(String fname) {
     return vertx.fileSystem().open(fname, new OpenOptions())
-        .map(x -> new MarcToGlobalRecord(new MarcToJsonParser(x)));
-  }
-
-  Future<MarcToGlobalRecord> marcxmlFromFile(String fname) {
-    return vertx.fileSystem().open(fname, new OpenOptions())
-        .map(x -> new MarcToGlobalRecord(new MarcXmlParserToJson(XmlParser.newParser(x))));
+        .map(x -> new MarcJsonToPayload(new MarcToJsonParser(x)));
   }
 
   String get001(JsonObject marc) {
@@ -60,10 +55,10 @@ public class MarcToGlobalRecordTest {
         })
         .onComplete(context.asyncAssertSuccess(records -> {
           assertThat(records, hasSize(3));
-          assertThat(get001(records.get(0).getJsonObject("payload").getJsonObject("marc")), is("   73209622 //r823"));
-          assertThat(records.get(0).getJsonObject("payload").containsKey("marcHoldings"), is(false));
-          assertThat(get001(records.get(1).getJsonObject("payload").getJsonObject("marc")), is("   11224466 "));
-          assertThat(get001(records.get(2).getJsonObject("payload").getJsonObject("marc")), is("   77123332 "));
+          assertThat(get001(records.get(0).getJsonObject("marc")), is("   73209622 //r823"));
+          assertThat(records.get(0).containsKey("marcHoldings"), is(false));
+          assertThat(get001(records.get(1).getJsonObject("marc")), is("   11224466 "));
+          assertThat(get001(records.get(2).getJsonObject("marc")), is("   77123332 "));
         }));
   }
 
@@ -80,16 +75,16 @@ public class MarcToGlobalRecordTest {
         })
         .onComplete(context.asyncAssertSuccess(records -> {
           assertThat(records, hasSize(7));
-          assertThat(get001(records.get(0).getJsonObject("payload").getJsonObject("marc")), is("ocm22544415 "));
-          assertThat(get001(records.get(0).getJsonObject("payload").getJsonArray("marcHoldings").getJsonObject(0)), is("203780362"));
-          assertThat(get001(records.get(6).getJsonObject("payload").getJsonObject("marc")), is("on1328230635"));
-          assertThat(get001(records.get(6).getJsonObject("payload").getJsonArray("marcHoldings").getJsonObject(0)), is("385266588"));
+          assertThat(get001(records.get(0).getJsonObject("marc")), is("ocm22544415 "));
+          assertThat(get001(records.get(0).getJsonArray("marcHoldings").getJsonObject(0)), is("203780362"));
+          assertThat(get001(records.get(6).getJsonObject("marc")), is("on1328230635"));
+          assertThat(get001(records.get(6).getJsonArray("marcHoldings").getJsonObject(0)), is("385266588"));
         }));
   }
 
   @Test
-  public void marc1delete(TestContext context) {
-    marcxmlFromFile("marc1-delete.xml")
+  public void parentMarcIsHolding(TestContext context) {
+    marcFromFile("mfhd-no-parent.marc")
         .compose(parser -> {
           List<JsonObject> records = new ArrayList<>();
           Promise<List<JsonObject>> promise = Promise.promise();
@@ -98,12 +93,9 @@ public class MarcToGlobalRecordTest {
           parser.exceptionHandler(promise::tryFail);
           return promise.future();
         })
-        .onComplete(context.asyncAssertSuccess(records -> {
-          assertThat(records, hasSize(1));
-          assertThat(get001(records.get(0).getJsonObject("payload").getJsonObject("marc")), is("   73209622 //r823"));
-          assertThat(records.get(0).getBoolean("delete"), is(true));
-          assertThat(records.get(0).getJsonObject("payload").containsKey("marcHoldings"), is(false));
-        }));
+        .onComplete(context.asyncAssertFailure(
+            e -> assertThat(e.getMessage(), startsWith("Parent MARC record is holding"))
+        ));
   }
 
 }

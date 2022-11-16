@@ -8,11 +8,16 @@ import java.util.LinkedList;
 import java.util.List;
 import org.folio.reservoir.util.MarcInJsonUtil;
 
-public class MarcToGlobalRecord extends ReadStreamConverter<JsonObject, JsonObject> {
+/**
+ * Converts stream of JSON-in-MARC to payload JSON objects.
+ *
+ * <p>Records with 004 are treated as holdings records.
+ */
+public class MarcJsonToPayload extends ReadStreamConverter<JsonObject, JsonObject> {
 
   List<JsonObject> marc = new LinkedList<>();
 
-  MarcToGlobalRecord(ReadStream<JsonObject> stream) {
+  public MarcJsonToPayload(ReadStream<JsonObject> stream) {
     super(stream);
   }
 
@@ -27,18 +32,18 @@ public class MarcToGlobalRecord extends ReadStreamConverter<JsonObject, JsonObje
   }
 
   /**
-   * Return next global record.
-   * @return null if input is incomplete; global record JSON object otherwise.
+   * Return next payload record (marc + optionally marcHoldings).
+   * @return null if input is incomplete; payload JSON object otherwise.
    */
-  // S5413 'List.remove()' should not be used in ascending 'for' loops
+  // S:5413 'List.remove()' should not be used in ascending 'for' loops
   @java.lang.SuppressWarnings({"squid:S5413"})
   JsonObject getNext() {
     if (marc.isEmpty()) {
       return null;
     }
-    JsonObject firstMarc = marc.get(0);
-    if (isHolding(firstMarc)) {
-      throw new DecodeException("Leading marc record is holding " + firstMarc.encodePrettily());
+    JsonObject parentMarc = marc.get(0);
+    if (isHolding(parentMarc)) {
+      throw new DecodeException("Parent MARC record is holding " + parentMarc.encodePrettily());
     }
     int marcSize = marc.size();
     int i = 1;
@@ -49,23 +54,17 @@ public class MarcToGlobalRecord extends ReadStreamConverter<JsonObject, JsonObje
       return null;
     }
     JsonObject payload = new JsonObject()
-        .put("marc", firstMarc);
-    JsonObject globalRecord = new JsonObject()
-        .put("payload", payload);
-    String leader = firstMarc.getString("leader");
-    if (leader.length() >= 24 && leader.charAt(5) == 'd') {
-      globalRecord.put("delete", true);
-    }
+        .put("marc", parentMarc);
     marc.remove(0); // remove the leader record
     if (i > 1) {
       JsonArray holdings = new JsonArray();
       for (int j = 1; j < i; j++) {
-        // j < marcSize so this is safe S5413
+        // j < marcSize so this is safe S:5413
         holdings.add(marc.remove(0)); // remove each mfhd
       }
       payload.put("marcHoldings", holdings);
     }
-    return globalRecord;
+    return payload;
   }
 
   @Override
