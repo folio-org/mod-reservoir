@@ -11,7 +11,6 @@ import io.vertx.ext.unit.junit.VertxUnitRunner;
 import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
-import org.junit.Ignore;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.marc4j.marc.Record;
@@ -37,12 +36,12 @@ public class Marc4jParserTest {
     vertx.close().onComplete(context.asyncAssertSuccess());
   }
 
-  Future<Marc4jParser> marc4jParserFromFile(String fname) {
+  Future<MappingReadStream<Record, Buffer>> marc4jParserFromFile(String fname) {
     return vertx.fileSystem().open(fname, new OpenOptions())
-        .map(Marc4jParser::new);
+        .map(file -> new MappingReadStream<>(file, new Marc4jMapper()));
   }
 
-  Future<Marc4jParser> marc4jParserFromFile() {
+  Future<MappingReadStream<Record, Buffer>> marc4jParserFromFile() {
     return marc4jParserFromFile("marc3.marc");
   }
 
@@ -189,7 +188,7 @@ public class Marc4jParserTest {
   @Test
   public void testBadMarc(TestContext context) {
     MemoryReadStream rs = new MemoryReadStream(Buffer.buffer("x00025" + "9".repeat(20)), vertx);
-    Marc4jParser parser = new Marc4jParser(rs);
+    MappingReadStream<Record, Buffer> parser = new MappingReadStream<>(rs, new Marc4jMapper());
     Promise<Void> promise = Promise.promise();
     parser.exceptionHandler(promise::tryFail);
     parser.endHandler(x -> promise.complete());
@@ -203,7 +202,7 @@ public class Marc4jParserTest {
   @Test
   public void testBadMarc2(TestContext context) {
     MemoryReadStream rs = new MemoryReadStream(Buffer.buffer("x00024"), Buffer.buffer("9"), 19, vertx);
-    Marc4jParser parser = new Marc4jParser(rs);
+    MappingReadStream<Record, Buffer> parser = new MappingReadStream<>(rs, new Marc4jMapper());
     Promise<Void> promise = Promise.promise();
     parser.exceptionHandler(promise::tryFail);
     parser.endHandler(x -> promise.complete());
@@ -216,7 +215,7 @@ public class Marc4jParserTest {
   @Test
   public void testAllLeadBad(TestContext context) {
     MemoryReadStream rs = new MemoryReadStream(Buffer.buffer("!".repeat(4) + "9".repeat(23)), vertx);
-    Marc4jParser parser = new Marc4jParser(rs);
+    MappingReadStream<Record, Buffer> parser = new MappingReadStream<>(rs, new Marc4jMapper());
     Promise<Void> promise = Promise.promise();
     parser.exceptionHandler(promise::tryFail);
     parser.endHandler(x -> promise.complete());
@@ -228,7 +227,7 @@ public class Marc4jParserTest {
   @Test
   public void testExceptionInStream(TestContext context) {
     MemoryReadStream rs = new MemoryReadStream(null, vertx);
-    Marc4jParser parser = new Marc4jParser(rs);
+    MappingReadStream<Record, Buffer> parser = new MappingReadStream<>(rs, new Marc4jMapper());
     Promise<Void> promise = Promise.promise();
     parser.exceptionHandler(promise::tryFail);
     parser.endHandler(x -> promise.complete());
@@ -241,7 +240,7 @@ public class Marc4jParserTest {
   @Test
   public void testExceptionInStreamNoExceptionHandler(TestContext context) {
     MemoryReadStream rs = new MemoryReadStream(null, vertx);
-    Marc4jParser parser = new Marc4jParser(rs);
+    MappingReadStream<Record, Buffer> parser = new MappingReadStream<>(rs, new Marc4jMapper());
     Promise<Void> promise = Promise.promise();
     parser.endHandler(x -> promise.complete());
     rs.run();
@@ -250,7 +249,7 @@ public class Marc4jParserTest {
   }
 
   static int getNext(String b, boolean ended) {
-    return Marc4jParser.parseMarcBuffer(Buffer.buffer(b), 0, ended);
+    return Marc4jMapper.parseMarcBuffer(Buffer.buffer(b), 0, ended);
   }
 
   @Test

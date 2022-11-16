@@ -3,7 +3,6 @@ package org.folio.reservoir.util.readstream;
 import io.vertx.core.json.DecodeException;
 import io.vertx.core.json.JsonArray;
 import io.vertx.core.json.JsonObject;
-import io.vertx.core.streams.ReadStream;
 import java.util.LinkedList;
 import java.util.List;
 import org.folio.reservoir.util.MarcInJsonUtil;
@@ -13,18 +12,13 @@ import org.folio.reservoir.util.MarcInJsonUtil;
  *
  * <p>Records with 004 are treated as holdings records.
  */
-public class MarcJsonToPayload extends ReadStreamConverter<JsonObject, JsonObject> {
+public class MarcJsonToPayloadMapper implements Mapper<JsonObject, JsonObject> {
 
   List<JsonObject> marc = new LinkedList<>();
 
-  public MarcJsonToPayload(ReadStream<JsonObject> stream) {
-    super(stream);
-  }
-
   @Override
-  public void handle(JsonObject value) {
+  public void put(JsonObject value) {
     marc.add(value);
-    checkPending();
   }
 
   boolean isHolding(JsonObject marc) {
@@ -38,7 +32,7 @@ public class MarcJsonToPayload extends ReadStreamConverter<JsonObject, JsonObjec
   // S:5413 'List.remove()' should not be used in ascending 'for' loops
   @java.lang.SuppressWarnings({"squid:S5413"})
   @Override
-  JsonObject getNext(boolean ended) {
+  public JsonObject get(boolean ended) {
     if (marc.isEmpty()) {
       return null;
     }

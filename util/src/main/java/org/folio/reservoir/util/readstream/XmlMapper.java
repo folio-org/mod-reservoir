@@ -6,24 +6,24 @@ import com.fasterxml.aalto.AsyncXMLStreamReader;
 import com.fasterxml.aalto.stax.InputFactoryImpl;
 import io.vertx.core.buffer.Buffer;
 import io.vertx.core.json.DecodeException;
-import io.vertx.core.streams.ReadStream;
 import javax.xml.stream.XMLStreamException;
 import javax.xml.stream.XMLStreamReader;
 
-public class XmlParserImpl
-    extends ReadStreamConverter<XMLStreamReader, Buffer>
-    implements XmlParser {
+public class XmlMapper
+    implements Mapper<Buffer, XMLStreamReader> {
   private final AsyncXMLStreamReader<AsyncByteArrayFeeder> parser;
 
-  XmlParserImpl(ReadStream<Buffer> stream) {
-    super(stream);
+  XmlMapper() {
     AsyncXMLInputFactory factory = new InputFactoryImpl();
     parser = factory.createAsyncForByteArray();
   }
 
   @Override
-  XMLStreamReader getNext(boolean ended) {
+  public XMLStreamReader get(boolean ended) {
     try {
+      if (ended) {
+        parser.getInputFeeder().endOfInput();
+      }
       if (parser.hasNext() && parser.next() != AsyncXMLStreamReader.EVENT_INCOMPLETE) {
         return parser;
       }
@@ -34,21 +34,13 @@ public class XmlParserImpl
   }
 
   @Override
-  public void handle(Buffer buffer) {
+  public void put(Buffer buffer) {
     byte[] bytes = buffer.getBytes();
     try {
       parser.getInputFeeder().feedInput(bytes, 0, bytes.length);
     } catch (XMLStreamException e) {
-      if (exceptionHandler != null) {
-        exceptionHandler.handle(e);
-      }
+      throw new DecodeException(e.getMessage(), e);
     }
-    checkPending();
   }
 
-  @Override
-  public void end() {
-    parser.getInputFeeder().endOfInput();
-    super.end();
-  }
 }

@@ -33,9 +33,9 @@ public class MarcJsonToPayloadTest {
     vertx.close().onComplete(context.asyncAssertSuccess());
   }
 
-  Future<MarcJsonToPayload> marcFromFile(String fname) {
+  Future<MappingReadStream<JsonObject, JsonObject>> marcFromFile(String fname) {
     return vertx.fileSystem().open(fname, new OpenOptions())
-        .map(x -> new MarcJsonToPayload(new MarcToJsonParser(x)));
+        .map(file -> new MappingReadStream<>(new MarcToJsonParser(file), new MarcJsonToPayloadMapper()));
   }
 
   String get001(JsonObject marc) {

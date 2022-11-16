@@ -13,10 +13,14 @@ import javax.xml.stream.XMLStreamReader;
  *
  * @see <a href="https://vertx.io/docs/apidocs/io/vertx/core/parsetools/JsonParser.html">JsonParser</a>
  */
-public interface XmlParser extends ReadStream<XMLStreamReader>, Handler<Buffer> {
-  static XmlParser newParser(ReadStream<Buffer> stream) {
-    return new XmlParserImpl(stream);
+public class XmlParser extends MappingReadStream<XMLStreamReader, Buffer> {
+
+  private XmlParser(ReadStream<Buffer> stream, Mapper<Buffer, XMLStreamReader> mapper) {
+    super(stream, mapper);
   }
 
-  void end();
+  public static XmlParser newParser(ReadStream<Buffer> stream) {
+    return new XmlParser(stream, new XmlMapper());
+  }
+
 }
