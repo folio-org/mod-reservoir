@@ -11,6 +11,7 @@ import io.vertx.ext.unit.junit.VertxUnitRunner;
 import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
+import org.junit.Ignore;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.marc4j.marc.Record;
@@ -195,19 +196,8 @@ public class Marc4jParserTest {
     rs.run();
     promise.future()
         .onComplete(context.asyncAssertFailure(
-            e -> assertThat(e.getMessage(), is("Index -1 out of bounds for length 0"))));
+            e -> assertThat(e.getMessage(), is("unable to parse record length"))));
 
-  }
-
-  @Test
-  public void testBadMarcNoExceptionHandler(TestContext context) {
-    MemoryReadStream rs = new MemoryReadStream(Buffer.buffer("x00025" + "9".repeat(20)), vertx);
-    Marc4jParser parser = new Marc4jParser(rs);
-    Promise<Void> promise = Promise.promise();
-    parser.endHandler(x -> promise.complete());
-    rs.run();
-    promise.future()
-        .onComplete(context.asyncAssertSuccess());
   }
 
   @Test
@@ -220,31 +210,7 @@ public class Marc4jParserTest {
     rs.run();
     promise.future()
         .onComplete(context.asyncAssertFailure(
-            e -> assertThat(e.getMessage(), is("Premature end of file encountered"))));
-  }
-
-  @Test
-  public void testSkipLength(TestContext context) {
-    MemoryReadStream rs = new MemoryReadStream(Buffer.buffer("x00025"), Buffer.buffer("9"), 19, vertx);
-    Marc4jParser parser = new Marc4jParser(rs);
-    Promise<Void> promise = Promise.promise();
-    parser.exceptionHandler(promise::tryFail);
-    parser.endHandler(x -> promise.complete());
-    rs.run();
-    promise.future()
-        .onComplete(context.asyncAssertSuccess());
-  }
-
-  @Test
-  public void testSkipLead(TestContext context) {
-    MemoryReadStream rs = new MemoryReadStream(Buffer.buffer("!" + "x".repeat(24)), vertx);
-    Marc4jParser parser = new Marc4jParser(rs);
-    Promise<Void> promise = Promise.promise();
-    parser.exceptionHandler(promise::tryFail);
-    parser.endHandler(x -> promise.complete());
-    rs.run();
-    promise.future()
-        .onComplete(context.asyncAssertFailure());
+            e -> assertThat(e.getMessage(), is("unable to parse record length"))));
   }
 
   @Test
@@ -283,20 +249,22 @@ public class Marc4jParserTest {
         .onComplete(context.asyncAssertSuccess());
   }
 
-  static int getNext(String b) {
-    return Marc4jParser.getNext(Buffer.buffer(b), 0);
+  static int getNext(String b, boolean ended) {
+    return Marc4jParser.parseMarcBuffer(Buffer.buffer(b), 0, ended);
   }
 
   @Test
   public void getNextTest() {
-    assertThat(getNext("0000"), is(0));
-    assertThat(getNext("x0000"), is(0));
-    assertThat(getNext("xxx0000"), is(0));
-    Assert.assertThrows(DecodeException.class, () -> getNext("xxxxx00000"));
-    Assert.assertThrows(DecodeException.class, () -> getNext("x00023"));
-    assertThat(getNext("x00024" + "0".repeat(18)), is(0));
-    assertThat(getNext("x00024" + "0".repeat(18)), is(0));
-    assertThat(getNext("x00024" + "0".repeat(19)), is(24));
+    assertThat(getNext("0000", false), is(0));
+    assertThat(getNext("x0000", false), is(0));
+    assertThat(getNext("xxx0000", false), is(0));
+    assertThat(getNext("000", true), is(3));
+    Assert.assertThrows(DecodeException.class, () -> getNext("xxxxx00000", false));
+    Assert.assertThrows(DecodeException.class, () -> getNext("x00023", false));
+    assertThat(getNext("x00024" + "0".repeat(18), false), is(0));
+    assertThat(getNext("x00024" + "0".repeat(18), false), is(0));
+    assertThat(getNext("x00024" + "0".repeat(18), true), is(23));
+    assertThat(getNext("x00024" + "0".repeat(19), false), is(24));
   }
 
 }

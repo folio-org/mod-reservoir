@@ -41,19 +41,19 @@ public class UploadTest extends TestBase {
 
   @Test
   public void uploadOctetStream(TestContext context) {
-    WebClient webClient = WebClient.create(vertx);
-
     MultipartForm body = MultipartForm.create()
         .binaryFileUpload("records", "tiny.mrc", Buffer.buffer("01234"), "application/octet-stream");
 
     webClient.postAbs(OKAPI_URL + "/reservoir/upload")
-        .expect(ResponsePredicate.SC_OK)
+        .expect(ResponsePredicate.SC_BAD_REQUEST)
         .putHeader(XOkapiHeaders.TENANT, TENANT_1)
         .addQueryParam("sourceId", "SOURCE-1")
         .addQueryParam("sourceVersion", "1")
         .addQueryParam("localIdPath", "path")
         .sendMultipartForm(body)
-        .onComplete(context.asyncAssertSuccess());
+        .onComplete(context.asyncAssertSuccess(res -> {
+          assertThat(res.bodyAsString(), is("Premature end of file encountered"));
+        }));
   }
 
   @Test

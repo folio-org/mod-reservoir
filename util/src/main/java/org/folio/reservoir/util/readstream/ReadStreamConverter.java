@@ -5,19 +5,19 @@ import io.vertx.core.streams.ReadStream;
 
 public abstract class ReadStreamConverter<T,V> implements ReadStream<T>, Handler<V> {
 
-  protected boolean emitting;
+  boolean emitting;
 
-  protected long demand = Long.MAX_VALUE;
+  long demand = Long.MAX_VALUE;
 
-  protected boolean ended;
+  boolean ended;
 
   protected final ReadStream<V> stream;
 
-  protected Handler<T> eventHandler;
+  Handler<T> eventHandler;
 
-  protected Handler<Void> endHandler;
+  Handler<Void> endHandler;
 
-  protected Handler<Throwable> exceptionHandler;
+  Handler<Throwable> exceptionHandler;
 
   ReadStreamConverter(ReadStream<V> stream) {
     this.stream = stream;
@@ -85,7 +85,18 @@ public abstract class ReadStreamConverter<T,V> implements ReadStream<T>, Handler
     }
     emitting = true;
     try {
-      handlePending();
+      while (demand > 0L) {
+        T t = getNext(ended);
+        if (t == null) {
+          break;
+        }
+        if (demand != Long.MAX_VALUE) {
+          --demand;
+        }
+        if (eventHandler != null) {
+          eventHandler.handle(t);
+        }
+      }
       if (ended) {
         Handler<Void> handler = endHandler;
         endHandler = null;
@@ -100,8 +111,8 @@ public abstract class ReadStreamConverter<T,V> implements ReadStream<T>, Handler
         }
       }
     } catch (Exception e) {
+      stream.handler(null); // only interested in first error
       if (exceptionHandler != null) {
-        stream.handler(null); // only interested in first error
         exceptionHandler.handle(e);
       }
     } finally {
@@ -109,6 +120,6 @@ public abstract class ReadStreamConverter<T,V> implements ReadStream<T>, Handler
     }
   }
 
-  abstract void handlePending();
+  abstract T getNext(boolean ended);
 
 }

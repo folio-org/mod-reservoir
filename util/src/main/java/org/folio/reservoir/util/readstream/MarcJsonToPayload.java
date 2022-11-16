@@ -37,7 +37,8 @@ public class MarcJsonToPayload extends ReadStreamConverter<JsonObject, JsonObjec
    */
   // S:5413 'List.remove()' should not be used in ascending 'for' loops
   @java.lang.SuppressWarnings({"squid:S5413"})
-  JsonObject getNext() {
+  @Override
+  JsonObject getNext(boolean ended) {
     if (marc.isEmpty()) {
       return null;
     }
@@ -65,21 +66,5 @@ public class MarcJsonToPayload extends ReadStreamConverter<JsonObject, JsonObjec
       payload.put("marcHoldings", holdings);
     }
     return payload;
-  }
-
-  @Override
-  void handlePending()  {
-    while (demand > 0L) {
-      JsonObject next = getNext();
-      if (next == null) {
-        break;
-      }
-      if (eventHandler != null) {
-        eventHandler.handle(next);
-      }
-      if (demand != Long.MAX_VALUE) {
-        --demand;
-      }
-    }
   }
 }
