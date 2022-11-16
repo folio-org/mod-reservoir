@@ -9,15 +9,15 @@ import java.util.List;
 import org.folio.reservoir.util.MarcInJsonUtil;
 
 /**
- * Converts stream of JSON-in-MARC to payload JSON objects.
+ * Converts stream of JSON-in-MARC to global records.
  *
  * <p>Records with 004 are treated as holdings records.
  */
-public class MarcJsonToPayload extends ReadStreamConverter<JsonObject, JsonObject> {
+public class MarcJsonToGlobalRecord extends ReadStreamConverter<JsonObject, JsonObject> {
 
   List<JsonObject> marc = new LinkedList<>();
 
-  public MarcJsonToPayload(ReadStream<JsonObject> stream) {
+  public MarcJsonToGlobalRecord(ReadStream<JsonObject> stream) {
     super(stream);
   }
 
@@ -29,6 +29,19 @@ public class MarcJsonToPayload extends ReadStreamConverter<JsonObject, JsonObjec
 
   boolean isHolding(JsonObject marc) {
     return MarcInJsonUtil.lookupMarcDataField(marc, "004", null, null) != null;
+  }
+
+  static boolean getDeleted(JsonObject marc) {
+    String leader = marc.getString("leader");
+    return leader != null && leader != null && leader.length() >= 24 && leader.charAt(5) == 'd';
+  }
+
+  static String getLocalId(JsonObject marc) {
+    JsonArray fields = marc.getJsonArray("fields");
+    if (fields == null || fields.isEmpty()) {
+      return null;
+    }
+    return fields.getJsonObject(0).getString("001");
   }
 
   /**
@@ -56,6 +69,16 @@ public class MarcJsonToPayload extends ReadStreamConverter<JsonObject, JsonObjec
     }
     JsonObject payload = new JsonObject()
         .put("marc", parentMarc);
+    JsonObject globalRecord = new JsonObject()
+        .put("payload", payload);
+    String localId = getLocalId(parentMarc);
+    if (localId != null) {
+      globalRecord.put("localId", localId.trim());
+    }
+    boolean deleted = getDeleted(parentMarc);
+    if (deleted) {
+      globalRecord.put("delete", true);
+    }
     marc.remove(0); // remove the leader record
     if (i > 1) {
       JsonArray holdings = new JsonArray();
@@ -65,6 +88,6 @@ public class MarcJsonToPayload extends ReadStreamConverter<JsonObject, JsonObjec
       }
       payload.put("marcHoldings", holdings);
     }
-    return payload;
+    return globalRecord;
   }
 }

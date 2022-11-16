@@ -16,7 +16,7 @@ import org.apache.logging.log4j.Logger;
 import org.folio.okapi.common.GenericCompositeFuture;
 import org.folio.okapi.common.HttpResponse;
 import org.folio.reservoir.util.SourceId;
-import org.folio.reservoir.util.readstream.MarcJsonToPayload;
+import org.folio.reservoir.util.readstream.MarcJsonToGlobalRecord;
 import org.folio.reservoir.util.readstream.MarcToJsonParser;
 import org.folio.reservoir.util.readstream.MarcXmlParserToJson;
 import org.folio.reservoir.util.readstream.XmlParser;
@@ -35,9 +35,9 @@ public class UploadService {
     upload.exceptionHandler(promise::tryFail);
     upload.handler(r -> {
       if (number.incrementAndGet() < 10) {
-        if (r.containsKey("marc")) {
-          log.info("Got record controlnumber={}",
-              r.getJsonObject("marc").getJsonArray("fields").getJsonObject(0).getString("001"));
+        String localId = r.getString("localId");
+        if (localId != null) {
+          log.info("Got record localId={}", localId);
         }
       } else if (number.get() % 10000 == 0) {
         log.info("Processed {}", number.get());
@@ -101,9 +101,9 @@ public class UploadService {
             );
           }
           if (parser != null) {
-            parser = new MarcJsonToPayload(parser);
+            parser = new MarcJsonToGlobalRecord(parser);
+            futures.add(uploadPayloadStream(parser, ingest ? ingestWriteStream : null));
           }
-          futures.add(uploadPayloadStream(parser, ingest ? ingestWriteStream : null));
         }
       });
       Promise<Void> promise = Promise.promise();
