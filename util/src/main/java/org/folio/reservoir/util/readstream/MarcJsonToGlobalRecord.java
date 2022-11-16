@@ -33,7 +33,7 @@ public class MarcJsonToGlobalRecord extends ReadStreamConverter<JsonObject, Json
 
   static boolean getDeleted(JsonObject marc) {
     String leader = marc.getString("leader");
-    return leader != null && leader != null && leader.length() >= 24 && leader.charAt(5) == 'd';
+    return leader != null && leader.length() >= 24 && leader.charAt(5) == 'd';
   }
 
   static String getLocalId(JsonObject marc) {
