@@ -156,56 +156,6 @@ public class MarcToJsonParserTest {
   }
 
   @Test
-  public void testBadMarc(TestContext context) {
-    MemoryReadStream rs = new MemoryReadStream(Buffer.buffer("x00025" + "9".repeat(20)), vertx);
-    Marc4jParser parser = new Marc4jParser(rs);
-    Promise<Void> promise = Promise.promise();
-    parser.exceptionHandler(promise::tryFail);
-    parser.endHandler(x -> promise.complete());
-    rs.run();
-    promise.future()
-        .onComplete(context.asyncAssertFailure(
-            e -> assertThat(e.getMessage(), is("Index -1 out of bounds for length 0"))));
-
-  }
-
-  @Test
-  public void testBadMarcNoExceptionHandler(TestContext context) {
-    MemoryReadStream rs = new MemoryReadStream(Buffer.buffer("x00025" + "9".repeat(20)), vertx);
-    Marc4jParser parser = new Marc4jParser(rs);
-    Promise<Void> promise = Promise.promise();
-    parser.endHandler(x -> promise.complete());
-    rs.run();
-    promise.future()
-        .onComplete(context.asyncAssertSuccess());
-  }
-
-  @Test
-  public void testBadMarc2(TestContext context) {
-    MemoryReadStream rs = new MemoryReadStream(Buffer.buffer("x00024"), Buffer.buffer("9"), 19, vertx);
-    Marc4jParser parser = new Marc4jParser(rs);
-    Promise<Void> promise = Promise.promise();
-    parser.exceptionHandler(promise::tryFail);
-    parser.endHandler(x -> promise.complete());
-    rs.run();
-    promise.future()
-        .onComplete(context.asyncAssertFailure(
-            e -> assertThat(e.getMessage(), is("Premature end of file encountered"))));
-  }
-
-  @Test
-  public void testSkipLength(TestContext context) {
-    MemoryReadStream rs = new MemoryReadStream(Buffer.buffer("x00025"), Buffer.buffer("9"), 19, vertx);
-    Marc4jParser parser = new Marc4jParser(rs);
-    Promise<Void> promise = Promise.promise();
-    parser.exceptionHandler(promise::tryFail);
-    parser.endHandler(x -> promise.complete());
-    rs.run();
-    promise.future()
-        .onComplete(context.asyncAssertSuccess());
-  }
-
-  @Test
   public void testSkipLead(TestContext context) {
     MemoryReadStream rs = new MemoryReadStream(Buffer.buffer("!" + "x".repeat(24)), vertx);
     Marc4jParser parser = new Marc4jParser(rs);

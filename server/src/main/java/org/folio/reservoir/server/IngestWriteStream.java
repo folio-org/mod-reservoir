@@ -25,16 +25,14 @@ public class IngestWriteStream implements WriteStream<JsonObject> {
   AtomicInteger ops = new AtomicInteger();
   final ModuleJsonPath moduleJsonPath;
   int queueSize = 5;
-  final String payloadElement;
 
   IngestWriteStream(Vertx vertx, Storage storage, SourceId sourceId, int sourceVersion,
-      String localIdPath, String payloadElement) {
+      String localIdPath) {
     this.vertx = vertx;
     this.storage = storage;
     this.sourceId = sourceId;
     this.sourceVersion = sourceVersion;
     moduleJsonPath = localIdPath == null ? null : new ModuleJsonPath(localIdPath);
-    this.payloadElement = payloadElement;
   }
 
   @Override
@@ -44,9 +42,7 @@ public class IngestWriteStream implements WriteStream<JsonObject> {
   }
 
   @Override
-  public Future<Void> write(JsonObject payloadContent) {
-    final JsonObject payload = new JsonObject().put(payloadElement, payloadContent);
-    final JsonObject globalRecord = new JsonObject().put("payload", payload);
+  public Future<Void> write(JsonObject globalRecord) {
     Future<Void> future = Future.succeededFuture();
     ops.incrementAndGet();
     if (matchKeyConfigs == null) {
@@ -57,25 +53,13 @@ public class IngestWriteStream implements WriteStream<JsonObject> {
     }
     return future
         .compose(x -> {
-          JsonObject marc = payload.getJsonObject("marc");
-          if (marc != null) {
-            String leader = marc.getString("leader");
-            if (leader.length() >= 24 && leader.charAt(5) == 'd') {
-              globalRecord.put("delete", true);
-            }
-          }
-          String v = null;
           if (moduleJsonPath != null) {
+            JsonObject payload = globalRecord.getJsonObject("payload");
             Collection<String> strings = moduleJsonPath.executeAsCollection(null, payload);
             Iterator<String> iterator = strings.iterator();
             if (iterator.hasNext()) {
-              v = iterator.next();
+              globalRecord.put("localId", iterator.next().trim());
             }
-          } else {
-            v = getLocalIdFromMarc(marc);
-          }
-          if (v != null) {
-            globalRecord.put("localId", v.trim());
           }
           return storage.ingestGlobalRecord(vertx, sourceId, sourceVersion,
               globalRecord, matchKeyConfigs);
@@ -121,16 +105,4 @@ public class IngestWriteStream implements WriteStream<JsonObject> {
     drainHandler = handler;
     return this;
   }
-
-  static String getLocalIdFromMarc(JsonObject marc) {
-    if (marc == null) {
-      return null;
-    }
-    JsonArray fields = marc.getJsonArray("fields");
-    if (fields == null || fields.isEmpty()) {
-      return null;
-    }
-    return fields.getJsonObject(0).getString("001");
-  }
-
 }

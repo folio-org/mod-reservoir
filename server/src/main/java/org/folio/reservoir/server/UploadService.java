@@ -16,6 +16,7 @@ import org.apache.logging.log4j.Logger;
 import org.folio.okapi.common.GenericCompositeFuture;
 import org.folio.okapi.common.HttpResponse;
 import org.folio.reservoir.util.SourceId;
+import org.folio.reservoir.util.readstream.MarcJsonToGlobalRecord;
 import org.folio.reservoir.util.readstream.MarcToJsonParser;
 import org.folio.reservoir.util.readstream.MarcXmlParserToJson;
 import org.folio.reservoir.util.readstream.XmlParser;
@@ -24,7 +25,7 @@ public class UploadService {
 
   private static final Logger log = LogManager.getLogger(UploadService.class);
 
-  private Future<Void> uploadMarcStream(ReadStream<JsonObject> upload,
+  private Future<Void> uploadPayloadStream(ReadStream<JsonObject> upload,
       IngestWriteStream ingestWriteStream) {
     Promise<Void> promise = Promise.promise();
     if (ingestWriteStream != null) {
@@ -34,8 +35,10 @@ public class UploadService {
     upload.exceptionHandler(promise::tryFail);
     upload.handler(r -> {
       if (number.incrementAndGet() < 10) {
-        log.info("Got record controlnumber={}", r.getJsonArray("fields")
-            .getJsonObject(0).getString("001"));
+        String localId = r.getString("localId");
+        if (localId != null) {
+          log.info("Got record localId={}", localId);
+        }
       } else if (number.get() % 10000 == 0) {
         log.info("Processed {}", number.get());
       }
@@ -57,7 +60,7 @@ public class UploadService {
   /**
    * non-OpenAPI upload records service handler.
    *
-   * <p>Do not produce http response in case of failures.
+   * <p>Does not produce HTTP response in case of failures.
    * @param ctx routing context
    * @return async result
    */
@@ -75,7 +78,7 @@ public class UploadService {
       final boolean ingest = request.getParam("ingest", "true").equals("true");
       final boolean raw = request.getParam("raw", "false").equals("true");
       IngestWriteStream ingestWriteStream = new IngestWriteStream(ctx.vertx(), storage,
-          new SourceId(sourceId), Integer.parseInt(sourceVersion), localIdPath, "marc");
+          new SourceId(sourceId), Integer.parseInt(sourceVersion), localIdPath);
       ingestWriteStream.setWriteQueueMaxSize(100);
       List<Future<Void>> futures = new ArrayList<>();
       request.setExpectMultipart(true);
@@ -98,7 +101,8 @@ public class UploadService {
             );
           }
           if (parser != null) {
-            futures.add(uploadMarcStream(parser, ingest ? ingestWriteStream : null));
+            parser = new MarcJsonToGlobalRecord(parser);
+            futures.add(uploadPayloadStream(parser, ingest ? ingestWriteStream : null));
           }
         }
       });
