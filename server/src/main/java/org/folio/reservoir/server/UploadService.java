@@ -16,7 +16,8 @@ import org.apache.logging.log4j.Logger;
 import org.folio.okapi.common.GenericCompositeFuture;
 import org.folio.okapi.common.HttpResponse;
 import org.folio.reservoir.util.SourceId;
-import org.folio.reservoir.util.readstream.MarcJsonToGlobalRecord;
+import org.folio.reservoir.util.readstream.MappingReadStream;
+import org.folio.reservoir.util.readstream.MarcJsonToIngestMapper;
 import org.folio.reservoir.util.readstream.MarcToJsonParser;
 import org.folio.reservoir.util.readstream.MarcXmlParserToJson;
 import org.folio.reservoir.util.readstream.XmlParser;
@@ -101,7 +102,7 @@ public class UploadService {
             );
           }
           if (parser != null) {
-            parser = new MarcJsonToGlobalRecord(parser);
+            parser = new MappingReadStream<>(parser, new MarcJsonToIngestMapper());
             futures.add(uploadPayloadStream(parser, ingest ? ingestWriteStream : null));
           }
         }

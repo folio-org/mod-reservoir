@@ -2,7 +2,6 @@ package org.folio.reservoir.util.readstream;
 
 import io.vertx.core.buffer.Buffer;
 import io.vertx.core.json.DecodeException;
-import io.vertx.core.streams.ReadStream;
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.io.InputStream;
@@ -11,19 +10,9 @@ import org.marc4j.MarcPermissiveStreamReader;
 import org.marc4j.MarcReader;
 import org.marc4j.marc.Record;
 
-public class Marc4jParser extends ReadStreamConverter<Record, Buffer> {
-  private Buffer pendingBuffer;
-
+public class Marc4jMapper implements Mapper<Buffer, Record> {
+  private Buffer pendingBuffer = Buffer.buffer();
   MarcReader marcReader;
-
-  /**
-   * Construct marc4j streaming parser.
-   * @param stream ISO2709 encoded byte stream
-   */
-  public Marc4jParser(ReadStream<Buffer> stream) {
-    super(stream);
-    pendingBuffer = Buffer.buffer();
-  }
 
   /**
    * Check if we have a complete MARC-record at buffer and return its length.
@@ -60,7 +49,7 @@ public class Marc4jParser extends ReadStreamConverter<Record, Buffer> {
   }
 
   @Override
-  Record getNext(boolean ended) {
+  public Record poll(boolean ended) {
     if (marcReader != null) {
       if (marcReader.hasNext()) {
         return marcReader.next();
@@ -91,9 +80,8 @@ public class Marc4jParser extends ReadStreamConverter<Record, Buffer> {
   }
 
   @Override
-  public void handle(Buffer buffer) {
+  public void push(Buffer buffer) {
     this.pendingBuffer.appendBuffer(buffer);
-    checkPending();
   }
 
 }

@@ -6,15 +6,16 @@ import io.vertx.core.json.JsonObject;
 import io.vertx.core.streams.ReadStream;
 import java.io.ByteArrayOutputStream;
 import org.marc4j.MarcJsonWriter;
+import org.marc4j.marc.Record;
 
 public class MarcToJsonParser implements ReadStream<JsonObject> {
 
-  Marc4jParser marc4jParser;
+  MappingReadStream<Record, Buffer> marc4jParser;
 
   Handler<Throwable> exceptionHandler;
 
   public MarcToJsonParser(ReadStream<Buffer> stream) {
-    marc4jParser = new Marc4jParser(stream);
+    marc4jParser = new MappingReadStream<>(stream, new Marc4jMapper());
   }
 
   @Override

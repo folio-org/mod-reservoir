@@ -8,6 +8,7 @@ import io.vertx.core.json.JsonArray;
 import io.vertx.core.json.JsonObject;
 import io.vertx.ext.unit.TestContext;
 import io.vertx.ext.unit.junit.VertxUnitRunner;
+
 import java.util.ArrayList;
 import java.util.List;
 import org.junit.After;
@@ -23,7 +24,7 @@ import static org.hamcrest.Matchers.nullValue;
 import static org.hamcrest.Matchers.startsWith;
 
 @RunWith(VertxUnitRunner.class)
-public class MarcJsonToGlobalRecordTest {
+public class MarcJsonToIngestTest {
   Vertx vertx;
 
   @Before
@@ -36,9 +37,9 @@ public class MarcJsonToGlobalRecordTest {
     vertx.close().onComplete(context.asyncAssertSuccess());
   }
 
-  Future<MarcJsonToGlobalRecord> marcFromFile(String fname) {
+  Future<MappingReadStream<JsonObject, JsonObject>> marcFromFile(String fname) {
     return vertx.fileSystem().open(fname, new OpenOptions())
-        .map(x -> new MarcJsonToGlobalRecord(new MarcToJsonParser(x)));
+        .map(file -> new MappingReadStream<>(new MarcToJsonParser(file), new MarcJsonToIngestMapper()));
   }
 
   String get001(JsonObject marc) {
@@ -108,27 +109,28 @@ public class MarcJsonToGlobalRecordTest {
 
   @Test
   public void testgetLocalIdFromMarc() {
-    assertThat(MarcJsonToGlobalRecord.getLocalId(new JsonObject()), nullValue());
-    assertThat(MarcJsonToGlobalRecord.getLocalId(new JsonObject().put("fields", new JsonArray())), nullValue());
+    assertThat(MarcJsonToIngestMapper.getLocalId(new JsonObject()), nullValue());
+    assertThat(MarcJsonToIngestMapper.getLocalId(new JsonObject().put("fields", new JsonArray())), nullValue());
     {
       JsonObject t = new JsonObject().put("fields", "2");
-      Assert.assertThrows(ClassCastException.class, () -> MarcJsonToGlobalRecord.getLocalId(t));
+      Assert.assertThrows(ClassCastException.class, () -> MarcJsonToIngestMapper.getLocalId(t));
     }
     {
       JsonObject t = new JsonObject().put("fields", new JsonArray().add("1"));
-      Assert.assertThrows(ClassCastException.class, () -> MarcJsonToGlobalRecord.getLocalId(t));
+      Assert.assertThrows(ClassCastException.class, () -> MarcJsonToIngestMapper.getLocalId(t));
     }
     {
       JsonObject t = new JsonObject().put("fields", new JsonArray().add(new JsonObject().put("002", "3")));
-      assertThat(MarcJsonToGlobalRecord.getLocalId(t), nullValue());
+      assertThat(MarcJsonToIngestMapper.getLocalId(t), nullValue());
     }
     {
       JsonObject t = new JsonObject().put("fields", new JsonArray().add(new JsonObject().put("001", null)));
-      assertThat(MarcJsonToGlobalRecord.getLocalId(t), nullValue());
+      assertThat(MarcJsonToIngestMapper.getLocalId(t), nullValue());
     }
     {
       JsonObject t = new JsonObject().put("fields", new JsonArray().add(new JsonObject().put("001", "12 34 ")));
-      assertThat(MarcJsonToGlobalRecord.getLocalId(t), is("12 34 "));
+      assertThat(MarcJsonToIngestMapper.getLocalId(t), is("12 34 "));
     }
   }
+
 }

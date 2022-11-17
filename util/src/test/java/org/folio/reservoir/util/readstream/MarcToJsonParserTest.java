@@ -15,6 +15,8 @@ import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
+import org.marc4j.marc.Record;
+
 
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.hasSize;
@@ -158,7 +160,7 @@ public class MarcToJsonParserTest {
   @Test
   public void testSkipLead(TestContext context) {
     MemoryReadStream rs = new MemoryReadStream(Buffer.buffer("!" + "x".repeat(24)), vertx);
-    Marc4jParser parser = new Marc4jParser(rs);
+    MappingReadStream<Record, Buffer> parser = new MappingReadStream<>(rs, new Marc4jMapper());
     Promise<Void> promise = Promise.promise();
     parser.exceptionHandler(promise::tryFail);
     parser.endHandler(x -> promise.complete());
@@ -170,7 +172,7 @@ public class MarcToJsonParserTest {
   @Test
   public void testAllLeadBad(TestContext context) {
     MemoryReadStream rs = new MemoryReadStream(Buffer.buffer("!".repeat(4) + "9".repeat(23)), vertx);
-    Marc4jParser parser = new Marc4jParser(rs);
+    MappingReadStream<Record, Buffer> parser = new MappingReadStream<>(rs, new Marc4jMapper());
     Promise<Void> promise = Promise.promise();
     parser.exceptionHandler(promise::tryFail);
     parser.endHandler(x -> promise.complete());
@@ -182,7 +184,7 @@ public class MarcToJsonParserTest {
   @Test
   public void testExceptionInStream(TestContext context) {
     MemoryReadStream rs = new MemoryReadStream(null, vertx);
-    Marc4jParser parser = new Marc4jParser(rs);
+    MappingReadStream<Record, Buffer> parser = new MappingReadStream<>(rs, new Marc4jMapper());
     Promise<Void> promise = Promise.promise();
     parser.exceptionHandler(promise::tryFail);
     parser.endHandler(x -> promise.complete());
@@ -195,7 +197,7 @@ public class MarcToJsonParserTest {
   @Test
   public void testExceptionInStreamNoExceptionHandler(TestContext context) {
     MemoryReadStream rs = new MemoryReadStream(null, vertx);
-    Marc4jParser parser = new Marc4jParser(rs);
+    MappingReadStream<Record, Buffer> parser = new MappingReadStream<>(rs, new Marc4jMapper());
     Promise<Void> promise = Promise.promise();
     parser.endHandler(x -> promise.complete());
     rs.run();

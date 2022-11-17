@@ -3,7 +3,7 @@ package org.folio.reservoir.util.readstream;
 import io.vertx.core.Handler;
 import io.vertx.core.streams.ReadStream;
 
-public abstract class ReadStreamConverter<T,V> implements ReadStream<T>, Handler<V> {
+public class MappingReadStream<T,V> implements ReadStream<T>, Handler<V> {
 
   boolean emitting;
 
@@ -19,8 +19,16 @@ public abstract class ReadStreamConverter<T,V> implements ReadStream<T>, Handler
 
   Handler<Throwable> exceptionHandler;
 
-  ReadStreamConverter(ReadStream<V> stream) {
+  Mapper<V, T> mapper;
+
+  /**
+   * Wrap a read stream with a stream capable of applying mapper to the stream's elements.
+   * @param stream stream to wrap
+   * @param mapper mapper to apply
+   */
+  public MappingReadStream(ReadStream<V> stream, Mapper<V, T> mapper) {
     this.stream = stream;
+    this.mapper = mapper;
     stream.handler(this);
     stream.endHandler(v -> end());
     stream.exceptionHandler(e -> {
@@ -79,14 +87,20 @@ public abstract class ReadStreamConverter<T,V> implements ReadStream<T>, Handler
     checkPending();
   }
 
-  void checkPending()  {
+  @Override
+  public void handle(V event) {
+    mapper.push(event);
+    checkPending();
+  }
+
+  private void checkPending()  {
     if (emitting) {
       return;
     }
     emitting = true;
     try {
       while (demand > 0L) {
-        T t = getNext(ended);
+        T t = mapper.poll(ended);
         if (t == null) {
           break;
         }
@@ -119,7 +133,5 @@ public abstract class ReadStreamConverter<T,V> implements ReadStream<T>, Handler
       emitting = false;
     }
   }
-
-  abstract T getNext(boolean ended);
 
 }
