@@ -1,6 +1,5 @@
 package org.folio.reservoir.util.readstream;
 
-import io.vertx.core.Handler;
 import io.vertx.core.buffer.Buffer;
 import io.vertx.core.streams.ReadStream;
 import javax.xml.stream.XMLStreamReader;
