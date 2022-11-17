@@ -89,7 +89,7 @@ public class MappingReadStream<T,V> implements ReadStream<T>, Handler<V> {
 
   @Override
   public void handle(V event) {
-    mapper.put(event);
+    mapper.push(event);
     checkPending();
   }
 
@@ -100,7 +100,7 @@ public class MappingReadStream<T,V> implements ReadStream<T>, Handler<V> {
     emitting = true;
     try {
       while (demand > 0L) {
-        T t = mapper.get(ended);
+        T t = mapper.poll(ended);
         if (t == null) {
           break;
         }

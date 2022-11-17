@@ -19,7 +19,7 @@ public class XmlMapper
   }
 
   @Override
-  public XMLStreamReader get(boolean ended) {
+  public XMLStreamReader poll(boolean ended) {
     try {
       if (ended) {
         parser.getInputFeeder().endOfInput();
@@ -34,7 +34,7 @@ public class XmlMapper
   }
 
   @Override
-  public void put(Buffer buffer) {
+  public void push(Buffer buffer) {
     byte[] bytes = buffer.getBytes();
     try {
       parser.getInputFeeder().feedInput(bytes, 0, bytes.length);

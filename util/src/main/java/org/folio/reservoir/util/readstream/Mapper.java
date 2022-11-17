@@ -2,8 +2,8 @@ package org.folio.reservoir.util.readstream;
 
 public interface Mapper<T, V> {
 
-  public void put(T item);
+  public void push(T item);
 
-  public V get(boolean ended);
+  public V poll(boolean ended);
   
 }

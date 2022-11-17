@@ -17,7 +17,7 @@ public class MarcJsonToIngestMapper implements Mapper<JsonObject, JsonObject> {
   List<JsonObject> marc = new LinkedList<>();
 
   @Override
-  public void put(JsonObject value) {
+  public void push(JsonObject value) {
     marc.add(value);
   }
 
@@ -45,7 +45,7 @@ public class MarcJsonToIngestMapper implements Mapper<JsonObject, JsonObject> {
   // S:5413 'List.remove()' should not be used in ascending 'for' loops
   @java.lang.SuppressWarnings({"squid:S5413"})
   @Override
-  public JsonObject get(boolean ended) {
+  public JsonObject poll(boolean ended) {
     if (marc.isEmpty()) {
       return null;
     }

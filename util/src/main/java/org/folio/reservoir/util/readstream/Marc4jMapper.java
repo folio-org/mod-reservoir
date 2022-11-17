@@ -49,7 +49,7 @@ public class Marc4jMapper implements Mapper<Buffer, Record> {
   }
 
   @Override
-  public Record get(boolean ended) {
+  public Record poll(boolean ended) {
     if (marcReader != null) {
       if (marcReader.hasNext()) {
         return marcReader.next();
@@ -80,7 +80,7 @@ public class Marc4jMapper implements Mapper<Buffer, Record> {
   }
 
   @Override
-  public void put(Buffer buffer) {
+  public void push(Buffer buffer) {
     this.pendingBuffer.appendBuffer(buffer);
   }
 
