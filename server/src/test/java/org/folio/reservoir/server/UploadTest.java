@@ -26,6 +26,8 @@ public class UploadTest extends TestBase {
 
   Buffer marc1xmlBuffer;
 
+  Buffer marc3NoIdXmlBuffer;
+
   @Before
   public void before(TestContext context) {
     FileSystem fileSystem = vertx.fileSystem();
@@ -36,6 +38,8 @@ public class UploadTest extends TestBase {
         .onSuccess(x -> marc3xmlBuffer = x)
         .compose(x -> fileSystem.readFile("src/test/resources/marc1-delete.xml"))
         .onSuccess(x -> marc1xmlBuffer = x)
+        .compose(x -> fileSystem.readFile("src/test/resources/marc3-no-id.xml"))
+        .onSuccess(x -> marc3NoIdXmlBuffer = x)
         .onComplete(context.asyncAssertSuccess());
   }
 
@@ -98,7 +102,7 @@ public class UploadTest extends TestBase {
   }
 
   @Test
-  public void uploadMarcXml(TestContext context) {
+  public void uploadMarcXmlDelete(TestContext context) {
     MultipartForm requestForm1 = MultipartForm.create()
         .binaryFileUpload("records", "marc3.xml", marc3xmlBuffer,  "text/xml");
     MultipartForm requestForm2 = MultipartForm.create()
@@ -136,6 +140,33 @@ public class UploadTest extends TestBase {
         .compose(c1 ->
             webClient.getAbs(OKAPI_URL + "/reservoir/records")
                 .addQueryParam("query", "sourceId = \"SOURCE-2\"")
+                .expect(ResponsePredicate.SC_OK)
+                .putHeader(XOkapiHeaders.TENANT, TENANT_1)
+                .send()
+        )
+        .map(res -> {
+          JsonObject responseBody = res.bodyAsJsonObject();
+          assertThat(responseBody.getJsonArray("items").size(), is(2));
+          return null;
+        })
+        .onComplete(context.asyncAssertSuccess());
+  }
+
+  @Test
+  public void uploadMarcXmlNoId(TestContext context) {
+    MultipartForm requestForm1 = MultipartForm.create()
+        .binaryFileUpload("records", "marc3-no-id.xml", marc3NoIdXmlBuffer,  "text/xml");
+
+    // upload 3 new records, but one without 001
+    webClient.postAbs(OKAPI_URL + "/reservoir/upload")
+        .expect(ResponsePredicate.SC_OK)
+        .putHeader(XOkapiHeaders.TENANT, TENANT_1)
+        .addQueryParam("sourceId", "SOURCE-3")
+        .addQueryParam("sourceVersion", "1")
+        .sendMultipartForm(requestForm1)
+        .compose(c1 ->
+            webClient.getAbs(OKAPI_URL + "/reservoir/records")
+                .addQueryParam("query", "sourceId = \"SOURCE-3\"")
                 .expect(ResponsePredicate.SC_OK)
                 .putHeader(XOkapiHeaders.TENANT, TENANT_1)
                 .send()

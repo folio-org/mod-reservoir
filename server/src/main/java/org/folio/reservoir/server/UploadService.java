@@ -33,15 +33,24 @@ public class UploadService {
       ingestWriteStream.drainHandler(x -> upload.resume());
     }
     AtomicInteger number = new AtomicInteger();
+    AtomicInteger errors = new AtomicInteger();
     upload.exceptionHandler(promise::tryFail);
     upload.handler(r -> {
+      String localId = r.getString("localId");
       if (number.incrementAndGet() < 10) {
-        String localId = r.getString("localId");
         if (localId != null) {
           log.info("Got record localId={}", localId);
         }
       } else if (number.get() % 10000 == 0) {
         log.info("Processed {}", number.get());
+      }
+      if (localId == null) {
+        errors.incrementAndGet();
+        log.warn("Record number {} without localId", number.get());
+        if (errors.get() < 10) {
+          log.warn("{}", r.encodePrettily());
+        }
+        return;
       }
       if (ingestWriteStream != null) {
         if (ingestWriteStream.writeQueueFull()) {
