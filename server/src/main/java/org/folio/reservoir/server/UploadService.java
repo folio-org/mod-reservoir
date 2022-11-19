@@ -28,6 +28,7 @@ import org.folio.reservoir.util.readstream.XmlParser;
 
 public class UploadService {
 
+  private static final String LOCAL_ID = "localId";
   private static final Logger log = LogManager.getLogger(UploadService.class);
 
   private Future<Void> uploadPayloadStream(ReadStream<JsonObject> upload,
@@ -45,12 +46,12 @@ public class UploadService {
         Collection<String> strings = jsonPath.executeAsCollection(null, payload);
         Iterator<String> iterator = strings.iterator();
         if (iterator.hasNext()) {
-          r.put("localId", iterator.next().trim());
+          r.put(LOCAL_ID, iterator.next().trim());
         } else {
-          r.remove("localId");
+          r.remove(LOCAL_ID);
         }
       }
-      String localId = r.getString("localId");
+      String localId = r.getString(LOCAL_ID);
       if (number.incrementAndGet() < 10) {
         if (localId != null) {
           log.info("Got record localId={}", localId);

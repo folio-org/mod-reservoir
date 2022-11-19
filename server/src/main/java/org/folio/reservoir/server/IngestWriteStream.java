@@ -7,8 +7,6 @@ import io.vertx.core.Vertx;
 import io.vertx.core.json.JsonArray;
 import io.vertx.core.json.JsonObject;
 import io.vertx.core.streams.WriteStream;
-import java.util.Collection;
-import java.util.Iterator;
 import java.util.concurrent.atomic.AtomicInteger;
 import org.folio.reservoir.util.SourceId;
 
@@ -48,10 +46,9 @@ public class IngestWriteStream implements WriteStream<JsonObject> {
       });
     }
     return future
-        .compose(x -> {
-          return storage.ingestGlobalRecord(vertx, sourceId, sourceVersion,
-              globalRecord, matchKeyConfigs);
-        })
+        .compose(x -> storage.ingestGlobalRecord(vertx, sourceId, sourceVersion,
+              globalRecord, matchKeyConfigs)
+        )
         .onComplete(x -> {
           if (ops.decrementAndGet() == queueSize / 2 && drainHandler != null) {
             drainHandler.handle(null);
