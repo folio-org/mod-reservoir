@@ -1,5 +1,7 @@
 package org.folio.reservoir.server;
 
+import io.vertx.core.Future;
+import io.vertx.core.Promise;
 import io.vertx.core.buffer.Buffer;
 import io.vertx.core.file.FileSystem;
 import io.vertx.core.json.JsonObject;
@@ -102,6 +104,14 @@ public class UploadTest extends TestBase {
         .onComplete(context.asyncAssertSuccess());
   }
 
+  private static Future<Void> delay(long delay) {
+    Promise<Void> p = Promise.promise();
+    vertx.setTimer(delay, id -> {
+      p.complete();
+    });
+    return p.future();
+  }
+
   @Test
   public void uploadMarcXmlDelete(TestContext context) {
     MultipartForm requestForm1 = MultipartForm.create()
@@ -117,6 +127,7 @@ public class UploadTest extends TestBase {
         .addQueryParam("sourceVersion", "1")
         .addQueryParam("localIdPath",  "$.marc.fields[*].001")
         .sendMultipartForm(requestForm1)
+        .compose(x -> delay(100))
         .compose(c1 ->
             webClient.getAbs(OKAPI_URL + "/reservoir/records")
                 .addQueryParam("query", "sourceId = \"SOURCE-2\"")
@@ -138,6 +149,7 @@ public class UploadTest extends TestBase {
                 .addQueryParam("sourceVersion", "1")
                 .addQueryParam("localIdPath",  "$.marc.fields[*].001")
                 .sendMultipartForm(requestForm2))
+        .compose(x -> delay(100))
         .compose(c1 ->
             webClient.getAbs(OKAPI_URL + "/reservoir/records")
                 .addQueryParam("query", "sourceId = \"SOURCE-2\"")

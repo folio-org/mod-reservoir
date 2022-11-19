@@ -3,6 +3,7 @@ package org.folio.reservoir.server;
 import com.jayway.jsonpath.InvalidPathException;
 import io.vertx.core.Future;
 import io.vertx.core.Promise;
+import io.vertx.core.Vertx;
 import io.vertx.core.http.HttpServerRequest;
 import io.vertx.core.impl.future.FailedFuture;
 import io.vertx.core.json.JsonObject;
@@ -31,7 +32,7 @@ public class UploadService {
   private static final String LOCAL_ID = "localId";
   private static final Logger log = LogManager.getLogger(UploadService.class);
 
-  private Future<Void> uploadPayloadStream(ReadStream<JsonObject> upload,
+  private Future<Void> uploadPayloadStream(Vertx vertx, ReadStream<JsonObject> upload,
       IngestWriteStream ingestWriteStream, ModuleJsonPath jsonPath) {
     Promise<Void> promise = Promise.promise();
     if (ingestWriteStream != null) {
@@ -40,17 +41,54 @@ public class UploadService {
     AtomicInteger number = new AtomicInteger();
     AtomicInteger errors = new AtomicInteger();
     upload.exceptionHandler(promise::tryFail);
-    upload.handler(r -> {
-      if (jsonPath != null) {
-        JsonObject payload = r.getJsonObject("payload");
-        Collection<String> strings = jsonPath.executeAsCollection(null, payload);
-        Iterator<String> iterator = strings.iterator();
-        if (iterator.hasNext()) {
-          r.put(LOCAL_ID, iterator.next().trim());
-        } else {
-          r.remove(LOCAL_ID);
-        }
-      }
+    upload.handler(r ->
+        validateIngestRecord(vertx, jsonPath, r, number, errors) 
+          .compose(rec -> {
+            if (rec == null || ingestWriteStream == null) {
+              return Future.succeededFuture(null);
+            }
+            if (ingestWriteStream.writeQueueFull()) {
+              upload.pause();
+            }
+            return ingestWriteStream.write(rec);
+          })
+          .onFailure(promise::tryFail)
+    );
+    upload.endHandler(e -> {
+      log.info("{} records processed", number.get());
+      promise.tryComplete();
+    });
+    return promise.future();
+  }
+
+  private static Future<Collection<String>> lookupPath(Vertx vertx, 
+      ModuleJsonPath jsonPath, JsonObject payload) {
+    return vertx.executeBlocking(p -> { 
+      Collection<String> strings = jsonPath.executeAsCollection(null, payload);
+      p.complete(strings);
+    }, 
+    false);
+  }
+
+  private Future<JsonObject> validateIngestRecord(Vertx vertx, ModuleJsonPath jsonPath,
+      JsonObject rec, AtomicInteger number, AtomicInteger errors) {
+    Future<JsonObject> fut = Future.succeededFuture(rec);
+    if (jsonPath != null) {
+      fut = fut
+        .compose(r -> 
+          lookupPath(vertx, jsonPath, r.getJsonObject("payload"))
+            .map(strings -> {
+              Iterator<String> iterator = strings.iterator();
+              if (iterator.hasNext()) {
+                r.put(LOCAL_ID, iterator.next().trim());
+              } else {
+                r.remove(LOCAL_ID);
+              }
+              return r;
+            }
+      ));
+    }
+    return fut.map(r -> { 
       String localId = r.getString(LOCAL_ID);
       if (number.incrementAndGet() < 10) {
         if (localId != null) {
@@ -65,21 +103,10 @@ public class UploadService {
         if (errors.get() < 10) {
           log.warn("{}", r.encodePrettily());
         }
-        return;
+        return null;
       }
-      if (ingestWriteStream != null) {
-        if (ingestWriteStream.writeQueueFull()) {
-          upload.pause();
-        }
-        ingestWriteStream.write(r)
-            .onFailure(promise::tryFail);
-      }
+      return r;
     });
-    upload.endHandler(e -> {
-      log.info("{} records processed", number.get());
-      promise.tryComplete();
-    });
-    return promise.future();
   }
 
   /**
@@ -128,8 +155,8 @@ public class UploadService {
           }
           if (parser != null) {
             parser = new MappingReadStream<>(parser, new MarcJsonToIngestMapper());
-            futures.add(
-                uploadPayloadStream(parser, ingest ? ingestWriteStream : null, jsonPath));
+            futures.add(uploadPayloadStream(
+                ctx.vertx(), parser, ingest ? ingestWriteStream : null, jsonPath));
           }
         }
       });
