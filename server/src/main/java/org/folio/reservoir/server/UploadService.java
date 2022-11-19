@@ -1,5 +1,6 @@
 package org.folio.reservoir.server;
 
+import com.jayway.jsonpath.InvalidPathException;
 import io.vertx.core.Future;
 import io.vertx.core.Promise;
 import io.vertx.core.http.HttpServerRequest;
@@ -8,6 +9,8 @@ import io.vertx.core.json.JsonObject;
 import io.vertx.core.streams.ReadStream;
 import io.vertx.ext.web.RoutingContext;
 import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Iterator;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
@@ -15,6 +18,7 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.folio.okapi.common.GenericCompositeFuture;
 import org.folio.okapi.common.HttpResponse;
+import org.folio.reservoir.module.impl.ModuleJsonPath;
 import org.folio.reservoir.util.SourceId;
 import org.folio.reservoir.util.readstream.MappingReadStream;
 import org.folio.reservoir.util.readstream.MarcJsonToIngestMapper;
@@ -27,7 +31,7 @@ public class UploadService {
   private static final Logger log = LogManager.getLogger(UploadService.class);
 
   private Future<Void> uploadPayloadStream(ReadStream<JsonObject> upload,
-      IngestWriteStream ingestWriteStream) {
+      IngestWriteStream ingestWriteStream, ModuleJsonPath jsonPath) {
     Promise<Void> promise = Promise.promise();
     if (ingestWriteStream != null) {
       ingestWriteStream.drainHandler(x -> upload.resume());
@@ -36,6 +40,16 @@ public class UploadService {
     AtomicInteger errors = new AtomicInteger();
     upload.exceptionHandler(promise::tryFail);
     upload.handler(r -> {
+      if (jsonPath != null) {
+        JsonObject payload = r.getJsonObject("payload");
+        Collection<String> strings = jsonPath.executeAsCollection(null, payload);
+        Iterator<String> iterator = strings.iterator();
+        if (iterator.hasNext()) {
+          r.put("localId", iterator.next().trim());
+        } else {
+          r.remove("localId");
+        }
+      }
       String localId = r.getString("localId");
       if (number.incrementAndGet() < 10) {
         if (localId != null) {
@@ -84,11 +98,12 @@ public class UploadService {
         return Future.failedFuture("sourceId is a required parameter");
       }
       String sourceVersion = request.getParam("sourceVersion", "1");
-      String localIdPath = request.getParam("localIdPath");
+      final String localIdPath = request.getParam("localIdPath");
+      final ModuleJsonPath jsonPath = localIdPath == null ? null : new ModuleJsonPath(localIdPath);
       final boolean ingest = request.getParam("ingest", "true").equals("true");
       final boolean raw = request.getParam("raw", "false").equals("true");
       IngestWriteStream ingestWriteStream = new IngestWriteStream(ctx.vertx(), storage,
-          new SourceId(sourceId), Integer.parseInt(sourceVersion), localIdPath);
+          new SourceId(sourceId), Integer.parseInt(sourceVersion));
       ingestWriteStream.setWriteQueueMaxSize(100);
       List<Future<Void>> futures = new ArrayList<>();
       request.setExpectMultipart(true);
@@ -112,7 +127,8 @@ public class UploadService {
           }
           if (parser != null) {
             parser = new MappingReadStream<>(parser, new MarcJsonToIngestMapper());
-            futures.add(uploadPayloadStream(parser, ingest ? ingestWriteStream : null));
+            futures.add(
+                uploadPayloadStream(parser, ingest ? ingestWriteStream : null, jsonPath));
           }
         }
       });
@@ -128,6 +144,8 @@ public class UploadService {
           )
       );
       return promise.future();
+    } catch (InvalidPathException e) {
+      return Future.failedFuture("malformed 'localIdPath': " + e.getMessage());
     } catch (Exception e) {
       return Future.failedFuture(e);
     }

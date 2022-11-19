@@ -10,7 +10,6 @@ import io.vertx.core.streams.WriteStream;
 import java.util.Collection;
 import java.util.Iterator;
 import java.util.concurrent.atomic.AtomicInteger;
-import org.folio.reservoir.module.impl.ModuleJsonPath;
 import org.folio.reservoir.util.SourceId;
 
 public class IngestWriteStream implements WriteStream<JsonObject> {
@@ -23,16 +22,13 @@ public class IngestWriteStream implements WriteStream<JsonObject> {
   Handler<Void> drainHandler;
   JsonArray matchKeyConfigs;
   AtomicInteger ops = new AtomicInteger();
-  final ModuleJsonPath moduleJsonPath;
   int queueSize = 5;
 
-  IngestWriteStream(Vertx vertx, Storage storage, SourceId sourceId, int sourceVersion,
-      String localIdPath) {
+  IngestWriteStream(Vertx vertx, Storage storage, SourceId sourceId, int sourceVersion) {
     this.vertx = vertx;
     this.storage = storage;
     this.sourceId = sourceId;
     this.sourceVersion = sourceVersion;
-    moduleJsonPath = localIdPath == null ? null : new ModuleJsonPath(localIdPath);
   }
 
   @Override
@@ -53,14 +49,6 @@ public class IngestWriteStream implements WriteStream<JsonObject> {
     }
     return future
         .compose(x -> {
-          if (moduleJsonPath != null) {
-            JsonObject payload = globalRecord.getJsonObject("payload");
-            Collection<String> strings = moduleJsonPath.executeAsCollection(null, payload);
-            Iterator<String> iterator = strings.iterator();
-            if (iterator.hasNext()) {
-              globalRecord.put("localId", iterator.next().trim());
-            }
-          }
           return storage.ingestGlobalRecord(vertx, sourceId, sourceVersion,
               globalRecord, matchKeyConfigs);
         })
