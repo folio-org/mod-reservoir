@@ -39,9 +39,7 @@ public class UploadService {
       ingestWriteStream.write(r)
           .onFailure(promise::tryFail);
     });
-    upload.endHandler(e -> {
-      promise.tryComplete();
-    });
+    upload.endHandler(promise::tryComplete);
     return promise.future();
   }
 
