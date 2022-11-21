@@ -45,7 +45,7 @@ public class UploadService {
         validateIngestRecord(vertx, jsonPath, r, number, errors) 
           .compose(rec -> {
             if (rec == null || ingestWriteStream == null) {
-              return Future.succeededFuture(null);
+              return Future.succeededFuture();
             }
             if (ingestWriteStream.writeQueueFull()) {
               upload.pause();
