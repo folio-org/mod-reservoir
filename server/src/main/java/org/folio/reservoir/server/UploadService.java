@@ -3,17 +3,13 @@ package org.folio.reservoir.server;
 import com.jayway.jsonpath.InvalidPathException;
 import io.vertx.core.Future;
 import io.vertx.core.Promise;
-import io.vertx.core.Vertx;
 import io.vertx.core.http.HttpServerRequest;
 import io.vertx.core.impl.future.FailedFuture;
 import io.vertx.core.json.JsonObject;
 import io.vertx.core.streams.ReadStream;
 import io.vertx.ext.web.RoutingContext;
 import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Iterator;
 import java.util.List;
-import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -29,84 +25,24 @@ import org.folio.reservoir.util.readstream.XmlParser;
 
 public class UploadService {
 
-  private static final String LOCAL_ID = "localId";
   private static final Logger log = LogManager.getLogger(UploadService.class);
 
-  private Future<Void> uploadPayloadStream(Vertx vertx, ReadStream<JsonObject> upload,
-      IngestWriteStream ingestWriteStream, ModuleJsonPath jsonPath) {
+  private Future<Void> uploadPayloadStream(ReadStream<JsonObject> upload,
+      IngestWriteStream ingestWriteStream) {
     Promise<Void> promise = Promise.promise();
-    if (ingestWriteStream != null) {
-      ingestWriteStream.drainHandler(x -> upload.resume());
-    }
-    AtomicInteger number = new AtomicInteger();
-    AtomicInteger errors = new AtomicInteger();
+    ingestWriteStream.drainHandler(x -> upload.resume());
     upload.exceptionHandler(promise::tryFail);
-    upload.handler(r ->
-        validateIngestRecord(vertx, jsonPath, r, number, errors)
-          .compose(rec -> {
-            if (rec == null || ingestWriteStream == null) {
-              return Future.succeededFuture();
-            }
-            if (ingestWriteStream.writeQueueFull()) {
-              upload.pause();
-            }
-            return ingestWriteStream.write(rec);
-          })
-          .onFailure(promise::tryFail)
-    );
+    upload.handler(r -> {
+      if (ingestWriteStream.writeQueueFull()) {
+        upload.pause();
+      }
+      ingestWriteStream.write(r)
+          .onFailure(promise::tryFail);
+    });
     upload.endHandler(e -> {
-      log.info("{} records processed", number.get());
       promise.tryComplete();
     });
     return promise.future();
-  }
-
-  private static Future<Collection<String>> lookupPath(Vertx vertx,
-      ModuleJsonPath jsonPath, JsonObject payload) {
-    return vertx.executeBlocking(p -> {
-      Collection<String> strings = jsonPath.executeAsCollection(null, payload);
-      p.complete(strings);
-    },
-    false);
-  }
-
-  private Future<JsonObject> validateIngestRecord(Vertx vertx, ModuleJsonPath jsonPath,
-      JsonObject rec, AtomicInteger number, AtomicInteger errors) {
-    Future<JsonObject> fut = Future.succeededFuture(rec);
-    if (jsonPath != null) {
-      fut = fut
-        .compose(r ->
-          lookupPath(vertx, jsonPath, r.getJsonObject("payload"))
-            .map(strings -> {
-              Iterator<String> iterator = strings.iterator();
-              if (iterator.hasNext()) {
-                r.put(LOCAL_ID, iterator.next().trim());
-              } else {
-                r.remove(LOCAL_ID);
-              }
-              return r;
-            }
-      ));
-    }
-    return fut.map(r -> {
-      String localId = r.getString(LOCAL_ID);
-      if (number.incrementAndGet() < 10) {
-        if (localId != null) {
-          log.info("Got record localId={}", localId);
-        }
-      } else if (number.get() % 10000 == 0) {
-        log.info("Processed {}", number.get());
-      }
-      if (localId == null) {
-        errors.incrementAndGet();
-        log.warn("Record number {} without localId", number.get());
-        if (errors.get() < 10) {
-          log.warn("{}", r.encodePrettily());
-        }
-        return null;
-      }
-      return r;
-    });
   }
 
   /**
@@ -118,7 +54,6 @@ public class UploadService {
    */
   public Future<Void> uploadRecords(RoutingContext ctx) {
     try {
-      log.info("uploadRecords");
       Storage storage = new Storage(ctx);
       HttpServerRequest request = ctx.request();
       String sourceId = request.getParam("sourceId");
@@ -131,7 +66,7 @@ public class UploadService {
       final boolean ingest = request.getParam("ingest", "true").equals("true");
       final boolean raw = request.getParam("raw", "false").equals("true");
       IngestWriteStream ingestWriteStream = new IngestWriteStream(ctx.vertx(), storage,
-          new SourceId(sourceId), Integer.parseInt(sourceVersion));
+          new SourceId(sourceId), Integer.parseInt(sourceVersion), ingest, jsonPath);
       ingestWriteStream.setWriteQueueMaxSize(100);
       List<Future<Void>> futures = new ArrayList<>();
       request.setExpectMultipart(true);
@@ -155,8 +90,7 @@ public class UploadService {
           }
           if (parser != null) {
             parser = new MappingReadStream<>(parser, new MarcJsonToIngestMapper());
-            futures.add(uploadPayloadStream(
-                ctx.vertx(), parser, ingest ? ingestWriteStream : null, jsonPath));
+            futures.add(uploadPayloadStream(parser, ingestWriteStream));
           }
         }
       });
