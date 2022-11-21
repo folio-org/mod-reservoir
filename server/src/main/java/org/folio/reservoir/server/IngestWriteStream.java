@@ -157,7 +157,7 @@ public class IngestWriteStream implements WriteStream<JsonObject> {
       errors.incrementAndGet();
       log.warn("Record number {} without localId", number.get());
       if (errors.get() < 10) {
-        log.warn("{}", rec.encodePrettily());
+        log.warn("{}", rec::encodePrettily);
       }
     }
   }
