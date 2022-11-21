@@ -42,7 +42,7 @@ public class UploadService {
     AtomicInteger errors = new AtomicInteger();
     upload.exceptionHandler(promise::tryFail);
     upload.handler(r ->
-        validateIngestRecord(vertx, jsonPath, r, number, errors) 
+        validateIngestRecord(vertx, jsonPath, r, number, errors)
           .compose(rec -> {
             if (rec == null || ingestWriteStream == null) {
               return Future.succeededFuture();
@@ -61,12 +61,12 @@ public class UploadService {
     return promise.future();
   }
 
-  private static Future<Collection<String>> lookupPath(Vertx vertx, 
+  private static Future<Collection<String>> lookupPath(Vertx vertx,
       ModuleJsonPath jsonPath, JsonObject payload) {
-    return vertx.executeBlocking(p -> { 
+    return vertx.executeBlocking(p -> {
       Collection<String> strings = jsonPath.executeAsCollection(null, payload);
       p.complete(strings);
-    }, 
+    },
     false);
   }
 
@@ -75,7 +75,7 @@ public class UploadService {
     Future<JsonObject> fut = Future.succeededFuture(rec);
     if (jsonPath != null) {
       fut = fut
-        .compose(r -> 
+        .compose(r ->
           lookupPath(vertx, jsonPath, r.getJsonObject("payload"))
             .map(strings -> {
               Iterator<String> iterator = strings.iterator();
@@ -88,7 +88,7 @@ public class UploadService {
             }
       ));
     }
-    return fut.map(r -> { 
+    return fut.map(r -> {
       String localId = r.getString(LOCAL_ID);
       if (number.incrementAndGet() < 10) {
         if (localId != null) {
