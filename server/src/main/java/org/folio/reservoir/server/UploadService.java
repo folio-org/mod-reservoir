@@ -6,6 +6,7 @@ import io.vertx.core.Promise;
 import io.vertx.core.http.HttpServerRequest;
 import io.vertx.core.impl.future.FailedFuture;
 import io.vertx.core.json.JsonObject;
+import io.vertx.core.streams.Pump;
 import io.vertx.core.streams.ReadStream;
 import io.vertx.ext.web.RoutingContext;
 import java.util.ArrayList;
@@ -30,16 +31,9 @@ public class UploadService {
   private Future<Void> uploadPayloadStream(ReadStream<JsonObject> upload,
       IngestWriteStream ingestWriteStream) {
     Promise<Void> promise = Promise.promise();
-    ingestWriteStream.drainHandler(x -> upload.resume());
-    upload.exceptionHandler(promise::tryFail);
-    upload.handler(r -> {
-      if (ingestWriteStream.writeQueueFull()) {
-        upload.pause();
-      }
-      ingestWriteStream.write(r)
-          .onFailure(promise::tryFail);
-    });
     upload.endHandler(promise::tryComplete);
+    upload.exceptionHandler(promise::tryFail);
+    Pump.pump(upload, ingestWriteStream, 10).start();
     return promise.future();
   }
 
