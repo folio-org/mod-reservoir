@@ -73,7 +73,6 @@ public class VertxSolrClientTest {
     Router router = Router.router(vertx);
     router.post().handler(BodyHandler.create());
     router.get("/solr/" + COLLECTION + "/select").handler(c -> {
-      System.out.println("get path=" + c.request().path());
       JsonObject response = new JsonObject()
           .put("responseHeader",
               new JsonObject()
@@ -86,9 +85,7 @@ public class VertxSolrClientTest {
       c.response().putHeader("Content-Type", "application/json");
       c.response().end(response.encodePrettily());
     });
-    router.post().handler(c -> {
-      System.out.println("post path=" + c.request().path());
-      c.request().headers().forEach((n, v) -> System.out.println(n + "=" + v));
+    router.post("/solr/" + COLLECTION + "/update").handler(c -> {
       JsonObject response = new JsonObject()
           .put("responseHeader",
               new JsonObject()
@@ -158,7 +155,7 @@ public class VertxSolrClientTest {
         .compose(x -> c.commit())
         .compose(x -> c.query(map))
         .onComplete(context.asyncAssertSuccess(res -> {
-          assertThat(res.getJsonObject("response").getLong("numFound"), is(1L));
+          assertThat(res.getJsonObject("response").getInteger("numFound"), is(1));
         }));
   }
 
@@ -173,18 +170,25 @@ public class VertxSolrClientTest {
   @Test
   public void searchWebClient(TestContext context) {
     Assume.assumeTrue(hasSolr);
-    final UUID docId = UUID.randomUUID();
+    final UUID docId1 = UUID.randomUUID();
+    final UUID docId2 = UUID.randomUUID();
     VertxSolrClient c = VertxSolrClient.create(vertx, solrUrl, COLLECTION);
     JsonArray docs = new JsonArray()
         .add(new JsonObject()
-            .put("id", docId.toString())
-            .put("title", new JsonArray().add("title3a").add("title3b")));
-    Map<String,String> map = Map.of("q", "id:" + docId, "fl", "id,title", "sort", "id asc");
+            .put("id", docId1.toString())
+            .put("title", new JsonArray().add("title3a").add("title3b")))
+        .add(new JsonObject()
+            .put("id", docId2.toString())
+            .put("title", new JsonArray().add("title4a").add("title4b")));
+    Map<String,String> map = Map.of("q", "id:" + docId2, "fl", "id,title", "sort", "id asc");
     c.add(docs)
         .compose(x -> c.commit())
         .compose(x -> c.query(map))
         .onComplete(context.asyncAssertSuccess(res -> {
-          assertThat(res.getJsonObject("response").getLong("numFound"), is(1L));
+          JsonObject response = res.getJsonObject("response");
+          assertThat(response.getInteger("numFound"), is(1));
+          // check we get 2nd document exactly
+          assertThat(response.getJsonArray("docs").getJsonObject(0), is(docs.getJsonObject(1)));
         }));
   }
 
@@ -201,7 +205,7 @@ public class VertxSolrClientTest {
         .compose(x -> c.commit())
         .compose(x -> c.query(map))
         .onComplete(context.asyncAssertSuccess(res -> {
-          assertThat(res.getJsonObject("response").getLong("numFound"), is(1L));
+          assertThat(res.getJsonObject("response").getInteger("numFound"), is(1));
         }));
   }
 

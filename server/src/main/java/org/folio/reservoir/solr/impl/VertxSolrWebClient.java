@@ -6,6 +6,7 @@ import io.vertx.core.buffer.Buffer;
 import io.vertx.core.json.JsonArray;
 import io.vertx.core.json.JsonObject;
 import io.vertx.ext.web.client.HttpRequest;
+import io.vertx.ext.web.client.HttpResponse;
 import io.vertx.ext.web.client.WebClient;
 import io.vertx.ext.web.client.predicate.ResponsePredicate;
 import java.util.Map;
@@ -36,12 +37,12 @@ public class VertxSolrWebClient implements VertxSolrClient {
 
   @Override
   public Future<JsonObject> add(JsonArray docs) {
-    return webClient.postAbs(url + "/" + collection + "/update/json")
+    return webClient.postAbs(url + "/" + collection + "/update")
         .addQueryParam("wt", "json")
         .expect(ResponsePredicate.SC_OK)
         .expect(ResponsePredicate.JSON)
         .sendJson(docs)
-        .map(resp -> resp.bodyAsJsonObject());
+        .map(HttpResponse::bodyAsJsonObject);
   }
 
   @Override
@@ -53,17 +54,17 @@ public class VertxSolrWebClient implements VertxSolrClient {
     return request
         .addQueryParam("wt", "json")
         .send()
-        .map(resp -> resp.bodyAsJsonObject());
+        .map(HttpResponse::bodyAsJsonObject);
   }
 
   @Override
   public Future<JsonObject> commit() {
-    return webClient.postAbs(url + "/" + collection + "/update/json")
+    return webClient.postAbs(url + "/" + collection + "/update")
         .expect(ResponsePredicate.SC_OK)
         .expect(ResponsePredicate.JSON)
         .addQueryParam("wt", "json")
         .addQueryParam("commit", "true")
         .send()
-        .map(resp -> resp.bodyAsJsonObject());
+        .map(HttpResponse::bodyAsJsonObject);
   }
 }
