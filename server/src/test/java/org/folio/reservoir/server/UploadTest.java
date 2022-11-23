@@ -1,5 +1,7 @@
 package org.folio.reservoir.server;
 
+import io.vertx.core.Future;
+import io.vertx.core.Promise;
 import io.vertx.core.buffer.Buffer;
 import io.vertx.core.file.FileSystem;
 import io.vertx.core.json.JsonObject;
@@ -16,6 +18,7 @@ import org.junit.runner.RunWith;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.containsString;
 import static org.hamcrest.Matchers.is;
+import static org.hamcrest.Matchers.startsWith;
 
 @RunWith(VertxUnitRunner.class)
 public class UploadTest extends TestBase {
@@ -178,6 +181,56 @@ public class UploadTest extends TestBase {
         })
         .onComplete(context.asyncAssertSuccess());
   }
+
+  @Test
+  public void uploadMarcXmlWithIdButPathGivesEmpty(TestContext context) {
+    MultipartForm requestForm1 = MultipartForm.create()
+        .binaryFileUpload("records", "marc3.xml", marc3xmlBuffer,  "text/xml");
+
+    // upload 3 new records, but provide idPath that returns empty
+    webClient.postAbs(OKAPI_URL + "/reservoir/upload")
+        .expect(ResponsePredicate.SC_OK)
+        .putHeader(XOkapiHeaders.TENANT, TENANT_1)
+        .addQueryParam("sourceId", "SOURCE-4")
+        .addQueryParam("sourceVersion", "1")
+        .addQueryParam("localIdPath", "empty")
+        .sendMultipartForm(requestForm1)
+        .compose(c1 ->
+            webClient.getAbs(OKAPI_URL + "/reservoir/records")
+                .addQueryParam("query", "sourceId = \"SOURCE-4\"")
+                .expect(ResponsePredicate.SC_OK)
+                .putHeader(XOkapiHeaders.TENANT, TENANT_1)
+                .send()
+        )
+        .map(res -> {
+          JsonObject responseBody = res.bodyAsJsonObject();
+          assertThat(responseBody.getJsonArray("items").size(), is(0));
+          return null;
+        })
+        .onComplete(context.asyncAssertSuccess());
+  }
+
+  @Test
+  public void uploadMarcXmlWithIdMalformedPath(TestContext context) {
+    MultipartForm requestForm1 = MultipartForm.create()
+        .binaryFileUpload("records", "marc3.xml", marc3xmlBuffer,  "text/xml");
+
+    // upload 3 new records, but provide idPath that returns empty
+    webClient.postAbs(OKAPI_URL + "/reservoir/upload")
+        .expect(ResponsePredicate.SC_BAD_REQUEST)
+        .putHeader(XOkapiHeaders.TENANT, TENANT_1)
+        .addQueryParam("sourceId", "SOURCE-4")
+        .addQueryParam("sourceVersion", "1")
+        .addQueryParam("localIdPath", "empt[y")
+        .sendMultipartForm(requestForm1)
+        .map(res -> {
+          String responseBody = res.bodyAsString();
+          assertThat(responseBody, startsWith("malformed 'localIdPath'"));
+          return null;
+        })
+        .onComplete(context.asyncAssertSuccess());
+  }
+
 
   @Test
   public void uploadPdf(TestContext context) {
