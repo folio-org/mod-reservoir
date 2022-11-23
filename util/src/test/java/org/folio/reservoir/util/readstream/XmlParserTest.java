@@ -153,7 +153,7 @@ public class XmlParserTest {
             assertThat(events, empty());
             xmlParser.resume();
             vertx.setTimer(50, x2 -> {
-              assertThat(events, hasSize(4));
+              assertThat(events, hasSize(4)); // TODO sometimes fail.
               promise.complete();
             });
           });
