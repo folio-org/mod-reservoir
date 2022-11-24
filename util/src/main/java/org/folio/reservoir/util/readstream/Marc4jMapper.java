@@ -12,6 +12,9 @@ import org.marc4j.marc.Record;
 
 public class Marc4jMapper implements Mapper<Buffer, Record> {
   private Buffer pendingBuffer = Buffer.buffer();
+
+  private boolean ended;
+
   MarcReader marcReader;
 
   /**
@@ -49,7 +52,7 @@ public class Marc4jMapper implements Mapper<Buffer, Record> {
   }
 
   @Override
-  public Record poll(boolean ended) {
+  public Record poll() {
     if (marcReader != null) {
       if (marcReader.hasNext()) {
         return marcReader.next();
@@ -82,6 +85,11 @@ public class Marc4jMapper implements Mapper<Buffer, Record> {
   @Override
   public void push(Buffer buffer) {
     this.pendingBuffer.appendBuffer(buffer);
+  }
+
+  @Override
+  public void end() {
+    ended = true;
   }
 
 }
