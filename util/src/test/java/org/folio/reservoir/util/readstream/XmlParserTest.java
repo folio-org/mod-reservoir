@@ -3,20 +3,22 @@ package org.folio.reservoir.util.readstream;
 import io.vertx.core.Future;
 import io.vertx.core.Promise;
 import io.vertx.core.Vertx;
+import io.vertx.core.buffer.Buffer;
 import io.vertx.core.file.OpenOptions;
+import io.vertx.core.json.DecodeException;
 import io.vertx.ext.unit.TestContext;
 import io.vertx.ext.unit.junit.VertxUnitRunner;
 import java.util.ArrayList;
 import java.util.LinkedList;
 import java.util.List;
 
-import org.folio.reservoir.util.readstream.XmlParser;
 import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import javax.xml.stream.XMLStreamConstants;
+
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.contains;
 import static org.hamcrest.Matchers.containsString;
@@ -58,6 +60,17 @@ public class XmlParserTest {
     eventsFromFile("record10.xml").onComplete(context.asyncAssertSuccess(events -> {
       assertThat(events, hasSize(2965));
     }));
+  }
+
+  @Test
+  public void feedInputThrowsException() {
+    XmlMapper xmlMapper = new XmlMapper();
+    xmlMapper.push(Buffer.buffer("<"));
+    xmlMapper.end();
+    // we are violating the contract by using push after end
+    Exception e = Assert.assertThrows(DecodeException.class,
+        () -> xmlMapper.push(Buffer.buffer("xml/>")));
+    assertThat(e.getMessage(), is("Still have 1 unread bytes"));
   }
 
   @Test
