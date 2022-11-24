@@ -145,20 +145,6 @@ public class Marc4jParserTest {
   }
 
   @Test
-  public void testEmitted(TestContext context) {
-    marc4jParserFromFile()
-        .compose(parser -> {
-          Promise<Void> promise = Promise.promise();
-          parser.exceptionHandler(promise::tryFail);
-          parser.endHandler(promise::tryComplete);
-          parser.handler(x -> parser.end());
-          return promise.future();
-        })
-        .onComplete(context.asyncAssertFailure(
-            e -> assertThat(e.getMessage(), is("Parsing already done"))));
-  }
-
-  @Test
   public void testDoubleEnd(TestContext context) {
     marc4jParserFromFile()
         .map(parser -> {
