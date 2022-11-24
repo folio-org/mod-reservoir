@@ -174,7 +174,7 @@ public class XmlParserTest {
             throw new RuntimeException("handlerExcept");
           });
           xmlParser.exceptionHandler(promise::tryFail);
-          xmlParser.endHandler(promise::complete);
+          xmlParser.endHandler(promise::tryComplete);
           return promise.future();
         })
         .onComplete(context.asyncAssertFailure(
@@ -190,7 +190,7 @@ public class XmlParserTest {
           Promise<Void> promise = Promise.promise();
           xmlParser.handler(event -> events.add(event.getEventType()));
           xmlParser.exceptionHandler(promise::tryFail);
-          xmlParser.endHandler(promise::complete);
+          xmlParser.endHandler(promise::tryComplete);
           return promise.future();
         })
         .onComplete(context.asyncAssertFailure(
