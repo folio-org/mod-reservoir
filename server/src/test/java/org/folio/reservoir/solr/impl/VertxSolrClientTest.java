@@ -28,7 +28,7 @@ import static org.hamcrest.Matchers.is;
 public class VertxSolrClientTest {
 
   private final static String COLLECTION = "col1";
-  
+
   @ClassRule
   public static SolrContainer solrContainer = new SolrContainer("solr:9.1.0")
       .withCollection(COLLECTION);
