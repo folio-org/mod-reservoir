@@ -23,6 +23,7 @@ import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.contains;
 import static org.hamcrest.Matchers.containsString;
 import static org.hamcrest.Matchers.empty;
+import static org.hamcrest.Matchers.greaterThan;
 import static org.hamcrest.Matchers.hasSize;
 import static org.hamcrest.Matchers.is;
 
@@ -176,17 +177,17 @@ public class XmlParserTest {
     xmlParserFromFile("small.xml")
         .compose(xmlParser -> {
           Promise<Void> promise = Promise.promise();
-          xmlParser.handler(null);
-          xmlParser.handler(event -> events.add(event.getEventType()));
+          xmlParser.handler(event -> {
+            events.add(event.getEventType());
+            if (events.size() == 4) {
+              promise.tryComplete();
+            }
+          });
           xmlParser.exceptionHandler(promise::tryFail);
           xmlParser.pause();
-          vertx.setTimer(50, x1 -> {
+          vertx.setTimer(5, x1 -> {
             assertThat(events, empty());
             xmlParser.resume();
-            vertx.setTimer(50, x2 -> {
-              assertThat(events, hasSize(4));
-              promise.complete();
-            });
           });
           return promise.future();
         })
