@@ -3,20 +3,22 @@ package org.folio.reservoir.util.readstream;
 import io.vertx.core.Future;
 import io.vertx.core.Promise;
 import io.vertx.core.Vertx;
+import io.vertx.core.buffer.Buffer;
 import io.vertx.core.file.OpenOptions;
+import io.vertx.core.json.DecodeException;
 import io.vertx.ext.unit.TestContext;
 import io.vertx.ext.unit.junit.VertxUnitRunner;
 import java.util.ArrayList;
 import java.util.LinkedList;
 import java.util.List;
 
-import org.folio.reservoir.util.readstream.XmlParser;
 import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import javax.xml.stream.XMLStreamConstants;
+
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.contains;
 import static org.hamcrest.Matchers.containsString;
@@ -39,7 +41,11 @@ public class XmlParserTest {
 
   Future<XmlParser> xmlParserFromFile(String fname) {
     return vertx.fileSystem().open(fname, new OpenOptions())
-        .map(asyncFile -> XmlParser.newParser(asyncFile));
+        .map(asyncFile -> {
+          XmlParser xmlParser = XmlParser.newParser(asyncFile);
+          xmlParser.pause();
+          return xmlParser;
+        });
   }
 
   Future<List<Integer>> eventsFromFile(String fname) {
@@ -49,6 +55,7 @@ public class XmlParserTest {
           xmlParser.handler(event -> events.add(event.getEventType()));
           xmlParser.endHandler(e -> promise.complete(events));
           xmlParser.exceptionHandler(e -> promise.tryFail(e));
+          xmlParser.resume();
           return promise.future();
         });
   }
@@ -58,6 +65,17 @@ public class XmlParserTest {
     eventsFromFile("record10.xml").onComplete(context.asyncAssertSuccess(events -> {
       assertThat(events, hasSize(2965));
     }));
+  }
+
+  @Test
+  public void feedInputThrowsException() {
+    XmlMapper xmlMapper = new XmlMapper();
+    xmlMapper.push(Buffer.buffer("<"));
+    xmlMapper.end();
+    Buffer xml2 = Buffer.buffer("xml/>");
+    // we are violating the contract by using push after end
+    Exception e = Assert.assertThrows(DecodeException.class, () -> xmlMapper.push(xml2));
+    assertThat(e.getMessage(), is("Still have 1 unread bytes"));
   }
 
   @Test
@@ -112,7 +130,7 @@ public class XmlParserTest {
            vertx.setTimer(100, x -> {
              assertThat(events, hasSize(2));
              xmlParser.resume();
-             xmlParser.resume();
+             xmlParser.resume(); // provoke overflow in ReadStream.fetch
            });
            return promise.future();
          })
@@ -133,6 +151,7 @@ public class XmlParserTest {
             xmlParser.pause();
             xmlParser.fetch(1);
           });
+          xmlParser.resume();
           return promise.future();
         })
         .onComplete(context.asyncAssertSuccess(
@@ -145,17 +164,17 @@ public class XmlParserTest {
     xmlParserFromFile("small.xml")
         .compose(xmlParser -> {
           Promise<Void> promise = Promise.promise();
-          xmlParser.handler(null);
-          xmlParser.handler(event -> events.add(event.getEventType()));
+          xmlParser.handler(event -> {
+            events.add(event.getEventType());
+            if (events.size() == 4) {
+              promise.tryComplete();
+            }
+          });
           xmlParser.exceptionHandler(promise::tryFail);
           xmlParser.pause();
-          vertx.setTimer(50, x1 -> {
+          vertx.setTimer(5, x1 -> {
             assertThat(events, empty());
             xmlParser.resume();
-            vertx.setTimer(50, x2 -> {
-              assertThat(events, hasSize(4));
-              promise.complete();
-            });
           });
           return promise.future();
         })
@@ -175,6 +194,7 @@ public class XmlParserTest {
           });
           xmlParser.exceptionHandler(promise::tryFail);
           xmlParser.endHandler(promise::tryComplete);
+          xmlParser.resume();
           return promise.future();
         })
         .onComplete(context.asyncAssertFailure(
@@ -191,6 +211,7 @@ public class XmlParserTest {
           xmlParser.handler(event -> events.add(event.getEventType()));
           xmlParser.exceptionHandler(promise::tryFail);
           xmlParser.endHandler(promise::tryComplete);
+          xmlParser.resume();
           return promise.future();
         })
         .onComplete(context.asyncAssertFailure(
@@ -205,6 +226,7 @@ public class XmlParserTest {
           Promise<Void> promise = Promise.promise();
           xmlParser.handler(event -> events.add(event.getEventType()));
           xmlParser.endHandler(promise::complete);
+          xmlParser.resume();
           return promise.future();
         })
         .onComplete(context.asyncAssertSuccess(

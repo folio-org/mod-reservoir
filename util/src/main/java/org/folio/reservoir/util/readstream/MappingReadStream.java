@@ -84,6 +84,7 @@ public class MappingReadStream<T,V> implements ReadStream<T>, Handler<V> {
       throw new IllegalStateException("Parsing already done");
     }
     ended = true;
+    mapper.end();
     checkPending();
   }
 
@@ -100,7 +101,7 @@ public class MappingReadStream<T,V> implements ReadStream<T>, Handler<V> {
     emitting = true;
     try {
       while (demand > 0L) {
-        T t = mapper.poll(ended);
+        T t = mapper.poll();
         if (t == null) {
           break;
         }

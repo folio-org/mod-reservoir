@@ -14,6 +14,8 @@ import org.folio.reservoir.util.MarcInJsonUtil;
  */
 public class MarcJsonToIngestMapper implements Mapper<JsonObject, JsonObject> {
 
+  private boolean ended;
+
   List<JsonObject> marc = new LinkedList<>();
 
   @Override
@@ -45,7 +47,7 @@ public class MarcJsonToIngestMapper implements Mapper<JsonObject, JsonObject> {
   // S:5413 'List.remove()' should not be used in ascending 'for' loops
   @java.lang.SuppressWarnings({"squid:S5413"})
   @Override
-  public JsonObject poll(boolean ended) {
+  public JsonObject poll() {
     if (marc.isEmpty()) {
       return null;
     }
@@ -83,5 +85,10 @@ public class MarcJsonToIngestMapper implements Mapper<JsonObject, JsonObject> {
       payload.put("marcHoldings", holdings);
     }
     return globalRecord;
+  }
+
+  @Override
+  public void end() {
+    ended = true;
   }
 }
