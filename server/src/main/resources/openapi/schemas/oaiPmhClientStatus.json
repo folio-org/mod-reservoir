@@ -11,7 +11,7 @@
           "config" : {
             "description" : "configuration",
             "type" : "object",
-            "$ref" : "oai-pmh-client.json"
+            "$ref" : "oaiPmhClient.json"
           },
           "error" : {
             "type" : "string",
