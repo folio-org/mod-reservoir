@@ -21,7 +21,7 @@ public class AsyncCodecTest {
   }
 
   @After
-  public void before(TestContext context) {
+  public void after(TestContext context) {
     vertx.close(context.asyncAssertSuccess());
   }
 
