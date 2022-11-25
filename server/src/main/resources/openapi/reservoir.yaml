@@ -892,6 +892,173 @@ paths:
           $ref: "#/components/responses/trait_404"
         "500":
           $ref: "#/components/responses/trait_500"
+  /reservoir/solr:
+    parameters:
+      - $ref: headers/okapi-tenant.yaml
+      - $ref: headers/okapi-token.yaml
+      - $ref: headers/okapi-url.yaml
+    post:
+      description: Create Solr client
+      operationId: postSolrClient
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: schemas/solrClient.json
+      responses:
+        "201":
+          description: Solr client created
+          content:
+            application/json:
+              schema:
+                $ref: schemas/solrClient.json
+        "400":
+          $ref: "#/components/responses/trait_400"
+        "500":
+          $ref: "#/components/responses/trait_500"
+    get:
+      description: Get collection of Solr clients
+      operationId: getSolrClients
+      responses:
+        "201":
+          description: List of Solr clients
+          content:
+            application/json:
+              schema:
+                $ref: schemas/solrClients.json
+        "400":
+          $ref: "#/components/responses/trait_400"
+        "500":
+          $ref: "#/components/responses/trait_500"
+  /reservoir/solr/{id}:
+    parameters:
+      - $ref: headers/okapi-tenant.yaml
+      - $ref: headers/okapi-token.yaml
+      - $ref: headers/okapi-url.yaml
+      - in: path
+        name: id
+        required: true
+        description: Solr client identifier
+        schema:
+          type: string
+    get:
+      description: Get Solr client
+      operationId: getSolrClient
+      responses:
+        "200":
+          description: Solr client returned
+          content:
+            application/json:
+              schema:
+                $ref: schemas/solrClient.json
+        "400":
+          $ref: "#/components/responses/trait_400"
+        "404":
+          $ref: "#/components/responses/trait_404"
+        "500":
+          $ref: "#/components/responses/trait_500"
+    put:
+      description: Update Solr client
+      operationId: putSolrClient
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: schemas/solrClient.json
+      responses:
+        "204":
+          description: Updated OK
+        "400":
+          $ref: "#/components/responses/trait_400"
+        "404":
+          $ref: "#/components/responses/trait_404"
+        "500":
+          $ref: "#/components/responses/trait_500"
+    delete:
+      description: Delete Solr client
+      operationId: deleteSolrClient
+      responses:
+        "204":
+          description: Solr client deleted
+        "400":
+          $ref: "#/components/responses/trait_400"
+        "404":
+          $ref: "#/components/responses/trait_404"
+        "500":
+          $ref: "#/components/responses/trait_500"
+  /reservoir/solr/{id}/start:
+    parameters:
+      - $ref: headers/okapi-tenant.yaml
+      - $ref: headers/okapi-token.yaml
+      - $ref: headers/okapi-url.yaml
+      - in: path
+        name: id
+        required: true
+        description: Solr client identifier; "_all" for all clients
+        schema:
+          type: string
+    post:
+      description: Start Solr client job
+      operationId: startSolrClient
+      responses:
+        "204":
+          description: Started OK
+        "400":
+          $ref: "#/components/responses/trait_400"
+        "404":
+          $ref: "#/components/responses/trait_404"
+        "500":
+          $ref: "#/components/responses/trait_500"
+  /reservoir/solr/{id}/stop:
+    parameters:
+      - $ref: headers/okapi-tenant.yaml
+      - $ref: headers/okapi-token.yaml
+      - $ref: headers/okapi-url.yaml
+      - in: path
+        name: id
+        required: true
+        description: Solr client identifier; "_all" for all clients
+        schema:
+          type: string
+    post:
+      description: Stop Solr client job
+      operationId: stopSolrClient
+      responses:
+        "204":
+          description: Stopped OK
+        "400":
+          $ref: "#/components/responses/trait_400"
+        "404":
+          $ref: "#/components/responses/trait_404"
+        "500":
+          $ref: "#/components/responses/trait_500"
+  /reservoir/solr/{id}/status:
+    parameters:
+      - $ref: headers/okapi-tenant.yaml
+      - $ref: headers/okapi-token.yaml
+      - $ref: headers/okapi-url.yaml
+      - in: path
+        name: id
+        required: true
+        description: Solr client identifier; "_all" for all clients
+        schema:
+          type: string
+    get:
+      description: Get Solr client status
+      operationId: statusSolrlient
+      responses:
+        "200":
+          description: Status
+          content:
+            application/json:
+              schema:
+                $ref: schemas/solrClientStatus.json
+        "400":
+          $ref: "#/components/responses/trait_400"
+        "404":
+          $ref: "#/components/responses/trait_404"
+        "500":
+          $ref: "#/components/responses/trait_500"
 # Reservoir error responses
 components:
   responses:

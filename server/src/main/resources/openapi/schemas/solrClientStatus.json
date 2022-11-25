@@ -1,0 +1,45 @@
+{
+  "description": "Solr client status",
+  "type" : "object",
+  "properties" : {
+    "config": {
+      "description": "configuration",
+      "type": "object",
+      "$ref": "solrClient.json"
+    },
+    "error": {
+      "type": "string",
+      "description": "Error message for last error"
+    },
+    "lastActiveTimestamp": {
+      "description": "timestamp when the job was last active (last successful Solr communication)",
+      "type": "string",
+      "format": "date-time"
+    },
+    "totalRecords": {
+      "description": "Total number of records processed",
+      "type": "integer"
+    },
+    "totalDeleted": {
+      "description": "Total number of deleted records",
+      "type": "integer"
+    },
+    "totalUpdated": {
+      "description": "Total number of updated or inserted records",
+      "type": "integer"
+    },
+    "totalRequests": {
+      "description": "Total HTTP requests to Solr server",
+      "type": "integer"
+    }
+  },
+  "additionalProperties": false,
+  "required": [
+    "status",
+    "config",
+    "totalRecords",
+    "totalDeleted",
+    "totalUpdated",
+    "totalRequests"
+  ]
+}
