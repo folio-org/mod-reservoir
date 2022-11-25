@@ -9,6 +9,9 @@ import io.vertx.core.json.DecodeException;
 import javax.xml.stream.XMLStreamException;
 import javax.xml.stream.XMLStreamReader;
 
+/**
+ * Stream mapper based on <a href="https://github.com/FasterXML/aalto-xml">Aalto XML</a>.
+ */
 public class XmlMapper
     implements Mapper<Buffer, XMLStreamReader> {
   private final AsyncXMLStreamReader<AsyncByteArrayFeeder> parser;
@@ -19,11 +22,8 @@ public class XmlMapper
   }
 
   @Override
-  public XMLStreamReader poll(boolean ended) {
+  public XMLStreamReader poll() {
     try {
-      if (ended) {
-        parser.getInputFeeder().endOfInput();
-      }
       if (parser.hasNext() && parser.next() != AsyncXMLStreamReader.EVENT_INCOMPLETE) {
         return parser;
       }
@@ -31,6 +31,11 @@ public class XmlMapper
     } catch (XMLStreamException e) {
       throw new DecodeException(e.getMessage(), e);
     }
+  }
+
+  @Override
+  public void end() {
+    parser.getInputFeeder().endOfInput();
   }
 
   @Override

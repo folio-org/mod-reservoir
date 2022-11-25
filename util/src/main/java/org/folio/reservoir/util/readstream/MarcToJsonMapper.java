@@ -8,7 +8,7 @@ import org.marc4j.MarcJsonWriter;
 import org.marc4j.marc.Record;
 
 public class MarcToJsonMapper implements Mapper<Record, JsonObject> {
-  
+
   List<JsonObject> items = new LinkedList<>();
   ByteArrayOutputStream buffer = new ByteArrayOutputStream();
   MarcJsonWriter writer = new MarcJsonWriter(buffer);
@@ -22,11 +22,15 @@ public class MarcToJsonMapper implements Mapper<Record, JsonObject> {
   }
 
   @Override
-  public JsonObject poll(boolean ended) {
+  public JsonObject poll() {
     if (items.isEmpty()) {
       return null;
     }
     return items.remove(0);
   }
-  
+
+  @Override
+  public void end() {
+    // no special end marker (whole items)
+  }
 }
