@@ -125,7 +125,7 @@ public class XmlParserTest {
            vertx.setTimer(100, x -> {
              assertThat(events, hasSize(2));
              xmlParser.resume();
-             xmlParser.resume();
+             xmlParser.resume(); // provoke overflow in ReadStream.fetch
            });
            return promise.future();
          })
@@ -150,6 +150,24 @@ public class XmlParserTest {
         })
         .onComplete(context.asyncAssertSuccess(
             end -> assertThat(events, hasSize(4))));
+  }
+
+  public void emittingInEffect2(TestContext context) {
+    List<Integer> events = new LinkedList<>();
+    xmlParserFromFile("record10.xml")
+        .compose(xmlParser -> {
+          Promise<Void> promise = Promise.promise();
+          xmlParser.exceptionHandler(promise::tryFail);
+          xmlParser.endHandler(end -> promise.tryComplete());
+          xmlParser.handler(event -> {
+            events.add(event.getEventType());
+            xmlParser.pause();
+            xmlParser.fetch(1);
+          });
+          return promise.future();
+        })
+        .onComplete(context.asyncAssertSuccess(
+            end -> assertThat(events, hasSize(2965))));
   }
 
   @Test
