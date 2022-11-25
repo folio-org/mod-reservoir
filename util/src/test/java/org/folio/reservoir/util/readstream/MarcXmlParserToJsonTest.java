@@ -36,7 +36,11 @@ public class MarcXmlParserToJsonTest {
 
   Future<MarcXmlParserToJson> marcXmlParserFromFile(String fname) {
     return vertx.fileSystem().open(fname, new OpenOptions())
-        .map(asyncFile -> new MarcXmlParserToJson(XmlParser.newParser(asyncFile)));
+        .map(asyncFile -> {
+          MarcXmlParserToJson parser = new MarcXmlParserToJson(XmlParser.newParser(asyncFile));
+          parser.pause();
+          return parser;
+        });
   }
 
   Future<MarcXmlParserToJson> marcXmlParserFromFile() {
@@ -50,6 +54,7 @@ public class MarcXmlParserToJsonTest {
       parser.handler(records::add);
       parser.endHandler(e -> promise.complete(records));
       parser.exceptionHandler(promise::tryFail);
+      parser.resume();
       return promise.future();
     });
   }
@@ -72,6 +77,7 @@ public class MarcXmlParserToJsonTest {
           Promise<Void> promise = Promise.promise();
           parser.exceptionHandler(promise::tryFail);
           parser.endHandler(x -> promise.tryComplete());
+          parser.resume();
           return promise.future();
         })
         .onComplete(context.asyncAssertSuccess());
@@ -86,6 +92,7 @@ public class MarcXmlParserToJsonTest {
           parser.endHandler(x -> {
             throw new RuntimeException("end exception");
           });
+          parser.resume();
           return promise.future();
         })
         .onComplete(context.asyncAssertFailure(e -> assertThat(e.getMessage(), is("end exception"))));
@@ -100,6 +107,7 @@ public class MarcXmlParserToJsonTest {
             promise.tryFail("must stop");
             throw new RuntimeException("end exception");
           });
+          parser.resume();
           return promise.future();
         })
         .onComplete(context.asyncAssertFailure(e -> assertThat(e.getMessage(), is("must stop"))));
@@ -117,6 +125,7 @@ public class MarcXmlParserToJsonTest {
               promise.tryComplete();
             }
           });
+          parser.resume();
           return promise.future();
         })
         .onComplete(context.asyncAssertSuccess());
@@ -166,6 +175,7 @@ public class MarcXmlParserToJsonTest {
           });
           parser.exceptionHandler(promise::tryFail);
           parser.endHandler(promise::complete);
+          parser.resume();
           return promise.future();
         })
         .onComplete(context.asyncAssertFailure(

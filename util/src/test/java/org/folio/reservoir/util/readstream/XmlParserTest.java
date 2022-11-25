@@ -41,7 +41,11 @@ public class XmlParserTest {
 
   Future<XmlParser> xmlParserFromFile(String fname) {
     return vertx.fileSystem().open(fname, new OpenOptions())
-        .map(asyncFile -> XmlParser.newParser(asyncFile));
+        .map(asyncFile -> {
+          XmlParser xmlParser = XmlParser.newParser(asyncFile);
+          xmlParser.pause();
+          return xmlParser;
+        });
   }
 
   Future<List<Integer>> eventsFromFile(String fname) {
@@ -51,6 +55,7 @@ public class XmlParserTest {
           xmlParser.handler(event -> events.add(event.getEventType()));
           xmlParser.endHandler(e -> promise.complete(events));
           xmlParser.exceptionHandler(e -> promise.tryFail(e));
+          xmlParser.resume();
           return promise.future();
         });
   }
@@ -146,28 +151,11 @@ public class XmlParserTest {
             xmlParser.pause();
             xmlParser.fetch(1);
           });
+          xmlParser.resume();
           return promise.future();
         })
         .onComplete(context.asyncAssertSuccess(
             end -> assertThat(events, hasSize(4))));
-  }
-
-  public void emittingInEffect2(TestContext context) {
-    List<Integer> events = new LinkedList<>();
-    xmlParserFromFile("record10.xml")
-        .compose(xmlParser -> {
-          Promise<Void> promise = Promise.promise();
-          xmlParser.exceptionHandler(promise::tryFail);
-          xmlParser.endHandler(end -> promise.tryComplete());
-          xmlParser.handler(event -> {
-            events.add(event.getEventType());
-            xmlParser.pause();
-            xmlParser.fetch(1);
-          });
-          return promise.future();
-        })
-        .onComplete(context.asyncAssertSuccess(
-            end -> assertThat(events, hasSize(2965))));
   }
 
   @Test
@@ -206,6 +194,7 @@ public class XmlParserTest {
           });
           xmlParser.exceptionHandler(promise::tryFail);
           xmlParser.endHandler(promise::tryComplete);
+          xmlParser.resume();
           return promise.future();
         })
         .onComplete(context.asyncAssertFailure(
@@ -222,6 +211,7 @@ public class XmlParserTest {
           xmlParser.handler(event -> events.add(event.getEventType()));
           xmlParser.exceptionHandler(promise::tryFail);
           xmlParser.endHandler(promise::tryComplete);
+          xmlParser.resume();
           return promise.future();
         })
         .onComplete(context.asyncAssertFailure(
@@ -236,6 +226,7 @@ public class XmlParserTest {
           Promise<Void> promise = Promise.promise();
           xmlParser.handler(event -> events.add(event.getEventType()));
           xmlParser.endHandler(promise::complete);
+          xmlParser.resume();
           return promise.future();
         })
         .onComplete(context.asyncAssertSuccess(
