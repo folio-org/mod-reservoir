@@ -67,9 +67,9 @@ public class XmlParserTest {
     XmlMapper xmlMapper = new XmlMapper();
     xmlMapper.push(Buffer.buffer("<"));
     xmlMapper.end();
+    Buffer xml2 = Buffer.buffer("xml/>");
     // we are violating the contract by using push after end
-    Exception e = Assert.assertThrows(DecodeException.class,
-        () -> xmlMapper.push(Buffer.buffer("xml/>")));
+    Exception e = Assert.assertThrows(DecodeException.class, () -> xmlMapper.push(xml2));
     assertThat(e.getMessage(), is("Still have 1 unread bytes"));
   }
 
