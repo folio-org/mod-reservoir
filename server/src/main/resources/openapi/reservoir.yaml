@@ -1044,8 +1044,8 @@ paths:
         schema:
           type: string
     get:
-      description: Get Solr client status
-      operationId: statusSolrlient
+      description: Get Solr client(s) status
+      operationId: statusSolrlients
       responses:
         "200":
           description: Status
