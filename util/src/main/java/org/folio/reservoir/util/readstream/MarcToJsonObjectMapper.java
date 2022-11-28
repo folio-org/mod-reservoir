@@ -42,7 +42,6 @@ public class MarcToJsonObjectMapper implements Mapper<Record, JsonObject> {
       field.put(cf.getTag(), cf.getData());
       fields.add(field);
     }
-
     for (final DataField df : in.getDataFields()) {
       JsonObject field = new JsonObject();
       JsonObject tag = new JsonObject();
@@ -56,6 +55,7 @@ public class MarcToJsonObjectMapper implements Mapper<Record, JsonObject> {
       }
       field.put("ind1", String.valueOf(df.getIndicator1()));
       field.put("ind2", String.valueOf(df.getIndicator2()));
+      fields.add(field);
     }
     return out;
   }
