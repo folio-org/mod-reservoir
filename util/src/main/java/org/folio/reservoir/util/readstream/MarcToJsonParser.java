@@ -9,7 +9,7 @@ public class MarcToJsonParser extends MappingReadStream<JsonObject, Record> {
 
 
   public MarcToJsonParser(ReadStream<Buffer> stream) {
-    super(new MappingReadStream<>(stream, new Marc4jMapper()), new MarcToJsonMapper());
+    super(new MappingReadStream<>(stream, new Marc4jMapper()), new MarcToJsonObjectMapper());
   }
 
 }
