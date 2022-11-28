@@ -1,18 +1,18 @@
 {
-  "description": "Solr clients status response",
+  "description": "Solr outlets status response",
   "type" : "object",
   "properties" : {
     "items": {
       "description": "Status list",
       "type": "array",
       "items": {
-        "description": "Solr client status",
+        "description": "Solr outlet status",
         "type": "object",
         "properties": {
           "config": {
             "description": "configuration",
             "type": "object",
-            "$ref": "solrClient.json"
+            "$ref": "solrOutlet.json"
           },
           "error": {
             "type": "string",

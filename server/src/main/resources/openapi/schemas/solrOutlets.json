@@ -1,13 +1,13 @@
 {
-  "description": "Solr clients",
+  "description": "Solr outlets",
   "type": "object",
   "properties": {
     "items": {
-      "description": "List Solr clients",
+      "description": "List Solr outlets",
       "type": "array",
       "items": {
         "type": "object",
-        "$ref": "solrClient.json"
+        "$ref": "solrOutlet.json"
       }
     },
     "resultInfo": {

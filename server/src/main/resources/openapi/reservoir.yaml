@@ -898,34 +898,34 @@ paths:
       - $ref: headers/okapi-token.yaml
       - $ref: headers/okapi-url.yaml
     post:
-      description: Create Solr client
-      operationId: postSolrClient
+      description: Create Solr outlet
+      operationId: postSolrOutlet
       requestBody:
         content:
           application/json:
             schema:
-              $ref: schemas/solrClient.json
+              $ref: schemas/solrOutlet.json
       responses:
         "201":
-          description: Solr client created
+          description: Solr outlet created
           content:
             application/json:
               schema:
-                $ref: schemas/solrClient.json
+                $ref: schemas/solrOutlet.json
         "400":
           $ref: "#/components/responses/trait_400"
         "500":
           $ref: "#/components/responses/trait_500"
     get:
-      description: Get collection of Solr clients
-      operationId: getSolrClients
+      description: Get collection of Solr outlets
+      operationId: getSolrOutlets
       responses:
         "201":
-          description: List of Solr clients
+          description: List of Solr outlets
           content:
             application/json:
               schema:
-                $ref: schemas/solrClients.json
+                $ref: schemas/solrOutlets.json
         "400":
           $ref: "#/components/responses/trait_400"
         "500":
@@ -938,19 +938,19 @@ paths:
       - in: path
         name: id
         required: true
-        description: Solr client identifier
+        description: Solr outlet identifier
         schema:
           type: string
     get:
-      description: Get Solr client
-      operationId: getSolrClient
+      description: Get Solr outlet
+      operationId: getSolrOutlet
       responses:
         "200":
-          description: Solr client returned
+          description: Solr outlet returned
           content:
             application/json:
               schema:
-                $ref: schemas/solrClient.json
+                $ref: schemas/solrOutlet.json
         "400":
           $ref: "#/components/responses/trait_400"
         "404":
@@ -958,13 +958,13 @@ paths:
         "500":
           $ref: "#/components/responses/trait_500"
     put:
-      description: Update Solr client
-      operationId: putSolrClient
+      description: Update Solr outlet
+      operationId: putSolrOutlet
       requestBody:
         content:
           application/json:
             schema:
-              $ref: schemas/solrClient.json
+              $ref: schemas/solrOutlet.json
       responses:
         "204":
           description: Updated OK
@@ -975,11 +975,11 @@ paths:
         "500":
           $ref: "#/components/responses/trait_500"
     delete:
-      description: Delete Solr client
-      operationId: deleteSolrClient
+      description: Delete Solr outlet
+      operationId: deleteSolrOutlet
       responses:
         "204":
-          description: Solr client deleted
+          description: Solr outlet deleted
         "400":
           $ref: "#/components/responses/trait_400"
         "404":
@@ -994,12 +994,12 @@ paths:
       - in: path
         name: id
         required: true
-        description: Solr client identifier; "_all" for all clients
+        description: Solr outlet identifier; "_all" for all outlets
         schema:
           type: string
     post:
-      description: Start Solr client job
-      operationId: startSolrClient
+      description: Start Solr outlet job
+      operationId: startSolrOutlet
       responses:
         "204":
           description: Started OK
@@ -1017,12 +1017,12 @@ paths:
       - in: path
         name: id
         required: true
-        description: Solr client identifier; "_all" for all clients
+        description: Solr outlet identifier; "_all" for all outlets
         schema:
           type: string
     post:
-      description: Stop Solr client job
-      operationId: stopSolrClient
+      description: Stop Solr outlet job
+      operationId: stopSolrOutlet
       responses:
         "204":
           description: Stopped OK
@@ -1032,7 +1032,7 @@ paths:
           $ref: "#/components/responses/trait_404"
         "500":
           $ref: "#/components/responses/trait_500"
-  /reservoir/solr/{id}/status:
+  /reservoir/sol1r/{id}/status:
     parameters:
       - $ref: headers/okapi-tenant.yaml
       - $ref: headers/okapi-token.yaml
@@ -1040,19 +1040,19 @@ paths:
       - in: path
         name: id
         required: true
-        description: Solr client identifier; "_all" for all clients
+        description: Solr outlet identifier; "_all" for all outlets
         schema:
           type: string
     get:
-      description: Get Solr client(s) status
-      operationId: statusSolrlients
+      description: Get Solr outlet(s) status
+      operationId: statusSolrOutlets
       responses:
         "200":
           description: Status
           content:
             application/json:
               schema:
-                $ref: schemas/solrClientStatus.json
+                $ref: schemas/solrOutletStatus.json
         "400":
           $ref: "#/components/responses/trait_400"
         "404":

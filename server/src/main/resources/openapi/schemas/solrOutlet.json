@@ -1,10 +1,10 @@
 {
-  "description": "Solr client configuration",
+  "description": "Solr outlet configuration",
   "type": "object",
   "properties": {
     "id": {
       "type": "string",
-      "description": "Solr client identifier"
+      "description": "Solr outlet identifier"
     },
     "solrUrl" : {
       "type" : "string",
