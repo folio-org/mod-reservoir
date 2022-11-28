@@ -56,12 +56,12 @@ public class MarcToJsonParserTest {
           return promise.future();
         })
         .onComplete(context.asyncAssertSuccess(records -> {
-          System.out.println(records.get(1).toString());
           assertThat(records, hasSize(3));
           assertThat(records.get(0).getJsonArray("fields").getJsonObject(0).getString("001"), is("   73209622 //r823"));
           assertThat(records.get(0).getJsonArray("fields").getJsonObject(9).getJsonObject("245").getJsonArray("subfields").getJsonObject(0).getString("a"), is("The Computer Bible /"));
           assertThat(records.get(1).getJsonArray("fields").getJsonObject(0).getString("001"), is("   11224466 "));
-          assertThat(records.get(1).getJsonArray("fields").getJsonObject(8).getJsonObject("245").getJsonArray("subfields").getJsonObject(0).getString("a"), is("How to program a computer"));
+          //the following should be at pos 8 if we follow yaz order, marc4j puts 010 as last field following marc physicall order
+          assertThat(records.get(1).getJsonArray("fields").getJsonObject(7).getJsonObject("245").getJsonArray("subfields").getJsonObject(0).getString("a"), is("How to program a computer"));
           assertThat(records.get(2).getJsonArray("fields").getJsonObject(0).getString("001"), is("   77123332 "));
           assertThat(records.get(2).getJsonArray("fields").getJsonObject(10).getJsonObject("245").getJsonArray("subfields").getJsonObject(0).getString("a"), is("Voyager Diacritic test -- New input 001 (SBIE)."));
         }));
