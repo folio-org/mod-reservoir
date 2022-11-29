@@ -80,6 +80,20 @@ public class UploadTest extends TestBase {
   }
 
   @Test
+  public void uploadNonFormNoContentType(TestContext context) {
+    webClient.postAbs(OKAPI_URL + "/reservoir/upload")
+        .expect(ResponsePredicate.SC_BAD_REQUEST)
+        .putHeader(XOkapiHeaders.TENANT, TENANT_1)
+        .addQueryParam("sourceId", "SOURCE-1")
+        .addQueryParam("sourceVersion", "1")
+        .addQueryParam("localIdPath", "path")
+        .sendBuffer(Buffer.buffer("1234"))
+        .onComplete(context.asyncAssertSuccess(res -> {
+          assertThat(res.bodyAsString(), is("Missing Content-Type"));
+        }));
+  }
+
+  @Test
   public void uploadIso2709WithIngest(TestContext context) {
     MultipartForm requestForm = MultipartForm.create()
         .binaryFileUpload("records", "marc3.mrc", marc3marcBuffer,  "application/marc")

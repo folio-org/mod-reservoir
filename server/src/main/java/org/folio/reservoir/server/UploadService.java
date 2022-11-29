@@ -65,37 +65,29 @@ public class UploadService {
       ingestWriteStream.setWriteQueueMaxSize(100);
       String contentType = request.getHeader("Content-Type");
       log.info("Upload Content-Type {}", contentType);
-      if (contentType != null && contentType.startsWith("multipart/form-data")) {
+      if (contentType == null) {
+        return Future.failedFuture("Missing Content-Type");
+      }
+      Future<Void> future;
+      if (contentType.startsWith("multipart/form-data")) {
         List<Future<Void>> futures = new ArrayList<>();
         request.setExpectMultipart(true);
         request.uploadHandler(upload ->
             futures.add(uploadContent(upload, ingestWriteStream, upload.contentType(), raw))
         );
-        request.exceptionHandler(e -> futures.add(new FailedFuture<>(e)));
         Promise<Void> promise = Promise.promise();
-        request.endHandler(e1 ->
-            ingestWriteStream.end(e2 ->
-                promise.handle(GenericCompositeFuture.all(futures)
-                    .map(s -> {
-                      JsonObject res = new JsonObject();
-                      HttpResponse.responseJson(ctx, 200).end(res.encode());
-                      return null;
-                    }))
-            )
-        );
-        return promise.future();
+        request.exceptionHandler(promise::tryFail);
+        request.endHandler(e1 -> promise.handle(GenericCompositeFuture.all(futures).mapEmpty()));
+        future = promise.future();
       } else {
-        return uploadContent(request, ingestWriteStream, contentType, raw)
-            .compose(s -> {
-              Promise<Void> promise = Promise.promise();
-              ingestWriteStream.end(e2 -> {
-                JsonObject res = new JsonObject();
-                HttpResponse.responseJson(ctx, 200).end(res.encode());
-                promise.tryComplete();
-              });
-              return promise.future();
-            });
+        future = uploadContent(request, ingestWriteStream, contentType, raw);
       }
+      return future.onSuccess(response1 -> {
+        ingestWriteStream.end(s -> {
+          JsonObject res = new JsonObject();
+          HttpResponse.responseJson(ctx, 200).end(res.encode());
+        });
+      });
     } catch (InvalidPathException e) {
       return Future.failedFuture("malformed 'localIdPath': " + e.getMessage());
     } catch (Exception e) {
