@@ -103,8 +103,8 @@ public class UploadService {
     }
   }
 
-  private Future<Void> uploadContent(ReadStream<Buffer> request, IngestWriteStream ingestWriteStream,
-      String contentType, boolean raw) {
+  private Future<Void> uploadContent(ReadStream<Buffer> request,
+      IngestWriteStream ingestWriteStream, String contentType, boolean raw) {
     if (raw) {
       Promise<Void> promise = Promise.promise();
       AtomicLong sz = new AtomicLong();
@@ -118,8 +118,8 @@ public class UploadService {
     return uploadContent(request, ingestWriteStream, contentType);
   }
 
-  private Future<Void> uploadContent(ReadStream<Buffer> request, IngestWriteStream ingestWriteStream,
-      String contentType) {
+  private Future<Void> uploadContent(ReadStream<Buffer> request,
+      IngestWriteStream ingestWriteStream, String contentType) {
     ReadStream<JsonObject> parser;
     switch (contentType) {
       case "application/octet-stream", "application/marc" ->

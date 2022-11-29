@@ -436,6 +436,24 @@ For example to ingest a set of MARCXML records via curl from sourceId `BIB1`:
   curl -HX-Okapi-Tenant:$OKAPI_TENANT -Frecords=@records100k.xml $OKAPI_URL/reservoir/upload?sourceId=BIB1
 ```
 
+## Ingest via POST and body
+
+Same query parameters as the multipart, but the body contains the records straight up.
+
+For example for MARCXML:
+
+```
+  curl -HX-Okapi-Tenant:$OKAPI_TENANT -HContent-Type:text/xml --data-binary @records100k.xml \
+    $OKAPI_URL/reservoir/upload?sourceId=BIB1
+```
+
+and for ISO2709:
+
+```
+  curl -HX-Okapi-Tenant:$OKAPI_TENANT -HContent-Type:application/octet-stream --data-binary @records.mrc \
+    $OKAPI_URL/reservoir/upload?sourceId=BIB1
+```
+
 ## Additional information
 
 ### Issue tracker
