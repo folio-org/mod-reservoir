@@ -450,20 +450,20 @@ For example for MARCXML:
 and for ISO2709:
 
 ```
-  curl -HX-Okapi-Tenant:$OKAPI_TENANT -HContent-Type:application/octet-stream --data-binary @records.mrc \
-    $OKAPI_URL/reservoir/upload?sourceId=BIB1
+  curl -HX-Okapi-Tenant:$OKAPI_TENANT -HContent-Type:application/octet-stream \
+    --data-binary @records.mrc $OKAPI_URL/reservoir/upload?sourceId=BIB1
 ```
 
 This method also allows you to apply gzip compression on the fly or load and already compressed `gzip` file:
 
 ```
-  cat records.mrc | gzip | curl -HX-Okapi-Tenant:$OKAPI_TENANT -HContent-Type:application/octet-stream -HContent-Encoding:gzip --data-binary @- \
-    $OKAPI_URL/reservoir/upload?sourceId=BIB1
+  cat records.mrc | gzip | curl -HX-Okapi-Tenant:$OKAPI_TENANT -HContent-Type:application/octet-stream \
+    -HContent-Encoding:gzip --data-binary @- $OKAPI_URL/reservoir/upload?sourceId=BIB1
 ```
 
 ```
-  curl -HX-Okapi-Tenant:$OKAPI_TENANT -HContent-Type:application/octet-stream -HContent-Encoding:gzip --data-binary @record.mrc.gz \
-    $OKAPI_URL/reservoir/upload?sourceId=BIB1
+  curl -HX-Okapi-Tenant:$OKAPI_TENANT -HContent-Type:application/octet-stream -HContent-Encoding:gzip \
+   --data-binary @record.mrc.gz $OKAPI_URL/reservoir/upload?sourceId=BIB1
 ```
 
 ## Additional information
