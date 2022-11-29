@@ -463,7 +463,7 @@ This method also allows you to apply gzip compression on the fly or load and alr
 
 ```
   curl -HX-Okapi-Tenant:$OKAPI_TENANT -HContent-Type:application/octet-stream -HContent-Encoding:gzip \
-   --data-binary @record.mrc.gz $OKAPI_URL/reservoir/upload?sourceId=BIB1
+   --data-binary @records.mrc.gz $OKAPI_URL/reservoir/upload?sourceId=BIB1
 ```
 
 ## Additional information
