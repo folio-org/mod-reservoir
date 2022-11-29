@@ -5,7 +5,6 @@ import io.vertx.core.Future;
 import io.vertx.core.Promise;
 import io.vertx.core.buffer.Buffer;
 import io.vertx.core.http.HttpServerRequest;
-import io.vertx.core.impl.future.FailedFuture;
 import io.vertx.core.json.JsonObject;
 import io.vertx.core.streams.Pump;
 import io.vertx.core.streams.ReadStream;
@@ -79,12 +78,11 @@ public class UploadService {
       } else {
         future = uploadContent(request, ingestWriteStream, contentType, raw);
       }
-      return future.onSuccess(response1 -> {
-        ingestWriteStream.end(s -> {
-          JsonObject res = new JsonObject();
-          HttpResponse.responseJson(ctx, 200).end(res.encode());
-        });
-      });
+      return future.onSuccess(response1 ->
+          ingestWriteStream.end(s -> {
+            JsonObject res = new JsonObject();
+            HttpResponse.responseJson(ctx, 200).end(res.encode());
+          }));
     } catch (InvalidPathException e) {
       return Future.failedFuture("malformed 'localIdPath': " + e.getMessage());
     } catch (Exception e) {
