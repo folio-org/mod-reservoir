@@ -454,6 +454,18 @@ and for ISO2709:
     $OKAPI_URL/reservoir/upload?sourceId=BIB1
 ```
 
+This method also allows you to apply gzip compression on the fly or load and already compressed `gzip` file:
+
+```
+  cat records.mrc | gzip | curl -HX-Okapi-Tenant:$OKAPI_TENANT -HContent-Type:application/octet-stream -HContent-Encoding:gzip --data-binary @- \
+    $OKAPI_URL/reservoir/upload?sourceId=BIB1
+```
+
+```
+  curl -HX-Okapi-Tenant:$OKAPI_TENANT -HContent-Type:application/octet-stream -HContent-Encoding:gzip --data-binary @record.mrc.gz \
+    $OKAPI_URL/reservoir/upload?sourceId=BIB1
+```
+
 ## Additional information
 
 ### Issue tracker
@@ -490,4 +502,3 @@ The built artifacts for this module are available.
 See [configuration](https://dev.folio.org/download/artifacts) for repository access,
 and the Docker images for [released versions](https://hub.docker.com/r/folioorg/mod-reservoir/)
 and for [snapshot versions](https://hub.docker.com/r/folioci/mod-reservoir/).
-
