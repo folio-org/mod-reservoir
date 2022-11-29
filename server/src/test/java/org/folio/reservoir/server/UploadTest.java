@@ -89,7 +89,7 @@ public class UploadTest extends TestBase {
         .addQueryParam("localIdPath", "path")
         .sendBuffer(Buffer.buffer("1234"))
         .onComplete(context.asyncAssertSuccess(res -> {
-          assertThat(res.bodyAsString(), is("Missing Content-Type"));
+          assertThat(res.bodyAsString(), is("Premature end of file encountered"));
         }));
   }
 

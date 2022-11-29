@@ -65,11 +65,8 @@ public class UploadService {
       ingestWriteStream.setWriteQueueMaxSize(100);
       String contentType = request.getHeader("Content-Type");
       log.info("Upload Content-Type {}", contentType);
-      if (contentType == null) {
-        return Future.failedFuture("Missing Content-Type");
-      }
       Future<Void> future;
-      if (contentType.startsWith("multipart/form-data")) {
+      if (contentType != null && contentType.startsWith("multipart/form-data")) {
         List<Future<Void>> futures = new ArrayList<>();
         request.setExpectMultipart(true);
         request.uploadHandler(upload ->
