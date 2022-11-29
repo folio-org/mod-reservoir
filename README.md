@@ -461,7 +461,7 @@ Or using curl's alternative syntax with `-T/--upload-file` (uses PUT internally)
      $OKAPI_URL/reservoir/upload?sourceId=BIB1
 ```
 
-This method also allows you to apply gzip compression on the fly or load and already compressed `gzip` file:
+This method also allows you to apply gzip compression on the fly or load an already compressed `gzip` file:
 
 ```
   cat records.mrc | gzip | curl -HX-Okapi-Tenant:$OKAPI_TENANT -HContent-Type:application/octet-stream \
