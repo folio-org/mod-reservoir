@@ -64,13 +64,13 @@ public class UploadService {
           new SourceId(sourceId), Integer.parseInt(sourceVersion), ingest, jsonPath);
       ingestWriteStream.setWriteQueueMaxSize(100);
       String contentType = request.getHeader("Content-Type");
-      log.info("Got Content-Type {}", request.getHeader("Content-Type"));
+      log.info("Upload Content-Type {}", contentType);
       if (contentType != null && contentType.startsWith("multipart/form-data")) {
         List<Future<Void>> futures = new ArrayList<>();
         request.setExpectMultipart(true);
-        request.uploadHandler(upload -> {
-          futures.add(uploadContent(upload, ingestWriteStream, upload.contentType(), raw));
-        });
+        request.uploadHandler(upload ->
+            futures.add(uploadContent(upload, ingestWriteStream, upload.contentType(), raw))
+        );
         request.exceptionHandler(e -> futures.add(new FailedFuture<>(e)));
         Promise<Void> promise = Promise.promise();
         request.endHandler(e1 ->

@@ -71,17 +71,15 @@ public class IngestWriteStream implements WriteStream<JsonObject> {
         }
         return future;
       })
-      .onComplete(x -> {
-        if (ops.decrementAndGet() == queueSize / 2 && drainHandler != null) {
-          drainHandler.handle(null);
-        }
-        if (ops.get() == 0) {
-          if (endHandler != null) {
+        .onComplete(x -> {
+          if (ops.decrementAndGet() == queueSize / 2 && drainHandler != null) {
+            drainHandler.handle(null);
+          }
+          if (ops.get() == 0 && endHandler != null) {
             log.info("{} records processed", number.get());
             endHandler.handle(Future.succeededFuture());
           }
-        }
-      });
+        });
   }
 
   @Override
