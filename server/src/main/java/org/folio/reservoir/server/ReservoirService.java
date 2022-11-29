@@ -25,8 +25,11 @@ import org.folio.reservoir.util.readstream.LargeJsonReadStream;
 import org.folio.tlib.RouterCreator;
 import org.folio.tlib.TenantInitHooks;
 import org.folio.tlib.postgres.PgCqlDefinition;
-import org.folio.tlib.postgres.PgCqlField;
 import org.folio.tlib.postgres.PgCqlQuery;
+import org.folio.tlib.postgres.cqlfield.PgCqlFieldAlwaysMatches;
+import org.folio.tlib.postgres.cqlfield.PgCqlFieldNumber;
+import org.folio.tlib.postgres.cqlfield.PgCqlFieldText;
+import org.folio.tlib.postgres.cqlfield.PgCqlFieldUuid;
 import org.folio.tlib.util.TenantUtil;
 
 public class ReservoirService implements RouterCreator, TenantInitHooks {
@@ -92,22 +95,17 @@ public class ReservoirService implements RouterCreator, TenantInitHooks {
 
   static PgCqlDefinition createDefinitionBase() {
     PgCqlDefinition def = PgCqlDefinition.create();
-    def.addField(new PgCqlField("cql.allRecords", PgCqlField.Type.ALWAYS_MATCHES));
+    def.addField("cql.allRecords", new PgCqlFieldAlwaysMatches());
     return def;
   }
 
   static PgCqlDefinition createDefinitionGlobalRecords() {
     PgCqlDefinition def = createDefinitionBase();
-    def.addField(
-        new PgCqlField("id", PgCqlField.Type.UUID));
-    def.addField(
-        new PgCqlField("id", "globalId", PgCqlField.Type.UUID));
-    def.addField(
-        new PgCqlField("local_id", "localId", PgCqlField.Type.TEXT));
-    def.addField(
-        new PgCqlField("source_id", "sourceId", PgCqlField.Type.TEXT));
-    def.addField(
-        new PgCqlField("source_version", "sourceVersion", PgCqlField.Type.NUMBER));
+    def.addField("id", new PgCqlFieldUuid());
+    def.addField("globalId", new PgCqlFieldUuid().withColumn("id"));
+    def.addField("localId", new PgCqlFieldText().withColumn("local_id"));
+    def.addField("sourceId", new PgCqlFieldText().withColumn("source_id"));
+    def.addField("sourceVersion", new PgCqlFieldNumber().withColumn("source_version"));
     return def;
   }
 
@@ -155,14 +153,14 @@ public class ReservoirService implements RouterCreator, TenantInitHooks {
 
   Future<Void> getClusters(RoutingContext ctx) {
     PgCqlDefinition definition = createDefinitionBase();
-    definition.addField(
-        new PgCqlField("cluster_values.match_value", "matchValue", PgCqlField.Type.TEXT));
-    definition.addField(
-        new PgCqlField("cluster_records.cluster_id", "clusterId", PgCqlField.Type.UUID));
-    definition.addField(
-        new PgCqlField("global_records.source_id", "sourceId", PgCqlField.Type.TEXT));
-    definition.addField(
-        new PgCqlField("global_records.source_version", "sourceVersion", PgCqlField.Type.NUMBER));
+    definition.addField("matchValue",
+        new PgCqlFieldText().withColumn("cluster_values.match_value"));
+    definition.addField("clusterId",
+        new PgCqlFieldUuid().withColumn("cluster_records.cluster_id"));
+    definition.addField("sourceId",
+        new PgCqlFieldText().withColumn("global_records.source_id"));
+    definition.addField("sourceVersion",
+        new PgCqlFieldNumber().withColumn("global_records.source_version"));
 
     RequestParameters params = ctx.get(ValidationHandler.REQUEST_CONTEXT_KEY);
     PgCqlQuery pgCqlQuery = definition.parse(Util.getQueryParameter(params));
@@ -286,12 +284,9 @@ public class ReservoirService implements RouterCreator, TenantInitHooks {
 
   Future<Void> getConfigMatchKeys(RoutingContext ctx) {
     PgCqlDefinition definition = createDefinitionBase();
-    definition.addField(
-        new PgCqlField("id", PgCqlField.Type.TEXT));
-    definition.addField(
-        new PgCqlField("method", PgCqlField.Type.TEXT));
-    definition.addField(
-        new PgCqlField("matcher", PgCqlField.Type.TEXT));
+    definition.addField("id", new PgCqlFieldText());
+    definition.addField("method", new PgCqlFieldText());
+    definition.addField("matcher", new PgCqlFieldText());
 
     RequestParameters params = ctx.get(ValidationHandler.REQUEST_CONTEXT_KEY);
     PgCqlQuery pgCqlQuery = definition.parse(Util.getQueryParameter(params));
@@ -381,10 +376,8 @@ public class ReservoirService implements RouterCreator, TenantInitHooks {
 
   Future<Void> getCodeModules(RoutingContext ctx) {
     PgCqlDefinition definition = createDefinitionBase();
-    definition.addField(
-        new PgCqlField("id", PgCqlField.Type.TEXT));
-    definition.addField(
-        new PgCqlField("function", PgCqlField.Type.TEXT));
+    definition.addField("id", new PgCqlFieldText());
+    definition.addField("function", new PgCqlFieldText());
 
     RequestParameters params = ctx.get(ValidationHandler.REQUEST_CONTEXT_KEY);
     PgCqlQuery pgCqlQuery = definition.parse(Util.getQueryParameter(params));
