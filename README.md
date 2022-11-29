@@ -454,6 +454,13 @@ and for ISO2709:
     --data-binary @records.mrc $OKAPI_URL/reservoir/upload?sourceId=BIB1
 ```
 
+Or using curl's alternative syntax with `-T/--file-upload` (uses PUT internally):
+
+```
+  curl -HX-Okapi-Tenant:$OKAPI_TENANT -T records.mrc \
+     $OKAPI_URL/reservoir/upload?sourceId=BIB1
+```
+
 This method also allows you to apply gzip compression on the fly or load and already compressed `gzip` file:
 
 ```

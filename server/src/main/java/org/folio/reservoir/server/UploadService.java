@@ -121,6 +121,9 @@ public class UploadService {
   private Future<Void> uploadContent(ReadStream<Buffer> request,
       IngestWriteStream ingestWriteStream, String contentType) {
     ReadStream<JsonObject> parser;
+    if (contentType == null) {
+      contentType = "application/octet-stream";
+    }
     switch (contentType) {
       case "application/octet-stream", "application/marc" ->
           parser = new MarcToJsonParser(request);
