@@ -347,7 +347,7 @@
       "handlers": [
         {
           "methods": [
-            "POST"
+            "POST", "PUT"
           ],
           "pathPattern": "/reservoir/upload",
           "permissionsRequired": [
