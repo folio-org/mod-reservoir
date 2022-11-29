@@ -3,6 +3,7 @@ package org.folio.reservoir.server;
 import com.jayway.jsonpath.InvalidPathException;
 import io.vertx.core.Future;
 import io.vertx.core.Promise;
+import io.vertx.core.buffer.Buffer;
 import io.vertx.core.http.HttpServerRequest;
 import io.vertx.core.impl.future.FailedFuture;
 import io.vertx.core.json.JsonObject;
@@ -37,6 +38,8 @@ public class UploadService {
     return promise.future();
   }
 
+
+
   /**
    * non-OpenAPI upload records service handler.
    *
@@ -60,48 +63,74 @@ public class UploadService {
       IngestWriteStream ingestWriteStream = new IngestWriteStream(ctx.vertx(), storage,
           new SourceId(sourceId), Integer.parseInt(sourceVersion), ingest, jsonPath);
       ingestWriteStream.setWriteQueueMaxSize(100);
-      List<Future<Void>> futures = new ArrayList<>();
-      request.setExpectMultipart(true);
-      request.exceptionHandler(e -> futures.add(new FailedFuture<>(e)));
-      request.uploadHandler(upload -> {
-        if (raw) {
-          AtomicLong sz = new AtomicLong();
-          upload.handler(x -> sz.addAndGet(x.length()));
-          upload.endHandler(end -> log.info("Total size {}", sz.get()));
-        } else {
-          ReadStream<JsonObject> parser = null;
-          log.info("Content-Type: {}", upload.contentType());
-          switch (upload.contentType()) {
-            case "application/octet-stream", "application/marc" ->
-                parser = new MarcToJsonParser(upload);
-            case "application/xml", "text/xml" ->
-                parser = new MarcXmlParserToJson(XmlParser.newParser(upload));
-            default -> futures.add(
-                new FailedFuture<>("Unsupported content-type: " + upload.contentType())
-            );
-          }
-          if (parser != null) {
-            parser = new MappingReadStream<>(parser, new MarcJsonToIngestMapper());
-            futures.add(uploadPayloadStream(parser, ingestWriteStream));
-          }
-        }
-      });
-      Promise<Void> promise = Promise.promise();
-      request.endHandler(e1 ->
-          ingestWriteStream.end(e2 ->
-              promise.handle(GenericCompositeFuture.all(futures)
-                  .compose(x -> ingestWriteStream.end())
-                  .onSuccess(s -> {
-                    JsonObject res = new JsonObject();
-                    HttpResponse.responseJson(ctx, 200).end(res.encode());
-                  }))
-          )
-      );
-      return promise.future();
+      String contentType = request.getHeader("Content-Type");
+      log.info("Got Content-Type {}", request.getHeader("Content-Type"));
+      if (contentType != null && contentType.startsWith("multipart/form-data")) {
+        List<Future<Void>> futures = new ArrayList<>();
+        request.setExpectMultipart(true);
+        request.uploadHandler(upload -> {
+          futures.add(uploadContent(upload, ingestWriteStream, upload.contentType(), raw));
+        });
+        request.exceptionHandler(e -> futures.add(new FailedFuture<>(e)));
+        Promise<Void> promise = Promise.promise();
+        request.endHandler(e1 ->
+            ingestWriteStream.end(e2 ->
+                promise.handle(GenericCompositeFuture.all(futures)
+                    .map(s -> {
+                      JsonObject res = new JsonObject();
+                      HttpResponse.responseJson(ctx, 200).end(res.encode());
+                      return null;
+                    }))
+            )
+        );
+        return promise.future();
+      } else {
+        return uploadContent(request, ingestWriteStream, contentType, raw)
+            .compose(s -> {
+              Promise<Void> promise = Promise.promise();
+              ingestWriteStream.end(e2 -> {
+                JsonObject res = new JsonObject();
+                HttpResponse.responseJson(ctx, 200).end(res.encode());
+                promise.tryComplete();
+              });
+              return promise.future();
+            });
+      }
     } catch (InvalidPathException e) {
       return Future.failedFuture("malformed 'localIdPath': " + e.getMessage());
     } catch (Exception e) {
       return Future.failedFuture(e);
     }
+  }
+
+  private Future<Void> uploadContent(ReadStream<Buffer> request, IngestWriteStream ingestWriteStream,
+      String contentType, boolean raw) {
+    if (raw) {
+      Promise<Void> promise = Promise.promise();
+      AtomicLong sz = new AtomicLong();
+      request.handler(x -> sz.addAndGet(x.length()));
+      request.endHandler(end -> {
+        log.info("Total size {}", sz.get());
+        promise.complete();
+      });
+      return promise.future();
+    }
+    return uploadContent(request, ingestWriteStream, contentType);
+  }
+
+  private Future<Void> uploadContent(ReadStream<Buffer> request, IngestWriteStream ingestWriteStream,
+      String contentType) {
+    ReadStream<JsonObject> parser;
+    switch (contentType) {
+      case "application/octet-stream", "application/marc" ->
+          parser = new MarcToJsonParser(request);
+      case "application/xml", "text/xml" ->
+          parser = new MarcXmlParserToJson(XmlParser.newParser(request));
+      default -> {
+        return Future.failedFuture("Unsupported content-type: " + contentType);
+      }
+    }
+    parser = new MappingReadStream<>(parser, new MarcJsonToIngestMapper());
+    return uploadPayloadStream(parser, ingestWriteStream);
   }
 }

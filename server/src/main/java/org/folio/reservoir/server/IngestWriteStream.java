@@ -76,8 +76,8 @@ public class IngestWriteStream implements WriteStream<JsonObject> {
           drainHandler.handle(null);
         }
         if (ops.get() == 0) {
-          log.info("{} records processed", number.get());
           if (endHandler != null) {
+            log.info("{} records processed", number.get());
             endHandler.handle(Future.succeededFuture());
           }
         }
@@ -92,6 +92,7 @@ public class IngestWriteStream implements WriteStream<JsonObject> {
   @Override
   public void end(Handler<AsyncResult<Void>> handler) {
     if (ops.get() == 0) {
+      log.info("{} records processed", number.get());
       handler.handle(Future.succeededFuture());
     } else {
       endHandler = handler;

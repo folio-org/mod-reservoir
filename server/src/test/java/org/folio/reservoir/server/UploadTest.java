@@ -10,6 +10,7 @@ import io.vertx.ext.unit.junit.VertxUnitRunner;
 import io.vertx.ext.web.client.WebClient;
 import io.vertx.ext.web.client.predicate.ResponsePredicate;
 import io.vertx.ext.web.multipart.MultipartForm;
+import org.apache.http.entity.ContentType;
 import org.folio.okapi.common.XOkapiHeaders;
 import org.junit.Before;
 import org.junit.Test;
@@ -64,6 +65,21 @@ public class UploadTest extends TestBase {
   }
 
   @Test
+  public void uploadNonFormOctetStream(TestContext context) {
+    webClient.postAbs(OKAPI_URL + "/reservoir/upload")
+        .expect(ResponsePredicate.SC_BAD_REQUEST)
+        .putHeader("Content-Type", "application/octet-stream")
+        .putHeader(XOkapiHeaders.TENANT, TENANT_1)
+        .addQueryParam("sourceId", "SOURCE-1")
+        .addQueryParam("sourceVersion", "1")
+        .addQueryParam("localIdPath", "path")
+        .sendBuffer(Buffer.buffer("1234"))
+        .onComplete(context.asyncAssertSuccess(res -> {
+          assertThat(res.bodyAsString(), is("Premature end of file encountered"));
+        }));
+  }
+
+  @Test
   public void uploadIso2709WithIngest(TestContext context) {
     MultipartForm requestForm = MultipartForm.create()
         .binaryFileUpload("records", "marc3.mrc", marc3marcBuffer,  "application/marc");
@@ -101,6 +117,19 @@ public class UploadTest extends TestBase {
         .addQueryParam("sourceVersion", "1")
         .addQueryParam("ingest", "false")
         .sendMultipartForm(requestForm)
+        .onComplete(context.asyncAssertSuccess());
+  }
+
+  @Test
+  public void uploadNonFormIso2709WithoutIngest(TestContext context) {
+    webClient.postAbs(OKAPI_URL + "/reservoir/upload")
+        .expect(ResponsePredicate.SC_OK)
+        .putHeader(XOkapiHeaders.TENANT, TENANT_1)
+        .putHeader("Content-Type", "application/octet-stream")
+        .addQueryParam("sourceId", "SOURCE-1")
+        .addQueryParam("sourceVersion", "1")
+        .addQueryParam("ingest", "false")
+        .sendBuffer(marc3marcBuffer)
         .onComplete(context.asyncAssertSuccess());
   }
 
