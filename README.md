@@ -454,7 +454,7 @@ and for ISO2709:
     --data-binary @records.mrc $OKAPI_URL/reservoir/upload?sourceId=BIB1
 ```
 
-Or using curl's alternative syntax with `-T/--file-upload` (uses PUT internally):
+Or using curl's alternative syntax with `-T/--upload-file` (uses PUT internally):
 
 ```
   curl -HX-Okapi-Tenant:$OKAPI_TENANT -T records.mrc \
