@@ -82,7 +82,8 @@ public class UploadTest extends TestBase {
   @Test
   public void uploadIso2709WithIngest(TestContext context) {
     MultipartForm requestForm = MultipartForm.create()
-        .binaryFileUpload("records", "marc3.mrc", marc3marcBuffer,  "application/marc");
+        .binaryFileUpload("records", "marc3.mrc", marc3marcBuffer,  "application/marc")
+        .binaryFileUpload("records", "marc1-delete.xml", marc1xmlBuffer,  "text/xml");
 
     webClient.postAbs(OKAPI_URL + "/reservoir/upload")
         .expect(ResponsePredicate.SC_OK)
@@ -99,7 +100,7 @@ public class UploadTest extends TestBase {
         )
         .map(res -> {
           JsonObject responseBody = res.bodyAsJsonObject();
-          assertThat(responseBody.getJsonArray("items").size(), is(3));
+          assertThat(responseBody.getJsonArray("items").size(), is(2));
           return null;
         })
         .onComplete(context.asyncAssertSuccess());
