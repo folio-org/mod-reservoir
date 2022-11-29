@@ -357,6 +357,7 @@ public class OaiPmhClientService {
 
   Future<Void> startJob(Storage storage, String id, OaiPmhStatus job) {
     job.setStatusRunning();
+    job.setError(null);
     job.setLastTotalRecords(0L);
     job.setLastRecsPerSec(null);
     job.setLastStartedTimestampRaw(LocalDateTime.now(ZoneOffset.UTC));
