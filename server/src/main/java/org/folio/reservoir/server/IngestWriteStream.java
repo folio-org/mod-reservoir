@@ -22,6 +22,8 @@ public class IngestWriteStream implements WriteStream<JsonObject> {
   final Vertx vertx;
   Handler<Throwable> exceptionHandler;
   Handler<AsyncResult<Void>> endHandler;
+
+  boolean ended;
   Handler<Void> drainHandler;
   JsonArray matchKeyConfigs;
   AtomicInteger ops = new AtomicInteger();
@@ -53,35 +55,35 @@ public class IngestWriteStream implements WriteStream<JsonObject> {
   public Future<Void> write(JsonObject globalRecord) {
     ops.incrementAndGet();
     return lookupId(globalRecord)
-      .compose(rec -> {
-        log(rec);
-        Future<Void> future = Future.succeededFuture();
-        String localId = rec.getString(LOCAL_ID);
-        if (ingest && localId != null) {
-          if (matchKeyConfigs == null) {
-            future = storage.getAvailableMatchConfigs().map(x -> {
-              matchKeyConfigs = x;
-              return null;
-            });
+        .compose(rec -> {
+          log(rec);
+          Future<Void> future = Future.succeededFuture();
+          String localId = rec.getString(LOCAL_ID);
+          if (ingest && localId != null) {
+            if (matchKeyConfigs == null) {
+              future = storage.getAvailableMatchConfigs().map(x -> {
+                matchKeyConfigs = x;
+                return null;
+              });
+            }
+            future = future
+                .compose(x -> storage.ingestGlobalRecord(
+                    vertx, sourceId, sourceVersion, rec, matchKeyConfigs))
+                .mapEmpty();
           }
-          future = future
-            .compose(x -> storage.ingestGlobalRecord(
-              vertx, sourceId, sourceVersion, rec, matchKeyConfigs))
-            .mapEmpty();
-        }
-        return future;
-      })
-      .onComplete(x -> {
-        if (ops.decrementAndGet() == queueSize / 2 && drainHandler != null) {
-          drainHandler.handle(null);
-        }
-        if (ops.get() == 0) {
-          log.info("{} records processed", number.get());
-          if (endHandler != null) {
-            endHandler.handle(Future.succeededFuture());
+          return future;
+        })
+        .onComplete(x -> {
+          if (ops.decrementAndGet() == queueSize / 2 && drainHandler != null) {
+            drainHandler.handle(null);
           }
-        }
-      });
+          if (ops.get() == 0 && ended) {
+            log.info("{} records processed", number.get());
+            if (endHandler != null) {
+              endHandler.handle(Future.succeededFuture());
+            }
+          }
+        });
   }
 
   @Override
@@ -91,7 +93,9 @@ public class IngestWriteStream implements WriteStream<JsonObject> {
 
   @Override
   public void end(Handler<AsyncResult<Void>> handler) {
+    ended = true;
     if (ops.get() == 0) {
+      log.info("{} records processed", number.get());
       handler.handle(Future.succeededFuture());
     } else {
       endHandler = handler;
