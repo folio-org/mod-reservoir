@@ -37,8 +37,6 @@ public class UploadService {
     return promise.future();
   }
 
-
-
   /**
    * non-OpenAPI upload records service handler.
    *
@@ -66,8 +64,8 @@ public class UploadService {
       log.info("Upload Content-Type {}", contentType);
       Future<Void> future;
       if (contentType != null && contentType.startsWith("multipart/form-data")) {
-        List<Future<Void>> futures = new ArrayList<>();
         request.setExpectMultipart(true);
+        List<Future<Void>> futures = new ArrayList<>();
         request.uploadHandler(upload ->
             futures.add(uploadContent(upload, ingestWriteStream, upload.contentType(), raw))
         );
