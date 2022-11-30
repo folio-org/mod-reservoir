@@ -568,25 +568,29 @@ public class OaiPmhClientService {
     }
   }
 
+  private Future<Void> handleBadResponse(HttpClientResponse res) {
+    Promise<Void> promise = Promise.promise();
+    Buffer buffer = Buffer.buffer();
+    res.handler(x -> {
+      // only save first bytes, so we don't fill our memory up with big response
+      if (buffer.length() < 80) {
+        buffer.appendBuffer(x);
+      }
+    });
+    res.exceptionHandler(promise::tryFail);
+    res.endHandler(end -> {
+      String msg = buffer.length() > 80
+          ? buffer.getString(0, 80) : buffer.toString();
+      promise.tryFail("Returned HTTP status " + res.statusCode() + ": " + msg);
+    });
+    return promise.future();
+  }
+
   private Future<Void> listRecordsResponse(Storage storage, OaiPmhStatus job,
       JsonArray matchKeyConfigs, HttpClientResponse res) {
     job.setTotalRequests(job.getTotalRequests() + 1);
     if (res.statusCode() != 200) {
-      Promise<Void> promise = Promise.promise();
-      Buffer buffer = Buffer.buffer();
-      res.handler(x -> {
-        // only save first bytes, so we don't fill our memory up with big response
-        if (buffer.length() < 80) {
-          buffer.appendBuffer(x);
-        }
-      });
-      res.exceptionHandler(promise::tryFail);
-      res.endHandler(end -> {
-        String msg = buffer.length() > 80
-            ? buffer.getString(0, 80) : buffer.toString();
-        promise.tryFail("Returned HTTP status " + res.statusCode() + ": " + msg);
-      });
-      return promise.future();
+      return handleBadResponse(res);
     }
     XmlParser xmlParser = XmlParser.newParser(res);
     XmlMetadataStreamParser<JsonObject> metadataParser
