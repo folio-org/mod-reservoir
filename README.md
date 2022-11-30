@@ -136,6 +136,75 @@ Once records are loaded, they can be retrieved with:
 curl -HX-Okapi-Tenant:$OKAPI_TENANT $OKAPI_URL/reservoir/records
 ```
 
+## Ingest with curl via multipart/form-data
+
+Yet another ingesting alternative is importing via HTTP multipart/form-data at endpoint `/reservoir/upload`.
+
+The named form element `records` is recognized; other names are ignored.
+Remaining configuration is triggered by headers (such as `X-Okapi-Token`) and query parameters.
+
+Currently, two formats are supported.
+
+ * MARC/ISO2709 concatenated records, triggered by Content-Type `application/octet-stream`.
+ * MARCXML collection, triggered by Content-Type `application/xml` or `text/xml`.
+
+The following query parameters are recognized:
+
+ * `sourceId`: required parameter for specifying the source identifier.
+ * `sourceVersion` : optional parameter for specifying source version
+    (default is 1)
+ * `localIdPath` : optional parameter for specifying where to fetch local identifier
+    (default is `$.marc.fields[*].001`)
+
+These query parameters are for debugging and performance testing only:
+
+ * `ingest` optional boolean parameter to determine whether ingesting is to take place (default `true`)
+ * `raw` optional boolean parameter to determine whether to just pipe the stream (default `false`)
+
+For example to ingest a set of MARCXML records via curl from sourceId `BIB1`:
+
+```
+  curl -HX-Okapi-Tenant:$OKAPI_TENANT -Frecords=@records100k.xml $OKAPI_URL/reservoir/upload?sourceId=BIB1
+```
+
+## Ingest with curl without a form
+
+Uses the same path and query parameters as the multipart/form-data upload but the request body contains
+the file contents directly.
+
+For ISO2709 (binary):
+
+```
+  curl -HX-Okapi-Tenant:$OKAPI_TENANT  -T records.mrc \
+    $OKAPI_URL/reservoir/upload?sourceId=BIB1
+```
+
+Note: curl's `-T` is a shorthand for `--upload-file` and uses `PUT` for uploads,
+no `Content-Type` is set by curl which Reservoir treats the same as `application/octet-stream`.
+
+For uploading MARCXML:
+
+```
+  curl -HX-Okapi-Tenant:$OKAPI_TENANT -HContent-Type:text/xml -T records100k.xml \
+    $OKAPI_URL/reservoir/upload?sourceId=BIB1
+```
+
+Additionally, this method allows sending `gzip` compressed files:
+
+```
+  curl -HX-Okapi-Tenant:$OKAPI_TENANT -HContent-Encoding:gzip \
+   -T records.mrc.gz $OKAPI_URL/reservoir/upload?sourceId=BIB1
+```
+
+or apply compression on the fly:
+
+```
+  cat records.mrc | gzip | curl -HX-Okapi-Tenant:$OKAPI_TENANT \
+    -HContent-Encoding:gzip -T - $OKAPI_URL/reservoir/upload?sourceId=BIB1
+```
+
+Avoid using curl's alternative with `--data-binary @...` for large files as it buffers the entire file and may result in out of memory errors.
+
 ## Configuring matchers
 
 Records in Reservoir are clustered according to rules expressed in a `matcher`. Matchers
@@ -403,74 +472,6 @@ and enabled for the OAI-PMH server with:
 ```
 curl -HX-Okapi-Tenant:$OKAPI_TENANT -HContent-Type:application/json \
   -XPUT $OKAPI_URL/reservoir/config/oai -d'{"transformer":"marc-transformer::transform"}'
-```
-
-## Ingest via multipart/form-data
-
-Yet another ingesting alternative is importing via HTTP multipart/form-data at endpoint `/reservoir/upload`.
-
-The named form element `records` is recognized; other names are ignored.
-Remaining configuration is triggered by headers (such as `X-Okapi-Token`) and query parameters.
-
-Currently, two formats are supported.
-
- * MARC/ISO2709 concatenated records, triggered by Content-Type `application/octet-stream`.
- * MARCXML collection, triggered by Content-Type `application/xml` or `text/xml`.
-
-The following query parameters are recognized:
-
- * `sourceId`: required parameter for specifying the source identifier.
- * `sourceVersion` : optional parameter for specifying source version
-    (default is 1)
- * `localIdPath` : optional parameter for specifying where to fetch local identifier
-    (default is `$.marc.fields[*].001`)
-
-These query parameters are for debugging and performance testing only:
-
- * `ingest` optional boolean parameter to determine whether ingesting is to take place (default `true`)
- * `raw` optional boolean parameter to determine whether to just pipe the stream (default `false`)
-
-For example to ingest a set of MARCXML records via curl from sourceId `BIB1`:
-
-```
-  curl -HX-Okapi-Tenant:$OKAPI_TENANT -Frecords=@records100k.xml $OKAPI_URL/reservoir/upload?sourceId=BIB1
-```
-
-## Ingest via POST and body
-
-Same query parameters as the multipart, but the body contains the records straight up.
-
-For example for MARCXML:
-
-```
-  curl -HX-Okapi-Tenant:$OKAPI_TENANT -HContent-Type:text/xml --data-binary @records100k.xml \
-    $OKAPI_URL/reservoir/upload?sourceId=BIB1
-```
-
-and for ISO2709:
-
-```
-  curl -HX-Okapi-Tenant:$OKAPI_TENANT -HContent-Type:application/octet-stream \
-    --data-binary @records.mrc $OKAPI_URL/reservoir/upload?sourceId=BIB1
-```
-
-Or using curl's alternative syntax with `-T/--upload-file` (uses PUT internally):
-
-```
-  curl -HX-Okapi-Tenant:$OKAPI_TENANT -T records.mrc \
-     $OKAPI_URL/reservoir/upload?sourceId=BIB1
-```
-
-This method also allows you to apply gzip compression on the fly or load an already compressed `gzip` file:
-
-```
-  cat records.mrc | gzip | curl -HX-Okapi-Tenant:$OKAPI_TENANT -HContent-Type:application/octet-stream \
-    -HContent-Encoding:gzip --data-binary @- $OKAPI_URL/reservoir/upload?sourceId=BIB1
-```
-
-```
-  curl -HX-Okapi-Tenant:$OKAPI_TENANT -HContent-Type:application/octet-stream -HContent-Encoding:gzip \
-   --data-binary @records.mrc.gz $OKAPI_URL/reservoir/upload?sourceId=BIB1
 ```
 
 ## Additional information
