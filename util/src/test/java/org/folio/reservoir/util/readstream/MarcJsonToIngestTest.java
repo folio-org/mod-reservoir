@@ -6,6 +6,7 @@ import io.vertx.core.Vertx;
 import io.vertx.core.file.OpenOptions;
 import io.vertx.core.json.JsonArray;
 import io.vertx.core.json.JsonObject;
+import io.vertx.core.streams.ReadStream;
 import io.vertx.ext.unit.TestContext;
 import io.vertx.ext.unit.junit.VertxUnitRunner;
 
@@ -37,14 +38,12 @@ public class MarcJsonToIngestTest {
     vertx.close().onComplete(context.asyncAssertSuccess());
   }
 
-  Future<MappingReadStream<JsonObject, JsonObject>> marcFromFile(String fname) {
-    return vertx.fileSystem().open(fname, new OpenOptions())
-        .map(file -> {
-          MappingReadStream<JsonObject, JsonObject> stream =
-              new MappingReadStream<>(new MarcToJsonParser(file), new MarcJsonToIngestMapper());
-          stream.pause();
-          return stream;
-        });
+  Future<ReadStream<JsonObject>> marcFromFile(String fname) {
+    return vertx.fileSystem()
+        .open(fname, new OpenOptions())
+        .map(file -> new MappingReadStream<>(new MarcToJsonParser(file),
+            new MarcJsonToIngestMapper())
+            .pause());
   }
 
   String get001(JsonObject marc) {
