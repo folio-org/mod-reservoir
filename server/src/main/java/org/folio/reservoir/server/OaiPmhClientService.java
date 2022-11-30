@@ -537,7 +537,7 @@ public class OaiPmhClientService {
     return httpClient.request(requestOptions).compose(HttpClientRequest::send);
   }
 
-  static Future<Void> endResponse(StringBuilder resumptionToken, String error,
+  static Future<Void> endResponse(String resumptionToken, String error,
       OaiPmhStatus job) {
     JsonObject config = job.getConfig();
     LocalDateTime started = job.getLastStartedTimestampRaw();
@@ -546,11 +546,10 @@ public class OaiPmhClientService {
     job.setLastRunningTime(runningTimeMilli);
     job.calculateLastRecsPerSec();
     String oldResumptionToken = config.getString(RESUMPTION_TOKEN_LITERAL);
-    if (resumptionToken.length() == 0
-        || resumptionToken.toString().equals(oldResumptionToken)) {
+    if (resumptionToken.isEmpty() || resumptionToken.equals(oldResumptionToken)) {
       moveFromDate(config);
       config.remove(RESUMPTION_TOKEN_LITERAL);
-      return Future.failedFuture(error == null ? OAI_ERROR_NORECORDSMATCH : error);
+      return Future.failedFuture(error.isEmpty() ? OAI_ERROR_NORECORDSMATCH : error);
     } else {
       config.put(RESUMPTION_TOKEN_LITERAL, resumptionToken);
       return Future.succeededFuture();
@@ -600,6 +599,7 @@ public class OaiPmhClientService {
     AtomicBoolean ended = new AtomicBoolean();
     int sourceVersion = config.getInteger("sourceVersion", 1);
     StringBuilder resumptionToken = new StringBuilder();
+    StringBuilder error = new StringBuilder();
     OaiParserStream<JsonObject> oaiParserStream =
         new OaiParserStream<>(xmlParser,
             oaiRecord -> {
@@ -632,7 +632,8 @@ public class OaiPmhClientService {
                       job.setTotalUpdated(job.getTotalUpdated() + 1);
                     }
                     if (queue.get() == 0 && Boolean.TRUE.equals(ended.get())) {
-                      endResponse(resumptionToken, null, job).onComplete(promise);
+                      endResponse(resumptionToken.toString(), error.toString(), job)
+                          .onComplete(promise);
                     }
                     return null;
                   })
@@ -646,8 +647,12 @@ public class OaiPmhClientService {
       if (tmp != null) {
         resumptionToken.append(tmp);
       }
+      tmp = oaiParserStream.getError();
+      if (tmp != null) {
+        error.append(tmp);
+      }
       if (queue.get() == 0) {
-        endResponse(resumptionToken, oaiParserStream.getError(), job).onComplete(promise);
+        endResponse(resumptionToken.toString(), error.toString(), job).onComplete(promise);
       }
     });
     return promise.future();
