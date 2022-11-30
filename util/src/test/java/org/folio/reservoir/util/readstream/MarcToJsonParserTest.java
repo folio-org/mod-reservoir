@@ -6,6 +6,7 @@ import io.vertx.core.Vertx;
 import io.vertx.core.buffer.Buffer;
 import io.vertx.core.file.OpenOptions;
 import io.vertx.core.json.JsonObject;
+import io.vertx.core.streams.ReadStream;
 import io.vertx.ext.unit.TestContext;
 import io.vertx.ext.unit.junit.VertxUnitRunner;
 import java.util.ArrayList;
@@ -35,12 +36,12 @@ public class MarcToJsonParserTest {
     vertx.close().onComplete(context.asyncAssertSuccess());
   }
 
-  Future<MarcToJsonParser> marc4ParserToXmlFromFile(String fname) {
+  Future<ReadStream<JsonObject>> marc4ParserToXmlFromFile(String fname) {
     return vertx.fileSystem().open(fname, new OpenOptions())
-        .map(MarcToJsonParser::new);
+        .map(f -> new MarcToJsonParser(f).pause());
   }
 
-  Future<MarcToJsonParser> marc4ParserToXmlFromFile() {
+  Future<ReadStream<JsonObject>> marc4ParserToXmlFromFile() {
     return marc4ParserToXmlFromFile("marc3.marc");
   }
 
@@ -53,6 +54,7 @@ public class MarcToJsonParserTest {
           parser.handler(records::add);
           parser.endHandler(e -> promise.complete(records));
           parser.exceptionHandler(promise::tryFail);
+          parser.resume();
           return promise.future();
         })
         .onComplete(context.asyncAssertSuccess(records -> {
@@ -74,6 +76,7 @@ public class MarcToJsonParserTest {
           Promise<Void> promise = Promise.promise();
           parser.exceptionHandler(promise::tryFail);
           parser.endHandler(x -> promise.tryComplete());
+          parser.resume();
           return promise.future();
         })
         .onComplete(context.asyncAssertSuccess());
@@ -88,6 +91,7 @@ public class MarcToJsonParserTest {
           parser.endHandler(x -> {
             throw new RuntimeException("end exception");
           });
+          parser.resume();
           return promise.future();
         })
         .onComplete(context.asyncAssertFailure(e -> assertThat(e.getMessage(), is("end exception"))));
@@ -102,6 +106,7 @@ public class MarcToJsonParserTest {
             promise.tryFail("must stop");
             throw new RuntimeException("end exception");
           });
+          parser.resume();
           return promise.future();
         })
         .onComplete(context.asyncAssertFailure(e -> assertThat(e.getMessage(), is("must stop"))));
@@ -119,6 +124,7 @@ public class MarcToJsonParserTest {
               promise.tryComplete();
             }
           });
+          parser.resume();
           return promise.future();
         })
         .onComplete(context.asyncAssertSuccess());
@@ -155,6 +161,7 @@ public class MarcToJsonParserTest {
           });
           parser.exceptionHandler(promise::tryFail);
           parser.endHandler(promise::complete);
+          parser.resume();
           return promise.future();
         })
         .onComplete(context.asyncAssertFailure(
@@ -192,6 +199,7 @@ public class MarcToJsonParserTest {
     Promise<Void> promise = Promise.promise();
     parser.exceptionHandler(promise::tryFail);
     parser.endHandler(x -> promise.complete());
+    parser.resume();
     rs.run();
     promise.future()
         .onComplete(context.asyncAssertFailure(
