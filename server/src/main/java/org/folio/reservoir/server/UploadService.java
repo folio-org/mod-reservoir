@@ -61,7 +61,7 @@ public class UploadService {
           new SourceId(sourceId), Integer.parseInt(sourceVersion), ingest, jsonPath);
       ingestWriteStream.setWriteQueueMaxSize(100);
       String contentType = request.getHeader("Content-Type");
-      int queueSize = storage.pool.getPoolOptions().getMaxSize() * 2;
+      int queueSize = storage.pool.getPoolOptions().getMaxSize() * 10;
       log.info("Upload Content-Type {} source {} queueSize {}", contentType, sourceId, queueSize);
       Future<Void> future;
       if (contentType != null && contentType.startsWith("multipart/form-data")) {
