@@ -29,11 +29,11 @@ public class UploadService {
   private static final Logger log = LogManager.getLogger(UploadService.class);
 
   private Future<Void> uploadPayloadStream(ReadStream<JsonObject> upload,
-      IngestWriteStream ingestWriteStream) {
+      IngestWriteStream ingestWriteStream, int queueSize) {
     Promise<Void> promise = Promise.promise();
     upload.endHandler(promise::tryComplete);
     upload.exceptionHandler(promise::tryFail);
-    Pump.pump(upload, ingestWriteStream, 20).start();
+    Pump.pump(upload, ingestWriteStream, queueSize).start();
     return promise.future();
   }
 
@@ -61,20 +61,22 @@ public class UploadService {
           new SourceId(sourceId), Integer.parseInt(sourceVersion), ingest, jsonPath);
       ingestWriteStream.setWriteQueueMaxSize(100);
       String contentType = request.getHeader("Content-Type");
-      log.info("Upload Content-Type {}", contentType);
+      int queueSize = storage.pool.getPoolOptions().getMaxSize() * 2;
+      log.info("Upload Content-Type {} source {} queueSize {}", contentType, sourceId, queueSize);
       Future<Void> future;
       if (contentType != null && contentType.startsWith("multipart/form-data")) {
         request.setExpectMultipart(true);
         List<Future<Void>> futures = new ArrayList<>();
         request.uploadHandler(upload ->
-            futures.add(uploadContent(upload, ingestWriteStream, upload.contentType(), raw))
+            futures.add(uploadContent(upload, ingestWriteStream, upload.contentType(),
+                queueSize, raw))
         );
         Promise<Void> promise = Promise.promise();
         request.exceptionHandler(promise::tryFail);
         request.endHandler(e1 -> promise.handle(GenericCompositeFuture.all(futures).mapEmpty()));
         future = promise.future();
       } else {
-        future = uploadContent(request, ingestWriteStream, contentType, raw);
+        future = uploadContent(request, ingestWriteStream, contentType, queueSize, raw);
       }
       return future.onSuccess(response1 ->
           ingestWriteStream.end(s -> {
@@ -89,7 +91,7 @@ public class UploadService {
   }
 
   private Future<Void> uploadContent(ReadStream<Buffer> request,
-      IngestWriteStream ingestWriteStream, String contentType, boolean raw) {
+      IngestWriteStream ingestWriteStream, String contentType, int queueSize, boolean raw) {
     if (raw) {
       Promise<Void> promise = Promise.promise();
       AtomicLong sz = new AtomicLong();
@@ -100,11 +102,11 @@ public class UploadService {
       });
       return promise.future();
     }
-    return uploadContent(request, ingestWriteStream, contentType);
+    return uploadContent(request, ingestWriteStream, contentType, queueSize);
   }
 
   private Future<Void> uploadContent(ReadStream<Buffer> request,
-      IngestWriteStream ingestWriteStream, String contentType) {
+      IngestWriteStream ingestWriteStream, String contentType, int queueSize) {
     ReadStream<JsonObject> parser;
     if (contentType == null) {
       contentType = "application/octet-stream";
@@ -119,6 +121,6 @@ public class UploadService {
       }
     }
     parser = new MappingReadStream<>(parser, new MarcJsonToIngestMapper());
-    return uploadPayloadStream(parser, ingestWriteStream);
+    return uploadPayloadStream(parser, ingestWriteStream, queueSize);
   }
 }
