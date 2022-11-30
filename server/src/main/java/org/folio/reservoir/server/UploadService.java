@@ -33,7 +33,7 @@ public class UploadService {
     Promise<Void> promise = Promise.promise();
     upload.endHandler(promise::tryComplete);
     upload.exceptionHandler(promise::tryFail);
-    Pump.pump(upload, ingestWriteStream, 40).start();
+    Pump.pump(upload, ingestWriteStream, 20).start();
     return promise.future();
   }
 
