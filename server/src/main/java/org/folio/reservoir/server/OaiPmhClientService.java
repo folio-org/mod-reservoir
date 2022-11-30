@@ -537,8 +537,7 @@ public class OaiPmhClientService {
     return httpClient.request(requestOptions).compose(HttpClientRequest::send);
   }
 
-  static Future<Void> endResponse(String resumptionToken, String error,
-      OaiPmhStatus job) {
+  static Future<Void> endResponse(String resumptionToken, String error, OaiPmhStatus job) {
     JsonObject config = job.getConfig();
     LocalDateTime started = job.getLastStartedTimestampRaw();
     long runningTimeMilli =
@@ -546,10 +545,10 @@ public class OaiPmhClientService {
     job.setLastRunningTime(runningTimeMilli);
     job.calculateLastRecsPerSec();
     String oldResumptionToken = config.getString(RESUMPTION_TOKEN_LITERAL);
-    if (resumptionToken.isEmpty() || resumptionToken.equals(oldResumptionToken)) {
+    if (resumptionToken == null || resumptionToken.equals(oldResumptionToken)) {
       moveFromDate(config);
       config.remove(RESUMPTION_TOKEN_LITERAL);
-      return Future.failedFuture(error.isEmpty() ? OAI_ERROR_NORECORDSMATCH : error);
+      return Future.failedFuture(error == null ? OAI_ERROR_NORECORDSMATCH : error);
     } else {
       config.put(RESUMPTION_TOKEN_LITERAL, resumptionToken);
       return Future.succeededFuture();
@@ -598,61 +597,51 @@ public class OaiPmhClientService {
     AtomicInteger queue = new AtomicInteger();
     AtomicBoolean ended = new AtomicBoolean();
     int sourceVersion = config.getInteger("sourceVersion", 1);
-    StringBuilder resumptionToken = new StringBuilder();
-    StringBuilder error = new StringBuilder();
-    OaiParserStream<JsonObject> oaiParserStream =
-        new OaiParserStream<>(xmlParser,
-            oaiRecord -> {
-              // populate from with newest datestamp from all responses
-              String datestamp = oaiRecord.getDatestamp();
-              String from = config.getString("from");
-              if (from == null || datestamp.compareTo(from) > 0) {
-                config.put("from", datestamp);
-              }
-              queue.incrementAndGet();
-              // is queue full: 4 because that's the Postgres client pool size
-              if (Boolean.FALSE.equals(ended.get()) && queue.get() >= 4) {
-                xmlParser.pause();
-              }
-              ingestRecord(storage, oaiRecord, sourceId, sourceVersion,
-                  matchKeyConfigs)
-                  .map(upd -> {
-                    queue.decrementAndGet();
-                    // drain ?
-                    if (queue.get() < 2) {
-                      xmlParser.resume();
-                    }
-                    job.setTotalRecords(job.getTotalRecords() + 1);
-                    job.setLastTotalRecords(job.getLastTotalRecords() + 1);
-                    if (upd == null) {
-                      job.setTotalDeleted(job.getTotalDeleted() + 1);
-                    } else if (Boolean.TRUE.equals(upd)) {
-                      job.setTotalInserted(job.getTotalInserted() + 1);
-                    } else {
-                      job.setTotalUpdated(job.getTotalUpdated() + 1);
-                    }
-                    if (queue.get() == 0 && Boolean.TRUE.equals(ended.get())) {
-                      endResponse(resumptionToken.toString(), error.toString(), job)
-                          .onComplete(promise);
-                    }
-                    return null;
-                  })
-                  .onFailure(x -> xmlParser.resume());
-            },
-            metadataParser);
+    OaiParserStream<JsonObject> oaiParserStream = new OaiParserStream<>(xmlParser, metadataParser);
+    oaiParserStream.parse(
+        oaiRecord -> {
+          // populate from with newest datestamp from all responses
+          String datestamp = oaiRecord.getDatestamp();
+          String from = config.getString("from");
+          if (from == null || datestamp.compareTo(from) > 0) {
+            config.put("from", datestamp);
+          }
+          queue.incrementAndGet();
+          // is queue full: 4 because that's the Postgres client pool size
+          if (Boolean.FALSE.equals(ended.get()) && queue.get() >= 4) {
+            xmlParser.pause();
+          }
+          ingestRecord(storage, oaiRecord, sourceId, sourceVersion,
+              matchKeyConfigs)
+              .map(upd -> {
+                queue.decrementAndGet();
+                // drain ?
+                if (queue.get() < 2) {
+                  xmlParser.resume();
+                }
+                job.setTotalRecords(job.getTotalRecords() + 1);
+                job.setLastTotalRecords(job.getLastTotalRecords() + 1);
+                if (upd == null) {
+                  job.setTotalDeleted(job.getTotalDeleted() + 1);
+                } else if (Boolean.TRUE.equals(upd)) {
+                  job.setTotalInserted(job.getTotalInserted() + 1);
+                } else {
+                  job.setTotalUpdated(job.getTotalUpdated() + 1);
+                }
+                if (queue.get() == 0 && Boolean.TRUE.equals(ended.get())) {
+                  endResponse(oaiParserStream.getResumptionToken(), oaiParserStream.getError(), job)
+                      .onComplete(promise);
+                }
+                return null;
+              })
+              .onFailure(x -> xmlParser.resume());
+        });
     oaiParserStream.exceptionHandler(promise::fail);
     xmlParser.endHandler(end -> {
       ended.set(true);
-      String tmp = oaiParserStream.getResumptionToken();
-      if (tmp != null) {
-        resumptionToken.append(tmp);
-      }
-      tmp = oaiParserStream.getError();
-      if (tmp != null) {
-        error.append(tmp);
-      }
       if (queue.get() == 0) {
-        endResponse(resumptionToken.toString(), error.toString(), job).onComplete(promise);
+        endResponse(oaiParserStream.getResumptionToken(), oaiParserStream.getError(), job)
+            .onComplete(promise);
       }
     });
     return promise.future();

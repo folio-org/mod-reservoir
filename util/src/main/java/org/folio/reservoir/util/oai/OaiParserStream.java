@@ -71,14 +71,21 @@ public class OaiParserStream<T> {
     return this;
   }
 
+  final ReadStream<XMLStreamReader> stream;
+
+  final XmlMetadataStreamParser<T> metadataParser;
+
+  public OaiParserStream(ReadStream<XMLStreamReader> stream,
+      XmlMetadataStreamParser<T> metadataParser) {
+    this.stream = stream;
+    this.metadataParser = metadataParser;
+  }
+
   /**
    * Parse OAI response from stream.
-   * @param stream XML parser stream
    * @param recordHandler handler that is called for each record
-   * @param metadataParser metadata parser
    */
-  public OaiParserStream(ReadStream<XMLStreamReader> stream, Consumer<OaiRecord<T>> recordHandler,
-      XmlMetadataStreamParser<T> metadataParser) {
+  public void parse(Consumer<OaiRecord<T>> recordHandler) {
     stream.handler(xmlStreamReader -> {
       try {
         int event = xmlStreamReader.getEventType();
