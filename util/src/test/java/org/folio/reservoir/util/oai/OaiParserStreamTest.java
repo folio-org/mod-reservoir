@@ -42,7 +42,8 @@ public class OaiParserStreamTest {
     return vertx.fileSystem().open(fname, new OpenOptions()).compose(asyncFile -> {
       XmlParser xmlParser = XmlParser.newParser(asyncFile);
       XmlMetadataStreamParser<JsonObject> metadataParser = new XmlMetadataParserMarcInJson();
-      OaiParserStream<JsonObject> oaiParserStream = new OaiParserStream<>(xmlParser, recordHandler, metadataParser);
+      OaiParserStream<JsonObject> oaiParserStream = new OaiParserStream<>(xmlParser, metadataParser);
+      oaiParserStream.parse(recordHandler);
       Promise<OaiParserStream<JsonObject>> promise = Promise.promise();
       oaiParserStream.exceptionHandler(e -> promise.tryFail(e));
       xmlParser.endHandler(e -> promise.complete(oaiParserStream));
