@@ -57,6 +57,8 @@ public class OaiPmhClientService {
 
   private static final String CLIENT_ID_ALL = "_all";
 
+  private static final String OAI_ERROR_NORECORDSMATCH = "noRecordsMatch";
+
   private static final Logger log = LogManager.getLogger(OaiPmhClientService.class);
 
   public OaiPmhClientService(Vertx vertx) {
@@ -548,7 +550,7 @@ public class OaiPmhClientService {
         || resumptionToken.toString().equals(oldResumptionToken)) {
       moveFromDate(config);
       config.remove(RESUMPTION_TOKEN_LITERAL);
-      return Future.failedFuture(error); // == null if no error (just end of harvest)
+      return Future.failedFuture(error == null ? OAI_ERROR_NORECORDSMATCH : error);
     } else {
       config.put(RESUMPTION_TOKEN_LITERAL, resumptionToken);
       return Future.succeededFuture();
@@ -693,11 +695,11 @@ public class OaiPmhClientService {
         .recover(e -> {
           // error or all harvested. let's save it.
           job.setStatusIdle();
-          if (e.getMessage() != null) {
+          if (OAI_ERROR_NORECORDSMATCH.equals(e.getMessage())) {
+            log.info("harvest loop id={} owner={} all harvested", id, owner);
+          } else {
             log.warn("harvest loop id={} owner={} error {}", id, owner, e.getMessage(), e);
             job.setError(e.getMessage());
-          } else {
-            log.info("harvest loop id={} owner={} all harvested", id, owner);
           }
           // hopefully updateJob works so that error can be saved.
           return updateJob(storage, id, config, job, null, null);
