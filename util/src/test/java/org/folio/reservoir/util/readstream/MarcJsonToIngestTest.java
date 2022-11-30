@@ -39,7 +39,12 @@ public class MarcJsonToIngestTest {
 
   Future<MappingReadStream<JsonObject, JsonObject>> marcFromFile(String fname) {
     return vertx.fileSystem().open(fname, new OpenOptions())
-        .map(file -> new MappingReadStream<>(new MarcToJsonParser(file), new MarcJsonToIngestMapper()));
+        .map(file -> {
+          MappingReadStream<JsonObject, JsonObject> stream =
+              new MappingReadStream<>(new MarcToJsonParser(file), new MarcJsonToIngestMapper());
+          stream.pause();
+          return stream;
+        });
   }
 
   String get001(JsonObject marc) {
@@ -55,6 +60,7 @@ public class MarcJsonToIngestTest {
           parser.handler(records::add);
           parser.endHandler(e -> promise.complete(records));
           parser.exceptionHandler(promise::tryFail);
+          parser.resume();
           return promise.future();
         })
         .onComplete(context.asyncAssertSuccess(records -> {
@@ -78,6 +84,7 @@ public class MarcJsonToIngestTest {
           parser.handler(records::add);
           parser.endHandler(e -> promise.complete(records));
           parser.exceptionHandler(promise::tryFail);
+          parser.resume();
           return promise.future();
         })
         .onComplete(context.asyncAssertSuccess(records -> {
@@ -100,6 +107,7 @@ public class MarcJsonToIngestTest {
           parser.handler(records::add);
           parser.endHandler(e -> promise.complete(records));
           parser.exceptionHandler(promise::tryFail);
+          parser.resume();
           return promise.future();
         })
         .onComplete(context.asyncAssertFailure(
