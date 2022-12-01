@@ -643,7 +643,8 @@ public class OaiPmhClientService {
               .onFailure(x -> {
                 log.error("{} when parsing record {}", x.getMessage(),
                     oaiRecord.getIdentifier(), x);
-                // fail now. To ignore, omit the call
+                // fail now. To ignore, omit the calls below
+                xmlParser.endHandler(null);
                 promise.tryFail(x.getMessage() + " when parsing record "
                     + oaiRecord.getIdentifier());
               });
