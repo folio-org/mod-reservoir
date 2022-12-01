@@ -618,11 +618,6 @@ public class OaiPmhClientService {
           ingestRecord(storage, oaiRecord, sourceId, sourceVersion,
               matchKeyConfigs)
               .map(upd -> {
-                queue.decrementAndGet();
-                // drain ?
-                if (queue.get() < 2) {
-                  xmlParser.resume();
-                }
                 job.setTotalRecords(job.getTotalRecords() + 1);
                 job.setLastTotalRecords(job.getLastTotalRecords() + 1);
                 if (upd == null) {
@@ -632,15 +627,29 @@ public class OaiPmhClientService {
                 } else {
                   job.setTotalUpdated(job.getTotalUpdated() + 1);
                 }
+                return null;
+              })
+              .onFailure(x -> {
+                log.error("{} when parsing record {}", x.getMessage(),
+                    oaiRecord.getIdentifier(), x);
+                // fail now. To ignore, omit the calls below
+                xmlParser.endHandler(null);
+                promise.tryFail(x.getMessage() + " when parsing record "
+                    + oaiRecord.getIdentifier());
+              })
+              .onComplete(x -> {
+                queue.decrementAndGet();
+                // drain ?
+                if (queue.get() < 2) {
+                  xmlParser.resume();
+                }
                 if (queue.get() == 0 && Boolean.TRUE.equals(ended.get())) {
                   endResponse(oaiParserStream.getResumptionToken(), oaiParserStream.getError(), job)
                       .onComplete(promise);
                 }
-                return null;
-              })
-              .onFailure(x -> xmlParser.resume());
+              });
         });
-    oaiParserStream.exceptionHandler(promise::fail);
+    oaiParserStream.exceptionHandler(promise::tryFail);
     xmlParser.endHandler(end -> {
       ended.set(true);
       if (queue.get() == 0) {

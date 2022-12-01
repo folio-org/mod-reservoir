@@ -126,6 +126,10 @@ public class OaiParserStreamTest {
   public void listRecords5(TestContext context) {
     List<OaiRecord<JsonObject>> records = new ArrayList<>();
     parseOai("oai-response-5.xml", records::add)
-        .onComplete(context.asyncAssertFailure(e -> assertThat(e.getMessage(), is("Bad marcxml element: foo"))));
+        .onComplete(context.asyncAssertFailure(e -> {
+          assertThat(e.getMessage(), is("Bad marcxml element: foo"));
+          assertThat(records, hasSize(1));
+          assertThat(records.get(0).identifier, is("998212783503681"));
+        }));
   }
 }
