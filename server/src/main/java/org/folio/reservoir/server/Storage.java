@@ -321,7 +321,7 @@ public class Storage {
                 } catch (Exception e) {
                   p.fail(e);
                 }
-              }, false)
+              }, true)
               .compose(values ->
                 updateMatchKeyValues(conn, globalId, matchkeyId, values)
               ));
