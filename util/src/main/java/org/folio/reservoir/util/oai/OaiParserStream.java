@@ -103,10 +103,14 @@ public class OaiParserStream<T> {
           cdata.append(xmlStreamReader.getText());
         }
       } catch (Exception e) {
+        stream.handler(null);
         exceptionHandler.handle(e);
       }
     });
-    stream.exceptionHandler(e -> exceptionHandler.handle(e));
+    stream.exceptionHandler(e -> {
+      stream.handler(null);
+      exceptionHandler.handle(e);
+    });
   }
 
   private void startElement(Consumer<OaiRecord<T>> recordHandler,
