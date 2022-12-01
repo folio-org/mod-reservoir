@@ -629,6 +629,14 @@ public class OaiPmhClientService {
                 }
                 return null;
               })
+              .onFailure(x -> {
+                log.error("{} when parsing record {}", x.getMessage(),
+                    oaiRecord.getIdentifier(), x);
+                // fail now. To ignore, omit the calls below
+                xmlParser.endHandler(null);
+                promise.tryFail(x.getMessage() + " when parsing record "
+                    + oaiRecord.getIdentifier());
+              })
               .onComplete(x -> {
                 queue.decrementAndGet();
                 // drain ?
@@ -639,14 +647,6 @@ public class OaiPmhClientService {
                   endResponse(oaiParserStream.getResumptionToken(), oaiParserStream.getError(), job)
                       .onComplete(promise);
                 }
-              })
-              .onFailure(x -> {
-                log.error("{} when parsing record {}", x.getMessage(),
-                    oaiRecord.getIdentifier(), x);
-                // fail now. To ignore, omit the calls below
-                xmlParser.endHandler(null);
-                promise.tryFail(x.getMessage() + " when parsing record "
-                    + oaiRecord.getIdentifier());
               });
         });
     oaiParserStream.exceptionHandler(promise::tryFail);
