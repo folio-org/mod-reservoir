@@ -649,7 +649,7 @@ public class OaiPmhClientService {
                     + oaiRecord.getIdentifier());
               });
         });
-    oaiParserStream.exceptionHandler(promise::fail);
+    oaiParserStream.exceptionHandler(promise::tryFail);
     xmlParser.endHandler(end -> {
       ended.set(true);
       if (queue.get() == 0) {
