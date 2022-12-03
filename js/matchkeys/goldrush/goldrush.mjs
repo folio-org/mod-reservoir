@@ -14,7 +14,7 @@ function loadMarcJson(record) {
     throw new Error('MARC fields[0] key is not numeric.');
   }
   if (!marcObj.leader) {
-    throw new Error('MARC leader field is missing.');
+    marcObj.leader = '00000nam a22000000a 4500';
   }
   return marcObj;
 }
