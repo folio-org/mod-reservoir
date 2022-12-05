@@ -107,6 +107,39 @@ public class MainVerticleTest extends TestBase {
   }
 
   @Test
+  public void testGetUploadForm() {
+    RestAssured.given()
+        .header(XOkapiHeaders.TENANT, TENANT_1)
+        .get("/reservoir/upload-form")
+        .then()
+        .statusCode(200)
+        .header("Content-Type", is("text/html;charset=UTF-8"));
+    RestAssured.given()
+        .header(XOkapiHeaders.TENANT, TENANT_1)
+        .get("/reservoir/upload-form/")
+        .then()
+        .statusCode(200)
+        .header("Content-Type", is("text/html;charset=UTF-8"));
+    RestAssured.given()
+        .header(XOkapiHeaders.TENANT, TENANT_1)
+        .get("/reservoir/upload-form/index.html")
+        .then()
+        .statusCode(200)
+        .header("Content-Type", is("text/html;charset=UTF-8"));
+    RestAssured.given()
+        .header(XOkapiHeaders.TENANT, TENANT_1)
+        .get("/reservoir/upload-form/index.js")
+        .then()
+        .statusCode(200)
+        .header("Content-Type", is("text/javascript;charset=UTF-8"));
+    RestAssured.given()
+        .header(XOkapiHeaders.TENANT, TENANT_1)
+        .get("/reservoir/upload-form/notexist.html")
+        .then()
+        .statusCode(404);
+  }
+
+  @Test
   public void testGetGlobalRecordsUnknownTenant() {
     String tenant = "unknowntenant";
     RestAssured.given()

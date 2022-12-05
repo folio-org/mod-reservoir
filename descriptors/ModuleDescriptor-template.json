@@ -355,6 +355,19 @@
           ]
         }
       ]
+    },
+    {
+      "id": "reservoir-upload-form",
+      "version": "1.0",
+      "handlers": [
+        {
+          "methods": [
+            "GET", "HEAD"
+          ],
+          "pathPattern": "/reservoir/upload-form*",
+          "permissionsRequired": []
+        }
+      ]
     }
   ],
   "requires": [],

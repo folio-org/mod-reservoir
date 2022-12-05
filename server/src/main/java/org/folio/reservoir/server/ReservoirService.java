@@ -9,6 +9,7 @@ import io.vertx.core.json.JsonArray;
 import io.vertx.core.json.JsonObject;
 import io.vertx.ext.web.Router;
 import io.vertx.ext.web.RoutingContext;
+import io.vertx.ext.web.handler.StaticHandler;
 import io.vertx.ext.web.openapi.RouterBuilder;
 import io.vertx.ext.web.validation.RequestParameters;
 import io.vertx.ext.web.validation.ValidationHandler;
@@ -510,6 +511,9 @@ public class ReservoirService implements RouterCreator, TenantInitHooks {
               .method(HttpMethod.POST).method(HttpMethod.PUT).handler(ctx ->
               uploadService.uploadRecords(ctx).onFailure(cause -> failHandler(400, ctx, cause)));
           router.route("/*").subRouter(routerBuilder.createRouter());
+          //upload page
+          router.route("/reservoir/upload-form/*")
+              .handler(StaticHandler.create());
           return router;
         });
   }
