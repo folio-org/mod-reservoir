@@ -83,7 +83,7 @@ public class UploadService {
         request.endHandler(e1 ->
             GenericCompositeFuture.all(futures)
                 .onSuccess(y -> promise.complete())
-                .onFailure(e -> promise.tryFail(e))
+                .onFailure(promise::tryFail)
         );
         future = promise.future();
       } else {
