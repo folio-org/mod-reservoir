@@ -352,6 +352,10 @@
           "pathPattern": "/reservoir/upload",
           "permissionsRequired": [
             "reservoir-upload.post"
+          ],
+          "permissionsDesired": [
+            "reservoir-upload.all-sources",
+            "reservoir-upload.sources.*"
           ]
         }
       ]
@@ -604,7 +608,8 @@
       "displayName": "reservoir - upload",
       "description": "upload permissions",
       "subPermissions": [
-        "reservoir-upload.post"
+        "reservoir-upload.post",
+        "reservoir-upload.all-sources"
       ]
     },
     {
