@@ -435,6 +435,14 @@ public class ReservoirService implements RouterCreator, TenantInitHooks {
     failHandler(statusCode, ctx, t);
   }
 
+  static void failHandler(RoutingContext ctx, Throwable e) {
+    if (e instanceof ForbiddenException) {
+      failHandler(403, ctx, e);
+    } else {
+      failHandler(400, ctx, e);
+    }
+  }
+
   static void failHandler(int statusCode, RoutingContext ctx, Throwable e) {
     log.error(e.getMessage(), e);
     failHandler(statusCode, ctx, e.getMessage());
@@ -509,7 +517,7 @@ public class ReservoirService implements RouterCreator, TenantInitHooks {
               putGlobalRecords(ctx).onFailure(cause -> failHandler(400, ctx, cause)));
           router.route("/reservoir/upload")
               .method(HttpMethod.POST).method(HttpMethod.PUT).handler(ctx ->
-              uploadService.uploadRecords(ctx).onFailure(cause -> failHandler(400, ctx, cause)));
+              uploadService.uploadRecords(ctx).onFailure(cause -> failHandler(ctx, cause)));
           router.route("/*").subRouter(routerBuilder.createRouter());
           //upload page
           router.route("/reservoir/upload-form/*")
