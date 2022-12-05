@@ -20,7 +20,9 @@ form.addEventListener(
     if (isJWT(tenantOrToken)) {
       request.setRequestHeader("X-Okapi-Token", tenantOrToken);
     } else {
+      //local
       request.setRequestHeader("X-Okapi-Tenant", tenantOrToken);
+      request.setRequestHeader("X-Okapi-Permissions", '["reservoir-upload.source.' + params.sourceId + '"]');
     }
     request.onload = (progress) => {
       output.innerHTML =
