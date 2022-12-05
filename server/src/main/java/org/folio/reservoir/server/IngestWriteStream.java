@@ -73,6 +73,11 @@ public class IngestWriteStream implements WriteStream<JsonObject> {
           }
           return future;
         })
+        .onFailure(e -> {
+          if (exceptionHandler != null) {
+            exceptionHandler.handle(e);
+          }
+        })
         .onComplete(x -> {
           if (ops.decrementAndGet() == queueSize / 2 && drainHandler != null) {
             drainHandler.handle(null);
