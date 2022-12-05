@@ -205,6 +205,23 @@ or apply compression on the fly:
 
 Avoid using curl's alternative with `--data-binary @...` for large files as it buffers the entire file and may result in out of memory errors.
 
+## Ingest via an embedded upload form
+
+Reservoir comes with a simple HTML/JS file upload form that can be accessed by a browser at:
+(when running Reservoir locally)
+
+```
+  http://localhost:8081/reservoir/upload-form
+```
+
+When running behind Okapi you need to use the `invoke` URL:
+
+```
+  http://$OKAPI_URL/_/invoke/tenant/$OKAPI_TENANT/reservoir/upload-form/
+```
+
+in order to pass the tenant identifier (trailing slash is important).
+
 ## Configuring matchers
 
 Records in Reservoir are clustered according to rules expressed in a `matcher`. Matchers
