@@ -132,6 +132,7 @@ public class UploadTest extends TestBase {
 
     // go straight to module without Okapi intercepting
     webClient.postAbs(MODULE_URL + "/reservoir/upload")
+        .putHeader(XOkapiHeaders.PERMISSIONS, "[\"" + PERM_PREFIX + "." + "SOURCE-1" + "\"]")
         .expect(ResponsePredicate.SC_BAD_REQUEST)
         .putHeader(XOkapiHeaders.TENANT, "badtenant")
         .addQueryParam("sourceId", "SOURCE-1")
