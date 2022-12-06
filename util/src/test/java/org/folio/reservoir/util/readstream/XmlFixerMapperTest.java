@@ -7,6 +7,8 @@ import static org.hamcrest.Matchers.is;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.nullValue;
 
+// ignore warnings about Parameterized test
+@SuppressWarnings({"java:S5976"})
 public class XmlFixerMapperTest {
 
   @Test
