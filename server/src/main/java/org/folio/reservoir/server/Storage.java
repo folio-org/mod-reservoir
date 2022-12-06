@@ -115,6 +115,10 @@ public class Storage {
     return oaiPmhClientTable;
   }
 
+  public String getTenant() {
+    return tenant;
+  }
+
   /**
    * Prepares storage with tables, etc.
    * @return async result.

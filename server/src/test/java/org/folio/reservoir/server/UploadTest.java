@@ -10,6 +10,7 @@ import io.vertx.ext.web.client.predicate.ResponsePredicate;
 import io.vertx.ext.web.multipart.MultipartForm;
 import org.folio.okapi.common.XOkapiHeaders;
 import org.junit.Before;
+import org.junit.Ignore;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 
@@ -81,6 +82,20 @@ public class UploadTest extends TestBase {
   }
 
   @Test
+  public void uploadNonFormIso2709WithIngest(TestContext context) {
+    webClient.postAbs(MODULE_URL + "/reservoir/upload")
+        .expect(ResponsePredicate.SC_BAD_REQUEST)
+        .putHeader(XOkapiHeaders.TENANT, "badtenant")
+        .putHeader(XOkapiHeaders.PERMISSIONS, "[\"" + PERM_PREFIX + "." + "SOURCE-1" + "\"]")
+        .addQueryParam("sourceId", "SOURCE-1")
+        .addQueryParam("sourceVersion", "1")
+        .sendBuffer(marc3marcBuffer)
+        .onComplete(context.asyncAssertSuccess(res -> {
+          assertThat(res.bodyAsString(), containsString("does not exist (42P01)"));
+        }));
+  }
+
+  @Test
   public void uploadNonFormNoContentType(TestContext context) {
     webClient.postAbs(OKAPI_URL + "/reservoir/upload")
         .expect(ResponsePredicate.SC_BAD_REQUEST)
@@ -121,6 +136,25 @@ public class UploadTest extends TestBase {
           return null;
         })
         .onComplete(context.asyncAssertSuccess());
+  }
+
+  @Test
+  public void uploadIso2709WithBadTenant(TestContext context) {
+    MultipartForm requestForm = MultipartForm.create()
+        .binaryFileUpload("records", "marc3.mrc", marc3marcBuffer,  "application/marc")
+        .binaryFileUpload("records", "marc1-delete.xml", marc1xmlBuffer,  "text/xml");
+
+    // go straight to module without Okapi intercepting
+    webClient.postAbs(MODULE_URL + "/reservoir/upload")
+        .putHeader(XOkapiHeaders.PERMISSIONS, "[\"" + PERM_PREFIX + "." + "SOURCE-1" + "\"]")
+        .expect(ResponsePredicate.SC_BAD_REQUEST)
+        .putHeader(XOkapiHeaders.TENANT, "badtenant")
+        .addQueryParam("sourceId", "SOURCE-1")
+        .addQueryParam("sourceVersion", "1")
+        .sendMultipartForm(requestForm)
+        .onComplete(context.asyncAssertSuccess(res -> {
+          assertThat(res.bodyAsString(), containsString("does not exist (42P01)"));
+        }));
   }
 
   @Test
@@ -284,7 +318,6 @@ public class UploadTest extends TestBase {
         })
         .onComplete(context.asyncAssertSuccess());
   }
-
 
   @Test
   public void uploadPdf(TestContext context) {

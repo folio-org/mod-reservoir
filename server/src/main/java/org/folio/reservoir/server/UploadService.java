@@ -37,8 +37,9 @@ public class UploadService {
   private Future<Void> uploadPayloadStream(ReadStream<JsonObject> upload,
       IngestWriteStream ingestWriteStream, int queueSize) {
     Promise<Void> promise = Promise.promise();
-    upload.endHandler(promise::tryComplete);
+    upload.endHandler(x -> ingestWriteStream.end(y -> promise.tryComplete()));
     upload.exceptionHandler(promise::tryFail);
+    ingestWriteStream.exceptionHandler(promise::tryFail);
     Pump.pump(upload, ingestWriteStream, queueSize).start();
     return promise.future();
   }
@@ -52,44 +53,35 @@ public class UploadService {
    */
   public Future<Void> uploadRecords(RoutingContext ctx) {
     try {
-      String sourceId = ctx.request().getParam("sourceId");
+      HttpServerRequest request = ctx.request();
+      String sourceId = request.getParam("sourceId");
       if (sourceId == null) {
         return Future.failedFuture("sourceId is a required parameter");
       }
       enforcePermissionsBySource(ctx, sourceId);
-      Storage storage = new Storage(ctx);
-      HttpServerRequest request = ctx.request();
-      String sourceVersion = request.getParam("sourceVersion", "1");
       final String localIdPath = request.getParam("localIdPath");
       final ModuleJsonPath jsonPath = localIdPath == null ? null : new ModuleJsonPath(localIdPath);
-      final boolean ingest = request.getParam("ingest", "true").equals("true");
-      final boolean raw = request.getParam("raw", "false").equals("true");
-      IngestWriteStream ingestWriteStream = new IngestWriteStream(ctx.vertx(), storage,
-          new SourceId(sourceId), Integer.parseInt(sourceVersion), ingest, jsonPath);
-      ingestWriteStream.setWriteQueueMaxSize(100);
       String contentType = request.getHeader("Content-Type");
-      int queueSize = storage.pool.getPoolOptions().getMaxSize() * 10;
-      log.info("Upload Content-Type {} source {} queueSize {}", contentType, sourceId, queueSize);
       Future<Void> future;
       if (contentType != null && contentType.startsWith("multipart/form-data")) {
+        log.info("Upload multipart");
         request.setExpectMultipart(true);
         List<Future<Void>> futures = new ArrayList<>();
         request.uploadHandler(upload ->
-            futures.add(uploadContent(upload, ingestWriteStream, upload.contentType(),
-                queueSize, raw))
+            futures.add(uploadContent(ctx, upload, upload.contentType(), jsonPath,
+                new SourceId(sourceId)))
         );
         Promise<Void> promise = Promise.promise();
-        request.exceptionHandler(promise::tryFail);
-        request.endHandler(e1 -> promise.handle(GenericCompositeFuture.all(futures).mapEmpty()));
+        request.endHandler(e1 ->
+            GenericCompositeFuture.all(futures).<Void>mapEmpty().onComplete(promise));
         future = promise.future();
       } else {
-        future = uploadContent(request, ingestWriteStream, contentType, queueSize, raw);
+        future = uploadContent(ctx, request, contentType, jsonPath, new SourceId(sourceId));
       }
-      return future.onSuccess(response1 ->
-          ingestWriteStream.end(s -> {
-            JsonObject res = new JsonObject();
-            HttpResponse.responseJson(ctx, 200).end(res.encode());
-          }));
+      return future.onSuccess(response -> {
+        JsonObject res = new JsonObject();
+        HttpResponse.responseJson(ctx, 200).end(res.encode());
+      });
     } catch (InvalidPathException e) {
       return Future.failedFuture("malformed 'localIdPath': " + e.getMessage());
     } catch (Exception e) {
@@ -97,19 +89,34 @@ public class UploadService {
     }
   }
 
-  private Future<Void> uploadContent(ReadStream<Buffer> request,
-      IngestWriteStream ingestWriteStream, String contentType, int queueSize, boolean raw) {
-    if (raw) {
-      Promise<Void> promise = Promise.promise();
-      AtomicLong sz = new AtomicLong();
-      request.handler(x -> sz.addAndGet(x.length()));
-      request.endHandler(end -> {
-        log.info("Total size {}", sz.get());
-        promise.complete();
-      });
-      return promise.future();
+  private Future<Void> uploadContent(RoutingContext ctx, ReadStream<Buffer> readStream,
+      String contentType, ModuleJsonPath jsonPath, SourceId sourceId) {
+    try {
+      HttpServerRequest request = ctx.request();
+      final boolean raw = request.getParam("raw", "false").equals("true");
+      if (raw) {
+        Promise<Void> promise = Promise.promise();
+        AtomicLong sz = new AtomicLong();
+        readStream.handler(x -> sz.addAndGet(x.length()));
+        readStream.endHandler(end -> {
+          log.info("Total size {}", sz.get());
+          promise.complete();
+        });
+        return promise.future();
+      }
+      Storage storage = new Storage(ctx);
+      int queueSize = storage.pool.getPoolOptions().getMaxSize() * 10;
+      final boolean ingest = request.getParam("ingest", "true").equals("true");
+      String sourceVersion = request.getParam("sourceVersion", "1");
+
+      log.info("Upload tenant {} source {} queueSize {} Content-Type {}",
+          storage.getTenant(), sourceId, queueSize, contentType);
+      IngestWriteStream ingestWriteStream = new IngestWriteStream(ctx.vertx(), storage, sourceId,
+          Integer.parseInt(sourceVersion), ingest, jsonPath);
+      return uploadContent(readStream, ingestWriteStream, contentType, queueSize);
+    } catch (Exception e) {
+      return Future.failedFuture(e);
     }
-    return uploadContent(request, ingestWriteStream, contentType, queueSize);
   }
 
   private Future<Void> uploadContent(ReadStream<Buffer> request,
