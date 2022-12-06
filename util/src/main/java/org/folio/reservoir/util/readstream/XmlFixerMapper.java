@@ -14,6 +14,17 @@ public class XmlFixerMapper implements Mapper<Buffer, Buffer> {
 
   int numberOfFixes = 0;
 
+
+  private void incomplete(Buffer input, int i, int back) {
+    if (ended) {
+      result.appendBuffer(input, back, i - back);
+      pending = null;
+    } else {
+      pending = Buffer.buffer();
+      pending.appendBuffer(input, back, i - back);
+    }
+  }
+
   @Override
   public void push(Buffer buffer) {
     Buffer input;
@@ -38,12 +49,7 @@ public class XmlFixerMapper implements Mapper<Buffer, Buffer> {
         numberOfFixes++;
       } else if (leadingByte == '&') {
         if (i == input.length() - 1) {
-          if (ended) {
-            i++;
-            break;
-          }
-          pending = Buffer.buffer();
-          pending.appendBuffer(input, back, i + 1 - back);
+          incomplete(input, i + 1, back);
           return;
         }
         if (input.getByte(i + 1) == '#') {
@@ -55,20 +61,13 @@ public class XmlFixerMapper implements Mapper<Buffer, Buffer> {
             j++;
           }
           if (j == input.length()) {
-            if (ended) {
-              i = j;
-              break;
-            }
-            pending = Buffer.buffer();
-            pending.appendBuffer(input, back, j - back);
+            incomplete(input, j, back);
             return;
           }
           int v;
           if (input.getByte(i + 2) == 'x') {
-            // &#x....;
             v = Integer.parseInt(input.getString(i + 3, j), 16);
           } else {
-            // &#...;
             v = Integer.parseInt(input.getString(i + 2, j));
           }
           if (v < 32 && v != 9 && v != 10 && v != 13) {
