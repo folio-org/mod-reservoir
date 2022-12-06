@@ -37,10 +37,8 @@ public class XmlFixerMapper implements Mapper<Buffer, Buffer> {
       if (leadingByte < 32 && leadingByte != 9 && leadingByte != 10 && leadingByte != 13) {
         result.appendBuffer(input, tail, front - tail);
         addFix();
-      } else if (leadingByte == '&') {
-        if (handleEntity(input)) {
-          return;
-        }
+      } else if (leadingByte == '&' && handleEntity(input)) {
+        return;
       }
     }
     result.appendBuffer(input, tail, front - tail);
