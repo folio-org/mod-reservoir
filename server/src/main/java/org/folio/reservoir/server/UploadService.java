@@ -129,7 +129,7 @@ public class UploadService {
       case "application/octet-stream", "application/marc" ->
           parser = new MarcToJsonParser(request);
       case "application/xml", "text/xml" ->
-          parser = new MarcXmlParserToJson(XmlParser.newParser(request));
+          parser = new MarcXmlParserToJson(XmlParser.newFixingParser(request));
       default -> {
         return Future.failedFuture("Unsupported content-type: " + contentType);
       }

@@ -592,7 +592,7 @@ public class OaiPmhClientService {
     if (res.statusCode() != 200) {
       return handleBadResponse(res);
     }
-    XmlParser xmlParser = XmlParser.newParser(res);
+    XmlParser xmlParser = XmlParser.newFixingParser(res);
     XmlMetadataStreamParser<JsonObject> metadataParser
         = new XmlMetadataParserMarcInJson();
     JsonObject config = job.getConfig();
