@@ -14,16 +14,9 @@ public class XmlFixerMapper implements Mapper<Buffer, Buffer> {
 
   private int numberOfFixes = 0;
 
+  int front;
 
-  private void incomplete(Buffer input, int i, int back) {
-    if (ended) {
-      result.appendBuffer(input, back, i - back);
-      pending = null;
-    } else {
-      pending = Buffer.buffer();
-      pending.appendBuffer(input, back, i - back);
-    }
-  }
+  int tail;
 
   @Override
   public void push(Buffer buffer) {
@@ -38,54 +31,73 @@ public class XmlFixerMapper implements Mapper<Buffer, Buffer> {
       pending.appendBuffer(buffer);
       input = pending;
     }
-    int back = 0;
-    int i;
-    for (i = 0; i < input.length(); i++) {
-      byte leadingByte = input.getByte(i);
+    tail = 0;
+    for (front = 0; front < input.length(); front++) {
+      byte leadingByte = input.getByte(front);
       if (leadingByte < 32 && leadingByte != 9 && leadingByte != 10 && leadingByte != 13) {
-        result.appendBuffer(input, back, i - back);
-        back = i + 1;
-        result.appendString(REPLACEMENT_CHAR);
-        numberOfFixes++;
+        result.appendBuffer(input, tail, front - tail);
+        addFix();
       } else if (leadingByte == '&') {
-        if (i == input.length() - 1) {
-          incomplete(input, i + 1, back);
+        if (handleEntity(input)) {
           return;
-        }
-        if (input.getByte(i + 1) == '#') {
-          int j = i + 2;
-          while (j < input.length()) {
-            if (input.getByte(j) == ';') {
-              break;
-            }
-            j++;
-          }
-          if (j == input.length()) {
-            incomplete(input, j, back);
-            return;
-          }
-          try {
-            int v;
-            if (input.getByte(i + 2) == 'x') {
-              v = Integer.parseInt(input.getString(i + 3, j), 16);
-            } else {
-              v = Integer.parseInt(input.getString(i + 2, j));
-            }
-            if (v < 32 && v != 9 && v != 10 && v != 13) {
-              result.appendBuffer(input, back, i - back);
-              i = j;
-              back = i + 1;
-              result.appendString(REPLACEMENT_CHAR);
-              numberOfFixes++;
-            }
-          } catch (NumberFormatException e) {
-            // ignored; Data will be passed as is
-          }
         }
       }
     }
-    result.appendBuffer(input, back, i - back);
+    result.appendBuffer(input, tail, front - tail);
     pending = null;
+  }
+
+  private void addFix() {
+    tail = front + 1;
+    result.appendString(REPLACEMENT_CHAR);
+    numberOfFixes++;
+  }
+
+  private boolean handleEntity(Buffer input) {
+    if (front == input.length() - 1) {
+      incomplete(input, front + 1);
+      return true;
+    }
+    if (input.getByte(front + 1) != '#') {
+      return false;
+    }
+    int j = front + 2;
+    while (j < input.length()) {
+      if (input.getByte(j) == ';') {
+        break;
+      }
+      j++;
+    }
+    if (j == input.length()) {
+      incomplete(input, j);
+      return true;
+    }
+    try {
+      int v;
+      if (input.getByte(front + 2) == 'x') {
+        v = Integer.parseInt(input.getString(front + 3, j), 16);
+      } else {
+        v = Integer.parseInt(input.getString(front + 2, j));
+      }
+      if (v < 32 && v != 9 && v != 10 && v != 13) {
+        result.appendBuffer(input, tail, front - tail);
+        front = j;
+        addFix();
+      }
+    } catch (NumberFormatException e) {
+      // ignored; Data will be passed as is
+    }
+    return false;
+  }
+
+  private void incomplete(Buffer input, int pos) {
+    if (ended) {
+      result.appendBuffer(input, tail, pos - tail);
+      pending = null;
+    } else {
+      pending = Buffer.buffer();
+      pending.appendBuffer(input, tail, pos - tail);
+    }
   }
 
   @Override
