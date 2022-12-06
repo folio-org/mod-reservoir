@@ -59,12 +59,11 @@ public class XmlFixerMapper implements Mapper<Buffer, Buffer> {
     if (input.getByte(front + 1) != '#') {
       return false;
     }
-    int j = front + 2;
-    while (j < input.length()) {
+    int j;
+    for (j = front + 2; j < input.length(); j++) {
       if (input.getByte(j) == ';') {
         break;
       }
-      j++;
     }
     if (j == input.length()) {
       incomplete(input, j);
