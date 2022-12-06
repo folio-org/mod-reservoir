@@ -58,7 +58,7 @@ public class XmlFixerMapperTest {
     assertThat(poll.length(), is(0));
     poll = xmlFixerMapper.poll();
     assertThat(poll, is(nullValue()));
-    assertThat(xmlFixerMapper.numberOfFixes, is(1));
+    assertThat(xmlFixerMapper.getNumberOfFixes(), is(1));
   }
 
   @Test
@@ -76,16 +76,16 @@ public class XmlFixerMapperTest {
     assertThat(poll.length(), is(0));
     poll = xmlFixerMapper.poll();
     assertThat(poll, is(nullValue()));
-    assertThat(xmlFixerMapper.numberOfFixes, is(0));
+    assertThat(xmlFixerMapper.getNumberOfFixes(), is(0));
   }
 
   @Test
   public void testCharEntities2() {
     XmlFixerMapper xmlFixerMapper = new XmlFixerMapper();
 
-    xmlFixerMapper.push(Buffer.buffer("&#9;&#10;&#13;&#1;&#31;&#32;"));
+    xmlFixerMapper.push(Buffer.buffer("&#9;&#10;&#13;&#1;&#31;&#32;&#x0A;&#abc;"));
     Buffer poll = xmlFixerMapper.poll();
-    assertThat(poll.toString(), is("&#9;&#10;&#13;&#xFFFD;&#xFFFD;&#32;"));
+    assertThat(poll.toString(), is("&#9;&#10;&#13;&#xFFFD;&#xFFFD;&#32;&#x0A;&#abc;"));
     poll = xmlFixerMapper.poll();
     assertThat(poll, is(nullValue()));
 
@@ -94,7 +94,7 @@ public class XmlFixerMapperTest {
     assertThat(poll.length(), is(0));
     poll = xmlFixerMapper.poll();
     assertThat(poll, is(nullValue()));
-    assertThat(xmlFixerMapper.numberOfFixes, is(2));
+    assertThat(xmlFixerMapper.getNumberOfFixes(), is(2));
   }
 
   @Test
@@ -121,7 +121,7 @@ public class XmlFixerMapperTest {
     assertThat(poll.length(), is(0));
     poll = xmlFixerMapper.poll();
     assertThat(poll, is(nullValue()));
-    assertThat(xmlFixerMapper.numberOfFixes, is(0));
+    assertThat(xmlFixerMapper.getNumberOfFixes(), is(0));
   }
 
   @Test
@@ -152,7 +152,7 @@ public class XmlFixerMapperTest {
     assertThat(poll.length(), is(0));
     poll = xmlFixerMapper.poll();
     assertThat(poll, is(nullValue()));
-    assertThat(xmlFixerMapper.numberOfFixes, is(1));
+    assertThat(xmlFixerMapper.getNumberOfFixes(), is(1));
   }
 
   @Test
@@ -175,7 +175,7 @@ public class XmlFixerMapperTest {
     assertThat(poll.toString(), is("ab&#3"));
     poll = xmlFixerMapper.poll();
     assertThat(poll, is(nullValue()));
-    assertThat(xmlFixerMapper.numberOfFixes, is(0));
+    assertThat(xmlFixerMapper.getNumberOfFixes(), is(0));
   }
 
   @Test
@@ -191,7 +191,7 @@ public class XmlFixerMapperTest {
     assertThat(poll.toString(), is("ab&"));
     poll = xmlFixerMapper.poll();
     assertThat(poll, is(nullValue()));
-    assertThat(xmlFixerMapper.numberOfFixes, is(0));
+    assertThat(xmlFixerMapper.getNumberOfFixes(), is(0));
   }
 
 }

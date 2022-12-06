@@ -12,7 +12,7 @@ public class XmlFixerMapper implements Mapper<Buffer, Buffer> {
 
   Buffer pending = null;
 
-  int numberOfFixes = 0;
+  private int numberOfFixes = 0;
 
 
   private void incomplete(Buffer input, int i, int back) {
@@ -64,18 +64,22 @@ public class XmlFixerMapper implements Mapper<Buffer, Buffer> {
             incomplete(input, j, back);
             return;
           }
-          int v;
-          if (input.getByte(i + 2) == 'x') {
-            v = Integer.parseInt(input.getString(i + 3, j), 16);
-          } else {
-            v = Integer.parseInt(input.getString(i + 2, j));
-          }
-          if (v < 32 && v != 9 && v != 10 && v != 13) {
-            result.appendBuffer(input, back, i - back);
-            i = j;
-            back = i + 1;
-            result.appendString(REPLACEMENT_CHAR);
-            numberOfFixes++;
+          try {
+            int v;
+            if (input.getByte(i + 2) == 'x') {
+              v = Integer.parseInt(input.getString(i + 3, j), 16);
+            } else {
+              v = Integer.parseInt(input.getString(i + 2, j));
+            }
+            if (v < 32 && v != 9 && v != 10 && v != 13) {
+              result.appendBuffer(input, back, i - back);
+              i = j;
+              back = i + 1;
+              result.appendString(REPLACEMENT_CHAR);
+              numberOfFixes++;
+            }
+          } catch (NumberFormatException e) {
+            // ignored; Data will be passed as is
           }
         }
       }
