@@ -22,7 +22,4 @@ public class XmlParser extends MappingReadStream<XMLStreamReader, Buffer> {
     return new XmlParser(stream, new XmlMapper());
   }
 
-  public static XmlParser newFixingParser(ReadStream<Buffer> stream) {
-    return new XmlParser(new XmlFixer(stream), new XmlMapper());
-  }
 }

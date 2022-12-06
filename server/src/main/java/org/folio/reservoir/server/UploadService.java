@@ -26,6 +26,7 @@ import org.folio.reservoir.util.readstream.MappingReadStream;
 import org.folio.reservoir.util.readstream.MarcJsonToIngestMapper;
 import org.folio.reservoir.util.readstream.MarcToJsonParser;
 import org.folio.reservoir.util.readstream.MarcXmlParserToJson;
+import org.folio.reservoir.util.readstream.XmlFixer;
 import org.folio.reservoir.util.readstream.XmlParser;
 
 public class UploadService {
@@ -108,19 +109,21 @@ public class UploadService {
       int queueSize = storage.pool.getPoolOptions().getMaxSize() * 10;
       final boolean ingest = request.getParam("ingest", "true").equals("true");
       String sourceVersion = request.getParam("sourceVersion", "1");
+      final boolean xmlFixing = request.getParam("xmlFixing", "false").equals("true");
 
       log.info("Upload tenant {} source {} queueSize {} Content-Type {}",
           storage.getTenant(), sourceId, queueSize, contentType);
       IngestWriteStream ingestWriteStream = new IngestWriteStream(ctx.vertx(), storage, sourceId,
           Integer.parseInt(sourceVersion), ingest, jsonPath);
-      return uploadContent(readStream, ingestWriteStream, contentType, queueSize);
+      return uploadContent(readStream, ingestWriteStream, contentType, queueSize, xmlFixing);
     } catch (Exception e) {
       return Future.failedFuture(e);
     }
   }
 
   private Future<Void> uploadContent(ReadStream<Buffer> request,
-      IngestWriteStream ingestWriteStream, String contentType, int queueSize) {
+      IngestWriteStream ingestWriteStream, String contentType,
+      int queueSize, boolean xmlFixing) {
     ReadStream<JsonObject> parser;
     if (contentType == null) {
       contentType = "application/octet-stream";
@@ -129,7 +132,8 @@ public class UploadService {
       case "application/octet-stream", "application/marc" ->
           parser = new MarcToJsonParser(request);
       case "application/xml", "text/xml" ->
-          parser = new MarcXmlParserToJson(XmlParser.newFixingParser(request));
+          parser = new MarcXmlParserToJson(
+              XmlParser.newParser(xmlFixing ? new XmlFixer(request) : request));
       default -> {
         return Future.failedFuture("Unsupported content-type: " + contentType);
       }

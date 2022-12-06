@@ -36,7 +36,7 @@ public class XmlFixerTest {
   Future<XmlParser> xmlParserFromFile(String fname) {
     return vertx.fileSystem().open(fname, new OpenOptions())
         .map(asyncFile -> {
-          XmlParser xmlParser = XmlParser.newFixingParser(asyncFile);
+          XmlParser xmlParser = XmlParser.newParser(new XmlFixer(asyncFile));
           xmlParser.pause();
           return xmlParser;
         });
