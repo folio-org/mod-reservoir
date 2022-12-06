@@ -82,6 +82,20 @@ public class UploadTest extends TestBase {
   }
 
   @Test
+  public void uploadNonFormIso2709WithIngest(TestContext context) {
+    webClient.postAbs(MODULE_URL + "/reservoir/upload")
+        .expect(ResponsePredicate.SC_BAD_REQUEST)
+        .putHeader(XOkapiHeaders.TENANT, "badtenant")
+        .putHeader(XOkapiHeaders.PERMISSIONS, "[\"" + PERM_PREFIX + "." + "SOURCE-1" + "\"]")
+        .addQueryParam("sourceId", "SOURCE-1")
+        .addQueryParam("sourceVersion", "1")
+        .sendBuffer(marc3marcBuffer)
+        .onComplete(context.asyncAssertSuccess(res -> {
+          assertThat(res.bodyAsString(), containsString("does not exist (42P01)"));
+        }));
+  }
+
+  @Test
   public void uploadNonFormNoContentType(TestContext context) {
     webClient.postAbs(OKAPI_URL + "/reservoir/upload")
         .expect(ResponsePredicate.SC_BAD_REQUEST)
