@@ -355,7 +355,7 @@
           ],
           "permissionsDesired": [
             "reservoir-upload.all-sources",
-            "reservoir-upload.sources.*"
+            "reservoir-upload.source.*"
           ]
         }
       ]
