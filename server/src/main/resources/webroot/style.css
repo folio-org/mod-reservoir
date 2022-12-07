@@ -48,8 +48,7 @@ textarea {
 }
 
 input[type=checkbox] {
-  margin-left: 1em;
-  display: inline;
+  width: 1em;
 }
 
 input:focus,
