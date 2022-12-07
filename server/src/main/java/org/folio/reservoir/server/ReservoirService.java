@@ -9,6 +9,7 @@ import io.vertx.core.json.JsonArray;
 import io.vertx.core.json.JsonObject;
 import io.vertx.ext.web.Router;
 import io.vertx.ext.web.RoutingContext;
+import io.vertx.ext.web.handler.BodyHandler;
 import io.vertx.ext.web.handler.StaticHandler;
 import io.vertx.ext.web.openapi.RouterBuilder;
 import io.vertx.ext.web.validation.RequestParameters;
@@ -481,6 +482,7 @@ public class ReservoirService implements RouterCreator, TenantInitHooks {
     UploadService uploadService = new UploadService();
     return RouterBuilder.create(vertx, "openapi/reservoir.yaml")
         .map(routerBuilder -> {
+          routerBuilder.rootHandler(BodyHandler.create().setBodyLimit(65536));
           add(routerBuilder, "getGlobalRecords", this::getGlobalRecords);
           add(routerBuilder, "deleteGlobalRecords", this::deleteGlobalRecords);
           add(routerBuilder, "getGlobalRecord", this::getGlobalRecord);
@@ -518,10 +520,10 @@ public class ReservoirService implements RouterCreator, TenantInitHooks {
           router.route("/reservoir/upload")
               .method(HttpMethod.POST).method(HttpMethod.PUT).handler(ctx ->
               uploadService.uploadRecords(ctx).onFailure(cause -> failHandler(ctx, cause)));
-          router.route("/*").subRouter(routerBuilder.createRouter());
           //upload page
           router.route("/reservoir/upload-form/*")
               .handler(StaticHandler.create());
+          router.route("/*").subRouter(routerBuilder.createRouter());
           return router;
         });
   }
