@@ -1,0 +1,7 @@
+{
+  "description": "Upload statistic by file",
+  "type": "object",
+  "additionalProperties": {
+    "$ref" : "ingestStats.json"
+  }
+}

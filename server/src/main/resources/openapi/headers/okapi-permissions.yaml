@@ -1,0 +1,6 @@
+in: header
+name: X-Okapi-Permissions
+description: A JSON array with client permissions
+required: false
+schema:
+  type: string
