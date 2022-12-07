@@ -73,11 +73,11 @@ public class IngestStats {
    */
   public JsonObject toJson() {
     JsonObject stats = new JsonObject();
-    stats.put("processed", processed.get());
-    stats.put("ignored", ignored.get());
-    stats.put("inserted", inserted.get());
-    stats.put("updated", updated.get());
-    stats.put("deleted", deleted.get());
+    stats.put("processed", processed());
+    stats.put("ignored", ignored());
+    stats.put("inserted", inserted());
+    stats.put("updated", updated());
+    stats.put("deleted", deleted());
     return stats;
   }
 
