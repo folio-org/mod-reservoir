@@ -41,6 +41,7 @@ import org.folio.reservoir.util.XmlMetadataParserMarcInJson;
 import org.folio.reservoir.util.XmlMetadataStreamParser;
 import org.folio.reservoir.util.oai.OaiParserStream;
 import org.folio.reservoir.util.oai.OaiRecord;
+import org.folio.reservoir.util.readstream.XmlFixer;
 import org.folio.reservoir.util.readstream.XmlParser;
 
 public class OaiPmhClientService {
@@ -592,7 +593,7 @@ public class OaiPmhClientService {
     if (res.statusCode() != 200) {
       return handleBadResponse(res);
     }
-    XmlParser xmlParser = XmlParser.newParser(res);
+    XmlParser xmlParser = XmlParser.newParser(new XmlFixer(res));
     XmlMetadataStreamParser<JsonObject> metadataParser
         = new XmlMetadataParserMarcInJson();
     JsonObject config = job.getConfig();
