@@ -30,19 +30,18 @@ public class IngestWriteStream implements WriteStream<JsonObject> {
   int queueSize = 5;
   boolean ingest;
   ModuleJsonPath jsonPath;
-  AtomicInteger number = new AtomicInteger();
-  AtomicInteger errors = new AtomicInteger();
+  final IngestStats stats;
   private static final Logger log = LogManager.getLogger(IngestWriteStream.class);
   private static final String LOCAL_ID = "localId";
 
-  IngestWriteStream(Vertx vertx, Storage storage, SourceId sourceId, int sourceVersion,
-      boolean ingest, ModuleJsonPath jsonPath) {
+  IngestWriteStream(Vertx vertx, Storage storage, IngestParams params, String fileName) {
     this.vertx = vertx;
     this.storage = storage;
-    this.sourceId = sourceId;
-    this.sourceVersion = sourceVersion;
-    this.ingest = ingest;
-    this.jsonPath = jsonPath;
+    sourceId = params.sourceId;
+    sourceVersion = params.sourceVersion;
+    ingest = params.ingest;
+    jsonPath = params.jsonPath;
+    this.stats = new IngestStats(fileName);
   }
 
   @Override
@@ -67,8 +66,18 @@ public class IngestWriteStream implements WriteStream<JsonObject> {
               });
             }
             future = future
-                .compose(x -> storage.ingestGlobalRecord(
-                    vertx, sourceId, sourceVersion, rec, matchKeyConfigs))
+                .compose(x -> storage
+                  .ingestGlobalRecord(
+                    vertx, sourceId, sourceVersion, rec, matchKeyConfigs)
+                  .onSuccess(r -> {
+                    if (r == null) {
+                      stats.incrementDeleted();
+                    } else if (r.booleanValue()) {
+                      stats.incrementInserted();
+                    } else {
+                      stats.incrementUpdated();
+                    }
+                  }))
                 .mapEmpty();
           }
           return future;
@@ -84,7 +93,7 @@ public class IngestWriteStream implements WriteStream<JsonObject> {
             drainHandler.handle(null);
           }
           if (ops.get() == 0 && ended) {
-            log.info("{} records processed", number.get());
+            log.info("{} records processed", stats.processed());
             if (endHandler != null) {
               endHandler.handle(Future.succeededFuture());
             }
@@ -101,7 +110,7 @@ public class IngestWriteStream implements WriteStream<JsonObject> {
   public void end(Handler<AsyncResult<Void>> handler) {
     ended = true;
     if (ops.get() == 0) {
-      log.info("{} records processed", number.get());
+      log.info("{} records processed", stats.processed());
       handler.handle(Future.succeededFuture());
     } else {
       endHandler = handler;
@@ -123,6 +132,10 @@ public class IngestWriteStream implements WriteStream<JsonObject> {
   public WriteStream<JsonObject> drainHandler(Handler<Void> handler) {
     drainHandler = handler;
     return this;
+  }
+
+  public IngestStats stats() {
+    return stats;
   }
 
   private static Future<Collection<String>> lookupPath(Vertx vertx,
@@ -156,17 +169,17 @@ public class IngestWriteStream implements WriteStream<JsonObject> {
 
   private void log(JsonObject rec) {
     String localId = rec.getString(LOCAL_ID);
-    if (number.incrementAndGet() < 10) {
+    if (stats.incrementProcessed() < 10) {
       if (localId != null) {
         log.info("Got record localId={}", localId);
       }
-    } else if (number.get() % 10000 == 0) {
-      log.info("Processed {}", number.get());
+    } else if (stats.processed() % 10000 == 0) {
+      log.info("Processed {}", stats.processed());
     }
     if (localId == null) {
-      errors.incrementAndGet();
-      log.warn("Record number {} without localId", number.get());
-      if (errors.get() < 10) {
+      stats.incrementIgnored();
+      log.warn("Record number {} without localId", stats.processed());
+      if (stats.ignored() < 10) {
         log.warn("{}", rec::encodePrettily);
       }
     }

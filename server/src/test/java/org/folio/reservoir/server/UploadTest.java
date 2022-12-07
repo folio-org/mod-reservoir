@@ -10,7 +10,6 @@ import io.vertx.ext.web.client.predicate.ResponsePredicate;
 import io.vertx.ext.web.multipart.MultipartForm;
 import org.folio.okapi.common.XOkapiHeaders;
 import org.junit.Before;
-import org.junit.Ignore;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 
@@ -124,13 +123,24 @@ public class UploadTest extends TestBase {
         .addQueryParam("sourceId", "SOURCE-1")
         .addQueryParam("sourceVersion", "1")
         .sendMultipartForm(requestForm)
-        .compose(c1 ->
-            webClient.getAbs(OKAPI_URL + "/reservoir/records")
+        .compose(res -> {
+          JsonObject responseBody = res.bodyAsJsonObject();
+          assertThat(responseBody.getJsonObject("marc3.mrc").getInteger("processed"), is(3));
+          assertThat(responseBody.getJsonObject("marc3.mrc").getInteger("ignored"), is(0));
+          assertThat(responseBody.getJsonObject("marc3.mrc").getInteger("inserted"), is(3));
+          assertThat(responseBody.getJsonObject("marc3.mrc").getInteger("updated"), is(0));
+          assertThat(responseBody.getJsonObject("marc3.mrc").getInteger("deleted"), is(0));
+          assertThat(responseBody.getJsonObject("marc1-delete.xml").getInteger("processed"), is(1));
+          assertThat(responseBody.getJsonObject("marc1-delete.xml").getInteger("ignored"), is(0));
+          assertThat(responseBody.getJsonObject("marc1-delete.xml").getInteger("inserted"), is(0));
+          assertThat(responseBody.getJsonObject("marc1-delete.xml").getInteger("updated"), is(0));
+          assertThat(responseBody.getJsonObject("marc1-delete.xml").getInteger("deleted"), is(1));
+          return webClient.getAbs(OKAPI_URL + "/reservoir/records")
                 .addQueryParam("query", "sourceId = \"SOURCE-1\"")
                 .expect(ResponsePredicate.SC_OK)
                 .putHeader(XOkapiHeaders.TENANT, TENANT_1)
-                .send()
-        )
+                .send();
+        })
         .map(res -> {
           JsonObject responseBody = res.bodyAsJsonObject();
           assertThat(responseBody.getJsonArray("items").size(), is(2));
@@ -172,7 +182,14 @@ public class UploadTest extends TestBase {
         .addQueryParam("sourceVersion", "1")
         .addQueryParam("ingest", "false")
         .sendMultipartForm(requestForm)
-        .onComplete(context.asyncAssertSuccess());
+        .onComplete(context.asyncAssertSuccess(res -> {
+          JsonObject responseBody = res.bodyAsJsonObject();
+          assertThat(responseBody.getJsonObject("marc3.mrc").getInteger("processed"), is(3));
+          assertThat(responseBody.getJsonObject("marc3.mrc").getInteger("ignored"), is(0));
+          assertThat(responseBody.getJsonObject("marc3.mrc").getInteger("inserted"), is(0));
+          assertThat(responseBody.getJsonObject("marc3.mrc").getInteger("updated"), is(0));
+          assertThat(responseBody.getJsonObject("marc3.mrc").getInteger("deleted"), is(0));
+        }));
   }
 
   @Test
@@ -185,8 +202,16 @@ public class UploadTest extends TestBase {
         .addQueryParam("sourceId", "SOURCE-1")
         .addQueryParam("sourceVersion", "1")
         .addQueryParam("ingest", "false")
+        .addQueryParam("fileName", "marc3.mrc")
         .sendBuffer(marc3marcBuffer)
-        .onComplete(context.asyncAssertSuccess());
+        .onComplete(context.asyncAssertSuccess(res -> {
+          JsonObject responseBody = res.bodyAsJsonObject();
+          assertThat(responseBody.getJsonObject("marc3.mrc").getInteger("processed"), is(3));
+          assertThat(responseBody.getJsonObject("marc3.mrc").getInteger("ignored"), is(0));
+          assertThat(responseBody.getJsonObject("marc3.mrc").getInteger("inserted"), is(0));
+          assertThat(responseBody.getJsonObject("marc3.mrc").getInteger("updated"), is(0));
+          assertThat(responseBody.getJsonObject("marc3.mrc").getInteger("deleted"), is(0));
+        }));
   }
 
   @Test
@@ -206,13 +231,19 @@ public class UploadTest extends TestBase {
         .addQueryParam("sourceVersion", "1")
         .addQueryParam("localIdPath",  "$.marc.fields[*].001")
         .sendMultipartForm(requestForm1)
-        .compose(c1 ->
-            webClient.getAbs(OKAPI_URL + "/reservoir/records")
+        .compose(res -> {
+            JsonObject responseBody = res.bodyAsJsonObject();
+            assertThat(responseBody.getJsonObject("marc3.xml").getInteger("processed"), is(3));
+            assertThat(responseBody.getJsonObject("marc3.xml").getInteger("ignored"), is(0));
+            assertThat(responseBody.getJsonObject("marc3.xml").getInteger("inserted"), is(3));
+            assertThat(responseBody.getJsonObject("marc3.xml").getInteger("updated"), is(0));
+            assertThat(responseBody.getJsonObject("marc3.xml").getInteger("deleted"), is(0));
+            return webClient.getAbs(OKAPI_URL + "/reservoir/records")
                 .addQueryParam("query", "sourceId = \"SOURCE-2\"")
                 .expect(ResponsePredicate.SC_OK)
                 .putHeader(XOkapiHeaders.TENANT, TENANT_1)
-                .send()
-        )
+                .send();
+        })
         .map(res -> {
           JsonObject responseBody = res.bodyAsJsonObject();
           assertThat(responseBody.getJsonArray("items").size(), is(3));
@@ -229,13 +260,19 @@ public class UploadTest extends TestBase {
                 .addQueryParam("sourceVersion", "1")
                 .addQueryParam("localIdPath",  "$.marc.fields[*].001")
                 .sendMultipartForm(requestForm2))
-        .compose(c1 ->
-            webClient.getAbs(OKAPI_URL + "/reservoir/records")
+        .compose(res -> {
+            JsonObject responseBody = res.bodyAsJsonObject();
+            assertThat(responseBody.getJsonObject("marc1-delete.xml").getInteger("processed"), is(1));
+            assertThat(responseBody.getJsonObject("marc1-delete.xml").getInteger("ignored"), is(0));
+            assertThat(responseBody.getJsonObject("marc1-delete.xml").getInteger("inserted"), is(0));
+            assertThat(responseBody.getJsonObject("marc1-delete.xml").getInteger("updated"), is(0));
+            assertThat(responseBody.getJsonObject("marc1-delete.xml").getInteger("deleted"), is(1));
+            return webClient.getAbs(OKAPI_URL + "/reservoir/records")
                 .addQueryParam("query", "sourceId = \"SOURCE-2\"")
                 .expect(ResponsePredicate.SC_OK)
                 .putHeader(XOkapiHeaders.TENANT, TENANT_1)
-                .send()
-        )
+                .send();
+        })
         .map(res -> {
           JsonObject responseBody = res.bodyAsJsonObject();
           assertThat(responseBody.getJsonArray("items").size(), is(2));
@@ -257,13 +294,19 @@ public class UploadTest extends TestBase {
         .addQueryParam("sourceId", "SOURCE-3")
         .addQueryParam("sourceVersion", "1")
         .sendMultipartForm(requestForm1)
-        .compose(c1 ->
-            webClient.getAbs(OKAPI_URL + "/reservoir/records")
+        .compose(res -> {
+            JsonObject responseBody = res.bodyAsJsonObject();
+            assertThat(responseBody.getJsonObject("marc3-no-id.xml").getInteger("processed"), is(3));
+            assertThat(responseBody.getJsonObject("marc3-no-id.xml").getInteger("ignored"), is(1));
+            assertThat(responseBody.getJsonObject("marc3-no-id.xml").getInteger("inserted"), is(2));
+            assertThat(responseBody.getJsonObject("marc3-no-id.xml").getInteger("updated"), is(0));
+            assertThat(responseBody.getJsonObject("marc3-no-id.xml").getInteger("deleted"), is(0));
+            return webClient.getAbs(OKAPI_URL + "/reservoir/records")
                 .addQueryParam("query", "sourceId = \"SOURCE-3\"")
                 .expect(ResponsePredicate.SC_OK)
                 .putHeader(XOkapiHeaders.TENANT, TENANT_1)
-                .send()
-        )
+                .send();
+        })
         .map(res -> {
           JsonObject responseBody = res.bodyAsJsonObject();
           assertThat(responseBody.getJsonArray("items").size(), is(2));
@@ -286,13 +329,19 @@ public class UploadTest extends TestBase {
         .addQueryParam("sourceVersion", "1")
         .addQueryParam("localIdPath", "empty")
         .sendMultipartForm(requestForm1)
-        .compose(c1 ->
-            webClient.getAbs(OKAPI_URL + "/reservoir/records")
+        .compose(res -> {
+            JsonObject responseBody = res.bodyAsJsonObject();
+            assertThat(responseBody.getJsonObject("marc3.xml").getInteger("processed"), is(3));
+            assertThat(responseBody.getJsonObject("marc3.xml").getInteger("ignored"), is(3));
+            assertThat(responseBody.getJsonObject("marc3.xml").getInteger("inserted"), is(0));
+            assertThat(responseBody.getJsonObject("marc3.xml").getInteger("updated"), is(0));
+            assertThat(responseBody.getJsonObject("marc3.xml").getInteger("deleted"), is(0));
+            return webClient.getAbs(OKAPI_URL + "/reservoir/records")
                 .addQueryParam("query", "sourceId = \"SOURCE-4\"")
                 .expect(ResponsePredicate.SC_OK)
                 .putHeader(XOkapiHeaders.TENANT, TENANT_1)
-                .send()
-        )
+                .send();
+        })
         .map(res -> {
           JsonObject responseBody = res.bodyAsJsonObject();
           assertThat(responseBody.getJsonArray("items").size(), is(0));
@@ -306,7 +355,6 @@ public class UploadTest extends TestBase {
     MultipartForm requestForm1 = MultipartForm.create()
         .binaryFileUpload("records", "marc3.xml", marc3xmlBuffer,  "text/xml");
 
-    // upload 3 new records, but provide idPath that returns empty
     webClient.postAbs(OKAPI_URL + "/reservoir/upload")
         .expect(ResponsePredicate.SC_BAD_REQUEST)
         .putHeader(XOkapiHeaders.TENANT, TENANT_1)
@@ -357,7 +405,9 @@ public class UploadTest extends TestBase {
         .addQueryParam("localIdPath", "path")
         .addQueryParam("raw", "true")
         .sendMultipartForm(requestForm)
-        .onComplete(context.asyncAssertSuccess());
+        .onComplete(context.asyncAssertSuccess(res ->
+            assertThat(res.bodyAsString(), is("{}"))
+        ));
   }
 
   @Test
