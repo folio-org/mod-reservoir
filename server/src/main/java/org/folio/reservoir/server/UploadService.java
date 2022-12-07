@@ -1,6 +1,5 @@
 package org.folio.reservoir.server;
 
-import com.jayway.jsonpath.InvalidPathException;
 import io.vertx.core.Future;
 import io.vertx.core.Promise;
 import io.vertx.core.buffer.Buffer;
@@ -20,8 +19,6 @@ import org.apache.logging.log4j.Logger;
 import org.folio.okapi.common.GenericCompositeFuture;
 import org.folio.okapi.common.HttpResponse;
 import org.folio.okapi.common.XOkapiHeaders;
-import org.folio.reservoir.module.impl.ModuleJsonPath;
-import org.folio.reservoir.util.SourceId;
 import org.folio.reservoir.util.readstream.MappingReadStream;
 import org.folio.reservoir.util.readstream.MarcJsonToIngestMapper;
 import org.folio.reservoir.util.readstream.MarcToJsonParser;
@@ -35,10 +32,11 @@ public class UploadService {
   private static final String UPLOAD_PERMISSIONS_ALLSOURCES = "reservoir-upload.all-sources";
   private static final String UPLOAD_PERMISSIONS_SOURCE_PREFIX = "reservoir-upload.source";
 
-  private Future<Void> uploadPayloadStream(ReadStream<JsonObject> upload,
+  private Future<IngestStats> uploadPayloadStream(ReadStream<JsonObject> upload,
       IngestWriteStream ingestWriteStream, int queueSize) {
-    Promise<Void> promise = Promise.promise();
-    upload.endHandler(x -> ingestWriteStream.end(y -> promise.tryComplete()));
+    Promise<IngestStats> promise = Promise.promise();
+    upload.endHandler(x -> ingestWriteStream.end(y ->
+        promise.tryComplete(ingestWriteStream.stats())));
     upload.exceptionHandler(promise::tryFail);
     ingestWriteStream.exceptionHandler(promise::tryFail);
     Pump.pump(upload, ingestWriteStream, queueSize).start();
@@ -54,49 +52,40 @@ public class UploadService {
    */
   public Future<Void> uploadRecords(RoutingContext ctx) {
     try {
+      enforcePermissionsBySource(ctx);
+      IngestParams params = new IngestParams(ctx.request());
       HttpServerRequest request = ctx.request();
-      String sourceId = request.getParam("sourceId");
-      if (sourceId == null) {
-        return Future.failedFuture("sourceId is a required parameter");
-      }
-      enforcePermissionsBySource(ctx, sourceId);
-      final String localIdPath = request.getParam("localIdPath");
-      final ModuleJsonPath jsonPath = localIdPath == null ? null : new ModuleJsonPath(localIdPath);
-      String contentType = request.getHeader("Content-Type");
-      Future<Void> future;
-      if (contentType != null && contentType.startsWith("multipart/form-data")) {
-        log.info("Upload multipart");
+      Future<IngestStatsByFile> future;
+      if (params.contentType != null && params.contentType.startsWith("multipart/form-data")) {
         request.setExpectMultipart(true);
-        List<Future<Void>> futures = new ArrayList<>();
+        List<Future<IngestStats>> futures = new ArrayList<>();
+        IngestStatsByFile statsByFile = new IngestStatsByFile();
         request.uploadHandler(upload ->
-            futures.add(uploadContent(ctx, upload, upload.contentType(), jsonPath,
-                new SourceId(sourceId)))
+            futures.add(
+              uploadContent(ctx, upload, params, upload.filename(), upload.contentType())
+                .onSuccess(statsByFile::addStats))
         );
-        Promise<Void> promise = Promise.promise();
+        Promise<IngestStatsByFile> promise = Promise.promise();
         request.endHandler(e1 ->
-            GenericCompositeFuture.all(futures).<Void>mapEmpty().onComplete(promise));
+            GenericCompositeFuture.all(futures).map(res -> statsByFile).onComplete(promise));
         future = promise.future();
       } else {
-        future = uploadContent(ctx, request, contentType, jsonPath, new SourceId(sourceId));
+        future = uploadContent(ctx, request, params, params.fileName, params.contentType)
+            .map(IngestStatsByFile::new);
       }
-      return future.onSuccess(response -> {
-        JsonObject res = new JsonObject();
-        HttpResponse.responseJson(ctx, 200).end(res.encode());
-      });
-    } catch (InvalidPathException e) {
-      return Future.failedFuture("malformed 'localIdPath': " + e.getMessage());
+      return future.onSuccess(res ->
+        HttpResponse.responseJson(ctx, 200).end(res.toJson().encode()))
+        .mapEmpty();
     } catch (Exception e) {
       return Future.failedFuture(e);
     }
   }
 
-  private Future<Void> uploadContent(RoutingContext ctx, ReadStream<Buffer> readStream,
-      String contentType, ModuleJsonPath jsonPath, SourceId sourceId) {
+  private Future<IngestStats> uploadContent(RoutingContext ctx, ReadStream<Buffer> readStream,
+      IngestParams params, String fileName, String contentType) {
     try {
-      HttpServerRequest request = ctx.request();
-      final boolean raw = request.getParam("raw", "false").equals("true");
-      if (raw) {
-        Promise<Void> promise = Promise.promise();
+      if (params.raw) {
+        Promise<IngestStats> promise = Promise.promise();
         AtomicLong sz = new AtomicLong();
         readStream.handler(x -> sz.addAndGet(x.length()));
         readStream.endHandler(end -> {
@@ -107,21 +96,18 @@ public class UploadService {
       }
       Storage storage = new Storage(ctx);
       int queueSize = storage.pool.getPoolOptions().getMaxSize() * 10;
-      final boolean ingest = request.getParam("ingest", "true").equals("true");
-      String sourceVersion = request.getParam("sourceVersion", "1");
-      final boolean xmlFixing = request.getParam("xmlFixing", "false").equals("true");
-
-      log.info("Upload tenant {} source {} queueSize {} Content-Type {}",
-          storage.getTenant(), sourceId, queueSize, contentType);
-      IngestWriteStream ingestWriteStream = new IngestWriteStream(ctx.vertx(), storage, sourceId,
-          Integer.parseInt(sourceVersion), ingest, jsonPath);
-      return uploadContent(readStream, ingestWriteStream, contentType, queueSize, xmlFixing);
+      log.info("{} uploading. {} queuSize: {} tenant: {}",
+          params.getSummary(fileName), params.getDetails(contentType),
+          queueSize, storage.getTenant());
+      return uploadContent(readStream,
+          new IngestWriteStream(ctx.vertx(), storage, params, fileName, contentType),
+          contentType, queueSize, params.xmlFixing);
     } catch (Exception e) {
       return Future.failedFuture(e);
     }
   }
 
-  private Future<Void> uploadContent(ReadStream<Buffer> request,
+  private Future<IngestStats> uploadContent(ReadStream<Buffer> request,
       IngestWriteStream ingestWriteStream, String contentType,
       int queueSize, boolean xmlFixing) {
     ReadStream<JsonObject> parser;
@@ -142,7 +128,8 @@ public class UploadService {
     return uploadPayloadStream(parser, ingestWriteStream, queueSize);
   }
 
-  private String enforcePermissionsBySource(RoutingContext ctx, String sourceId) {
+  private String enforcePermissionsBySource(RoutingContext ctx) {
+    String sourceId = IngestParams.validateSourceId(ctx.request());
     try {
       Set<String> perms = parsePermissions(ctx);
       if (perms.contains(UPLOAD_PERMISSIONS_ALLSOURCES)) {

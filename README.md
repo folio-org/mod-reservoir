@@ -153,9 +153,10 @@ The following query parameters are recognized:
  * `sourceId`: required parameter for specifying the source identifier.
  * `sourceVersion`: optional parameter for specifying source version
     (default is 1)
+ * `fileName`: optional parameter for specifying the name of the uploaded file
  * `localIdPath`: optional parameter for specifying where to find local identifier
     (default is `$.marc.fields[*].001`)
- * `xmlFixing`: `true/false`, if `true` an attempt is made to remove invalid characters (e.g control chars)
+ * `xmlFixing`: optional boolean parameter, if `true` an attempt is made to remove invalid characters (e.g control chars)
     from the XML input, `false` by default
 
 These query parameters are for debugging and performance testing only:

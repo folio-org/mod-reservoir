@@ -13,36 +13,34 @@ import java.util.concurrent.atomic.AtomicInteger;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.folio.reservoir.module.impl.ModuleJsonPath;
-import org.folio.reservoir.util.SourceId;
 
 public class IngestWriteStream implements WriteStream<JsonObject> {
-  final SourceId sourceId;
-  final int sourceVersion;
-  final Storage storage;
   final Vertx vertx;
+  final Storage storage;
+  final IngestParams params;
+  final IngestStats stats;
+  final String fileName;
+  final String contentType;
   Handler<Throwable> exceptionHandler;
   Handler<AsyncResult<Void>> endHandler;
-
   boolean ended;
   Handler<Void> drainHandler;
   JsonArray matchKeyConfigs;
   AtomicInteger ops = new AtomicInteger();
   int queueSize = 5;
   boolean ingest;
-  ModuleJsonPath jsonPath;
-  AtomicInteger number = new AtomicInteger();
-  AtomicInteger errors = new AtomicInteger();
   private static final Logger log = LogManager.getLogger(IngestWriteStream.class);
   private static final String LOCAL_ID = "localId";
 
-  IngestWriteStream(Vertx vertx, Storage storage, SourceId sourceId, int sourceVersion,
-      boolean ingest, ModuleJsonPath jsonPath) {
+  IngestWriteStream(Vertx vertx, Storage storage, IngestParams params,
+      String fileName, String contentType) {
     this.vertx = vertx;
     this.storage = storage;
-    this.sourceId = sourceId;
-    this.sourceVersion = sourceVersion;
-    this.ingest = ingest;
-    this.jsonPath = jsonPath;
+    this.params = params;
+    this.fileName = fileName;
+    this.contentType = contentType;
+    this.stats = new IngestStats(fileName);
+    this.ingest = params.ingest;
   }
 
   @Override
@@ -67,8 +65,18 @@ public class IngestWriteStream implements WriteStream<JsonObject> {
               });
             }
             future = future
-                .compose(x -> storage.ingestGlobalRecord(
-                    vertx, sourceId, sourceVersion, rec, matchKeyConfigs))
+                .compose(x -> storage
+                  .ingestGlobalRecord(
+                    vertx, params.sourceId, params.sourceVersion, rec, matchKeyConfigs)
+                  .onSuccess(r -> {
+                    if (r == null) {
+                      stats.incrementDeleted();
+                    } else if (r.booleanValue()) {
+                      stats.incrementInserted();
+                    } else {
+                      stats.incrementUpdated();
+                    }
+                  }))
                 .mapEmpty();
           }
           return future;
@@ -84,7 +92,7 @@ public class IngestWriteStream implements WriteStream<JsonObject> {
             drainHandler.handle(null);
           }
           if (ops.get() == 0 && ended) {
-            log.info("{} records processed", number.get());
+            log.info("{} {}", params.getSummary(fileName), stats);
             if (endHandler != null) {
               endHandler.handle(Future.succeededFuture());
             }
@@ -101,7 +109,7 @@ public class IngestWriteStream implements WriteStream<JsonObject> {
   public void end(Handler<AsyncResult<Void>> handler) {
     ended = true;
     if (ops.get() == 0) {
-      log.info("{} records processed", number.get());
+      log.info("{} {}", params.getSummary(fileName), stats);
       handler.handle(Future.succeededFuture());
     } else {
       endHandler = handler;
@@ -125,6 +133,10 @@ public class IngestWriteStream implements WriteStream<JsonObject> {
     return this;
   }
 
+  public IngestStats stats() {
+    return stats;
+  }
+
   private static Future<Collection<String>> lookupPath(Vertx vertx,
       ModuleJsonPath jsonPath, JsonObject payload) {
     return vertx.executeBlocking(p -> {
@@ -136,10 +148,10 @@ public class IngestWriteStream implements WriteStream<JsonObject> {
 
   private Future<JsonObject> lookupId(JsonObject rec) {
     Future<JsonObject> fut = Future.succeededFuture(rec);
-    if (jsonPath != null) {
+    if (params.jsonPath != null) {
       fut = fut
         .compose(r ->
-          lookupPath(vertx, jsonPath, r.getJsonObject("payload"))
+          lookupPath(vertx, params.jsonPath, r.getJsonObject("payload"))
             .map(strings -> {
               Iterator<String> iterator = strings.iterator();
               if (iterator.hasNext()) {
@@ -156,17 +168,17 @@ public class IngestWriteStream implements WriteStream<JsonObject> {
 
   private void log(JsonObject rec) {
     String localId = rec.getString(LOCAL_ID);
-    if (number.incrementAndGet() < 10) {
+    if (stats.incrementProcessed() < 10) {
       if (localId != null) {
-        log.info("Got record localId={}", localId);
+        log.info("{} found ID {} at {}", params.getSummary(fileName), localId, stats.processed());
       }
-    } else if (number.get() % 10000 == 0) {
-      log.info("Processed {}", number.get());
+    } else if (stats.processed() % 10000 == 0) {
+      log.info("{} processed: {}", params.getSummary(fileName), stats.processed());
     }
     if (localId == null) {
-      errors.incrementAndGet();
-      log.warn("Record number {} without localId", number.get());
-      if (errors.get() < 10) {
+      stats.incrementIgnored();
+      log.warn("{} missing ID at {}", params.getSummary(fileName), stats.processed());
+      if (stats.ignored() < 10) {
         log.warn("{}", rec::encodePrettily);
       }
     }
