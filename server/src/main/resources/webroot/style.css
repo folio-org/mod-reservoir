@@ -47,6 +47,11 @@ textarea {
   border: 1px solid #999;
 }
 
+input[type=checkbox] {
+  margin-left: 1em;
+  display: inline;
+}
+
 input:focus,
 textarea:focus {
   /* Additional highlight for focused elements */

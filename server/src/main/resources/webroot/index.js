@@ -12,6 +12,7 @@ form.addEventListener(
     params.sourceId = document.querySelector("#sourceIdInput").value;
     params.sourceVersion = document.querySelector("#sourceVersionInput").value;
     params.localIdPath = document.querySelector("#localIdPathInput").value;
+    params.xmlFixing = document.querySelector("#xmlFixingInput").checked;
     const fileInput = document.querySelector("#fileInput");
     const formData = new FormData();
     Array.from(fileInput.files).forEach(file => {
@@ -41,10 +42,10 @@ function qs(params) {
   let qs = "";
   let sep = "?";
   for (const key in params) {
-    if (params[key]) {
-      qs += sep + key + "=" + encodeURIComponent(params[key]);
-      sep = "&";
-    }
+    if (params[key] === null) continue;
+    if (typeof params[key] === "string" && params[key].length === 0) continue;
+    qs += sep + key + "=" + encodeURIComponent(params[key]);
+    sep = "&";
   }
   return qs;
 }
