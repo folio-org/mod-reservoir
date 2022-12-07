@@ -62,7 +62,7 @@ public class UploadService {
         IngestStatsByFile statsByFile = new IngestStatsByFile();
         request.uploadHandler(upload ->
             futures.add(
-              uploadContent(ctx, upload, params, upload.contentType(), upload.filename())
+              uploadContent(ctx, upload, params, upload.filename(), upload.contentType())
                 .onSuccess(statsByFile::addStats))
         );
         Promise<IngestStatsByFile> promise = Promise.promise();
@@ -70,7 +70,7 @@ public class UploadService {
             GenericCompositeFuture.all(futures).map(res -> statsByFile).onComplete(promise));
         future = promise.future();
       } else {
-        future = uploadContent(ctx, request, params, params.contentType, params.fileName)
+        future = uploadContent(ctx, request, params, params.fileName, params.contentType)
             .map(IngestStatsByFile::new);
       }
       return future.onSuccess(res ->
@@ -82,7 +82,7 @@ public class UploadService {
   }
 
   private Future<IngestStats> uploadContent(RoutingContext ctx, ReadStream<Buffer> readStream,
-      IngestParams params, String contentType, String fileName) {
+      IngestParams params, String fileName, String contentType) {
     try {
       if (params.raw) {
         Promise<IngestStats> promise = Promise.promise();
@@ -96,10 +96,11 @@ public class UploadService {
       }
       Storage storage = new Storage(ctx);
       int queueSize = storage.pool.getPoolOptions().getMaxSize() * 10;
-      log.info("Upload {} starting. tenant: {} queueSize: {} content-type: {}",
-          params.getSummary(), storage.getTenant(), queueSize, contentType);
+      log.info("{} uploading. {} queuSize: {} tenant: {}",
+          params.getSummary(fileName), params.getDetails(contentType),
+          queueSize, storage.getTenant());
       return uploadContent(readStream,
-          new IngestWriteStream(ctx.vertx(), storage, params, fileName),
+          new IngestWriteStream(ctx.vertx(), storage, params, fileName, contentType),
           contentType, queueSize, params.xmlFixing);
     } catch (Exception e) {
       return Future.failedFuture(e);

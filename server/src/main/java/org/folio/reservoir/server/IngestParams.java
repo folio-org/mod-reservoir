@@ -8,12 +8,12 @@ import org.folio.reservoir.util.SourceId;
 public class IngestParams {
   final SourceId sourceId;
   final Integer sourceVersion;
+  final String fileName;
   final String contentType;
   final ModuleJsonPath jsonPath;
   final boolean ingest;
   final boolean raw;
   final boolean xmlFixing;
-  final String fileName;
 
   /**
    * Create ingest params from request.
@@ -49,8 +49,25 @@ public class IngestParams {
 
   }
 
-  public String getSummary() {
-    return sourceId + ":" + sourceVersion + ":" + fileName;
+  public String getSummary(String fileName) {
+    return sourceId + ":" + sourceVersion + ":" + (fileName != null ? fileName : this.fileName);
+  }
+
+  /**
+   * Return detailed arguments.
+   * @param contentType contentType override
+   * @return detailed arguments
+   */
+  public String getDetails(String contentType) {
+    StringBuilder details = new StringBuilder();
+    details.append("cT: ").append(contentType != null ? contentType : this.contentType);
+    details.append(" idPath: ").append(jsonPath);
+    if (raw) {
+      details.append(" raw: ").append(raw);
+    } else {
+      details.append(" ingest: ").append(ingest).append(" xmlFixing: ").append(xmlFixing);
+    }
+    return details.toString();
   }
 
 }

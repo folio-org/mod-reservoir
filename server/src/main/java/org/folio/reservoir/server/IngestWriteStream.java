@@ -19,6 +19,8 @@ public class IngestWriteStream implements WriteStream<JsonObject> {
   final Storage storage;
   final IngestParams params;
   final IngestStats stats;
+  final String fileName;
+  final String contentType;
   Handler<Throwable> exceptionHandler;
   Handler<AsyncResult<Void>> endHandler;
   boolean ended;
@@ -29,12 +31,14 @@ public class IngestWriteStream implements WriteStream<JsonObject> {
   boolean ingest;
   private static final Logger log = LogManager.getLogger(IngestWriteStream.class);
   private static final String LOCAL_ID = "localId";
-  private static final String PROGRESS_LOG_PATTERN = "{} processed {}";
 
-  IngestWriteStream(Vertx vertx, Storage storage, IngestParams params, String fileName) {
+  IngestWriteStream(Vertx vertx, Storage storage, IngestParams params,
+      String fileName, String contentType) {
     this.vertx = vertx;
     this.storage = storage;
     this.params = params;
+    this.fileName = fileName;
+    this.contentType = contentType;
     this.stats = new IngestStats(fileName);
     this.ingest = params.ingest;
   }
@@ -88,7 +92,7 @@ public class IngestWriteStream implements WriteStream<JsonObject> {
             drainHandler.handle(null);
           }
           if (ops.get() == 0 && ended) {
-            log.info(PROGRESS_LOG_PATTERN, params.getSummary(), stats.processed());
+            log.info("{} {}", params.getSummary(fileName), stats);
             if (endHandler != null) {
               endHandler.handle(Future.succeededFuture());
             }
@@ -105,7 +109,7 @@ public class IngestWriteStream implements WriteStream<JsonObject> {
   public void end(Handler<AsyncResult<Void>> handler) {
     ended = true;
     if (ops.get() == 0) {
-      log.info(PROGRESS_LOG_PATTERN, params.getSummary(), stats.processed());
+      log.info("{} {}", params.getSummary(fileName), stats);
       handler.handle(Future.succeededFuture());
     } else {
       endHandler = handler;
@@ -166,14 +170,14 @@ public class IngestWriteStream implements WriteStream<JsonObject> {
     String localId = rec.getString(LOCAL_ID);
     if (stats.incrementProcessed() < 10) {
       if (localId != null) {
-        log.info("{} found ID {} at {}", params.getSummary(), localId, stats.processed());
+        log.info("{} found ID {} at {}", params.getSummary(fileName), localId, stats.processed());
       }
     } else if (stats.processed() % 10000 == 0) {
-      log.info(PROGRESS_LOG_PATTERN, params.getSummary(), stats.processed());
+      log.info("{} processed: {}", params.getSummary(fileName), stats.processed());
     }
     if (localId == null) {
       stats.incrementIgnored();
-      log.warn("{} missing ID at {}", params.getSummary(), stats.processed());
+      log.warn("{} missing ID at {}", params.getSummary(fileName), stats.processed());
       if (stats.ignored() < 10) {
         log.warn("{}", rec::encodePrettily);
       }
