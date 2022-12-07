@@ -282,6 +282,71 @@ public class UploadTest extends TestBase {
   }
 
   @Test
+  public void uploadMarcXmlTwice(TestContext context) {
+    MultipartForm requestForm1 = MultipartForm.create()
+        .binaryFileUpload("records", "marc3.xml", marc3xmlBuffer,  "text/xml");
+
+    // upload 3 new records
+    webClient.postAbs(OKAPI_URL + "/reservoir/upload")
+        .expect(ResponsePredicate.SC_OK)
+        .putHeader(XOkapiHeaders.TENANT, TENANT_1)
+        .putHeader(XOkapiHeaders.PERMISSIONS, "[\"" + PERM_PREFIX + "." + "SOURCE-5" + "\"]")
+        .addQueryParam("xmlFixing", "false")
+        .addQueryParam("sourceId", "SOURCE-5")
+        .addQueryParam("sourceVersion", "1")
+        .addQueryParam("localIdPath",  "$.marc.fields[*].001")
+        .sendMultipartForm(requestForm1)
+        .compose(res -> {
+            JsonObject responseBody = res.bodyAsJsonObject();
+            assertThat(responseBody.getJsonObject("marc3.xml").getInteger("processed"), is(3));
+            assertThat(responseBody.getJsonObject("marc3.xml").getInteger("ignored"), is(0));
+            assertThat(responseBody.getJsonObject("marc3.xml").getInteger("inserted"), is(3));
+            assertThat(responseBody.getJsonObject("marc3.xml").getInteger("updated"), is(0));
+            assertThat(responseBody.getJsonObject("marc3.xml").getInteger("deleted"), is(0));
+            return webClient.getAbs(OKAPI_URL + "/reservoir/records")
+                .addQueryParam("query", "sourceId = \"SOURCE-5\"")
+                .expect(ResponsePredicate.SC_OK)
+                .putHeader(XOkapiHeaders.TENANT, TENANT_1)
+                .send();
+        })
+        .map(res -> {
+          JsonObject responseBody = res.bodyAsJsonObject();
+          assertThat(responseBody.getJsonArray("items").size(), is(3));
+          return null;
+        })
+        .compose(c1 ->
+            // upload 1 "delete" record
+            webClient.postAbs(OKAPI_URL + "/reservoir/upload")
+                .expect(ResponsePredicate.SC_OK)
+                .putHeader(XOkapiHeaders.TENANT, TENANT_1)
+                .putHeader(XOkapiHeaders.PERMISSIONS, "[\"" + PERM_PREFIX + "." + "SOURCE-5" + "\"]")
+                .addQueryParam("xmlFixing", "true")
+                .addQueryParam("sourceId", "SOURCE-5")
+                .addQueryParam("sourceVersion", "1")
+                .addQueryParam("localIdPath",  "$.marc.fields[*].001")
+                .sendMultipartForm(requestForm1))
+        .compose(res -> {
+            JsonObject responseBody = res.bodyAsJsonObject();
+            assertThat(responseBody.getJsonObject("marc3.xml").getInteger("processed"), is(3));
+            assertThat(responseBody.getJsonObject("marc3.xml").getInteger("ignored"), is(0));
+            assertThat(responseBody.getJsonObject("marc3.xml").getInteger("inserted"), is(0));
+            assertThat(responseBody.getJsonObject("marc3.xml").getInteger("updated"), is(3));
+            assertThat(responseBody.getJsonObject("marc3.xml").getInteger("deleted"), is(0));
+            return webClient.getAbs(OKAPI_URL + "/reservoir/records")
+                .addQueryParam("query", "sourceId = \"SOURCE-5\"")
+                .expect(ResponsePredicate.SC_OK)
+                .putHeader(XOkapiHeaders.TENANT, TENANT_1)
+                .send();
+        })
+        .map(res -> {
+          JsonObject responseBody = res.bodyAsJsonObject();
+          assertThat(responseBody.getJsonArray("items").size(), is(3));
+          return null;
+        })
+        .onComplete(context.asyncAssertSuccess());
+  }
+
+  @Test
   public void uploadMarcXmlNoId(TestContext context) {
     MultipartForm requestForm1 = MultipartForm.create()
         .binaryFileUpload("records", "marc3-no-id.xml", marc3NoIdXmlBuffer,  "text/xml");
