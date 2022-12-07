@@ -14,7 +14,9 @@ form.addEventListener(
     params.localIdPath = document.querySelector("#localIdPathInput").value;
     const fileInput = document.querySelector("#fileInput");
     const formData = new FormData();
-    formData.append("records", fileInput.files[0]);
+    Array.from(fileInput.files).forEach(file => {
+      formData.append("records", file);
+    });
     const request = new XMLHttpRequest();
     request.open("POST", "/reservoir/upload" + qs(params), true);
     if (isJWT(tenantOrToken)) {
@@ -27,7 +29,7 @@ form.addEventListener(
     request.onload = (progress) => {
       output.innerHTML =
         request.status === 200
-          ? "Uploaded."
+          ? renderStatus(request.response)
           : `Error: ${request.responseText}`;
     };
     request.send(formData);
@@ -49,4 +51,19 @@ function qs(params) {
 
 function isJWT(token) {
   return token.startsWith("eyJ");
+}
+
+function renderStatus(response) {
+  const status = JSON.parse(response);
+  const keys = Object.keys(status);
+  let summary = "Uploaded. Summary:";
+  keys.forEach(key => {
+    summary += "<br />File '" + key + "':"
+    + "<br/>- processed: " + status[key].processed
+    + "<br/>- ignored: " + status[key].ignored
+    + "<br/>- inserted: " + status[key].inserted
+    + "<br/>- updated: " + status[key].updated
+    + "<br/>- ignored: " + status[key].deleted
+  });
+  return summary;
 }

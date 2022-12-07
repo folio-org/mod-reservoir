@@ -71,4 +71,9 @@ button {
      between the labels and their text fields */
   margin-left: 0.2em;
   font: bold 1.2em sans-serif;
+  vertical-align: top;
+}
+
+#output {
+  text-align: left;
 }
