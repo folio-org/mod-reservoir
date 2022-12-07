@@ -53,6 +53,10 @@
     "url" : {
       "type" : "string",
       "description" : "OAI PMH server prefix so that PREFIX?verb=.. works"
+    },
+    "xmlFixing" : {
+      "type": "boolean",
+      "description": "Attempt to fix malformed server response by remving invalid chars"
     }
   },
   "additionalProperties": false,
@@ -60,4 +64,3 @@
     "id", "url", "sourceId"
   ]
 }
-
