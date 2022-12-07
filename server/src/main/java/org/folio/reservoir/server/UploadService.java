@@ -1,6 +1,5 @@
 package org.folio.reservoir.server;
 
-import com.jayway.jsonpath.InvalidPathException;
 import io.vertx.core.Future;
 import io.vertx.core.Promise;
 import io.vertx.core.buffer.Buffer;
