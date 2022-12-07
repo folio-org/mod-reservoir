@@ -593,10 +593,11 @@ public class OaiPmhClientService {
     if (res.statusCode() != 200) {
       return handleBadResponse(res);
     }
-    XmlParser xmlParser = XmlParser.newParser(new XmlFixer(res));
+    JsonObject config = job.getConfig();
+    boolean xmlFixing = config.getBoolean("xmlFixing", false);
+    XmlParser xmlParser = XmlParser.newParser(xmlFixing ? new XmlFixer(res) : res);
     XmlMetadataStreamParser<JsonObject> metadataParser
         = new XmlMetadataParserMarcInJson();
-    JsonObject config = job.getConfig();
     SourceId sourceId = new SourceId(config.getString("sourceId"));
     Promise<Void> promise = Promise.promise();
     AtomicInteger queue = new AtomicInteger();
