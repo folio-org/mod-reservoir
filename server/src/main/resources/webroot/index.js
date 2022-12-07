@@ -64,7 +64,7 @@ function renderStatus(response) {
     + "<br/>- ignored: " + status[key].ignored
     + "<br/>- inserted: " + status[key].inserted
     + "<br/>- updated: " + status[key].updated
-    + "<br/>- ignored: " + status[key].deleted
+    + "<br/>- deleted: " + status[key].deleted
   });
   return summary;
 }
