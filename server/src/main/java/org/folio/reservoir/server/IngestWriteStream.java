@@ -29,6 +29,7 @@ public class IngestWriteStream implements WriteStream<JsonObject> {
   boolean ingest;
   private static final Logger log = LogManager.getLogger(IngestWriteStream.class);
   private static final String LOCAL_ID = "localId";
+  private static final String PROGRESS_LOG_PATTERN = "{} processed {}";
 
   IngestWriteStream(Vertx vertx, Storage storage, IngestParams params, String fileName) {
     this.vertx = vertx;
@@ -87,7 +88,7 @@ public class IngestWriteStream implements WriteStream<JsonObject> {
             drainHandler.handle(null);
           }
           if (ops.get() == 0 && ended) {
-            log.info("{} processed {}", params.getSummary(), stats.processed());
+            log.info(PROGRESS_LOG_PATTERN, params.getSummary(), stats.processed());
             if (endHandler != null) {
               endHandler.handle(Future.succeededFuture());
             }
@@ -104,7 +105,7 @@ public class IngestWriteStream implements WriteStream<JsonObject> {
   public void end(Handler<AsyncResult<Void>> handler) {
     ended = true;
     if (ops.get() == 0) {
-      log.info("{} processed {}", params.getSummary(), stats.processed());
+      log.info(PROGRESS_LOG_PATTERN, params.getSummary(), stats.processed());
       handler.handle(Future.succeededFuture());
     } else {
       endHandler = handler;
@@ -168,7 +169,7 @@ public class IngestWriteStream implements WriteStream<JsonObject> {
         log.info("{} found ID {} at {}", params.getSummary(), localId, stats.processed());
       }
     } else if (stats.processed() % 10000 == 0) {
-      log.info("{} processed {}", params.getSummary(), stats.processed());
+      log.info(PROGRESS_LOG_PATTERN, params.getSummary(), stats.processed());
     }
     if (localId == null) {
       stats.incrementIgnored();
