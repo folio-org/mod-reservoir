@@ -57,7 +57,6 @@ public class UploadService {
       HttpServerRequest request = ctx.request();
       Future<IngestStatsByFile> future;
       if (params.contentType != null && params.contentType.startsWith("multipart/form-data")) {
-        log.info("Upload multipart");
         request.setExpectMultipart(true);
         List<Future<IngestStats>> futures = new ArrayList<>();
         IngestStatsByFile statsByFile = new IngestStatsByFile();
@@ -97,8 +96,8 @@ public class UploadService {
       }
       Storage storage = new Storage(ctx);
       int queueSize = storage.pool.getPoolOptions().getMaxSize() * 10;
-      log.info("Upload tenant {} source {} queueSize {} Content-Type {} fileName {}",
-          storage.getTenant(), params.sourceId, queueSize, contentType, fileName);
+      log.info("Upload {} starting. tenant: {} queueSize: {} content-type: {}",
+          params.getSummary(), storage.getTenant(), queueSize, contentType);
       return uploadContent(readStream,
           new IngestWriteStream(ctx.vertx(), storage, params, fileName),
           contentType, queueSize, params.xmlFixing);

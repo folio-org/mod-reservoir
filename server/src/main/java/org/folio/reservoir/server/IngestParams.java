@@ -32,7 +32,7 @@ public class IngestParams {
     ingest = request.getParam("ingest", "true").equals("true");
     xmlFixing = request.getParam("xmlFixing", "false").equals("true");
     raw = request.getParam("raw", "false").equals("true");
-    fileName = request.getParam("fileName", "<unknown>");
+    fileName = request.getParam("fileName", "<noname>");
   }
 
   /**
@@ -47,6 +47,10 @@ public class IngestParams {
     }
     return sourceIdParam;
 
+  }
+
+  public String getSummary() {
+    return sourceId + ":" + sourceVersion + ":" + fileName;
   }
 
 }

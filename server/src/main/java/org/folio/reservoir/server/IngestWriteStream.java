@@ -13,35 +13,29 @@ import java.util.concurrent.atomic.AtomicInteger;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.folio.reservoir.module.impl.ModuleJsonPath;
-import org.folio.reservoir.util.SourceId;
 
 public class IngestWriteStream implements WriteStream<JsonObject> {
-  final SourceId sourceId;
-  final int sourceVersion;
-  final Storage storage;
   final Vertx vertx;
+  final Storage storage;
+  final IngestParams params;
+  final IngestStats stats;
   Handler<Throwable> exceptionHandler;
   Handler<AsyncResult<Void>> endHandler;
-
   boolean ended;
   Handler<Void> drainHandler;
   JsonArray matchKeyConfigs;
   AtomicInteger ops = new AtomicInteger();
   int queueSize = 5;
   boolean ingest;
-  ModuleJsonPath jsonPath;
-  final IngestStats stats;
   private static final Logger log = LogManager.getLogger(IngestWriteStream.class);
   private static final String LOCAL_ID = "localId";
 
   IngestWriteStream(Vertx vertx, Storage storage, IngestParams params, String fileName) {
     this.vertx = vertx;
     this.storage = storage;
-    sourceId = params.sourceId;
-    sourceVersion = params.sourceVersion;
-    ingest = params.ingest;
-    jsonPath = params.jsonPath;
+    this.params = params;
     this.stats = new IngestStats(fileName);
+    this.ingest = params.ingest;
   }
 
   @Override
@@ -68,7 +62,7 @@ public class IngestWriteStream implements WriteStream<JsonObject> {
             future = future
                 .compose(x -> storage
                   .ingestGlobalRecord(
-                    vertx, sourceId, sourceVersion, rec, matchKeyConfigs)
+                    vertx, params.sourceId, params.sourceVersion, rec, matchKeyConfigs)
                   .onSuccess(r -> {
                     if (r == null) {
                       stats.incrementDeleted();
@@ -93,7 +87,7 @@ public class IngestWriteStream implements WriteStream<JsonObject> {
             drainHandler.handle(null);
           }
           if (ops.get() == 0 && ended) {
-            log.info("{} records processed", stats.processed());
+            log.info("{} processed {}", params.getSummary(), stats.processed());
             if (endHandler != null) {
               endHandler.handle(Future.succeededFuture());
             }
@@ -110,7 +104,7 @@ public class IngestWriteStream implements WriteStream<JsonObject> {
   public void end(Handler<AsyncResult<Void>> handler) {
     ended = true;
     if (ops.get() == 0) {
-      log.info("{} records processed", stats.processed());
+      log.info("{} processed {}", params.getSummary(), stats.processed());
       handler.handle(Future.succeededFuture());
     } else {
       endHandler = handler;
@@ -149,10 +143,10 @@ public class IngestWriteStream implements WriteStream<JsonObject> {
 
   private Future<JsonObject> lookupId(JsonObject rec) {
     Future<JsonObject> fut = Future.succeededFuture(rec);
-    if (jsonPath != null) {
+    if (params.jsonPath != null) {
       fut = fut
         .compose(r ->
-          lookupPath(vertx, jsonPath, r.getJsonObject("payload"))
+          lookupPath(vertx, params.jsonPath, r.getJsonObject("payload"))
             .map(strings -> {
               Iterator<String> iterator = strings.iterator();
               if (iterator.hasNext()) {
@@ -171,14 +165,14 @@ public class IngestWriteStream implements WriteStream<JsonObject> {
     String localId = rec.getString(LOCAL_ID);
     if (stats.incrementProcessed() < 10) {
       if (localId != null) {
-        log.info("Got record localId={}", localId);
+        log.info("{} found ID {} at {}", params.getSummary(), localId, stats.processed());
       }
     } else if (stats.processed() % 10000 == 0) {
-      log.info("Processed {}", stats.processed());
+      log.info("{} processed {}", params.getSummary(), stats.processed());
     }
     if (localId == null) {
       stats.incrementIgnored();
-      log.warn("Record number {} without localId", stats.processed());
+      log.warn("{} missing ID at {}", params.getSummary(), stats.processed());
       if (stats.ignored() < 10) {
         log.warn("{}", rec::encodePrettily);
       }
