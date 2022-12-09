@@ -2505,7 +2505,7 @@ public class MainVerticleTest extends TestBase {
         .get("/reservoir/oai")
         .then().statusCode(200)
         .contentType("text/xml")
-        .body(containsString("<!-- Failed to produce record: Error -->"));
+        .body(containsString("<!-- Failed to produce record"));
 
     RestAssured.given()
         .header(XOkapiHeaders.TENANT, TENANT_1)
