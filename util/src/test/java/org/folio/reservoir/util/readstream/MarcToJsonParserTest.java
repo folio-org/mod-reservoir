@@ -59,13 +59,22 @@ public class MarcToJsonParserTest {
         })
         .onComplete(context.asyncAssertSuccess(records -> {
           assertThat(records, hasSize(3));
+          //rec1
           assertThat(records.get(0).getJsonArray("fields").getJsonObject(0).getString("001"), is("   73209622 //r823"));
           assertThat(records.get(0).getJsonArray("fields").getJsonObject(9).getJsonObject("245").getJsonArray("subfields").getJsonObject(0).getString("a"), is("The Computer Bible /"));
+          assertThat(records.get(0).getJsonArray("fields").getJsonObject(9).getJsonObject("245").getString("ind1"), is("0"));
+          assertThat(records.get(0).getJsonArray("fields").getJsonObject(9).getJsonObject("245").getString("ind2"), is("4"));
+          //rec2
           assertThat(records.get(1).getJsonArray("fields").getJsonObject(0).getString("001"), is("   11224466 "));
           //the following should be at pos 8 if we follow yaz order, marc4j puts 010 as last field following marc physicall order
           assertThat(records.get(1).getJsonArray("fields").getJsonObject(7).getJsonObject("245").getJsonArray("subfields").getJsonObject(0).getString("a"), is("How to program a computer"));
+          assertThat(records.get(1).getJsonArray("fields").getJsonObject(7).getJsonObject("245").getString("ind1"), is("1"));
+          assertThat(records.get(1).getJsonArray("fields").getJsonObject(7).getJsonObject("245").getString("ind2"), is("0"));
+          //rec3
           assertThat(records.get(2).getJsonArray("fields").getJsonObject(0).getString("001"), is("   77123332 "));
           assertThat(records.get(2).getJsonArray("fields").getJsonObject(10).getJsonObject("245").getJsonArray("subfields").getJsonObject(0).getString("a"), is("Voyager Diacritic test -- New input 001 (SBIE)."));
+          assertThat(records.get(2).getJsonArray("fields").getJsonObject(10).getJsonObject("245").getString("ind1"), is("0"));
+          assertThat(records.get(2).getJsonArray("fields").getJsonObject(10).getJsonObject("245").getString("ind2"), is("0"));
         }));
   }
 
