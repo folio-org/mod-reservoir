@@ -511,6 +511,7 @@ paths:
       - $ref: headers/okapi-tenant.yaml
       - $ref: headers/okapi-token.yaml
       - $ref: headers/okapi-url.yaml
+      - $ref: headers/okapi-permissions.yaml
       - in: query
         name: sourceId
         required: true
@@ -524,10 +525,33 @@ paths:
           type: integer
           default: 1
       - in: query
+        name: fileName
+        description: file name of the uploaded file (for non multipart upload)
+        schema:
+          type: string
+      - in: query
         name: localIdPath
         description: JSON-path for where local identifier is fetched from
         schema:
           type: string
+      - in: query
+        name: xmlFixing
+        description: attempt to fix XML input by replacing invalid chars
+        schema:
+          type: boolean
+          default: false
+      - in: query
+        name: raw
+        description: only calculate size
+        schema:
+          type: boolean
+          default: false
+      - in: query
+        name: ingest
+        description: ingest records after processing files
+        schema:
+          type: boolean
+          default: true
     post:
       description: Upload MARC binary and MARCXML records.
       operationId: uploadRecords
@@ -545,15 +569,29 @@ paths:
                 # MARC not that common (say .mrc) often defaults to application/octet-stream
                 contentType: application/octet-stream,application/marc,
                   application/xml,text/xml
+          application/octet-stream:
+            schema:
+              type: string
+              format: binary
+          application/xml:
+            schema:
+              type: string
+              format: binary
+          text/xml:
+            schema:
+              type: string
+              format: binary
       responses:
         "200":
           description: Records accepted.
           content:
             application/json:
               schema:
-                $ref: schemas/ingestRecordResponse.json
+                $ref: schemas/ingestStatsByFile.json
         "400":
           $ref: "#/components/responses/trait_400"
+        "403":
+          $ref: "#/components/responses/trait_403"
         "500":
           $ref: "#/components/responses/trait_500"
   # Global Records retrieval and simple ingest
@@ -1069,6 +1107,17 @@ components:
           schema:
             type: object
             example: {"error":"Invalid JSON in request"}
+    trait_403:
+      description: Forbidden
+      content:
+        text/plain:
+          schema:
+            type: string
+            example: Insufficient permissions to acccess resource
+        application/json:
+          schema:
+            type: object
+            example: {"error":"Insufficient permissions to acccess resource"}
     trait_404:
       description: Not Found
       content:
@@ -1090,4 +1139,3 @@ components:
   schemas:
     errors:
       $ref: schemas/errors.json
-

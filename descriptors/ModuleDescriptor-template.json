@@ -347,12 +347,29 @@
       "handlers": [
         {
           "methods": [
-            "POST"
+            "POST", "PUT"
           ],
           "pathPattern": "/reservoir/upload",
           "permissionsRequired": [
             "reservoir-upload.post"
+          ],
+          "permissionsDesired": [
+            "reservoir-upload.all-sources",
+            "reservoir-upload.source.*"
           ]
+        }
+      ]
+    },
+    {
+      "id": "reservoir-upload-form",
+      "version": "1.0",
+      "handlers": [
+        {
+          "methods": [
+            "GET", "HEAD"
+          ],
+          "pathPattern": "/reservoir/upload-form*",
+          "permissionsRequired": []
         }
       ]
     }
@@ -591,7 +608,8 @@
       "displayName": "reservoir - upload",
       "description": "upload permissions",
       "subPermissions": [
-        "reservoir-upload.post"
+        "reservoir-upload.post",
+        "reservoir-upload.all-sources"
       ]
     },
     {
@@ -614,7 +632,7 @@
     "dockerPull": false,
     "dockerArgs": {
       "HostConfig": {
-        "Memory": 536870912,
+        "Memory": 2147483648,
         "PortBindings": {
           "8081/tcp": [
             {
@@ -627,7 +645,7 @@
     "env": [
       {
         "name": "JAVA_OPTIONS",
-        "value": "-XX:MaxRAMPercentage=66.0"
+        "value": "-XX:MaxRAMPercentage=66.0 --module-path=compiler/ --upgrade-module-path=compiler/compiler.jar:compiler/compiler-management.jar -XX:+UnlockExperimentalVMOptions -XX:+EnableJVMCI"
       },
       {
         "name": "DB_HOST",

@@ -41,6 +41,7 @@ import org.folio.reservoir.util.XmlMetadataParserMarcInJson;
 import org.folio.reservoir.util.XmlMetadataStreamParser;
 import org.folio.reservoir.util.oai.OaiParserStream;
 import org.folio.reservoir.util.oai.OaiRecord;
+import org.folio.reservoir.util.readstream.XmlFixer;
 import org.folio.reservoir.util.readstream.XmlParser;
 
 public class OaiPmhClientService {
@@ -57,6 +58,8 @@ public class OaiPmhClientService {
 
   private static final String CLIENT_ID_ALL = "_all";
 
+  private static final String OAI_ERROR_NORECORDSMATCH = "noRecordsMatch";
+
   private static final Logger log = LogManager.getLogger(OaiPmhClientService.class);
 
   public OaiPmhClientService(Vertx vertx) {
@@ -72,7 +75,7 @@ public class OaiPmhClientService {
    */
   public Future<Void> post(RoutingContext ctx) {
     Storage storage = new Storage(ctx);
-    JsonObject config = ctx.getBodyAsJson();
+    JsonObject config = ctx.body().asJsonObject();
 
     String id = config.getString("id");
     if (CLIENT_ID_ALL.equals(id)) {
@@ -235,7 +238,7 @@ public class OaiPmhClientService {
     Storage storage = new Storage(ctx);
     RequestParameters params = ctx.get(ValidationHandler.REQUEST_CONTEXT_KEY);
     String id = Util.getParameterString(params.pathParameter("id"));
-    JsonObject config = ctx.getBodyAsJson();
+    JsonObject config = ctx.body().asJsonObject();
     config.remove("id");
     return getJob(storage, id).compose(existing -> {
       if (existing != null) {
@@ -357,6 +360,7 @@ public class OaiPmhClientService {
 
   Future<Void> startJob(Storage storage, String id, OaiPmhStatus job) {
     job.setStatusRunning();
+    job.setError(null);
     job.setLastTotalRecords(0L);
     job.setLastRecsPerSec(null);
     job.setLastStartedTimestampRaw(LocalDateTime.now(ZoneOffset.UTC));
@@ -534,8 +538,7 @@ public class OaiPmhClientService {
     return httpClient.request(requestOptions).compose(HttpClientRequest::send);
   }
 
-  static void endResponse(StringBuilder resumptionToken,
-      String error, Promise<Void> promise, OaiPmhStatus job) {
+  static Future<Void> endResponse(String resumptionToken, String error, OaiPmhStatus job) {
     JsonObject config = job.getConfig();
     LocalDateTime started = job.getLastStartedTimestampRaw();
     long runningTimeMilli =
@@ -543,20 +546,19 @@ public class OaiPmhClientService {
     job.setLastRunningTime(runningTimeMilli);
     job.calculateLastRecsPerSec();
     String oldResumptionToken = config.getString(RESUMPTION_TOKEN_LITERAL);
-    if (resumptionToken.length() == 0
-        || resumptionToken.toString().equals(oldResumptionToken)) {
+    if (resumptionToken == null || resumptionToken.equals(oldResumptionToken)) {
       moveFromDate(config);
       config.remove(RESUMPTION_TOKEN_LITERAL);
-      promise.fail(error);
+      return Future.failedFuture(error == null ? OAI_ERROR_NORECORDSMATCH : error);
     } else {
       config.put(RESUMPTION_TOKEN_LITERAL, resumptionToken);
-      promise.complete();
+      return Future.succeededFuture();
     }
   }
 
   /**
    * If the last datestamp is at least 1 DAY or 1 HOUR before "now"
-   * we bump it by 1 DAY or 1 SEC respectively, to avoid reharvesting
+   * we bump it by 1 DAY or 1 SEC respectively, to avoid re-harvesting
    * the same files next time.
    * @param config job config
    */
@@ -567,131 +569,153 @@ public class OaiPmhClientService {
     }
   }
 
+  private Future<Void> handleBadResponse(HttpClientResponse res) {
+    Promise<Void> promise = Promise.promise();
+    Buffer buffer = Buffer.buffer();
+    res.handler(x -> {
+      // only save first bytes, so we don't fill our memory up with big response
+      if (buffer.length() < 80) {
+        buffer.appendBuffer(x);
+      }
+    });
+    res.exceptionHandler(promise::tryFail);
+    res.endHandler(end -> {
+      String msg = buffer.length() > 80
+          ? buffer.getString(0, 80) : buffer.toString();
+      promise.tryFail("Returned HTTP status " + res.statusCode() + ": " + msg);
+    });
+    return promise.future();
+  }
+
   private Future<Void> listRecordsResponse(Storage storage, OaiPmhStatus job,
       JsonArray matchKeyConfigs, HttpClientResponse res) {
     job.setTotalRequests(job.getTotalRequests() + 1);
     if (res.statusCode() != 200) {
-      Promise<Void> promise = Promise.promise();
-      Buffer buffer = Buffer.buffer();
-      res.handler(buffer::appendBuffer);
-      res.exceptionHandler(promise::tryFail);
-      res.endHandler(end -> {
-        String msg = buffer.length() > 80
-            ? buffer.getString(0, 80) : buffer.toString();
-        promise.fail("Returned HTTP status " + res.statusCode() + ": " + msg);
-      });
-      return promise.future();
+      return handleBadResponse(res);
     }
-    XmlParser xmlParser = XmlParser.newParser(res);
+    JsonObject config = job.getConfig();
+    boolean xmlFixing = config.getBoolean("xmlFixing", false);
+    XmlParser xmlParser = XmlParser.newParser(xmlFixing ? new XmlFixer(res) : res);
     XmlMetadataStreamParser<JsonObject> metadataParser
         = new XmlMetadataParserMarcInJson();
-    JsonObject config = job.getConfig();
     SourceId sourceId = new SourceId(config.getString("sourceId"));
     Promise<Void> promise = Promise.promise();
     AtomicInteger queue = new AtomicInteger();
     AtomicBoolean ended = new AtomicBoolean();
     int sourceVersion = config.getInteger("sourceVersion", 1);
-    StringBuilder resumptionToken = new StringBuilder();
-    OaiParserStream<JsonObject> oaiParserStream =
-        new OaiParserStream<>(xmlParser,
-            oaiRecord -> {
-              // populate from with newest datestamp from all responses
-              String datestamp = oaiRecord.getDatestamp();
-              String from = config.getString("from");
-              if (from == null || datestamp.compareTo(from) > 0) {
-                config.put("from", datestamp);
-              }
-              queue.incrementAndGet();
-              // is queue full: 4 because that's the Postgres client pool size
-              if (Boolean.FALSE.equals(ended.get()) && queue.get() >= 4) {
-                xmlParser.pause();
-              }
-              ingestRecord(storage, oaiRecord, sourceId, sourceVersion,
-                  matchKeyConfigs)
-                  .map(upd -> {
-                    queue.decrementAndGet();
-                    // drain ?
-                    if (queue.get() < 2) {
-                      xmlParser.resume();
-                    }
-                    job.setTotalRecords(job.getTotalRecords() + 1);
-                    job.setLastTotalRecords(job.getLastTotalRecords() + 1);
-                    if (upd == null) {
-                      job.setTotalDeleted(job.getTotalDeleted() + 1);
-                    } else if (Boolean.TRUE.equals(upd)) {
-                      job.setTotalInserted(job.getTotalInserted() + 1);
-                    } else {
-                      job.setTotalUpdated(job.getTotalUpdated() + 1);
-                    }
-                    if (queue.get() == 0 && Boolean.TRUE.equals(ended.get())) {
-                      endResponse(resumptionToken, null, promise, job);
-                    }
-                    return null;
-                  })
-                  .onFailure(x -> xmlParser.resume());
-            },
-            metadataParser);
-    oaiParserStream.exceptionHandler(promise::fail);
+    OaiParserStream<JsonObject> oaiParserStream = new OaiParserStream<>(xmlParser, metadataParser);
+    oaiParserStream.parse(
+        oaiRecord -> {
+          // populate from with newest datestamp from all responses
+          String datestamp = oaiRecord.getDatestamp();
+          String from = config.getString("from");
+          if (from == null || datestamp.compareTo(from) > 0) {
+            config.put("from", datestamp);
+          }
+          queue.incrementAndGet();
+          // is queue full: 4 because that's the Postgres client pool size
+          if (Boolean.FALSE.equals(ended.get()) && queue.get() >= 4) {
+            xmlParser.pause();
+          }
+          ingestRecord(storage, oaiRecord, sourceId, sourceVersion,
+              matchKeyConfigs)
+              .map(upd -> {
+                job.setTotalRecords(job.getTotalRecords() + 1);
+                job.setLastTotalRecords(job.getLastTotalRecords() + 1);
+                if (upd == null) {
+                  job.setTotalDeleted(job.getTotalDeleted() + 1);
+                } else if (Boolean.TRUE.equals(upd)) {
+                  job.setTotalInserted(job.getTotalInserted() + 1);
+                } else {
+                  job.setTotalUpdated(job.getTotalUpdated() + 1);
+                }
+                return null;
+              })
+              .onFailure(x -> {
+                log.error("{} when parsing record {}", x.getMessage(),
+                    oaiRecord.getIdentifier(), x);
+                // fail now. To ignore, omit the calls below
+                xmlParser.endHandler(null);
+                promise.tryFail(x.getMessage() + " when parsing record "
+                    + oaiRecord.getIdentifier());
+              })
+              .onComplete(x -> {
+                queue.decrementAndGet();
+                // drain ?
+                if (queue.get() < 2) {
+                  xmlParser.resume();
+                }
+                if (queue.get() == 0 && Boolean.TRUE.equals(ended.get())) {
+                  endResponse(oaiParserStream.getResumptionToken(), oaiParserStream.getError(), job)
+                      .onComplete(promise);
+                }
+              });
+        });
+    oaiParserStream.exceptionHandler(promise::tryFail);
     xmlParser.endHandler(end -> {
       ended.set(true);
-      String tmp = oaiParserStream.getResumptionToken();
-      if (tmp != null) {
-        resumptionToken.append(tmp);
-      }
       if (queue.get() == 0) {
-        endResponse(resumptionToken, oaiParserStream.getError(), promise, job);
+        endResponse(oaiParserStream.getResumptionToken(), oaiParserStream.getError(), job)
+            .onComplete(promise);
       }
     });
     return promise.future();
   }
 
   void oaiHarvestLoop(Storage storage, String id, OaiPmhStatus job, UUID owner, int retries) {
+    log.info("harvest loop id={} owner={} retries={}", id, owner, retries);
+    job.setError(null);
+    job.setLastActiveTimestampRaw(LocalDateTime.now(ZoneOffset.UTC));
     JsonObject config = job.getConfig();
-    log.info("harvest loop id={} owner={}", id, owner);
     getStopOwner(storage, id)
-        .onSuccess(row -> {
+        .compose(row -> {
           if (!row.getUUID("owner").equals(owner)) {
-            return;
+            log.info("harvest loop id={} owner={} not owner", id, owner);
+            return Future.succeededFuture();
           }
-          job.setError(null);
-          job.setLastActiveTimestampRaw(LocalDateTime.now(ZoneOffset.UTC));
-          Future<Integer> f;
           if (Boolean.TRUE.equals(row.getBoolean("stop"))) {
-            f = Future.failedFuture((String) null);
-          } else {
-            f = storage.getAvailableMatchConfigs()
-                .compose(matchKeyConfigs ->
-                    listRecordsRequest(config)
-                        .compose(res ->
-                            listRecordsResponse(storage, job, matchKeyConfigs, res)))
-                .map(0)
-                .recover(e -> {
-                  if (e instanceof VertxException && "Connection was closed".equals(e.getMessage())
-                      && retries < config.getInteger("numberRetries", 3)) {
-                    Promise<Integer> promise = Promise.promise();
-                    long w = config.getInteger("waitRetries", 10);
-                    vertx.setTimer(1000 * w, x -> promise.complete(retries + 1));
-                    return promise.future();
-                  }
-                  return Future.failedFuture(e);
-                });
+            log.info("harvest loop id={} owner={} stopping", id, owner);
+            job.setStatusIdle();
+            return updateJob(storage, id, config, job, null, null);
           }
-          f.compose(newRetries ->
+          return storage.getAvailableMatchConfigs()
+              .compose(matchKeyConfigs ->
+                  listRecordsRequest(config)
+                      .compose(res ->
+                          listRecordsResponse(storage, job, matchKeyConfigs, res)))
+              .map(0)
+              .recover(e -> {
+                if (e instanceof VertxException && "Connection was closed".equals(e.getMessage())
+                    && retries < config.getInteger("numberRetries", 3)) {
+                  Promise<Integer> promise = Promise.promise();
+                  long w = config.getInteger("waitRetries", 10);
+                  vertx.setTimer(1000 * w, x -> promise.complete(retries + 1));
+                  return promise.future();
+                }
+                return Future.failedFuture(e);
+              })
+              .compose(newRetries ->
                   // continue harvesting
                   updateJob(storage, id, config, job, null, null)
                       // only continue if we can also save job
                       .onSuccess(x1 -> oaiHarvestLoop(storage, id, job, owner, newRetries))
-              )
-              .onFailure(e -> {
-                // stop either due to error or no resumption token or "stop"
-                job.setStatusIdle();
-                if (e.getMessage() != null) {
-                  log.error(e.getMessage(), e);
-                  job.setError(e.getMessage());
-                }
-                // hopefully updateJob works so that error can be saved.
-                updateJob(storage, id, config, job, null, null);
-              });
-        });
+              );
+        })
+        .recover(e -> {
+          // error or all harvested. let's save it.
+          job.setStatusIdle();
+          if (OAI_ERROR_NORECORDSMATCH.equals(e.getMessage())) {
+            log.info("harvest loop id={} owner={} all harvested", id, owner);
+          } else {
+            log.warn("harvest loop id={} owner={} error {}", id, owner, e.getMessage(), e);
+            job.setError(e.getMessage());
+          }
+          // hopefully updateJob works so that error can be saved.
+          return updateJob(storage, id, config, job, null, null);
+        })
+        .onFailure(e ->
+            // if we make it here even saving didn't work!!!
+            log.error("harvest loop fail id={} owner={} fatal {}", id, owner, e.getMessage(), e)
+        );
   }
 }

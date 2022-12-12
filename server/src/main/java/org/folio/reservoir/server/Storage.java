@@ -115,6 +115,10 @@ public class Storage {
     return oaiPmhClientTable;
   }
 
+  public String getTenant() {
+    return tenant;
+  }
+
   /**
    * Prepares storage with tables, etc.
    * @return async result.
@@ -306,17 +310,25 @@ public class Storage {
     if (matcherProp != null) {
       ModuleInvocation invocation = new ModuleInvocation(matcherProp);
       return selectCodeModuleEntity(conn, invocation.getModuleName())
-        .compose(entity -> {
-          if (entity == null) {
-            return Future.failedFuture(
-              "Module '" + invocation.getModuleName()
-                + "' does not exist for '" + invocation + "'");
-          }
-          return ModuleCache.getInstance().lookup(vertx, tenant, entity);
-        })
-        .compose(module ->
-            updateMatchKeyValues(conn, globalId, matchkeyId,
-              new ModuleExecutable(module, invocation).executeAsCollection(payload)));
+          .compose(entity -> {
+            if (entity == null) {
+              return Future.failedFuture(
+                  "Module '" + invocation.getModuleName()
+                      + "' does not exist for '" + invocation + "'");
+            }
+            return ModuleCache.getInstance().lookup(vertx, tenant, entity);
+          })
+          .compose(module ->
+              vertx.<Collection<String>>executeBlocking(p -> {
+                try {
+                  p.complete(new ModuleExecutable(module, invocation).executeAsCollection(payload));
+                } catch (Exception e) {
+                  p.fail(e);
+                }
+              }, true)
+              .compose(values ->
+                updateMatchKeyValues(conn, globalId, matchkeyId, values)
+              ));
     } else {
       String methodName = matchKeyConfig.getString("method");
       JsonObject params = matchKeyConfig.getJsonObject("params");

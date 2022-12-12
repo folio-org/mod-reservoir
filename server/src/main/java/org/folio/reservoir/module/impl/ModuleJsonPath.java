@@ -69,4 +69,8 @@ public class ModuleJsonPath implements Module {
     return Future.succeededFuture();
   }
 
+  public String toString() {
+    return jsonPath != null ? jsonPath.getPath() : super.toString();
+  }
+
 }

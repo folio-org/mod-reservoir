@@ -80,6 +80,9 @@ If it's not defined you can specify it by passing `--add-host=host.docker.intern
 
 ## Command-line client
 
+Note: the CLI is no longer developed and the file upload functionality is now available from
+curl (see below) so please use this instead.
+
 The client is a command-line tool for sending records to the mod-reservoir server.
 
 Run the client with:
@@ -135,6 +138,105 @@ Once records are loaded, they can be retrieved with:
 ```
 curl -HX-Okapi-Tenant:$OKAPI_TENANT $OKAPI_URL/reservoir/records
 ```
+
+## Ingest record files
+
+The endpoint `/reservoir/upload` allows uploading files via HTTP `PUT` and `POST`.
+
+Currently, two formats are supported.
+
+ * MARC/ISO2709 concatenated records, triggered by Content-Type `application/octet-stream`.
+ * MARCXML collection, triggered by Content-Type `application/xml` or `text/xml`.
+
+The following query parameters are recognized:
+
+ * `sourceId`: required parameter for specifying the source identifier.
+ * `sourceVersion`: optional parameter for specifying source version
+    (default is 1)
+ * `fileName`: optional parameter for specifying the name of the uploaded file
+ * `localIdPath`: optional parameter for specifying where to find local identifier
+    (default is `$.marc.fields[*].001`)
+ * `xmlFixing`: optional boolean parameter, if `true` an attempt is made to remove invalid characters (e.g control chars)
+    from the XML input, `false` by default
+
+These query parameters are for debugging and performance testing only:
+
+ * `ingest` optional boolean parameter to determine whether ingesting is to take place (default `true`)
+ * `raw` optional boolean parameter to determine whether to just pipe the stream (default `false`)
+
+Note that this endpoint expects granular permissions for ingesting records from a particular source:
+
+ * `resevoir-upload.source.*` to ingest records from a specific source, where `*` symbol must be replaced
+    by the `sourceId` parameter
+ * `reservoir-upload.all-sources` to ingest data for any source (admin permission).
+
+ These permissions are enforced not by Okapi but by Reservoir directly and hence must be specifed through
+ the `X-Okapi-Permissions` header if the request is performed directly against the module. This is achieved
+ by adding `-H'X-Okapi-Permissions:["reservoir-upload.all-sources"]'` switch to the curl commands below.
+
+For uploading ISO2709 (binary MARC) use:
+
+```
+  curl -HX-Okapi-Tenant:$OKAPI_TENANT \
+    -T records.mrc $OKAPI_URL/reservoir/upload?sourceId=BIB1
+```
+
+Note: curl's `-T` is a shorthand for `--upload-file` and uses `PUT` for uploads,
+no `Content-Type` is set by curl which Reservoir treats the same as `application/octet-stream`.
+
+For uploading MARCXML:
+
+```
+  curl -HX-Okapi-Tenant:$OKAPI_TENANT -HContent-Type:text/xml \
+    -T records100k.xml $OKAPI_URL/reservoir/upload?sourceId=BIB1
+```
+
+In order to send `gzip` compressed files use:
+
+```
+  curl -HX-Okapi-Tenant:$OKAPI_TENANT -HContent-Encoding:gzip \
+   -T records.mrc.gz $OKAPI_URL/reservoir/upload?sourceId=BIB1
+```
+
+or apply compression on the fly:
+
+```
+  cat records.mrc | gzip | curl -HX-Okapi-Tenant:$OKAPI_TENANT \
+    -HContent-Encoding:gzip -T - $OKAPI_URL/reservoir/upload?sourceId=BIB1
+```
+
+Avoid using curl's alternative with `--data-binary @...` for large files as it buffers the entire file and may result in out of memory errors.
+
+## Ingest via multipart/form-data
+
+An alternative to the method above is uploading with `multipart/form-data` content type at `/reservoir/upload` endpoint.
+
+Only the named form input `records` is recognized; other form inputs are ignored.
+
+For example to ingest a set of MARCXML records via curl from sourceId `BIB1`:
+
+```
+  curl -HX-Okapi-Tenant:$OKAPI_TENANT -Frecords=@records100k.xml $OKAPI_URL/reservoir/upload?sourceId=BIB1
+```
+
+This approach does not allow for `gzip` compression but is simpler to integrate with a regular browser.
+
+## Ingest via an embedded upload form
+
+Reservoir comes with a simple HTML/JS file upload form that can be accessed by a browser at:
+(when running Reservoir locally)
+
+```
+  http://localhost:8081/reservoir/upload-form
+```
+
+When running behind Okapi you need to use the `invoke` URL:
+
+```
+  http://$OKAPI_URL/_/invoke/tenant/$OKAPI_TENANT/reservoir/upload-form/
+```
+
+in order to pass the tenant identifier (trailing slash is important).
 
 ## Configuring matchers
 
@@ -405,37 +507,6 @@ curl -HX-Okapi-Tenant:$OKAPI_TENANT -HContent-Type:application/json \
   -XPUT $OKAPI_URL/reservoir/config/oai -d'{"transformer":"marc-transformer::transform"}'
 ```
 
-## Ingest via multipart/form-data
-
-Yet another ingesting alternative is importing via HTTP multipart/form-data at endpoint `/reservoir/upload`.
-
-The named form element `records` is recognized; other names are ignored.
-Remaining configuration is triggered by headers (such as `X-Okapi-Token`) and query parameters.
-
-Currently, two formats are supported.
-
- * MARC/ISO2709 concatenated records, triggered by Content-Type `application/octet-stream`.
- * MARCXML collection, triggered by Content-Type `application/xml` or `text/xml`.
-
-The following query parameters are recognized:
-
- * `sourceId`: required parameter for specifying the source identifier.
- * `sourceVersion` : optional parameter for specifying source version
-    (default is 1)
- * `localIdPath` : optional parameter for specifying where to fetch local identifier
-    (default is `$.marc.fields[*].001`)
-
-These query parameters are for debugging and performance testing only:
-
- * `ingest` optional boolean parameter to determine whether ingesting is to take place (default `true`)
- * `raw` optional boolean parameter to determine whether to just pipe the stream (default `false`)
-
-For example to ingest a set of MARCXML records via curl from sourceId `BIB1`:
-
-```
-  curl -HX-Okapi-Tenant:$OKAPI_TENANT -Frecords=@records100k.xml $OKAPI_URL/reservoir/upload?sourceId=BIB1
-```
-
 ## Additional information
 
 ### Issue tracker
@@ -472,4 +543,3 @@ The built artifacts for this module are available.
 See [configuration](https://dev.folio.org/download/artifacts) for repository access,
 and the Docker images for [released versions](https://hub.docker.com/r/folioorg/mod-reservoir/)
 and for [snapshot versions](https://hub.docker.com/r/folioci/mod-reservoir/).
-

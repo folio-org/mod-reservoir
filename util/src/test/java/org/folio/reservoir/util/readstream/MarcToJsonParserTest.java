@@ -6,6 +6,7 @@ import io.vertx.core.Vertx;
 import io.vertx.core.buffer.Buffer;
 import io.vertx.core.file.OpenOptions;
 import io.vertx.core.json.JsonObject;
+import io.vertx.core.streams.ReadStream;
 import io.vertx.ext.unit.TestContext;
 import io.vertx.ext.unit.junit.VertxUnitRunner;
 import java.util.ArrayList;
@@ -35,12 +36,12 @@ public class MarcToJsonParserTest {
     vertx.close().onComplete(context.asyncAssertSuccess());
   }
 
-  Future<MarcToJsonParser> marc4ParserToXmlFromFile(String fname) {
+  Future<ReadStream<JsonObject>> marc4ParserToXmlFromFile(String fname) {
     return vertx.fileSystem().open(fname, new OpenOptions())
-        .map(MarcToJsonParser::new);
+        .map(f -> new MarcToJsonParser(f).pause());
   }
 
-  Future<MarcToJsonParser> marc4ParserToXmlFromFile() {
+  Future<ReadStream<JsonObject>> marc4ParserToXmlFromFile() {
     return marc4ParserToXmlFromFile("marc3.marc");
   }
 
@@ -53,17 +54,27 @@ public class MarcToJsonParserTest {
           parser.handler(records::add);
           parser.endHandler(e -> promise.complete(records));
           parser.exceptionHandler(promise::tryFail);
+          parser.resume();
           return promise.future();
         })
         .onComplete(context.asyncAssertSuccess(records -> {
           assertThat(records, hasSize(3));
+          //rec1
           assertThat(records.get(0).getJsonArray("fields").getJsonObject(0).getString("001"), is("   73209622 //r823"));
           assertThat(records.get(0).getJsonArray("fields").getJsonObject(9).getJsonObject("245").getJsonArray("subfields").getJsonObject(0).getString("a"), is("The Computer Bible /"));
+          assertThat(records.get(0).getJsonArray("fields").getJsonObject(9).getJsonObject("245").getString("ind1"), is("0"));
+          assertThat(records.get(0).getJsonArray("fields").getJsonObject(9).getJsonObject("245").getString("ind2"), is("4"));
+          //rec2
           assertThat(records.get(1).getJsonArray("fields").getJsonObject(0).getString("001"), is("   11224466 "));
           //the following should be at pos 8 if we follow yaz order, marc4j puts 010 as last field following marc physicall order
           assertThat(records.get(1).getJsonArray("fields").getJsonObject(7).getJsonObject("245").getJsonArray("subfields").getJsonObject(0).getString("a"), is("How to program a computer"));
+          assertThat(records.get(1).getJsonArray("fields").getJsonObject(7).getJsonObject("245").getString("ind1"), is("1"));
+          assertThat(records.get(1).getJsonArray("fields").getJsonObject(7).getJsonObject("245").getString("ind2"), is("0"));
+          //rec3
           assertThat(records.get(2).getJsonArray("fields").getJsonObject(0).getString("001"), is("   77123332 "));
           assertThat(records.get(2).getJsonArray("fields").getJsonObject(10).getJsonObject("245").getJsonArray("subfields").getJsonObject(0).getString("a"), is("Voyager Diacritic test -- New input 001 (SBIE)."));
+          assertThat(records.get(2).getJsonArray("fields").getJsonObject(10).getJsonObject("245").getString("ind1"), is("0"));
+          assertThat(records.get(2).getJsonArray("fields").getJsonObject(10).getJsonObject("245").getString("ind2"), is("0"));
         }));
   }
 
@@ -74,6 +85,7 @@ public class MarcToJsonParserTest {
           Promise<Void> promise = Promise.promise();
           parser.exceptionHandler(promise::tryFail);
           parser.endHandler(x -> promise.tryComplete());
+          parser.resume();
           return promise.future();
         })
         .onComplete(context.asyncAssertSuccess());
@@ -88,6 +100,7 @@ public class MarcToJsonParserTest {
           parser.endHandler(x -> {
             throw new RuntimeException("end exception");
           });
+          parser.resume();
           return promise.future();
         })
         .onComplete(context.asyncAssertFailure(e -> assertThat(e.getMessage(), is("end exception"))));
@@ -102,6 +115,7 @@ public class MarcToJsonParserTest {
             promise.tryFail("must stop");
             throw new RuntimeException("end exception");
           });
+          parser.resume();
           return promise.future();
         })
         .onComplete(context.asyncAssertFailure(e -> assertThat(e.getMessage(), is("must stop"))));
@@ -119,6 +133,7 @@ public class MarcToJsonParserTest {
               promise.tryComplete();
             }
           });
+          parser.resume();
           return promise.future();
         })
         .onComplete(context.asyncAssertSuccess());
@@ -155,6 +170,7 @@ public class MarcToJsonParserTest {
           });
           parser.exceptionHandler(promise::tryFail);
           parser.endHandler(promise::complete);
+          parser.resume();
           return promise.future();
         })
         .onComplete(context.asyncAssertFailure(
@@ -192,6 +208,7 @@ public class MarcToJsonParserTest {
     Promise<Void> promise = Promise.promise();
     parser.exceptionHandler(promise::tryFail);
     parser.endHandler(x -> promise.complete());
+    parser.resume();
     rs.run();
     promise.future()
         .onComplete(context.asyncAssertFailure(

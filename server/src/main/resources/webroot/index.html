@@ -1,0 +1,89 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="X-UA-Compatible" content="ie=edge">
+    <title>Reservoir: ingest from file</title>
+    <link rel="stylesheet" href="./style.css">
+    <link rel="icon" href="./favicon.ico" type="image/x-icon">
+  </head>
+  <body>
+    <main>
+      <form
+      enctype="multipart/form-data"
+      method="post"
+      name="uploadForm">
+        <ul>
+            <li class="header">Reservoir: ingest from file</li>
+            <li>
+              <label for="tokenInput">JWT / Tenant (*):</label>
+              <input
+                id="tokenInput"
+                type="text"
+                autocomplete="on"
+                name="authToken"
+                placeholder="eyJhbGciOiJIUzI1NiJ9..."
+                required
+                size="24"
+                maxlength="512" />
+            </li>
+            <li>
+              <label for="sourceIdInput">Source ID (*):</label>
+              <input
+                id="sourceIdInput"
+                type="text"
+                autocomplete="on"
+                name="sourceId"
+                placeholder="US-XXX"
+                required
+                size="12"
+                maxlength="64" />
+            </li>
+            <li>
+              <label for="sourceVersionInput">Source version:</label>
+              <input
+                id="sourceVersionInput"
+                type="number"
+                name="sourceVersion"
+                placeholder="1"
+                min="1"/>
+            </li>
+            <li>
+              <label for="localIdPathInput">Record local ID (JSONPath):</label>
+              <input
+                id="localIdPathInput"
+                type="text"
+                autocomplete="on"
+                name="localIdPath"
+                placeholder="$.marc.fields[*].001"
+                size="24"
+                maxlength="128" />
+            </li>
+            <li>
+              <label for="fileInput">MARC or MarcXML (*):</label>
+              <input
+                id="fileInput"
+                type="file"
+                multiple
+                name="records"
+                required
+                size="24" />
+            </li>
+            <li>
+              <label for="xmlFixingInput">Fix XML:</label>
+              <input
+                id="xmlFixingInput"
+                type="checkbox"
+                name="xmlFixing" />
+            </li>
+            <li class="button">
+              <button type="submit">Upload</button>
+              <label id="output"></label>
+            </li>
+          </ul>
+        </form>
+    </main>
+	<script src="index.js"></script>
+  </body>
+</html>

@@ -1,0 +1,30 @@
+{
+  "description": "File upload ingest statistics",
+  "type": "object",
+  "properties": {
+    "processed": {
+      "type": "integer",
+      "description": "Number of records processed"
+    },
+    "ignored": {
+      "type": "integer",
+      "description": "Number of records ignored"
+    },
+    "inserted": {
+      "type": "integer",
+      "description": "Number of records inserted (new)"
+    },
+    "updated": {
+      "type": "integer",
+      "description": "Number of records updated"
+    },
+    "deleted": {
+      "type": "integer",
+      "description": "Number of records deleted"
+    }
+  },
+  "additionalProperties": false,
+  "required": [
+    "processed", "ignored", "inserted", "updated", "deleted"
+  ]
+}

@@ -53,8 +53,8 @@ public class MarcToJsonObjectMapper implements Mapper<Record, JsonObject> {
         subfield.put(String.valueOf(sf.getCode()), sf.getData());
         subfields.add(subfield);
       }
-      field.put("ind1", String.valueOf(df.getIndicator1()));
-      field.put("ind2", String.valueOf(df.getIndicator2()));
+      tag.put("ind1", String.valueOf(df.getIndicator1()));
+      tag.put("ind2", String.valueOf(df.getIndicator2()));
       fields.add(field);
     }
     return out;

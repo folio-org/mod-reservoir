@@ -6,7 +6,7 @@
   <controlfield tag="005">19820325000000.0</controlfield>
   <controlfield tag="008">780306m19009999ohu           00000 grc  </controlfield>
   <datafield tag="010" ind1=" " ind2=" ">
-    <subfield code="a">   73209622 //r823</subfield>
+    <subfield code="a">   73209622 //r823&#1;</subfield>
   </datafield>
   <datafield tag="040" ind1=" " ind2=" ">
     <subfield code="a">DLC</subfield>

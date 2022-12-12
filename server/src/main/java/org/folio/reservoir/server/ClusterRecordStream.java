@@ -130,8 +130,10 @@ public class ClusterRecordStream implements WriteStream<ClusterRecordItem> {
     return getClusterRecordMetadata(cr)
         .compose(buf -> response.write(buf).mapEmpty())
         .recover(e -> {
-          log.info("failure {}", e.getMessage(), e);
-          return response.write(Buffer.buffer("<!-- Failed to produce record: "
+          log.warn("Failed to produce record {} cause: {}", cr.clusterId, e.getMessage());
+          log.debug(e);
+          return response.write(Buffer.buffer("<!-- Failed to produce record "
+              + encodeXmlText(cr.clusterId.toString()) + " cause: "
               + encodeXmlText(e.getMessage()) + " -->\n")).mapEmpty();
         })
         .mapEmpty();
