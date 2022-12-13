@@ -2,7 +2,7 @@ package org.folio.reservoir.util.oai;
 
 import io.vertx.core.Future;
 
-public interface OaiRequest {
+public interface OaiRequest<T> {
 
   OaiRequest set(String set);
 
@@ -16,5 +16,5 @@ public interface OaiRequest {
 
   OaiRequest limit(int limit);
 
-  Future<OaiResponse> listRecords();
+  Future<OaiResponse<T>> listRecords();
 }

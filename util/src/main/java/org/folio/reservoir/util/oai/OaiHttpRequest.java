@@ -1,4 +1,4 @@
-package org.folio.reservoir.util.oai.impl;
+package org.folio.reservoir.util.oai;
 
 import io.netty.handler.codec.http.QueryStringEncoder;
 import io.vertx.core.Future;
@@ -9,8 +9,6 @@ import io.vertx.core.http.HttpMethod;
 import io.vertx.core.http.RequestOptions;
 import io.vertx.core.streams.ReadStream;
 import org.folio.reservoir.util.XmlMetadataStreamParser;
-import org.folio.reservoir.util.oai.OaiRequest;
-import org.folio.reservoir.util.oai.OaiResponse;
 import org.folio.reservoir.util.readstream.XmlFixer;
 import org.folio.reservoir.util.readstream.XmlParser;
 
@@ -24,7 +22,14 @@ public class OaiHttpRequest<T> implements OaiRequest {
 
   final boolean xmlFixing;
 
-  OaiHttpRequest(HttpClient httpClient, String url,
+  /**
+   * Construct OAI HTTP client request.
+   * @param httpClient the Vert.x client to use HTTP communication
+   * @param url OAI URL
+   * @param metadataParser XML parser for the metadata section producing T
+   * @param xmlFixing whether XmlFixer should be used
+   */
+  public OaiHttpRequest(HttpClient httpClient, String url,
       XmlMetadataStreamParser<T> metadataParser, boolean xmlFixing) {
 
     queryEncoder = new QueryStringEncoder(url);

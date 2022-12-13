@@ -1,4 +1,4 @@
-package org.folio.reservoir.util.oai.impl;
+package org.folio.reservoir.util.oai;
 
 import io.vertx.core.Handler;
 import io.vertx.core.streams.ReadStream;
@@ -136,7 +136,9 @@ public class OaiXmlResponse<T> implements OaiResponse<T>, Handler<XMLStreamReade
       }
     } catch (Exception e) {
       stream.handler(null);
-      exceptionHandler.handle(e);
+      if (exceptionHandler != null) {
+        exceptionHandler.handle(e);
+      }
     }
   }
 
