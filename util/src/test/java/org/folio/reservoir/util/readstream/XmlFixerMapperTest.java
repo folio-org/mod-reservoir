@@ -53,9 +53,9 @@ public class XmlFixerMapperTest {
   public void testSingleCharBad() {
     XmlFixerMapper xmlFixerMapper = new XmlFixerMapper();
 
-    xmlFixerMapper.push(Buffer.buffer("\t\r\n\f \n"));
+    xmlFixerMapper.push(Buffer.buffer("\t\r\n\f \nJerzy Borzęcki."));
     Buffer poll = xmlFixerMapper.poll();
-    assertThat(poll.toString(), is("\t\r\n&#xFFFD; \n"));
+    assertThat(poll.toString(), is("\t\r\n&#xFFFD; \nJerzy Borzęcki."));
     poll = xmlFixerMapper.poll();
     assertThat(poll, is(nullValue()));
 
