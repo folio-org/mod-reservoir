@@ -116,7 +116,7 @@ public class OaiHttpRequestTest {
     XmlMetadataStreamParser<JsonObject> metadataParser = new XmlMetadataParserMarcInJson();
     oaiFilename = "oai-response-1.xml";
     OaiRequest<JsonObject> oaiRequest = new OaiHttpRequest<>(
-        httpClient, OKAPI_URL + "/oai", metadataParser, false, null);
+        httpClient, OKAPI_URL + "/oai1", metadataParser, false, null);
     oaiRequest.listRecords().onComplete(context.asyncAssertSuccess(oaiResponse -> {
       List<OaiRecord<JsonObject>> records = new ArrayList<>();
       oaiResponse.handler(records::add);
