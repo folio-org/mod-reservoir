@@ -22,6 +22,24 @@ public class XmlFixerMapper implements Mapper<Buffer, Buffer> {
 
   int moved = 0;
 
+
+  void handleUni(Buffer input, byte leadingByte) {
+    if (leadingByte < -64) {
+      if (sequenceLength > 0) {
+        sequenceLength--;
+      }
+    } else if (leadingByte < -32) {
+      sequenceLength = 1;
+    } else if (leadingByte < -16) {
+      sequenceLength = 2;
+    } else if (leadingByte < -8) {
+      sequenceLength = 3;
+    } else {
+      sequenceLength = 0;
+      skipByte(input);
+    }
+  }
+
   @Override
   public void push(Buffer buffer) {
     Buffer input;
@@ -39,20 +57,7 @@ public class XmlFixerMapper implements Mapper<Buffer, Buffer> {
     for (front = 0; front < input.length(); front++) {
       byte leadingByte = input.getByte(front);
       if (leadingByte < 0) {
-        if (leadingByte < -64) {
-          if (sequenceLength > 0) {
-            sequenceLength--;
-          }
-        } else if (leadingByte < -32) {
-          sequenceLength = 1;
-        } else if (leadingByte < -16) {
-          sequenceLength = 2;
-        } else if (leadingByte < -8) {
-          sequenceLength = 3;
-        } else {
-          sequenceLength = 0;
-          skipByte(input);
-        }
+        handleUni(input, leadingByte);
       } else if (sequenceLength > 0) {
         // bad UTF-8 sequence ... Take care of the special case where quote + gt
         // is placed after a byte which is part of a UTF-8 sequence.
