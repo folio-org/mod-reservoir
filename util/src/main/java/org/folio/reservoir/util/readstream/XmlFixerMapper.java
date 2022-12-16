@@ -18,7 +18,7 @@ public class XmlFixerMapper implements Mapper<Buffer, Buffer> {
 
   int tail;
 
-  int sequenceLength = 0;
+  int sequenceLength = 0; // number bytes remaining in a UTF-8 sequence
 
   int moved = 0;
 
@@ -43,6 +43,9 @@ public class XmlFixerMapper implements Mapper<Buffer, Buffer> {
   }
 
   void handleSequence(Buffer input, byte leadingByte) {
+    // the order of checks doesn't matter here but the most occurring
+    // check is listed first. There will always be more continuation bytes
+    // than leading bytes.
     if (isContinuation(leadingByte)) {
       if (sequenceLength > 0) {
         sequenceLength--;
