@@ -22,7 +22,6 @@ public class XmlFixerMapper implements Mapper<Buffer, Buffer> {
 
   int moved = 0;
 
-
   void handleUni(Buffer input, byte leadingByte) {
     if (leadingByte < -64) {
       if (sequenceLength > 0) {
