@@ -26,6 +26,8 @@ public class XmlFixerMapper implements Mapper<Buffer, Buffer> {
     if (leadingByte < -64) {
       if (sequenceLength > 0) {
         sequenceLength--;
+      } else {
+        skipByte(input);
       }
     } else if (leadingByte < -32) {
       sequenceLength = 1;

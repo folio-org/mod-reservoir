@@ -100,6 +100,11 @@ public class XmlFixerTest {
   }
 
   @Test
+  public void badMarcXml2(TestContext context) {
+    eventsFromFile("bad-marcxml.xml").onComplete(context.asyncAssertSuccess());
+  }
+
+  @Test
   public void badOaiResponse1(TestContext context) {
     bufferFromFile("pennstate-bad-rec-20221216.xml").onComplete(context.asyncAssertSuccess(buffer -> {
       assertThat(buffer.toString(), containsString("3659107")); // resumption token which comes last
