@@ -22,18 +22,18 @@ public class XmlFixerMapper implements Mapper<Buffer, Buffer> {
 
   int moved = 0;
 
-  void handleUni(Buffer input, byte leadingByte) {
-    if (leadingByte < -64) {
+  void handleSequence(Buffer input, byte leadingByte) {
+    if ((leadingByte & 64) == 0) {
       if (sequenceLength > 0) {
         sequenceLength--;
       } else {
         skipByte(input);
       }
-    } else if (leadingByte < -32) {
+    } else if ((leadingByte & 32) == 0) {
       sequenceLength = 1;
-    } else if (leadingByte < -16) {
+    } else if ((leadingByte & 16) == 0) {
       sequenceLength = 2;
-    } else if (leadingByte < -8) {
+    } else if ((leadingByte & 8) == 0) {
       sequenceLength = 3;
     } else {
       sequenceLength = 0;
@@ -57,15 +57,15 @@ public class XmlFixerMapper implements Mapper<Buffer, Buffer> {
     tail = 0;
     for (front = 0; front < input.length(); front++) {
       byte leadingByte = input.getByte(front);
-      if (leadingByte < 0) {
-        handleUni(input, leadingByte);
+      if ((leadingByte & 128) != 0) {
+        handleSequence(input, leadingByte);
       } else if (sequenceLength > 0) {
         // bad UTF-8 sequence ... Take care of the special case where quote + gt
         // is placed after a byte which is part of a UTF-8 sequence.
-        if (leadingByte == 34 && moved == 0) {
+        if (leadingByte == '"' && moved == 0) {
           skipByte(input);
           moved = 1;
-        } else if (leadingByte == 62 && moved == 1) {
+        } else if (leadingByte == '>' && moved == 1) {
           skipByte(input);
           moved = 2;
         }
@@ -77,7 +77,7 @@ public class XmlFixerMapper implements Mapper<Buffer, Buffer> {
           moved = 0;
         }
         if (leadingByte < 32
-            && leadingByte != 9 && leadingByte != 10 && leadingByte != 13) {
+            && leadingByte != '\t' && leadingByte != '\r' && leadingByte != '\n') {
           result.appendBuffer(input, tail, front - tail);
           addFix();
         } else if (leadingByte == '&' && handleEntity(input)) {
@@ -126,7 +126,7 @@ public class XmlFixerMapper implements Mapper<Buffer, Buffer> {
       } else {
         v = Integer.parseInt(input.getString(front + 2, j));
       }
-      if (v < 32 && v != 9 && v != 10 && v != 13) {
+      if (v < 32 && v != '\t' && v != '\r' && v != '\n') {
         result.appendBuffer(input, tail, front - tail);
         front = j;
         addFix();
