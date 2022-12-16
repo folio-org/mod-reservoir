@@ -8,13 +8,17 @@ import io.vertx.core.http.HttpClientRequest;
 import io.vertx.core.http.HttpMethod;
 import io.vertx.core.http.RequestOptions;
 import io.vertx.core.streams.ReadStream;
+import java.util.HashMap;
+import java.util.Map;
 import org.folio.reservoir.util.XmlMetadataStreamParser;
 import org.folio.reservoir.util.readstream.XmlFixer;
 import org.folio.reservoir.util.readstream.XmlParser;
 
 public class OaiHttpRequest<T> implements OaiRequest {
 
-  final QueryStringEncoder queryEncoder;
+  Map<String,String> queryParameters = new HashMap<>();
+
+  final String url;
 
   final HttpClient httpClient;
 
@@ -32,7 +36,7 @@ public class OaiHttpRequest<T> implements OaiRequest {
   public OaiHttpRequest(HttpClient httpClient, String url,
       XmlMetadataStreamParser<T> metadataParser, boolean xmlFixing) {
 
-    queryEncoder = new QueryStringEncoder(url);
+    this.url = url;
     this.httpClient = httpClient;
     this.metadataParser = metadataParser;
     this.xmlFixing = xmlFixing;
@@ -40,46 +44,48 @@ public class OaiHttpRequest<T> implements OaiRequest {
 
   @Override
   public OaiRequest set(String set) {
-    queryEncoder.addParam("set", set);
+    queryParameters.put("set", set);
     return this;
   }
 
   @Override
   public OaiRequest metadataPrefix(String metadataPrefix) {
-    queryEncoder.addParam("metadataPrefix", metadataPrefix);
+    queryParameters.put("metadataPrefix", metadataPrefix);
     return this;
   }
 
   @Override
   public OaiRequest from(String from) {
-    queryEncoder.addParam("from", from);
+    queryParameters.put("from", from);
     return this;
   }
 
   @Override
   public OaiRequest until(String until) {
-    queryEncoder.addParam("until", until);
+    queryParameters.put("until", until);
     return this;
   }
 
   @Override
   public OaiRequest token(String token) {
-    queryEncoder.addParam("resumptionToken", token);
+    queryParameters.put("resumptionToken", token);
     return this;
   }
 
   @Override
   public OaiRequest limit(int limit) {
-    queryEncoder.addParam("limit", Integer.toString(limit));
+    queryParameters.put("limit", Integer.toString(limit));
     return this;
   }
 
   @Override
   public Future<OaiResponse> listRecords() {
-    queryEncoder.addParam("verb", "ListRecords");
+    QueryStringEncoder enc = new QueryStringEncoder(url);
+    queryParameters.forEach((k,v) -> enc.addParam(k, v));
+    enc.addParam("verb", "ListRecords");
     RequestOptions requestOptions = new RequestOptions()
         .setMethod(HttpMethod.GET)
-        .setAbsoluteURI(queryEncoder.toString());
+        .setAbsoluteURI(enc.toString());
     return httpClient.request(requestOptions)
         .compose(HttpClientRequest::send)
         .map(httpResponse -> {
