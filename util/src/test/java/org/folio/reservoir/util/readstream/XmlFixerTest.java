@@ -9,7 +9,6 @@ import io.vertx.ext.unit.TestContext;
 import io.vertx.ext.unit.junit.VertxUnitRunner;
 import org.junit.After;
 import org.junit.Before;
-import org.junit.Ignore;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 
@@ -95,7 +94,9 @@ public class XmlFixerTest {
     bufferFromFile("bad-marcxml.xml").onComplete(context.asyncAssertSuccess(buffer -> {
       assertThat(buffer.toString(), containsString("<subfield code=\"å\">00E5</subfield>"));
       assertThat(buffer.toString(), containsString("<subfield code=\"丐\">4E10</subfield>"));
-      assertThat(buffer.toString(), containsString("<subfield code=\"ø\"></subfield>"));
+      assertThat(buffer.toString(), containsString("<subfield code=\"\uD83C\uDCA1\">1F0A1</subfield>"));
+      assertThat(buffer.toString(), containsString("<subfield code=\"ø\">F8 never allowed</subfield>"));
+      assertThat(buffer.toString(), containsString("<subfield code=\"o\">B8 out of sequence</subfield>"));
     }));
   }
 
