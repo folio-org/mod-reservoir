@@ -363,7 +363,7 @@ curl -HX-Okapi-Tenant:$OKAPI_TENANT -HContent-Type:application/json -XPOST \
 
 In this case, all ingested records from the client are given the source identifier `US-MDBJ`.
 
-See [schema](server/src/main/resources/openapi/schemas/oai-pmh-client.json) for more information.
+See [schema](server/src/main/resources/openapi/schemas/oaiPmhClient.json) for more information.
 
 This configuration can be inspected with:
 ```
