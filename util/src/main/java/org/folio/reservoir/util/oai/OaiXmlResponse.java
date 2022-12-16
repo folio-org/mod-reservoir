@@ -6,8 +6,6 @@ import java.util.function.Consumer;
 import javax.xml.stream.XMLStreamConstants;
 import javax.xml.stream.XMLStreamReader;
 import org.folio.reservoir.util.XmlMetadataStreamParser;
-import org.folio.reservoir.util.oai.OaiRecord;
-import org.folio.reservoir.util.oai.OaiResponse;
 import org.folio.reservoir.util.readstream.XmlParser;
 
 public class OaiXmlResponse<T> implements OaiResponse<T>, Handler<XMLStreamReader> {

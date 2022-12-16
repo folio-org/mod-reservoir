@@ -78,6 +78,7 @@ public class OaiHttpRequest<T> implements OaiRequest<T> {
     return this;
   }
 
+  @java.lang.SuppressWarnings({"squid:S112"}) // Generic exceptions should never be thrown
   @Override
   public Future<OaiResponse<T>> listRecords() {
     QueryStringEncoder enc = new QueryStringEncoder(url);
