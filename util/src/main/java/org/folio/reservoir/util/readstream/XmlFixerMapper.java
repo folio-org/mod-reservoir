@@ -22,18 +22,38 @@ public class XmlFixerMapper implements Mapper<Buffer, Buffer> {
 
   int moved = 0;
 
+  static boolean isAscii(byte b) {
+    return (b & 128) == 0;
+  }
+
+  static boolean isContinuation(byte b) {
+    return (b & 192) == 128;
+  }
+
+  static boolean is2byteSequence(byte b) {
+    return (b & 224) == 192;
+  }
+
+  static boolean is3byteSequence(byte b) {
+    return (b & 240) == 224;
+  }
+
+  static boolean is4byteSequence(byte b) {
+    return (b & 248) == 240;
+  }
+
   void handleSequence(Buffer input, byte leadingByte) {
-    if ((leadingByte & 64) == 0) {
+    if (isContinuation(leadingByte)) {
       if (sequenceLength > 0) {
         sequenceLength--;
       } else {
         skipByte(input);
       }
-    } else if ((leadingByte & 32) == 0) {
+    } else if (is2byteSequence(leadingByte)) {
       sequenceLength = 1;
-    } else if ((leadingByte & 16) == 0) {
+    } else if (is3byteSequence(leadingByte)) {
       sequenceLength = 2;
-    } else if ((leadingByte & 8) == 0) {
+    } else if (is4byteSequence(leadingByte)) {
       sequenceLength = 3;
     } else {
       sequenceLength = 0;
@@ -57,7 +77,7 @@ public class XmlFixerMapper implements Mapper<Buffer, Buffer> {
     tail = 0;
     for (front = 0; front < input.length(); front++) {
       byte leadingByte = input.getByte(front);
-      if ((leadingByte & 128) != 0) {
+      if (!isAscii(leadingByte)) {
         handleSequence(input, leadingByte);
       } else if (sequenceLength > 0) {
         // bad UTF-8 sequence ... Take care of the special case where quote + gt
