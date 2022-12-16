@@ -20,6 +20,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 import static org.hamcrest.MatcherAssert.assertThat;
+import static org.hamcrest.Matchers.containsString;
 import static org.hamcrest.Matchers.empty;
 import static org.hamcrest.Matchers.hasSize;
 import static org.hamcrest.Matchers.is;
@@ -131,6 +132,15 @@ public class OaiXmlResponseTest {
           assertThat(e.getMessage(), is("Bad marcxml element: foo"));
           assertThat(records, hasSize(1));
           assertThat(records.get(0).identifier, is("998212783503681"));
+        }));
+  }
+
+  @Test
+  public void badEncodingInResponse(TestContext context) {
+    List<OaiRecord<JsonObject>> records = new ArrayList<>();
+    parseOai("pennstate-bad-rec-20221216.xml", records::add)
+        .onComplete(context.asyncAssertFailure(e -> {
+          assertThat(e.getMessage(), containsString("Invalid UTF-8 middle byte 0x22"));
         }));
   }
 

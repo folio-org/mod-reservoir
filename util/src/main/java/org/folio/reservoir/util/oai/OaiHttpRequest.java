@@ -2,9 +2,13 @@ package org.folio.reservoir.util.oai;
 
 import io.netty.handler.codec.http.QueryStringEncoder;
 import io.vertx.core.Future;
+import io.vertx.core.MultiMap;
+import io.vertx.core.Promise;
 import io.vertx.core.buffer.Buffer;
 import io.vertx.core.http.HttpClient;
 import io.vertx.core.http.HttpClientRequest;
+import io.vertx.core.http.HttpClientResponse;
+import io.vertx.core.http.HttpHeaders;
 import io.vertx.core.http.HttpMethod;
 import io.vertx.core.http.RequestOptions;
 import io.vertx.core.streams.ReadStream;
@@ -24,6 +28,8 @@ public class OaiHttpRequest<T> implements OaiRequest<T> {
 
   final XmlMetadataStreamParser<T> metadataParser;
 
+  final MultiMap headers;
+
   final boolean xmlFixing;
 
   /**
@@ -32,14 +38,23 @@ public class OaiHttpRequest<T> implements OaiRequest<T> {
    * @param url OAI URL
    * @param metadataParser XML parser for the metadata section producing T
    * @param xmlFixing whether XmlFixer should be used
+   * @param headers HTTP headers
    */
   public OaiHttpRequest(HttpClient httpClient, String url,
-      XmlMetadataStreamParser<T> metadataParser, boolean xmlFixing) {
+      XmlMetadataStreamParser<T> metadataParser, boolean xmlFixing,
+      MultiMap headers) {
 
     this.url = url;
     this.httpClient = httpClient;
     this.metadataParser = metadataParser;
     this.xmlFixing = xmlFixing;
+    if (headers == null) {
+      headers = MultiMap.caseInsensitiveMultiMap();
+    }
+    if (!headers.contains("accept")) {
+      headers.add(HttpHeaders.ACCEPT, "text/xml");
+    }
+    this.headers = headers;
   }
 
   @Override
@@ -78,14 +93,25 @@ public class OaiHttpRequest<T> implements OaiRequest<T> {
     return this;
   }
 
+  @Override
+  public OaiRequest<T> params(String k, String v) {
+    queryParameters.put(k, v);
+    return this;
+  }
+
   @java.lang.SuppressWarnings({"squid:S112"}) // Generic exceptions should never be thrown
   @Override
   public Future<OaiResponse<T>> listRecords() {
     QueryStringEncoder enc = new QueryStringEncoder(url);
-    queryParameters.forEach(enc::addParam);
+    queryParameters.forEach((n, v) -> {
+      if (v != null) {
+        enc.addParam(n, v);
+      }
+    });
     enc.addParam("verb", "ListRecords");
     RequestOptions requestOptions = new RequestOptions()
         .setMethod(HttpMethod.GET)
+        .setHeaders(headers)
         .setAbsoluteURI(enc.toString());
     return httpClient.request(requestOptions)
         .compose(HttpClientRequest::send)

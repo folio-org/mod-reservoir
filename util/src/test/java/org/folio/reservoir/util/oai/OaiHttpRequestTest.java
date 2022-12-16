@@ -1,5 +1,6 @@
 package org.folio.reservoir.util.oai;
 
+import io.vertx.core.MultiMap;
 import io.vertx.core.Promise;
 import io.vertx.core.Vertx;
 import io.vertx.core.file.FileSystem;
@@ -83,7 +84,8 @@ public class OaiHttpRequestTest {
   @Test
   public void testNotFound(TestContext context) {
     XmlMetadataStreamParser<JsonObject> metadataParser = new XmlMetadataParserMarcInJson();
-    OaiRequest<JsonObject> oaiRequest = new OaiHttpRequest<>(httpClient, OKAPI_URL + "/xx", metadataParser, false);
+    OaiRequest<JsonObject> oaiRequest = new OaiHttpRequest<>(
+        httpClient, OKAPI_URL + "/xx", metadataParser, false, MultiMap.caseInsensitiveMultiMap());
     oaiRequest.listRecords().onComplete(context.asyncAssertFailure(oaiResponse -> {
       assertThat(oaiResponse.getMessage(), is("OAI server returned status 404"));
     }));
@@ -93,7 +95,8 @@ public class OaiHttpRequestTest {
   public void test1(TestContext context) {
     XmlMetadataStreamParser<JsonObject> metadataParser = new XmlMetadataParserMarcInJson();
     oaiFilename = "oai-response-1.xml";
-    OaiRequest<JsonObject> oaiRequest = new OaiHttpRequest<>(httpClient, OKAPI_URL + "/oai", metadataParser, false);
+    OaiRequest<JsonObject> oaiRequest = new OaiHttpRequest<>(
+        httpClient, OKAPI_URL + "/oai", metadataParser, false, MultiMap.caseInsensitiveMultiMap());
     oaiRequest.listRecords().onComplete(context.asyncAssertSuccess(oaiResponse -> {
       List<OaiRecord<JsonObject>> records = new ArrayList<>();
       oaiResponse.handler(records::add);

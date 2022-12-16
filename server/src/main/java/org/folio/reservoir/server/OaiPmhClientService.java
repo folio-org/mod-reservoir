@@ -6,12 +6,7 @@ import io.vertx.core.MultiMap;
 import io.vertx.core.Promise;
 import io.vertx.core.Vertx;
 import io.vertx.core.VertxException;
-import io.vertx.core.buffer.Buffer;
 import io.vertx.core.http.HttpClient;
-import io.vertx.core.http.HttpClientRequest;
-import io.vertx.core.http.HttpClientResponse;
-import io.vertx.core.http.HttpMethod;
-import io.vertx.core.http.RequestOptions;
 import io.vertx.core.json.JsonArray;
 import io.vertx.core.json.JsonObject;
 import io.vertx.ext.web.RoutingContext;
@@ -39,10 +34,10 @@ import org.folio.reservoir.server.entity.OaiPmhStatus;
 import org.folio.reservoir.util.SourceId;
 import org.folio.reservoir.util.XmlMetadataParserMarcInJson;
 import org.folio.reservoir.util.XmlMetadataStreamParser;
-import org.folio.reservoir.util.oai.OaiParserStream;
+import org.folio.reservoir.util.oai.OaiHttpRequest;
 import org.folio.reservoir.util.oai.OaiRecord;
-import org.folio.reservoir.util.readstream.XmlFixer;
-import org.folio.reservoir.util.readstream.XmlParser;
+import org.folio.reservoir.util.oai.OaiRequest;
+import org.folio.reservoir.util.oai.OaiResponse;
 
 public class OaiPmhClientService {
 
@@ -520,22 +515,30 @@ public class OaiPmhClientService {
     }
   }
 
-  Future<HttpClientResponse> listRecordsRequest(JsonObject config) {
-    RequestOptions requestOptions = new RequestOptions();
-    requestOptions.setMethod(HttpMethod.GET);
-    requestOptions.setHeaders(getHttpHeaders(config));
-    QueryStringEncoder enc = new QueryStringEncoder(config.getString("url"));
-    enc.addParam("verb", "ListRecords");
-    if (!addQueryParameterFromConfig(enc, config, RESUMPTION_TOKEN_LITERAL)) {
-      addQueryParameterFromConfig(enc, config, "from");
-      addQueryParameterFromConfig(enc, config, "until");
-      addQueryParameterFromConfig(enc, config, "set");
-      addQueryParameterFromConfig(enc, config, "metadataPrefix");
+  Future<OaiResponse<JsonObject>> listRecordsRequest(OaiPmhStatus job) {
+    JsonObject config = job.getConfig();
+    XmlMetadataStreamParser<JsonObject> metadataParser = new XmlMetadataParserMarcInJson();
+    OaiRequest<JsonObject> oaiRequest = new OaiHttpRequest<>(httpClient, config.getString("url"),
+        metadataParser, config.getBoolean("xmlFixing", false), getHttpHeaders(config));
+    String resumptionToken = config.getString(RESUMPTION_TOKEN_LITERAL);
+    if (resumptionToken != null) {
+      oaiRequest.token(resumptionToken);
+    } else {
+      oaiRequest
+          .from(config.getString("from"))
+          .until(config.getString("until"))
+          .set(config.getString("set"))
+          .metadataPrefix(config.getString("metadataPrefix"));
     }
-    addQueryParameterFromParams(enc, config.getJsonObject("params"));
-    String absoluteUri = enc.toString();
-    requestOptions.setAbsoluteURI(absoluteUri);
-    return httpClient.request(requestOptions).compose(HttpClientRequest::send);
+    JsonObject params = config.getJsonObject("params");
+    if (params != null) {
+      params.forEach(n -> {
+        if (n.getValue() instanceof String) {
+          oaiRequest.params(n.getKey(), (String) n.getValue());
+        }
+      });
+    }
+    return oaiRequest.listRecords();
   }
 
   static Future<Void> endResponse(String resumptionToken, String error, OaiPmhStatus job) {
@@ -569,97 +572,70 @@ public class OaiPmhClientService {
     }
   }
 
-  private Future<Void> handleBadResponse(HttpClientResponse res) {
-    Promise<Void> promise = Promise.promise();
-    Buffer buffer = Buffer.buffer();
-    res.handler(x -> {
-      // only save first bytes, so we don't fill our memory up with big response
-      if (buffer.length() < 80) {
-        buffer.appendBuffer(x);
-      }
-    });
-    res.exceptionHandler(promise::tryFail);
-    res.endHandler(end -> {
-      String msg = buffer.length() > 80
-          ? buffer.getString(0, 80) : buffer.toString();
-      promise.tryFail("Returned HTTP status " + res.statusCode() + ": " + msg);
-    });
-    return promise.future();
-  }
-
   private Future<Void> listRecordsResponse(Storage storage, OaiPmhStatus job,
-      JsonArray matchKeyConfigs, HttpClientResponse res) {
+      JsonArray matchKeyConfigs, OaiResponse<JsonObject> oaiResponse) {
+
     job.setTotalRequests(job.getTotalRequests() + 1);
-    if (res.statusCode() != 200) {
-      return handleBadResponse(res);
-    }
     JsonObject config = job.getConfig();
-    boolean xmlFixing = config.getBoolean("xmlFixing", false);
-    XmlParser xmlParser = XmlParser.newParser(xmlFixing ? new XmlFixer(res) : res);
-    XmlMetadataStreamParser<JsonObject> metadataParser
-        = new XmlMetadataParserMarcInJson();
+    int sourceVersion = config.getInteger("sourceVersion", 1);
     SourceId sourceId = new SourceId(config.getString("sourceId"));
     Promise<Void> promise = Promise.promise();
     AtomicInteger queue = new AtomicInteger();
     AtomicBoolean ended = new AtomicBoolean();
-    int sourceVersion = config.getInteger("sourceVersion", 1);
-    OaiParserStream<JsonObject> oaiParserStream = new OaiParserStream<>(xmlParser, metadataParser);
-    oaiParserStream.parse(
-        oaiRecord -> {
-          // populate from with newest datestamp from all responses
-          String datestamp = oaiRecord.getDatestamp();
-          String from = config.getString("from");
-          if (from == null || datestamp.compareTo(from) > 0) {
-            config.put("from", datestamp);
-          }
-          queue.incrementAndGet();
-          // is queue full: 4 because that's the Postgres client pool size
-          if (Boolean.FALSE.equals(ended.get()) && queue.get() >= 4) {
-            xmlParser.pause();
-          }
-          ingestRecord(storage, oaiRecord, sourceId, sourceVersion,
-              matchKeyConfigs)
-              .map(upd -> {
-                job.setTotalRecords(job.getTotalRecords() + 1);
-                job.setLastTotalRecords(job.getLastTotalRecords() + 1);
-                if (upd == null) {
-                  job.setTotalDeleted(job.getTotalDeleted() + 1);
-                } else if (Boolean.TRUE.equals(upd)) {
-                  job.setTotalInserted(job.getTotalInserted() + 1);
-                } else {
-                  job.setTotalUpdated(job.getTotalUpdated() + 1);
-                }
-                return null;
-              })
-              .onFailure(x -> {
-                log.error("{} when parsing record {}", x.getMessage(),
-                    oaiRecord.getIdentifier(), x);
-                // fail now. To ignore, omit the calls below
-                xmlParser.endHandler(null);
-                promise.tryFail(x.getMessage() + " when parsing record "
-                    + oaiRecord.getIdentifier());
-              })
-              .onComplete(x -> {
-                queue.decrementAndGet();
-                // drain ?
-                if (queue.get() < 2) {
-                  xmlParser.resume();
-                }
-                if (queue.get() == 0 && Boolean.TRUE.equals(ended.get())) {
-                  endResponse(oaiParserStream.getResumptionToken(), oaiParserStream.getError(), job)
-                      .onComplete(promise);
-                }
-              });
-        });
-    oaiParserStream.exceptionHandler(promise::tryFail);
-    xmlParser.endHandler(end -> {
+    oaiResponse.handler(oaiRecord -> {
+      String datestamp = oaiRecord.getDatestamp();
+      String from = config.getString("from");
+      if (from == null || datestamp.compareTo(from) > 0) {
+        config.put("from", datestamp);
+      }
+      queue.incrementAndGet();
+      // is queue full: 4 because that's the Postgres client pool size
+      if (Boolean.FALSE.equals(ended.get()) && queue.get() >= 4) {
+        oaiResponse.pause();
+      }
+      ingestRecord(storage, oaiRecord, sourceId, sourceVersion,
+          matchKeyConfigs)
+          .map(upd -> {
+            job.setTotalRecords(job.getTotalRecords() + 1);
+            job.setLastTotalRecords(job.getLastTotalRecords() + 1);
+            if (upd == null) {
+              job.setTotalDeleted(job.getTotalDeleted() + 1);
+            } else if (Boolean.TRUE.equals(upd)) {
+              job.setTotalInserted(job.getTotalInserted() + 1);
+            } else {
+              job.setTotalUpdated(job.getTotalUpdated() + 1);
+            }
+            return null;
+          })
+          .onFailure(x -> {
+            log.error("{} when parsing record {}", x.getMessage(),
+                oaiRecord.getIdentifier(), x);
+            // fail now. To ignore, omit the calls below
+            oaiResponse.endHandler(null);
+            promise.tryFail(x.getMessage() + " when parsing record "
+                + oaiRecord.getIdentifier());
+          })
+          .onComplete(x -> {
+            queue.decrementAndGet();
+            // drain ?
+            if (queue.get() < 2) {
+              oaiResponse.resume();
+            }
+            if (queue.get() == 0 && Boolean.TRUE.equals(ended.get())) {
+              endResponse(oaiResponse.resumptionToken(), oaiResponse.getError(), job)
+                  .onComplete(promise);
+            }
+          });
+    });
+    oaiResponse.exceptionHandler(promise::tryFail);
+    oaiResponse.endHandler(end -> {
       ended.set(true);
       if (queue.get() == 0) {
-        endResponse(oaiParserStream.getResumptionToken(), oaiParserStream.getError(), job)
+        endResponse(oaiResponse.resumptionToken(), oaiResponse.getError(), job)
             .onComplete(promise);
       }
     });
-    return promise.future();
+    return promise.future().onComplete(x -> log.info("listRecordsResponse completed"));
   }
 
   void oaiHarvestLoop(Storage storage, String id, OaiPmhStatus job, UUID owner, int retries) {
@@ -680,7 +656,7 @@ public class OaiPmhClientService {
           }
           return storage.getAvailableMatchConfigs()
               .compose(matchKeyConfigs ->
-                  listRecordsRequest(config)
+                  listRecordsRequest(job)
                       .compose(res ->
                           listRecordsResponse(storage, job, matchKeyConfigs, res)))
               .map(0)

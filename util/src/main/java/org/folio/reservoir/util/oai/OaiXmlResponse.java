@@ -53,6 +53,17 @@ public class OaiXmlResponse<T> implements OaiResponse<T>, Handler<XMLStreamReade
     this.stream = xmlParser;
     this.metadataParser = metadataParser;
     this.stream.handler(this);
+    this.stream.exceptionHandler(e -> {
+      if (exceptionHandler != null) {
+        exceptionHandler.handle(e);
+      }
+    });
+    this.stream.endHandler(end -> {
+      if (endHandler != null) {
+        endHandler.handle(null);
+        endHandler = null;
+      }
+    });
   }
 
   @Override

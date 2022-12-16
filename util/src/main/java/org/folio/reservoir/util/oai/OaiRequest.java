@@ -16,5 +16,7 @@ public interface OaiRequest<T> {
 
   OaiRequest<T> limit(int limit);
 
+  OaiRequest<T> params(String k, String v);
+
   Future<OaiResponse<T>> listRecords();
 }
