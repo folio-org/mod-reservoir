@@ -14,7 +14,7 @@ import org.folio.reservoir.util.XmlMetadataStreamParser;
 import org.folio.reservoir.util.readstream.XmlFixer;
 import org.folio.reservoir.util.readstream.XmlParser;
 
-public class OaiHttpRequest<T> implements OaiRequest {
+public class OaiHttpRequest<T> implements OaiRequest<T> {
 
   Map<String,String> queryParameters = new HashMap<>();
 
@@ -43,45 +43,45 @@ public class OaiHttpRequest<T> implements OaiRequest {
   }
 
   @Override
-  public OaiRequest set(String set) {
+  public OaiRequest<T> set(String set) {
     queryParameters.put("set", set);
     return this;
   }
 
   @Override
-  public OaiRequest metadataPrefix(String metadataPrefix) {
+  public OaiRequest<T> metadataPrefix(String metadataPrefix) {
     queryParameters.put("metadataPrefix", metadataPrefix);
     return this;
   }
 
   @Override
-  public OaiRequest from(String from) {
+  public OaiRequest<T> from(String from) {
     queryParameters.put("from", from);
     return this;
   }
 
   @Override
-  public OaiRequest until(String until) {
+  public OaiRequest<T> until(String until) {
     queryParameters.put("until", until);
     return this;
   }
 
   @Override
-  public OaiRequest token(String token) {
+  public OaiRequest<T> token(String token) {
     queryParameters.put("resumptionToken", token);
     return this;
   }
 
   @Override
-  public OaiRequest limit(int limit) {
+  public OaiRequest<T> limit(int limit) {
     queryParameters.put("limit", Integer.toString(limit));
     return this;
   }
 
   @Override
-  public Future<OaiResponse> listRecords() {
+  public Future<OaiResponse<T>> listRecords() {
     QueryStringEncoder enc = new QueryStringEncoder(url);
-    queryParameters.forEach((k,v) -> enc.addParam(k, v));
+    queryParameters.forEach(enc::addParam);
     enc.addParam("verb", "ListRecords");
     RequestOptions requestOptions = new RequestOptions()
         .setMethod(HttpMethod.GET)
