@@ -533,8 +533,8 @@ public class OaiPmhClientService {
     JsonObject params = config.getJsonObject("params");
     if (params != null) {
       params.forEach(n -> {
-        if (n.getValue() instanceof String) {
-          oaiRequest.params(n.getKey(), (String) n.getValue());
+        if (n.getValue() instanceof String s) {
+          oaiRequest.params(n.getKey(), s);
         }
       });
     }
