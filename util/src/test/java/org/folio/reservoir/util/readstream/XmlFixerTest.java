@@ -95,6 +95,7 @@ public class XmlFixerTest {
     bufferFromFile("bad-marcxml.xml").onComplete(context.asyncAssertSuccess(buffer -> {
       assertThat(buffer.toString(), containsString("<subfield code=\"å\">00E5</subfield>"));
       assertThat(buffer.toString(), containsString("<subfield code=\"丐\">4E10</subfield>"));
+      assertThat(buffer.toString(), containsString("<subfield code=\"ø\"></subfield>"));
     }));
   }
 
