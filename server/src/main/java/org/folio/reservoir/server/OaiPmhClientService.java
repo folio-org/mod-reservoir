@@ -622,7 +622,7 @@ public class OaiPmhClientService {
               oaiResponse.resume();
             }
             if (queue.get() == 0 && Boolean.TRUE.equals(ended.get())) {
-              endResponse(oaiResponse.resumptionToken(), oaiResponse.getError(), job)
+              endResponse(oaiResponse.getResumptionToken(), oaiResponse.getError(), job)
                   .onComplete(promise);
             }
           });
@@ -631,7 +631,7 @@ public class OaiPmhClientService {
     oaiResponse.endHandler(end -> {
       ended.set(true);
       if (queue.get() == 0) {
-        endResponse(oaiResponse.resumptionToken(), oaiResponse.getError(), job)
+        endResponse(oaiResponse.getResumptionToken(), oaiResponse.getError(), job)
             .onComplete(promise);
       }
     });

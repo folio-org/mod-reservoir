@@ -18,6 +18,7 @@ import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import javax.xml.stream.XMLStreamConstants;
+import javax.xml.stream.XMLStreamReader;
 
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.contains;
@@ -25,6 +26,7 @@ import static org.hamcrest.Matchers.containsString;
 import static org.hamcrest.Matchers.empty;
 import static org.hamcrest.Matchers.hasSize;
 import static org.hamcrest.Matchers.is;
+import static org.hamcrest.Matchers.nullValue;
 
 @RunWith(VertxUnitRunner.class)
 public class XmlParserTest {
@@ -65,6 +67,19 @@ public class XmlParserTest {
     eventsFromFile("record10.xml").onComplete(context.asyncAssertSuccess(events -> {
       assertThat(events, hasSize(2965));
     }));
+  }
+
+  @Test
+  public void testIncomplete() {
+    XmlMapper xmlMapper = new XmlMapper();
+    xmlMapper.push(Buffer.buffer("<foo"));
+    XMLStreamReader poll = xmlMapper.poll();
+    assertThat(poll.getEventType(), is(XMLStreamConstants.START_DOCUMENT));
+    poll = xmlMapper.poll();
+    assertThat(poll, nullValue());
+    xmlMapper.end();
+    Exception e = Assert.assertThrows(DecodeException.class, () -> xmlMapper.poll());
+    assertThat(e.getMessage(), is("Incomplete input"));
   }
 
   @Test

@@ -71,7 +71,7 @@ public class OaiXmlResponseTest {
           assertThat(records.get(1).metadata.getString("leader"), is("10873cam a22004693i 4500"));
           assertThat(records.get(2).metadata.getString("leader"), is("02052cam a22004213i 4500"));
           assertThat(records.get(3).metadata.getString("leader"), is("02225nam a2200469 i 4500"));
-          assertThat(oaiXmlResponse.resumptionToken(), is("MzM5OzE7Ozt2MS4w"));
+          assertThat(oaiXmlResponse.getResumptionToken(), is("MzM5OzE7Ozt2MS4w"));
           assertThat(records.get(3).datestamp, is("2022-05-03"));
         }));
   }
@@ -82,7 +82,7 @@ public class OaiXmlResponseTest {
     parseOai("oai-response-2.xml", records::add)
         .onComplete(context.asyncAssertSuccess(oaiParserStream -> {
           assertThat(records, empty());
-          assertThat(oaiParserStream.resumptionToken(), nullValue());
+          assertThat(oaiParserStream.getResumptionToken(), nullValue());
           assertThat(oaiParserStream.getError(), is("noRecordsMatch: The combination of the values of the from, until, set and metadataPrefix arguments returns an empty list"));
         }));
   }
@@ -92,7 +92,7 @@ public class OaiXmlResponseTest {
     List<OaiRecord<JsonObject>> records = new ArrayList<>();
     parseOai("oai-response-3.xml", records::add)
         .onComplete(context.asyncAssertSuccess(oaiParserStream -> {
-          assertThat(oaiParserStream.resumptionToken(), is("MzM5OzE7Ozt2MS4w"));
+          assertThat(oaiParserStream.getResumptionToken(), is("MzM5OzE7Ozt2MS4w"));
           assertThat(records, hasSize(1));
           assertThat(records.get(0).getMetadata(), nullValue());
           assertThat(records.get(0).isDeleted(), is(true));
@@ -119,7 +119,7 @@ public class OaiXmlResponseTest {
           assertThat(records.get(1).metadata, nullValue());
           assertThat(records.get(2).metadata, nullValue());
           assertThat(records.get(3).metadata, nullValue());
-          assertThat(oaiParserStream.resumptionToken(), is("MzM5OzE7Ozt2MS4w"));
+          assertThat(oaiParserStream.getResumptionToken(), is("MzM5OzE7Ozt2MS4w"));
           assertThat(records.get(3).datestamp, is("2022-05-03"));
         }));
   }

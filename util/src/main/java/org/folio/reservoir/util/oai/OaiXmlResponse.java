@@ -110,7 +110,7 @@ public class OaiXmlResponse<T> implements OaiResponse<T>, Handler<XMLStreamReade
   }
 
   @Override
-  public String resumptionToken() {
+  public String getResumptionToken() {
     return resumptionToken;
   }
 

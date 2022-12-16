@@ -16,6 +16,8 @@ public class XmlMapper
     implements Mapper<Buffer, XMLStreamReader> {
   private final AsyncXMLStreamReader<AsyncByteArrayFeeder> parser;
 
+  private boolean ended;
+
   XmlMapper() {
     AsyncXMLInputFactory factory = new InputFactoryImpl();
     parser = factory.createAsyncForByteArray();
@@ -27,6 +29,11 @@ public class XmlMapper
       if (parser.hasNext() && parser.next() != AsyncXMLStreamReader.EVENT_INCOMPLETE) {
         return parser;
       }
+      // even though we have told the parse of endOfInput, it still does not throw an
+      // error when on incomplete input, so we have to make that check ourselves.
+      if (ended && parser.getEventType() == AsyncXMLStreamReader.EVENT_INCOMPLETE) {
+        throw new DecodeException("Incomplete input");
+      }
       return null;
     } catch (XMLStreamException e) {
       throw new DecodeException(e.getMessage(), e);
@@ -35,6 +42,7 @@ public class XmlMapper
 
   @Override
   public void end() {
+    ended = true;
     parser.getInputFeeder().endOfInput();
   }
 

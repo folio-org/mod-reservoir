@@ -3917,7 +3917,7 @@ public class MainVerticleTest extends TestBase {
         .body("items[0].status", is("idle"))
         .body("items[0].totalRecords", is(0))
         .body("items[0].totalRequests", is(1))
-        .body("items[0].error", is(nullValue())) // error should be reported
+        .body("items[0].error", is("Incomplete input"))
         .body("items[0].config.id", is(PMH_CLIENT_ID))
         .body("items[0].config.sourceId", is(SOURCE_ID_1));
   }

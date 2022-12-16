@@ -47,7 +47,7 @@ public class OaiHttpRequestTest {
     httpClient = vertx.createHttpClient();
     FileSystem fileSystem = vertx.fileSystem();
     Router router = Router.router(vertx);
-    router.get("/oai").handler(ctx -> {
+    router.get("/oai1").handler(ctx -> {
       HttpServerResponse response = ctx.response();
       response.setChunked(true);
       if (oaiFilename == null) {
@@ -68,6 +68,26 @@ public class OaiHttpRequestTest {
             response.putHeader(HttpHeaders.CONTENT_TYPE, "text/xml");
             response.end(e.getMessage());
           });
+    });
+    router.get("/oai2").handler(ctx -> {
+      HttpServerResponse response = ctx.response();
+      response.setChunked(true);
+      response.setStatusCode(200);
+      response.putHeader(HttpHeaders.CONTENT_TYPE, "text/xml");
+      response.write("""
+          <OAI-PMH>
+            <ListRecords>
+          """
+      );
+      response.write("<resumptionToken>");
+      response.write(ctx.request().getParam("resumptionToken"));
+      response.write("</resumptionToken>");
+      response.write("""
+            </ListRecords>
+          </OAI-PMH>
+          """
+      );
+      response.end();
     });
     vertx.createHttpServer(new HttpServerOptions())
         .requestHandler(router)
@@ -96,7 +116,7 @@ public class OaiHttpRequestTest {
     XmlMetadataStreamParser<JsonObject> metadataParser = new XmlMetadataParserMarcInJson();
     oaiFilename = "oai-response-1.xml";
     OaiRequest<JsonObject> oaiRequest = new OaiHttpRequest<>(
-        httpClient, OKAPI_URL + "/oai", metadataParser, false, MultiMap.caseInsensitiveMultiMap());
+        httpClient, OKAPI_URL + "/oai", metadataParser, false, null);
     oaiRequest.listRecords().onComplete(context.asyncAssertSuccess(oaiResponse -> {
       List<OaiRecord<JsonObject>> records = new ArrayList<>();
       oaiResponse.handler(records::add);
@@ -117,10 +137,31 @@ public class OaiHttpRequestTest {
         assertThat(records.get(1).metadata.getString("leader"), is("10873cam a22004693i 4500"));
         assertThat(records.get(2).metadata.getString("leader"), is("02052cam a22004213i 4500"));
         assertThat(records.get(3).metadata.getString("leader"), is("02225nam a2200469 i 4500"));
-        assertThat(oaiResponse.resumptionToken(), is("MzM5OzE7Ozt2MS4w"));
+        assertThat(oaiResponse.getResumptionToken(), is("MzM5OzE7Ozt2MS4w"));
         assertThat(records.get(3).datestamp, is("2022-05-03"));
       }));
     }));
   }
 
+  @Test
+  public void test2(TestContext context) {
+    XmlMetadataStreamParser<JsonObject> metadataParser = new XmlMetadataParserMarcInJson();
+    OaiRequest<JsonObject> oaiRequest = new OaiHttpRequest<>(
+        httpClient, OKAPI_URL + "/oai2", metadataParser, false, null);
+    oaiRequest.token("abc");
+    oaiRequest.from("2004-01-01");
+    oaiRequest.until("2005-01-01");
+    oaiRequest.set("set");
+    oaiRequest.metadataPrefix("marcxml");
+    oaiRequest.params("p", "v");
+    oaiRequest.limit(3);
+    oaiRequest.listRecords().onComplete(context.asyncAssertSuccess(oaiResponse -> {
+      Promise promise = Promise.promise();
+      oaiResponse.endHandler(e -> promise.complete());
+      promise.future().onComplete(context.asyncAssertSuccess(x ->
+          assertThat(oaiResponse.getResumptionToken(), is("abc"))
+      ));
+    }));
+  }
 }
+

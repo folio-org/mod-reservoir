@@ -119,8 +119,6 @@ public class OaiHttpRequest<T> implements OaiRequest<T> {
           if (httpResponse.statusCode() != 200) {
             throw new RuntimeException("OAI server returned status " + httpResponse.statusCode());
           }
-          // TODO: check content-type
-          // in the future check for JSON response here!
           ReadStream<Buffer> bufferReadStream = httpResponse;
           if (xmlFixing) {
             bufferReadStream = new XmlFixer(bufferReadStream);
