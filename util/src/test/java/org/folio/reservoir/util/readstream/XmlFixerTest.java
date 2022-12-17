@@ -119,4 +119,11 @@ public class XmlFixerTest {
     }));
   }
 
+  @Test
+  public void badOaiResponse3(TestContext context) {
+    bufferFromFile("pennstate-bad-rec-20221217.xml").onComplete(context.asyncAssertSuccess(buffer -> {
+      assertThat(buffer.toString(), containsString("3659139")); // resumption token which comes last
+    }));
+  }
+
 }
