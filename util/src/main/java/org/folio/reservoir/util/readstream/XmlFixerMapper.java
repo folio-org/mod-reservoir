@@ -62,9 +62,6 @@ public class XmlFixerMapper implements Mapper<Buffer, Buffer> {
     if (sequenceLength > 0) {
       skipSequence(input);
     }
-    if (start != -1) {
-      throw new IllegalStateException("start = " + start);
-    }
     if (!ended && front + 3 + ASCII_LOOKAHED >= input.length()) {
       incomplete(input, input.length());
       return true;
@@ -84,12 +81,6 @@ public class XmlFixerMapper implements Mapper<Buffer, Buffer> {
   }
 
   void skipSequence(Buffer input) {
-    if (start == -1) {
-      throw new IllegalStateException("start == -1");
-    }
-    if (front - start < 1) {
-      throw new IllegalStateException("front = " + front + " start = " + start);
-    }
     result.appendBuffer(input, tail, start - tail);
     for (int i = start; i < front; i++) {
       byte b = input.getByte(i);
@@ -104,12 +95,6 @@ public class XmlFixerMapper implements Mapper<Buffer, Buffer> {
   }
 
   void flushSequence(Buffer input) {
-    if (start == -1) {
-      throw new IllegalStateException("start == -1");
-    }
-    if (front - start < 1) {
-      throw new IllegalStateException("front = " + front + " start = " + start);
-    }
     result.appendBuffer(input, tail, start - tail);
     for (int i = start; i <= front; i++) {
       byte b = input.getByte(i);
@@ -148,17 +133,9 @@ public class XmlFixerMapper implements Mapper<Buffer, Buffer> {
           return;
         }
       } else {
-        if (sequenceLength > 0) {
-          // bad UTF-8 sequence ... ASCII inside a sequence
-          if (front - start >= sequenceLength + ASCII_LOOKAHED - 1) {
-            if (start == -1) {
-              throw new IllegalStateException("start == -1");
-            }
-            if (front - start < 1) {
-              throw new IllegalStateException("front = " + front + " start = " + start);
-            }
-            skipSequence(input);
-          }
+        if (sequenceLength > 0
+            && front - start >= sequenceLength + ASCII_LOOKAHED - 1) {
+          skipSequence(input);
         }
         if (leadingByte < 32
             && leadingByte != '\t' && leadingByte != '\r' && leadingByte != '\n') {
