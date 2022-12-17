@@ -59,7 +59,7 @@ public class XmlFixerMapper implements Mapper<Buffer, Buffer> {
       }
       return false;
     }
-    if (start != -1) {
+    if (sequenceLength > 0) {
       skipSequence(input);
     }
     if (start != -1) {
@@ -177,7 +177,7 @@ public class XmlFixerMapper implements Mapper<Buffer, Buffer> {
         }
       }
     }
-    if (start != -1) {
+    if (sequenceLength > 0) {
       skipSequence(input);
     }
     result.appendBuffer(input, tail, front - tail);
