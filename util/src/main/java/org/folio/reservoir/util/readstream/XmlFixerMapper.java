@@ -59,9 +59,7 @@ public class XmlFixerMapper implements Mapper<Buffer, Buffer> {
       }
       return false;
     }
-    if (sequenceLength > 0) {
-      skipSequence(input);
-    }
+    checkSkipSequence(input);
     if (!ended && front + 3 + ASCII_LOOKAHED >= input.length()) {
       incomplete(input, input.length());
       return true;
@@ -78,6 +76,12 @@ public class XmlFixerMapper implements Mapper<Buffer, Buffer> {
     }
     start = front;
     return false;
+  }
+
+  void checkSkipSequence(Buffer input) {
+    if (sequenceLength > 0) {
+      skipSequence(input);
+    }
   }
 
   void skipSequence(Buffer input) {
@@ -139,24 +143,18 @@ public class XmlFixerMapper implements Mapper<Buffer, Buffer> {
         }
         if (leadingByte < 32
             && leadingByte != '\t' && leadingByte != '\r' && leadingByte != '\n') {
-          if (sequenceLength > 0) {
-            skipSequence(input);
-          }
+          checkSkipSequence(input);
           result.appendBuffer(input, tail, front - tail);
           addFix();
         } else if (leadingByte == '&') {
-          if (sequenceLength > 0) {
-            skipSequence(input);
-          }
+          checkSkipSequence(input);
           if (handleEntity(input)) {
             return;
           }
         }
       }
     }
-    if (sequenceLength > 0) {
-      skipSequence(input);
-    }
+    checkSkipSequence(input);
     result.appendBuffer(input, tail, front - tail);
     pending = null;
   }
