@@ -6,6 +6,8 @@ public class XmlFixerMapper implements Mapper<Buffer, Buffer> {
 
   private static final String REPLACEMENT_CHAR = "&#xFFFD;";
 
+  private static final int ASCII_LOOKAHED = 3;
+
   private boolean ended;
 
   Buffer result;
@@ -18,9 +20,9 @@ public class XmlFixerMapper implements Mapper<Buffer, Buffer> {
 
   int tail;
 
-  int sequenceLength = 0; // number bytes remaining in a UTF-8 sequence
+  int start = -1;
 
-  int moved = 0;
+  int sequenceLength = 0; // number bytes remaining in a UTF-8 sequence
 
   static boolean isAscii(byte b) {
     return (b & 128) == 0;
@@ -42,26 +44,87 @@ public class XmlFixerMapper implements Mapper<Buffer, Buffer> {
     return (b & 248) == 240;
   }
 
-  void handleSequence(Buffer input, byte leadingByte) {
+  boolean handleSequence(Buffer input, byte leadingByte) {
     // the order of checks doesn't matter here but the most occurring
     // check is listed first. There will always be more continuation bytes
     // than leading bytes.
     if (isContinuation(leadingByte)) {
-      if (sequenceLength > 0) {
-        sequenceLength--;
-      } else {
+      if (sequenceLength == 0) {
         skipByte(input);
+        return false;
       }
-    } else if (is2byteSequence(leadingByte)) {
+      sequenceLength--;
+      if (sequenceLength == 0) {
+        flushSequence(input);
+      }
+      return false;
+    }
+    if (start != -1) {
+      skipSequence(input);
+    }
+    if (start != -1) {
+      throw new IllegalStateException("start = " + start);
+    }
+    if (!ended && front + 3 + ASCII_LOOKAHED >= input.length()) {
+      incomplete(input, input.length());
+      return true;
+    }
+    if (is2byteSequence(leadingByte)) {
       sequenceLength = 1;
     } else if (is3byteSequence(leadingByte)) {
       sequenceLength = 2;
     } else if (is4byteSequence(leadingByte)) {
       sequenceLength = 3;
     } else {
-      sequenceLength = 0;
       skipByte(input);
+      return false;
     }
+    start = front;
+    return false;
+  }
+
+  void skipSequence(Buffer input) {
+    if (start == -1) {
+      throw new IllegalStateException("start == -1");
+    }
+    if (front - start < 1) {
+      throw new IllegalStateException("front = " + front + " start = " + start);
+    }
+    result.appendBuffer(input, tail, start - tail);
+    for (int i = start; i < front; i++) {
+      byte b = input.getByte(i);
+      if (isAscii(b)) {
+        result.appendByte(b);
+      }
+    }
+    tail = front;
+    start = -1;
+    sequenceLength = 0;
+    numberOfFixes++;
+  }
+
+  void flushSequence(Buffer input) {
+    if (start == -1) {
+      throw new IllegalStateException("start == -1");
+    }
+    if (front - start < 1) {
+      throw new IllegalStateException("front = " + front + " start = " + start);
+    }
+    result.appendBuffer(input, tail, start - tail);
+    for (int i = start; i <= front; i++) {
+      byte b = input.getByte(i);
+      if (!isAscii(b)) {
+        result.appendByte(b);
+      }
+    }
+    for (int i = start; i <= front; i++) {
+      byte b = input.getByte(i);
+      if (isAscii(b)) {
+        result.appendByte(b);
+      }
+    }
+    tail = front + 1;
+    start = -1;
   }
 
   @Override
@@ -81,32 +144,41 @@ public class XmlFixerMapper implements Mapper<Buffer, Buffer> {
     for (front = 0; front < input.length(); front++) {
       byte leadingByte = input.getByte(front);
       if (!isAscii(leadingByte)) {
-        handleSequence(input, leadingByte);
-      } else if (sequenceLength > 0) {
-        // bad UTF-8 sequence ... Take care of the special case where quote + gt
-        // is placed after a byte which is part of a UTF-8 sequence.
-        if (leadingByte == '"' && moved == 0) {
-          skipByte(input);
-          moved = 1;
-        } else if (leadingByte == '>' && moved == 1) {
-          skipByte(input);
-          moved = 2;
+        if (handleSequence(input, leadingByte)) {
+          return;
         }
       } else {
-        if (moved == 2) {
-          result.appendBuffer(input, tail, front - tail);
-          tail = front;
-          result.appendString("\">");
-          moved = 0;
+        if (sequenceLength > 0) {
+          // bad UTF-8 sequence ... ASCII inside a sequence
+          if (front - start >= sequenceLength + ASCII_LOOKAHED - 1) {
+            if (start == -1) {
+              throw new IllegalStateException("start == -1");
+            }
+            if (front - start < 1) {
+              throw new IllegalStateException("front = " + front + " start = " + start);
+            }
+            skipSequence(input);
+          }
         }
         if (leadingByte < 32
             && leadingByte != '\t' && leadingByte != '\r' && leadingByte != '\n') {
+          if (sequenceLength > 0) {
+            skipSequence(input);
+          }
           result.appendBuffer(input, tail, front - tail);
           addFix();
-        } else if (leadingByte == '&' && handleEntity(input)) {
-          return;
+        } else if (leadingByte == '&') {
+          if (sequenceLength > 0) {
+            skipSequence(input);
+          }
+          if (handleEntity(input)) {
+            return;
+          }
         }
       }
+    }
+    if (start != -1) {
+      skipSequence(input);
     }
     result.appendBuffer(input, tail, front - tail);
     pending = null;
@@ -134,7 +206,7 @@ public class XmlFixerMapper implements Mapper<Buffer, Buffer> {
     }
     int j;
     for (j = front + 2; j < input.length(); j++) {
-      if (input.getByte(j) == ';') {
+      if (!isAscii(input.getByte(j)) || input.getByte(j) == ';') {
         break;
       }
     }
