@@ -180,4 +180,56 @@ public class XmlFixerMapperTest {
     assertThat(xmlFixerMapper.getNumberOfFixes(), is(0));
   }
 
+  static void fixerTest(Buffer input, String expect) {
+    fixerTest(input, Buffer.buffer(expect));
+  }
+
+  static void fixerTest(Buffer input, Buffer expect) {
+    // pass to xmlFixerMapper in two passes + end
+    // this is to further test the handling of incomplete input.
+    for (int i = 0; i < input.length(); i++) {
+      Buffer got = Buffer.buffer();
+      Buffer b1;
+      Buffer res;
+      XmlFixerMapper xmlFixerMapper = new XmlFixerMapper();
+      if (i > 0) {
+        // first push
+        b1 = Buffer.buffer(input.getBytes(0, i));
+        xmlFixerMapper.push(b1);
+        while ((res = xmlFixerMapper.poll())!=null) {
+          got.appendBuffer(res);
+        }
+      }
+      // second push or only push if i == 0
+      b1 = Buffer.buffer(input.getBytes(i, input.length()));
+      xmlFixerMapper.push(b1);
+      while ((res = xmlFixerMapper.poll())!=null) {
+        got.appendBuffer(res);
+      }
+      xmlFixerMapper.end();
+      while ((res = xmlFixerMapper.poll())!=null) {
+        got.appendBuffer(res);
+      }
+      assertThat(got, is(expect));
+    }
+  }
+
+  @Test
+  public void testOk() {
+    fixerTest(Buffer.buffer("a"), "a");
+    fixerTest(Buffer.buffer("ab"), "ab");
+    fixerTest(Buffer.buffer("abc"), "abc");
+    fixerTest(Buffer.buffer("æøå"), "æøå");
+  }
+
+  @Test
+  public void test3() {
+    fixerTest(Buffer.buffer(new byte[] {3}), "&#xFFFD;");
+  }
+
+  @Test
+  public void invalidByte() {
+    fixerTest(Buffer.buffer(new byte[] {-2} ), "");
+  }
+
 }
