@@ -1,6 +1,7 @@
 package org.folio.reservoir.util.readstream;
 
 import io.vertx.core.buffer.Buffer;
+import org.junit.Ignore;
 import org.junit.Test;
 
 import static org.hamcrest.Matchers.is;
@@ -214,6 +215,15 @@ public class XmlFixerMapperTest {
     }
   }
 
+  static Buffer createBuffer(int ... values) {
+    byte [] bytes = new byte[values.length];
+    for (int i = 0; i < values.length; i++) {
+      bytes[i] = (byte) values[i];
+    }
+    return Buffer.buffer(bytes);
+  }
+
+
   @Test
   public void testOk() {
     fixerTest(Buffer.buffer("a"), "a");
@@ -222,14 +232,57 @@ public class XmlFixerMapperTest {
     fixerTest(Buffer.buffer("æøå"), "æøå");
   }
 
+  private static int ARING_1 = 0xc3;
+  private static int ARING_2 = 0xa5;
+  private static String ARING = "\u00e5";
+
+  private static int CJK_1 = 0xe4;
+  private static int CJK_2 = 0xb8;
+  private static int CJK_3 = 0x90;
+  private static String CJK = "\u4e10";
+
   @Test
-  public void test3() {
-    fixerTest(Buffer.buffer(new byte[] {3}), "&#xFFFD;");
+  public void testAring() {
+    fixerTest(createBuffer(ARING_1, ARING_2), ARING);
   }
+
+  @Test
+  public void testCjk() {
+    fixerTest(createBuffer(CJK_1, CJK_2, CJK_3), CJK);
+  }
+
+  @Test
+  public void testInvalidXmlChars() {
+    fixerTest(createBuffer(1), "&#xFFFD;");
+    fixerTest(createBuffer(3), "&#xFFFD;");
+    fixerTest(createBuffer(31), "&#xFFFD;");
+    fixerTest(createBuffer(32), " ");
+  }
+
 
   @Test
   public void invalidByte() {
-    fixerTest(Buffer.buffer(new byte[] {-2} ), "");
+    fixerTest(createBuffer('a', 0b11111000, 'b'), "ab");
+    fixerTest(createBuffer('a', 0b11111111, 'b'), "ab");
   }
 
+  @Test
+  public void invalidMidByte() {
+    fixerTest(createBuffer('a', ARING_2, 'b'), "ab");
+    fixerTest(createBuffer('a', CJK_2, 'b'), "ab");
+    fixerTest(createBuffer('a', ARING_2, ARING_2, 'b'), "ab");
+  }
+
+  @Test
+  @Ignore
+  public void incompleteSequences() {
+    fixerTest(createBuffer('a', ARING_1, 'b'), "ab");
+    fixerTest(createBuffer('a', CJK_1, CJK_2, 'b'), "ab");
+  }
+
+  @Test
+  public void fixedSequence() {
+    fixerTest(createBuffer('a', ARING_1, '"', '>', ARING_2, 'b'), "a" + ARING + "\">b");
+    fixerTest(createBuffer('a', CJK_1, '"', '>', CJK_2, CJK_3, 'b'), "a" + CJK + "\">b");
+  }
 }
