@@ -267,7 +267,7 @@ public class XmlFixerMapperTest {
   @Test
   public void incompleteSequences() {
     fixerTest(createBuffer('a', ARING_1, 'b'), "a&#xFFFD;b");
-    fixerTest(createBuffer('a', CJK_1, CJK_2, 'b'), "a&#xFFFD;&#xFFFD;b");
+    fixerTest(createBuffer('a', CJK_1, CJK_2, 'b'), "a&#xFFFD;b");
   }
 
   @Test

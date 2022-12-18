@@ -86,12 +86,15 @@ public class XmlFixerMapper implements Mapper<Buffer, Buffer> {
 
   void skipSequence(Buffer input) {
     result.appendBuffer(input, tail, sequenceStart - tail);
+    boolean lastWasReplaced = false;
     for (int i = sequenceStart; i < front; i++) {
       byte b = input.getByte(i);
       if (isAscii(b)) {
         result.appendByte(b);
-      } else {
+        lastWasReplaced = false;
+      } else if (!lastWasReplaced) {
         result.appendString(REPLACEMENT_CHAR);
+        lastWasReplaced = true;
       }
     }
     tail = front;
