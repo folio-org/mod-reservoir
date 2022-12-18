@@ -20,7 +20,7 @@ public class XmlFixerMapper implements Mapper<Buffer, Buffer> {
 
   int tail;
 
-  int start = -1;
+  int sequenceStart = -1;
 
   int sequenceLength = 0; // number bytes remaining in a UTF-8 sequence
 
@@ -74,7 +74,7 @@ public class XmlFixerMapper implements Mapper<Buffer, Buffer> {
       skipByte(input);
       return false;
     }
-    start = front;
+    sequenceStart = front;
     return false;
   }
 
@@ -85,35 +85,37 @@ public class XmlFixerMapper implements Mapper<Buffer, Buffer> {
   }
 
   void skipSequence(Buffer input) {
-    result.appendBuffer(input, tail, start - tail);
-    for (int i = start; i < front; i++) {
+    result.appendBuffer(input, tail, sequenceStart - tail);
+    for (int i = sequenceStart; i < front; i++) {
       byte b = input.getByte(i);
       if (isAscii(b)) {
         result.appendByte(b);
+      } else {
+        result.appendString(REPLACEMENT_CHAR);
       }
     }
     tail = front;
-    start = -1;
+    sequenceStart = -1;
     sequenceLength = 0;
     numberOfFixes++;
   }
 
   void flushSequence(Buffer input) {
-    result.appendBuffer(input, tail, start - tail);
-    for (int i = start; i <= front; i++) {
+    result.appendBuffer(input, tail, sequenceStart - tail);
+    for (int i = sequenceStart; i <= front; i++) {
       byte b = input.getByte(i);
       if (!isAscii(b)) {
         result.appendByte(b);
       }
     }
-    for (int i = start; i <= front; i++) {
+    for (int i = sequenceStart; i <= front; i++) {
       byte b = input.getByte(i);
       if (isAscii(b)) {
         result.appendByte(b);
       }
     }
     tail = front + 1;
-    start = -1;
+    sequenceStart = -1;
   }
 
   @Override
@@ -138,7 +140,7 @@ public class XmlFixerMapper implements Mapper<Buffer, Buffer> {
         }
       } else {
         if (sequenceLength > 0
-            && front - start >= sequenceLength + ASCII_LOOKAHED - 1) {
+            && front - sequenceStart >= sequenceLength + ASCII_LOOKAHED - 1) {
           skipSequence(input);
         }
         if (leadingByte < 32
@@ -161,8 +163,7 @@ public class XmlFixerMapper implements Mapper<Buffer, Buffer> {
 
   private void skipByte(Buffer input) {
     result.appendBuffer(input, tail, front - tail);
-    tail = front + 1;
-    numberOfFixes++;
+    addFix();
   }
 
   private void addFix() {

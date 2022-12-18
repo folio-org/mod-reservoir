@@ -253,27 +253,27 @@ public class XmlFixerMapperTest {
 
   @Test
   public void invalidByte() {
-    fixerTest(createBuffer('a', 0b11111000, 'b'), "ab");
-    fixerTest(createBuffer('a', 0b11111111, 'b'), "ab");
+    fixerTest(createBuffer('a', 0b11111000, 'b'), "a&#xFFFD;b");
+    fixerTest(createBuffer('a', 0b11111111, 'b'), "a&#xFFFD;b");
   }
 
   @Test
   public void invalidMidByte() {
-    fixerTest(createBuffer('a', ARING_2, 'b'), "ab");
-    fixerTest(createBuffer('a', CJK_2, 'b'), "ab");
-    fixerTest(createBuffer('a', ARING_2, ARING_2, 'b'), "ab");
+    fixerTest(createBuffer('a', ARING_2, 'b'), "a&#xFFFD;b");
+    fixerTest(createBuffer('a', CJK_2, 'b'), "a&#xFFFD;b");
+    fixerTest(createBuffer('a', ARING_2, ARING_2, 'b'), "a&#xFFFD;&#xFFFD;b");
   }
 
   @Test
   public void incompleteSequences() {
-    fixerTest(createBuffer('a', ARING_1, 'b'), "ab");
-    fixerTest(createBuffer('a', CJK_1, CJK_2, 'b'), "ab");
+    fixerTest(createBuffer('a', ARING_1, 'b'), "a&#xFFFD;b");
+    fixerTest(createBuffer('a', CJK_1, CJK_2, 'b'), "a&#xFFFD;&#xFFFD;b");
   }
 
   @Test
   public void doubleStart() {
-    fixerTest(createBuffer('a', ARING_1, ARING_1, 'b'), "ab");
-    fixerTest(createBuffer('a', CJK_1, CJK_1, 'b'), "ab");
+    fixerTest(createBuffer('a', ARING_1, ARING_1, 'b'), "a&#xFFFD;&#xFFFD;b");
+    fixerTest(createBuffer('a', CJK_1, CJK_1, 'b'), "a&#xFFFD;&#xFFFD;b");
   }
 
   @Test
@@ -286,13 +286,13 @@ public class XmlFixerMapperTest {
 
   @Test
   public void tooLongToFix() {
-    fixerTest(createBuffer('a', CJK_1, '0', '1', '2', '3', CJK_2, CJK_3, 'b'), "a0123b");
+    fixerTest(createBuffer('a', CJK_1, '0', '1', '2', '3', CJK_2, CJK_3, 'b'), "a&#xFFFD;0123&#xFFFD;&#xFFFD;b");
   }
 
   @Test
   public void skipFixWithXmlSubst() {
-    fixerTest(createBuffer('a', CJK_1, '\n', '\f', '\t', CJK_2, CJK_3, 'b'), "a\n&#xFFFD;\tb");
-    fixerTest(createBuffer('a', CJK_1, '&', '#', CJK_2, CJK_3, 'b'), "a&#b");
-    fixerTest(createBuffer('a', CJK_1, '&', '#', '1', ';', CJK_2, CJK_3, 'b'), "a&#xFFFD;b");
+    fixerTest(createBuffer('a', CJK_1, '\n', '\f', '\t', CJK_2, CJK_3, 'b'), "a&#xFFFD;\n&#xFFFD;\t&#xFFFD;&#xFFFD;b");
+    fixerTest(createBuffer('a', CJK_1, '&', '#', CJK_2, CJK_3, 'b'), "a&#xFFFD;&#&#xFFFD;&#xFFFD;b");
+    fixerTest(createBuffer('a', CJK_1, '&', '#', '1', ';', CJK_2, CJK_3, 'b'), "a&#xFFFD;&#xFFFD;&#xFFFD;&#xFFFD;b");
   }
 }
