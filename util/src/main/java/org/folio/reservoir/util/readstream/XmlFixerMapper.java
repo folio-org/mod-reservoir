@@ -61,7 +61,6 @@ public class XmlFixerMapper implements Mapper<Buffer, Buffer> {
     }
     checkSkipSequence(input);
     if (!ended && front + 3 + ASCII_LOOKAHED >= input.length()) {
-      incomplete(input);
       return true;
     }
     if (is2byteSequence(leadingByte)) {
@@ -134,7 +133,7 @@ public class XmlFixerMapper implements Mapper<Buffer, Buffer> {
       byte leadingByte = input.getByte(front);
       if (!isAscii(leadingByte)) {
         if (handleSequence(input, leadingByte)) {
-          return;
+          break;
         }
       } else {
         if (sequenceLength > 0
@@ -149,14 +148,22 @@ public class XmlFixerMapper implements Mapper<Buffer, Buffer> {
         } else if (leadingByte == '&') {
           checkSkipSequence(input);
           if (handleEntity(input)) {
-            return;
+            break;
           }
         }
       }
     }
     checkSkipSequence(input);
+    if (ended) {
+      front = input.length();
+    }
     result.appendBuffer(input, tail, front - tail);
-    pending = null;
+    if (front != input.length()) {
+      pending = Buffer.buffer();
+      pending.appendBuffer(input, front, input.length() - front);
+    } else {
+      pending = null;
+    }
   }
 
   private void skipByte(Buffer input) {
@@ -173,7 +180,6 @@ public class XmlFixerMapper implements Mapper<Buffer, Buffer> {
 
   private boolean handleEntity(Buffer input) {
     if (front == input.length() - 1) {
-      incomplete(input);
       return true;
     }
     if (input.getByte(front + 1) != '#') {
@@ -186,7 +192,6 @@ public class XmlFixerMapper implements Mapper<Buffer, Buffer> {
       }
     }
     if (j == input.length()) {
-      incomplete(input);
       return true;
     }
     try {
@@ -205,17 +210,6 @@ public class XmlFixerMapper implements Mapper<Buffer, Buffer> {
       // ignored; Data will be passed as is
     }
     return false;
-  }
-
-  private void incomplete(Buffer input) {
-    if (ended) {
-      result.appendBuffer(input, tail, input.length() - tail);
-      pending = null;
-    } else {
-      result.appendBuffer(input, tail, front - tail);
-      pending = Buffer.buffer();
-      pending.appendBuffer(input, front, input.length() - front);
-    }
   }
 
   @Override
