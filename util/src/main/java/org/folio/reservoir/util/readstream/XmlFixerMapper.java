@@ -126,7 +126,7 @@ public class XmlFixerMapper implements Mapper<Buffer, Buffer> {
 
   private boolean handleEntity(Buffer input) {
     if (front == input.length() - 1) {
-      incomplete(input, front + 1);
+      incomplete(input);
       return true;
     }
     if (input.getByte(front + 1) != '#') {
@@ -139,7 +139,7 @@ public class XmlFixerMapper implements Mapper<Buffer, Buffer> {
       }
     }
     if (j == input.length()) {
-      incomplete(input, j);
+      incomplete(input);
       return true;
     }
     try {
@@ -160,13 +160,14 @@ public class XmlFixerMapper implements Mapper<Buffer, Buffer> {
     return false;
   }
 
-  private void incomplete(Buffer input, int pos) {
+  private void incomplete(Buffer input) {
     if (ended) {
-      result.appendBuffer(input, tail, pos - tail);
+      result.appendBuffer(input, tail, input.length() - tail);
       pending = null;
     } else {
+      result.appendBuffer(input, tail, front - tail);
       pending = Buffer.buffer();
-      pending.appendBuffer(input, tail, pos - tail);
+      pending.appendBuffer(input, front, input.length() - front);
     }
   }
 
