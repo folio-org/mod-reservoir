@@ -20,6 +20,7 @@ import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.contains;
 import static org.hamcrest.Matchers.containsString;
 import static org.hamcrest.Matchers.hasSize;
+import static org.hamcrest.Matchers.is;
 
 @RunWith(VertxUnitRunner.class)
 
@@ -126,4 +127,33 @@ public class XmlFixerTest {
     }));
   }
 
+  @Test
+  public void pennState20221217xmlFixer(TestContext context) {
+    vertx.fileSystem().readFile("pennstate-bad-rec-20221217.xml")
+        .onComplete(context.asyncAssertSuccess(buffer -> {
+          for (int chunkSize = 3614; chunkSize < 3616; chunkSize ++) {
+            Buffer res = Buffer.buffer();
+            Buffer tmp;
+            XmlFixerMapper mapper = new XmlFixerMapper();
+            for (int offset = 0; offset < buffer.length(); offset += chunkSize) {
+              int end = offset + chunkSize;
+              if (end > buffer.length()) {
+                end = buffer.length();
+              }
+              mapper.push(buffer.getBuffer(offset, end));
+              while ((tmp = mapper.poll()) != null) {
+                res.appendBuffer(tmp);
+              }
+            }
+            mapper.end();
+            while ((tmp = mapper.poll()) != null) {
+              res.appendBuffer(tmp);
+            }
+            if (res.length() != buffer.length()) {
+              System.out.println("chunk = " + chunkSize);
+            }
+            assertThat(res.toString(), is(buffer.toString()));
+          }
+        }));
+  }
 }
