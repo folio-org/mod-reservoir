@@ -146,8 +146,7 @@ public class XmlFixerMapper implements Mapper<Buffer, Buffer> {
         if (leadingByte < 32
             && leadingByte != '\t' && leadingByte != '\r' && leadingByte != '\n') {
           checkSkipSequence(input);
-          result.appendBuffer(input, tail, front - tail);
-          addFix();
+          skipByte(input);
         } else if (leadingByte == '&') {
           checkSkipSequence(input);
           if (handleEntity(input)) {
