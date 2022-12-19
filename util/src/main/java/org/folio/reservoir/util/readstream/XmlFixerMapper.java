@@ -181,7 +181,7 @@ public class XmlFixerMapper implements Mapper<Buffer, Buffer> {
       if (b == ';') {
         break;
       }
-      if (b <= 32 || b > 126) {
+      if (b <= ' ' || b > 'z') {
         // unfinished entity, replace & with replacement char
         skipByte(input);
         return false;

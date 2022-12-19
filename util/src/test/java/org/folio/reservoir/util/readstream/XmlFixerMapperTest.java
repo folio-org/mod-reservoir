@@ -296,11 +296,14 @@ public class XmlFixerMapperTest {
     fixerTest(Buffer.buffer("a&\"lt;b"), "a&lt;\"b");
     fixerTest(Buffer.buffer("a&\"#33;b"), "a&#33;\"b");
     fixerTest(Buffer.buffer("a&\"#1;b"), "a&#xFFFD;\"b");
+    fixerTest(Buffer.buffer("a&\"#yy;b"), "a&#xFFFD;\"b");
     fixerTest(Buffer.buffer("a&\"#x20;b"), "a&#x20;\"b");
     fixerTest(Buffer.buffer("a&\">#1;b"), "a&#xFFFD;\">b");
     fixerTest(Buffer.buffer("a&c b"), "a&#xFFFD;c b");
     fixerTest(Buffer.buffer("a&" + CJK), "a&#xFFFD;" + CJK);
-    fixerTest(Buffer.buffer("a&>>>lt;"), "a&lt;>>>");
+    fixerTest(Buffer.buffer("a&{"), "a&#xFFFD;{");
+    fixerTest(Buffer.buffer("a&-apos;"), "a&#xFFFD;");
+    fixerTest(Buffer.buffer("a&<\">lt;"), "a&lt;<\">");
     // fixerTest(Buffer.buffer("a&>>>>lt;bbbbbbbbbb"), "a&lt;>>>b");
   }
 
