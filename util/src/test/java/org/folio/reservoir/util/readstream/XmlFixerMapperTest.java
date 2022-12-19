@@ -304,7 +304,7 @@ public class XmlFixerMapperTest {
     fixerTest(Buffer.buffer("a&{"), "a&#xFFFD;{");
     fixerTest(Buffer.buffer("a&-apos;"), "a&#xFFFD;");
     fixerTest(Buffer.buffer("a&<\">lt;"), "a&lt;<\">");
-    // fixerTest(Buffer.buffer("a&>>>>lt;bbbbbbbbbb"), "a&lt;>>>b");
+    fixerTest(Buffer.buffer("a&>>>>lt;01234"), "a&#xFFFD;01234");
   }
 
   @Test

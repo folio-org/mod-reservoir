@@ -188,17 +188,19 @@ public class XmlFixerMapper implements Mapper<Buffer, Buffer> {
       }
       j++;
     }
+    byte b = input.getByte(front + 1);
     int skip = 0;
-    while (true) {
-      byte c = input.getByte(front + 1 + skip);
-      if (c != '"' && c != '>' && c != '<') {
-        break;
-      }
+    while (b == '"' || b == '>' || b == '<') {
       if (skip == ASCII_LOOKAHED) {
-        skipByte(input);
-        return true;
+        result.appendBuffer(input, tail, front - tail);
+        result.appendString(REPLACEMENT_CHAR);
+        numberOfFixes++;
+        front = j;
+        tail = front + 1;
+        return false;
       }
       skip++;
+      b = input.getByte(front + 1 + skip);
     }
     if (input.getByte(front + 1 + skip) == '#') {
       try {
