@@ -165,47 +165,61 @@ public class XmlFixerMapper implements Mapper<Buffer, Buffer> {
 
   private void skipByte(Buffer input) {
     result.appendBuffer(input, tail, front - tail);
-    addFix();
-  }
-
-  private void addFix() {
     tail = front + 1;
     result.appendString(REPLACEMENT_CHAR);
     numberOfFixes++;
   }
 
   private boolean handleEntity(Buffer input) {
-    if (front == input.length() - 1) {
-      incomplete(input);
-      return true;
-    }
-    if (input.getByte(front + 1) != '#') {
-      return false;
-    }
-    int j;
-    for (j = front + 2; j < input.length(); j++) {
-      if (!isAscii(input.getByte(j)) || input.getByte(j) == ';') {
+    int j = front + 1;
+    while (true) {
+      if (j >= input.length()) {
+        incomplete(input);
+        return true;
+      }
+      byte b = input.getByte(j);
+      if (b == ';') {
         break;
       }
-    }
-    if (j == input.length()) {
-      incomplete(input);
-      return true;
-    }
-    try {
-      int v;
-      if (input.getByte(front + 2) == 'x') {
-        v = Integer.parseInt(input.getString(front + 3, j), 16);
-      } else {
-        v = Integer.parseInt(input.getString(front + 2, j));
+      if (!isAscii(b) || b <= 32) {
+        return false;
       }
-      if (v < 32 && v != '\t' && v != '\r' && v != '\n') {
-        result.appendBuffer(input, tail, front - tail);
-        front = j;
-        addFix();
+      j++;
+    }
+    int skip = 0;
+    if (input.getByte(front + 1) == '"') {
+      skip = 1;
+    }
+    if (input.getByte(front + 1 + skip) == '#') {
+      try {
+        int v;
+        if (input.getByte(front + 2 + skip) == 'x') {
+          v = Integer.parseInt(input.getString(front + 3 + skip, j), 16);
+        } else {
+          v = Integer.parseInt(input.getString(front + 2 + skip, j));
+        }
+        if (v < 32 && v != '\t' && v != '\r' && v != '\n') {
+          result.appendBuffer(input, tail, front - tail);
+          result.appendString(REPLACEMENT_CHAR);
+          numberOfFixes++;
+          if (skip > 0) {
+            result.appendBuffer(input, front + 1, skip);
+          }
+          front = j;
+          tail = front + 1;
+          return false;
+        }
+      } catch (NumberFormatException e) {
+        // ignored; Data will be passed as is
+        return false;
       }
-    } catch (NumberFormatException e) {
-      // ignored; Data will be passed as is
+    }
+    if (skip > 0) {
+      result.appendBuffer(input, tail, 1 + front - tail); // includes &
+      result.appendBuffer(input, front + 1 + skip, j - (front + skip));
+      result.appendBuffer(input, front + 1, skip);
+      front = j;
+      tail = front + 1;
     }
     return false;
   }
