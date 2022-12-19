@@ -1,7 +1,6 @@
 package org.folio.reservoir.util.readstream;
 
 import io.vertx.core.buffer.Buffer;
-import org.junit.Ignore;
 import org.junit.Test;
 
 import static org.hamcrest.Matchers.is;
@@ -238,6 +237,14 @@ public class XmlFixerMapperTest {
   private static int CJK_3 = 0x90;
   private static String CJK = "\u4e10";
 
+  private static int SPADE_1 = 0xf0;
+  private static int SPADE_2 = 0x9f;
+  private static int SPADE_3 = 0x82;
+  private static int SPADE_4 = 0xa1;
+
+  private static String SPADE = "\ud83c\udca1";
+
+
   @Test
   public void testAring() {
     fixerTest(createBuffer(ARING_1, ARING_2), ARING, 0);
@@ -246,6 +253,11 @@ public class XmlFixerMapperTest {
   @Test
   public void testCjk() {
     fixerTest(createBuffer(CJK_1, CJK_2, CJK_3), CJK, 0);
+  }
+
+  @Test
+  public void testSpade() {
+    fixerTest(createBuffer(SPADE_1, SPADE_2, SPADE_3, SPADE_4), SPADE, 0);
   }
 
   @Test
