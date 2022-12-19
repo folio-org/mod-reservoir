@@ -1,12 +1,16 @@
 package org.folio.reservoir.util.readstream;
 
 import io.vertx.core.buffer.Buffer;
+import java.util.List;
 
 public class XmlFixerMapper implements Mapper<Buffer, Buffer> {
 
   private static final String REPLACEMENT_CHAR = "&#xFFFD;";
 
   private static final int ASCII_LOOKAHED = 3;
+
+  private static final List<String> PREDEFINED_ENTITIES
+      = List.of("amp", "lt", "gt", "apos", "quot");
 
   private boolean ended;
 
@@ -50,8 +54,7 @@ public class XmlFixerMapper implements Mapper<Buffer, Buffer> {
     // than leading bytes.
     if (isContinuation(leadingByte)) {
       if (sequenceLength == 0) {
-        skipByte(input);
-        return false;
+        return addReplacement(input);
       }
       sequenceLength--;
       if (sequenceLength == 0) {
@@ -71,7 +74,7 @@ public class XmlFixerMapper implements Mapper<Buffer, Buffer> {
     } else if (is4byteSequence(leadingByte)) {
       sequenceLength = 3;
     } else {
-      skipByte(input);
+      addReplacement(input);
       return false;
     }
     sequenceStart = front;
@@ -104,6 +107,7 @@ public class XmlFixerMapper implements Mapper<Buffer, Buffer> {
   }
 
   void flushSequence(Buffer input) {
+    boolean fixes = false;
     result.appendBuffer(input, tail, sequenceStart - tail);
     for (int i = sequenceStart; i <= front; i++) {
       byte b = input.getByte(i);
@@ -115,7 +119,11 @@ public class XmlFixerMapper implements Mapper<Buffer, Buffer> {
       byte b = input.getByte(i);
       if (isAscii(b)) {
         result.appendByte(b);
+        fixes = true;
       }
+    }
+    if (fixes) {
+      numberOfFixes++;
     }
     tail = front + 1;
     sequenceStart = -1;
@@ -149,7 +157,7 @@ public class XmlFixerMapper implements Mapper<Buffer, Buffer> {
         if (leadingByte < 32
             && leadingByte != '\t' && leadingByte != '\r' && leadingByte != '\n') {
           checkSkipSequence(input);
-          skipByte(input);
+          addReplacement(input);
         } else if (leadingByte == '&') {
           checkSkipSequence(input);
           if (handleEntity(input)) {
@@ -163,49 +171,78 @@ public class XmlFixerMapper implements Mapper<Buffer, Buffer> {
     pending = null;
   }
 
-  private void skipByte(Buffer input) {
+  private boolean addReplacement(Buffer input) {
     result.appendBuffer(input, tail, front - tail);
-    addFix();
-  }
-
-  private void addFix() {
-    tail = front + 1;
     result.appendString(REPLACEMENT_CHAR);
     numberOfFixes++;
+    tail = front + 1;
+    return false;
+  }
+
+  boolean addReplacement(Buffer input, int newFront, int extraStart, int extraLength) {
+    addReplacement(input);
+    if (extraLength > 0) {
+      result.appendBuffer(input, extraStart, extraLength);
+    }
+    front = newFront;
+    tail = front + 1;
+    return false;
   }
 
   private boolean handleEntity(Buffer input) {
-    if (front == input.length() - 1) {
-      incomplete(input);
-      return true;
-    }
-    if (input.getByte(front + 1) != '#') {
-      return false;
-    }
-    int j;
-    for (j = front + 2; j < input.length(); j++) {
-      if (!isAscii(input.getByte(j)) || input.getByte(j) == ';') {
+    int j = front + 1;
+    while (true) {
+      if (j >= input.length()) {
+        incomplete(input);
+        return true;
+      }
+      byte b = input.getByte(j);
+      if (b == ';') {
         break;
       }
-    }
-    if (j == input.length()) {
-      incomplete(input);
-      return true;
-    }
-    try {
-      int v;
-      if (input.getByte(front + 2) == 'x') {
-        v = Integer.parseInt(input.getString(front + 3, j), 16);
-      } else {
-        v = Integer.parseInt(input.getString(front + 2, j));
+      if (b <= ' ' || b > 'z') {
+        // unfinished entity, replace & with replacement char
+        return addReplacement(input);
       }
-      if (v < 32 && v != '\t' && v != '\r' && v != '\n') {
-        result.appendBuffer(input, tail, front - tail);
-        front = j;
-        addFix();
+      j++;
+    }
+    byte b = input.getByte(front + 1);
+    int skip = 0;
+    while (!(b >= '0' && b <= '9' || b >= 'a' && b <= 'z' || b >= 'A' && b <= 'Z'
+        || b == '#' || b == ';')) {
+      if (skip == ASCII_LOOKAHED) {
+        return addReplacement(input, j, 0, 0);
       }
-    } catch (NumberFormatException e) {
-      // ignored; Data will be passed as is
+      skip++;
+      b = input.getByte(front + 1 + skip);
+    }
+    if (input.getByte(front + 1 + skip) == '#') {
+      try {
+        int v;
+        if (input.getByte(front + 2 + skip) == 'x') {
+          v = Integer.parseInt(input.getString(front + 3 + skip, j), 16);
+        } else {
+          v = Integer.parseInt(input.getString(front + 2 + skip, j));
+        }
+        if (v < 32 && v != '\t' && v != '\r' && v != '\n') {
+          return addReplacement(input, j, front + 1, skip);
+        }
+      } catch (NumberFormatException e) {
+        return addReplacement(input, j, front + 1, skip);
+      }
+    } else {
+      String ent = input.getString(front + 1 + skip, j);
+      if (!PREDEFINED_ENTITIES.contains(ent)) {
+        return addReplacement(input, j, front + 1, skip);
+      }
+    }
+    if (skip > 0) {
+      numberOfFixes++;
+      result.appendBuffer(input, tail, 1 + front - tail); // includes &
+      result.appendBuffer(input, front + 1 + skip, j - (front + skip));
+      result.appendBuffer(input, front + 1, skip);
+      front = j;
+      tail = front + 1;
     }
     return false;
   }
