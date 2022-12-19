@@ -225,6 +225,8 @@ public class XmlFixerMapperTest {
     fixerTest(Buffer.buffer("ab"), "ab", 0);
     fixerTest(Buffer.buffer("abc"), "abc", 0);
     fixerTest(Buffer.buffer("æøå"), "æøå", 0);
+    fixerTest(Buffer.buffer("&amp;&lt;&gt;&apos;&quot;"), "&amp;&lt;&gt;&apos;&quot;", 0);
+    fixerTest(Buffer.buffer("a&#32;&#33;b"), "a&#32;&#33;b", 0);
   }
 
   private static int ARING_1 = 0xc3;
