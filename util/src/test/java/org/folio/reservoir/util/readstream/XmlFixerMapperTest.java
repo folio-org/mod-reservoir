@@ -291,6 +291,8 @@ public class XmlFixerMapperTest {
     fixerTest(Buffer.buffer("a&\"#33;b"), "a&#33;\"b");
     fixerTest(Buffer.buffer("a&\"#1;b"), "a&#xFFFD;\"b");
     fixerTest(Buffer.buffer("a&camp;b"), "a&camp;b");
+    fixerTest(Buffer.buffer("a&c b"), "a&c b");
+    fixerTest(Buffer.buffer("a&" + CJK), "a&" + CJK);
   }
 
   @Test
