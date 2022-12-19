@@ -287,9 +287,11 @@ public class XmlFixerMapperTest {
   @Test
   public void testEntitySequence() {
     fixerTest(Buffer.buffer("a&\"amp;b"), "a&amp;\"b");
+    fixerTest(Buffer.buffer("a&\">amp;b"), "a&amp;\">b");
     fixerTest(Buffer.buffer("a&\"lt;b"), "a&lt;\"b");
     fixerTest(Buffer.buffer("a&\"#33;b"), "a&#33;\"b");
     fixerTest(Buffer.buffer("a&\"#1;b"), "a&#xFFFD;\"b");
+    fixerTest(Buffer.buffer("a&\">#1;b"), "a&#xFFFD;\">b");
     fixerTest(Buffer.buffer("a&camp;b"), "a&camp;b");
     fixerTest(Buffer.buffer("a&c b"), "a&c b");
     fixerTest(Buffer.buffer("a&" + CJK), "a&" + CJK);
