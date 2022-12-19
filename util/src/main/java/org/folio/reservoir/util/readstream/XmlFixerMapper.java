@@ -181,16 +181,22 @@ public class XmlFixerMapper implements Mapper<Buffer, Buffer> {
       if (b == ';') {
         break;
       }
-      if (!isAscii(b) || b <= 32) {
+      if (b <= 32 || b > 126) {
+        // unfinished entity, replace & with replacement char
+        skipByte(input);
         return false;
       }
       j++;
     }
     int skip = 0;
-    while (skip < ASCII_LOOKAHED) {
+    while (true) {
       byte c = input.getByte(front + 1 + skip);
       if (c != '"' && c != '>' && c != '<') {
         break;
+      }
+      if (skip == ASCII_LOOKAHED) {
+        skipByte(input);
+        return true;
       }
       skip++;
     }
@@ -214,8 +220,34 @@ public class XmlFixerMapper implements Mapper<Buffer, Buffer> {
           return false;
         }
       } catch (NumberFormatException e) {
-        // ignored; Data will be passed as is
+        result.appendBuffer(input, tail, front - tail);
+        result.appendString(REPLACEMENT_CHAR);
+        numberOfFixes++;
+        if (skip > 0) {
+          result.appendBuffer(input, front + 1, skip);
+        }
+        front = j;
+        tail = front + 1;
         return false;
+      }
+    } else {
+      switch (input.getString(front + 1 + skip, j)) {
+        case "amp":
+        case "lt":
+        case "gt":
+        case "apos":
+        case "quot":
+          break;
+        default:
+          result.appendBuffer(input, tail, front - tail);
+          result.appendString(REPLACEMENT_CHAR);
+          numberOfFixes++;
+          if (skip > 0) {
+            result.appendBuffer(input, front + 1, skip);
+          }
+          front = j;
+          tail = front + 1;
+          return false;
       }
     }
     if (skip > 0) {

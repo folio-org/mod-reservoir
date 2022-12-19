@@ -74,14 +74,14 @@ public class XmlFixerMapperTest {
   public void testCharEntities2() {
     XmlFixerMapper xmlFixerMapper = new XmlFixerMapper();
 
-    xmlFixerMapper.push(Buffer.buffer("&#9;&#10;&#13;&#1;&#31;&#32;&#x0A;&#abc;"));
+    xmlFixerMapper.push(Buffer.buffer("&#9;&#10;&#13;&#1;&#31;&#32;&#x0A;&#amp;"));
     Buffer poll = xmlFixerMapper.poll();
-    assertThat(poll.toString(), is("&#9;&#10;&#13;&#xFFFD;&#xFFFD;&#32;&#x0A;&#abc;"));
+    assertThat(poll.toString(), is("&#9;&#10;&#13;&#xFFFD;&#xFFFD;&#32;&#x0A;&#xFFFD;"));
     poll = xmlFixerMapper.poll();
     assertThat(poll, is(nullValue()));
 
     checkEnd(xmlFixerMapper);
-    assertThat(xmlFixerMapper.getNumberOfFixes(), is(2));
+    assertThat(xmlFixerMapper.getNumberOfFixes(), is(3));
   }
 
   @Test
@@ -287,14 +287,21 @@ public class XmlFixerMapperTest {
   @Test
   public void testEntitySequence() {
     fixerTest(Buffer.buffer("a&\"amp;b"), "a&amp;\"b");
+    fixerTest(Buffer.buffer("a&\"apos;b"), "a&apos;\"b");
+    fixerTest(Buffer.buffer("a&\"quot;b"), "a&quot;\"b");
+    fixerTest(Buffer.buffer("a&\"lt;b"), "a&lt;\"b");
+    fixerTest(Buffer.buffer("a&\"gt;b"), "a&gt;\"b");
+    fixerTest(Buffer.buffer("a&\"bad;b"), "a&#xFFFD;\"b");
     fixerTest(Buffer.buffer("a&\">amp;b"), "a&amp;\">b");
     fixerTest(Buffer.buffer("a&\"lt;b"), "a&lt;\"b");
     fixerTest(Buffer.buffer("a&\"#33;b"), "a&#33;\"b");
     fixerTest(Buffer.buffer("a&\"#1;b"), "a&#xFFFD;\"b");
+    fixerTest(Buffer.buffer("a&\"#x20;b"), "a&#x20;\"b");
     fixerTest(Buffer.buffer("a&\">#1;b"), "a&#xFFFD;\">b");
-    fixerTest(Buffer.buffer("a&camp;b"), "a&camp;b");
-    fixerTest(Buffer.buffer("a&c b"), "a&c b");
-    fixerTest(Buffer.buffer("a&" + CJK), "a&" + CJK);
+    fixerTest(Buffer.buffer("a&c b"), "a&#xFFFD;c b");
+    fixerTest(Buffer.buffer("a&" + CJK), "a&#xFFFD;" + CJK);
+    fixerTest(Buffer.buffer("a&>>>lt;"), "a&lt;>>>");
+    // fixerTest(Buffer.buffer("a&>>>>lt;bbbbbbbbbb"), "a&lt;>>>b");
   }
 
   @Test
@@ -305,7 +312,7 @@ public class XmlFixerMapperTest {
   @Test
   public void skipFixWithXmlSubst() {
     fixerTest(createBuffer('a', CJK_1, '\n', '\f', '\t', CJK_2, CJK_3, 'b'), "a&#xFFFD;\n&#xFFFD;\t&#xFFFD;&#xFFFD;b");
-    fixerTest(createBuffer('a', CJK_1, '&', '#', CJK_2, CJK_3, 'b'), "a&#xFFFD;&#&#xFFFD;&#xFFFD;b");
+    fixerTest(createBuffer('a', CJK_1, '&', '#', CJK_2, CJK_3, 'b'), "a&#xFFFD;&#xFFFD;#&#xFFFD;&#xFFFD;b");
     fixerTest(createBuffer('a', CJK_1, '&', '#', '1', ';', CJK_2, CJK_3, 'b'), "a&#xFFFD;&#xFFFD;&#xFFFD;&#xFFFD;b");
   }
 }
