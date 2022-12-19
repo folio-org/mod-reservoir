@@ -9,6 +9,9 @@ public class XmlFixerMapper implements Mapper<Buffer, Buffer> {
 
   private static final int ASCII_LOOKAHED = 3;
 
+  private static final List<String> PREDEFINED_ENTITIES
+      = List.of("amp", "lt", "gt", "apos", "quot");
+
   private boolean ended;
 
   Buffer result;
@@ -228,8 +231,7 @@ public class XmlFixerMapper implements Mapper<Buffer, Buffer> {
       }
     } else {
       String ent = input.getString(front + 1 + skip, j);
-      List<String> predefined = List.of("amp", "lt", "gt", "apos", "quot");
-      if (!predefined.contains(ent)) {
+      if (!PREDEFINED_ENTITIES.contains(ent)) {
         return addReplacement(input, j, front + 1, skip);
       }
     }
