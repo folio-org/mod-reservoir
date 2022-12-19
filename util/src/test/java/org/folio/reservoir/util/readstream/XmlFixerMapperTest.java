@@ -53,7 +53,7 @@ public class XmlFixerMapperTest {
   @Test
   public void testSingleCharBad() {
     fixerTest(Buffer.buffer("\t\r\n\f \nJerzy Borzęcki."),
-        "\t\r\n&#xFFFD; \nJerzy Borzęcki.");
+        "\t\r\n&#xFFFD; \nJerzy Borzęcki.", 1);
   }
 
   @Test
@@ -173,11 +173,11 @@ public class XmlFixerMapperTest {
     assertThat(xmlFixerMapper.getNumberOfFixes(), is(0));
   }
 
-  static void fixerTest(Buffer input, String expect) {
-    fixerTest(input, Buffer.buffer(expect));
+  static void fixerTest(Buffer input, String expect, int expectedFixes) {
+    fixerTest(input, Buffer.buffer(expect), expectedFixes);
   }
 
-  static void fixerTest(Buffer input, Buffer expect) {
+  static void fixerTest(Buffer input, Buffer expect, int expectedFixes) {
     // pass to xmlFixerMapper in two passes + end
     // this is to further test the handling of incomplete input.
     for (int i = 0; i < input.length(); i++) {
@@ -204,6 +204,9 @@ public class XmlFixerMapperTest {
         got.appendBuffer(res);
       }
       assertThat(got, is(expect));
+      if (expectedFixes != -1) {
+        assertThat(xmlFixerMapper.getNumberOfFixes(), is(expectedFixes));
+      }
     }
   }
 
@@ -218,10 +221,10 @@ public class XmlFixerMapperTest {
 
   @Test
   public void testOk() {
-    fixerTest(Buffer.buffer("a"), "a");
-    fixerTest(Buffer.buffer("ab"), "ab");
-    fixerTest(Buffer.buffer("abc"), "abc");
-    fixerTest(Buffer.buffer("æøå"), "æøå");
+    fixerTest(Buffer.buffer("a"), "a", 0);
+    fixerTest(Buffer.buffer("ab"), "ab", 0);
+    fixerTest(Buffer.buffer("abc"), "abc", 0);
+    fixerTest(Buffer.buffer("æøå"), "æøå", 0);
   }
 
   private static int ARING_1 = 0xc3;
@@ -235,87 +238,91 @@ public class XmlFixerMapperTest {
 
   @Test
   public void testAring() {
-    fixerTest(createBuffer(ARING_1, ARING_2), ARING);
+    fixerTest(createBuffer(ARING_1, ARING_2), ARING, 0);
   }
 
   @Test
   public void testCjk() {
-    fixerTest(createBuffer(CJK_1, CJK_2, CJK_3), CJK);
+    fixerTest(createBuffer(CJK_1, CJK_2, CJK_3), CJK, 0);
   }
 
   @Test
   public void testInvalidXmlChars() {
-    fixerTest(createBuffer(1), "&#xFFFD;");
-    fixerTest(createBuffer(3), "&#xFFFD;");
-    fixerTest(createBuffer(31), "&#xFFFD;");
-    fixerTest(createBuffer(32), " ");
+    fixerTest(createBuffer(1), "&#xFFFD;", 1);
+    fixerTest(createBuffer(3), "&#xFFFD;", 1);
+    fixerTest(createBuffer(31), "&#xFFFD;", 1);
+    fixerTest(createBuffer(32), " ", 0);
   }
 
   @Test
   public void invalidByte() {
-    fixerTest(createBuffer('a', 0b11111000, 'b'), "a&#xFFFD;b");
-    fixerTest(createBuffer('a', 0b11111111, 'b'), "a&#xFFFD;b");
+    fixerTest(createBuffer('a', 0b11111000, 'b'), "a&#xFFFD;b", 1);
+    fixerTest(createBuffer('a', 0b11111111, 'b'), "a&#xFFFD;b", 1);
   }
 
   @Test
   public void invalidMidByte() {
-    fixerTest(createBuffer('a', ARING_2, 'b'), "a&#xFFFD;b");
-    fixerTest(createBuffer('a', CJK_2, 'b'), "a&#xFFFD;b");
-    fixerTest(createBuffer('a', ARING_2, ARING_2, 'b'), "a&#xFFFD;&#xFFFD;b");
+    fixerTest(createBuffer('a', ARING_2, 'b'), "a&#xFFFD;b", 1);
+    fixerTest(createBuffer('a', CJK_2, 'b'), "a&#xFFFD;b", 1);
+    fixerTest(createBuffer('a', ARING_2, ARING_2, 'b'), "a&#xFFFD;&#xFFFD;b", 2);
   }
 
   @Test
   public void incompleteSequences() {
-    fixerTest(createBuffer('a', ARING_1, 'b'), "a&#xFFFD;b");
-    fixerTest(createBuffer('a', CJK_1, CJK_2, 'b'), "a&#xFFFD;b");
+    fixerTest(createBuffer('a', ARING_1, 'b'), "a&#xFFFD;b", 1);
+    fixerTest(createBuffer('a', CJK_1, CJK_2, 'b'), "a&#xFFFD;b", 1);
   }
 
   @Test
   public void doubleStart() {
-    fixerTest(createBuffer('a', ARING_1, ARING_1, 'b'), "a&#xFFFD;&#xFFFD;b");
-    fixerTest(createBuffer('a', CJK_1, CJK_1, 'b'), "a&#xFFFD;&#xFFFD;b");
+    fixerTest(createBuffer('a', ARING_1, ARING_1, 'b'), "a&#xFFFD;&#xFFFD;b", 2);
+    fixerTest(createBuffer('a', CJK_1, CJK_1, 'b'), "a&#xFFFD;&#xFFFD;b", 2);
   }
 
   @Test
   public void fixedSequence() {
-    fixerTest(createBuffer('a', ARING_1, '"', '>', ARING_2, 'b'), "a" + ARING + "\">b");
-    fixerTest(createBuffer('a', CJK_1, '"', '>', CJK_2, CJK_3, 'b'), "a" + CJK + "\">b");
-    fixerTest(createBuffer('a', CJK_1, '0', '1', '2', CJK_2, CJK_3, 'b'), "a" + CJK + "012b");
-    fixerTest(createBuffer('a', CJK_1, '\r', '\n', '\t', CJK_2, CJK_3, 'b'), "a" + CJK + "\r\n\tb");
+    fixerTest(createBuffer('a', ARING_1, '"', '>', ARING_2, 'b'), "a" + ARING + "\">b", 1);
+    fixerTest(createBuffer('a', CJK_1, '"', '>', CJK_2, CJK_3, 'b'), "a" + CJK + "\">b", 1);
+    fixerTest(createBuffer('a', CJK_1, '0', '1', '2', CJK_2, CJK_3, 'b'), "a" + CJK + "012b", 1);
+    fixerTest(createBuffer('a', CJK_1, '\r', '\n', '\t', CJK_2, CJK_3, 'b'), "a" + CJK + "\r\n\tb", 1);
   }
 
   @Test
   public void testEntitySequence() {
-    fixerTest(Buffer.buffer("a&\"amp;b"), "a&amp;\"b");
-    fixerTest(Buffer.buffer("a&\"apos;b"), "a&apos;\"b");
-    fixerTest(Buffer.buffer("a&\"quot;b"), "a&quot;\"b");
-    fixerTest(Buffer.buffer("a&\"lt;b"), "a&lt;\"b");
-    fixerTest(Buffer.buffer("a&\"gt;b"), "a&gt;\"b");
-    fixerTest(Buffer.buffer("a&\"bad;b"), "a&#xFFFD;\"b");
-    fixerTest(Buffer.buffer("a&\">amp;b"), "a&amp;\">b");
-    fixerTest(Buffer.buffer("a&\"lt;b"), "a&lt;\"b");
-    fixerTest(Buffer.buffer("a&\"#33;b"), "a&#33;\"b");
-    fixerTest(Buffer.buffer("a&\"#1;b"), "a&#xFFFD;\"b");
-    fixerTest(Buffer.buffer("a&\"#yy;b"), "a&#xFFFD;\"b");
-    fixerTest(Buffer.buffer("a&\"#x20;b"), "a&#x20;\"b");
-    fixerTest(Buffer.buffer("a&\">#1;b"), "a&#xFFFD;\">b");
-    fixerTest(Buffer.buffer("a&c b"), "a&#xFFFD;c b");
-    fixerTest(Buffer.buffer("a&" + CJK), "a&#xFFFD;" + CJK);
-    fixerTest(Buffer.buffer("a&{"), "a&#xFFFD;{");
-    fixerTest(Buffer.buffer("a&-apos;"), "a&#xFFFD;");
-    fixerTest(Buffer.buffer("a&<\">lt;"), "a&lt;<\">");
-    fixerTest(Buffer.buffer("a&>>>>lt;01234"), "a&#xFFFD;01234");
+    fixerTest(Buffer.buffer("a&\"amp;b"), "a&amp;\"b", 1);
+    fixerTest(Buffer.buffer("a&\"apos;b"), "a&apos;\"b", 1);
+    fixerTest(Buffer.buffer("a&\"quot;b"), "a&quot;\"b", 1);
+    fixerTest(Buffer.buffer("a&\"lt;b"), "a&lt;\"b", 1);
+    fixerTest(Buffer.buffer("a&\"gt;b"), "a&gt;\"b", 1);
+    fixerTest(Buffer.buffer("a&\"bad;b"), "a&#xFFFD;\"b", 1);
+    fixerTest(Buffer.buffer("a&\">amp;b"), "a&amp;\">b", 1);
+    fixerTest(Buffer.buffer("a&\"lt;b"), "a&lt;\"b", 1);
+    fixerTest(Buffer.buffer("a&\"#33;b"), "a&#33;\"b", 1);
+    fixerTest(Buffer.buffer("a&\"#1;b"), "a&#xFFFD;\"b", 1);
+    fixerTest(Buffer.buffer("a&\"#yy;b"), "a&#xFFFD;\"b", 1);
+    fixerTest(Buffer.buffer("a&\"#x20;b"), "a&#x20;\"b", 1);
+    fixerTest(Buffer.buffer("a&\">#1;b"), "a&#xFFFD;\">b", 1);
+    fixerTest(Buffer.buffer("a&c b"), "a&#xFFFD;c b", 1);
+    fixerTest(Buffer.buffer("a&" + CJK), "a&#xFFFD;" + CJK, 1);
+    fixerTest(Buffer.buffer("a&{"), "a&#xFFFD;{", 1);
+    fixerTest(Buffer.buffer("a&-apos;"), "a&#xFFFD;", 1);
+    fixerTest(Buffer.buffer("a&<\">lt;"), "a&lt;<\">", 1);
+    fixerTest(Buffer.buffer("a&>>>>lt;01234"), "a&#xFFFD;01234", 1);
   }
 
   @Test
   public void tooLongToFix() {
-    fixerTest(createBuffer('a', CJK_1, '0', '1', '2', '3', CJK_2, CJK_3, 'b'), "a&#xFFFD;0123&#xFFFD;&#xFFFD;b");
+    fixerTest(createBuffer('a', CJK_1, '0', '1', '2', '3', CJK_2, CJK_3, 'b'),
+        "a&#xFFFD;0123&#xFFFD;&#xFFFD;b", 3);
   }
 
   @Test
   public void skipFixWithXmlSubst() {
-    fixerTest(createBuffer('a', CJK_1, '\n', '\f', '\t', CJK_2, CJK_3, 'b'), "a&#xFFFD;\n&#xFFFD;\t&#xFFFD;&#xFFFD;b");
-    fixerTest(createBuffer('a', CJK_1, '&', '#', CJK_2, CJK_3, 'b'), "a&#xFFFD;&#xFFFD;#&#xFFFD;&#xFFFD;b");
-    fixerTest(createBuffer('a', CJK_1, '&', '#', '1', ';', CJK_2, CJK_3, 'b'), "a&#xFFFD;&#xFFFD;&#xFFFD;&#xFFFD;b");
+    fixerTest(createBuffer('a', CJK_1, '\n', '\f', '\t', CJK_2, CJK_3, 'b'),
+        "a&#xFFFD;\n&#xFFFD;\t&#xFFFD;&#xFFFD;b", 4);
+    fixerTest(createBuffer('a', CJK_1, '&', '#', CJK_2, CJK_3, 'b'),
+        "a&#xFFFD;&#xFFFD;#&#xFFFD;&#xFFFD;b", 4);
+    fixerTest(createBuffer('a', CJK_1, '&', '#', '1', ';', CJK_2, CJK_3, 'b'),
+        "a&#xFFFD;&#xFFFD;&#xFFFD;&#xFFFD;b", 4);
   }
 }

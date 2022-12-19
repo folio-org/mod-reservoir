@@ -104,6 +104,7 @@ public class XmlFixerMapper implements Mapper<Buffer, Buffer> {
   }
 
   void flushSequence(Buffer input) {
+    boolean fixes = false;
     result.appendBuffer(input, tail, sequenceStart - tail);
     for (int i = sequenceStart; i <= front; i++) {
       byte b = input.getByte(i);
@@ -115,7 +116,11 @@ public class XmlFixerMapper implements Mapper<Buffer, Buffer> {
       byte b = input.getByte(i);
       if (isAscii(b)) {
         result.appendByte(b);
+        fixes = true;
       }
+    }
+    if (fixes) {
+      numberOfFixes++;
     }
     tail = front + 1;
     sequenceStart = -1;
@@ -229,6 +234,7 @@ public class XmlFixerMapper implements Mapper<Buffer, Buffer> {
       }
     }
     if (skip > 0) {
+      numberOfFixes++;
       result.appendBuffer(input, tail, 1 + front - tail); // includes &
       result.appendBuffer(input, front + 1 + skip, j - (front + skip));
       result.appendBuffer(input, front + 1, skip);
