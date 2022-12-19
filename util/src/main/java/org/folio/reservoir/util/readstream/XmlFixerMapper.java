@@ -208,7 +208,8 @@ public class XmlFixerMapper implements Mapper<Buffer, Buffer> {
     }
     byte b = input.getByte(front + 1);
     int skip = 0;
-    while (b == '"' || b == '>' || b == '<') {
+    while (!(b >= '0' && b <= '9' || b >= 'a' && b <= 'z' || b >= 'A' && b <= 'Z'
+        || b == '#' || b == ';')) {
       if (skip == ASCII_LOOKAHED) {
         return addReplacement(input, j, 0, 0);
       }
