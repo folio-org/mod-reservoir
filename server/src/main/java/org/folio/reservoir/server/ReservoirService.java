@@ -178,6 +178,26 @@ public class ReservoirService implements RouterCreator, TenantInitHooks {
     });
   }
 
+  Future<Void> touchClusters(RoutingContext ctx) {
+    PgCqlDefinition definition = createDefinitionBase();
+    definition.addField("matchkeyId",
+      new PgCqlFieldText().withColumn("cluster_meta.match_key_config_id"));
+    definition.addField("clusterId",
+        new PgCqlFieldUuid().withColumn("cluster_records.cluster_id"));
+    definition.addField("sourceId",
+        new PgCqlFieldText().withColumn("global_records.source_id"));
+    definition.addField("sourceVersion",
+        new PgCqlFieldNumber().withColumn("global_records.source_version"));
+
+    RequestParameters params = ctx.get(ValidationHandler.REQUEST_CONTEXT_KEY);
+    PgCqlQuery pgCqlQuery = definition.parse(Util.getQueryParameter(params));
+    Storage storage = new Storage(ctx);
+    return storage.touchClusters(pgCqlQuery)
+        .map(count -> new JsonObject().put("count", count))
+        .onSuccess(res -> ctx.response().end(res.encode()))
+        .mapEmpty();
+  }
+
   Future<Void> getCluster(RoutingContext ctx) {
     RequestParameters params = ctx.get(ValidationHandler.REQUEST_CONTEXT_KEY);
     String id = Util.getParameterString(params.pathParameter("clusterId"));
@@ -494,6 +514,7 @@ public class ReservoirService implements RouterCreator, TenantInitHooks {
           add(routerBuilder, "initializeMatchKey", this::initializeMatchKey);
           add(routerBuilder, "statsMatchKey", this::statsMatchKey);
           add(routerBuilder, "getClusters", this::getClusters);
+          add(routerBuilder, "touchClusters", this::touchClusters);
           add(routerBuilder, "getCluster", this::getCluster);
           add(routerBuilder, "oaiService", OaiService::get);
           add(routerBuilder, "postCodeModule", this::postCodeModule);

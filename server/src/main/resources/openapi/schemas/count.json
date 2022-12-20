@@ -1,0 +1,14 @@
+{
+  "description": "Result count of a processing operatior",
+  "type": "object",
+  "properties": {
+    "count": {
+      "type": "integer",
+      "description": "Number of items processed"
+    }
+  },
+  "additionalProperties": false,
+  "required": [
+    "processed"
+  ]
+}

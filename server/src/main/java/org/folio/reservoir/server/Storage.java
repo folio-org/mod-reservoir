@@ -8,6 +8,7 @@ import io.vertx.core.json.JsonObject;
 import io.vertx.ext.web.RoutingContext;
 import io.vertx.ext.web.validation.RequestParameters;
 import io.vertx.ext.web.validation.ValidationHandler;
+import io.vertx.reactivex.sqlclient.SqlResult;
 import io.vertx.sqlclient.Row;
 import io.vertx.sqlclient.RowIterator;
 import io.vertx.sqlclient.RowSet;
@@ -41,6 +42,7 @@ import org.folio.reservoir.server.entity.CodeModuleEntity;
 import org.folio.reservoir.util.ReadStreamConsumer;
 import org.folio.reservoir.util.SourceId;
 import org.folio.reservoir.util.readstream.LargeJsonReadStream;
+import org.folio.tlib.postgres.PgCqlQuery;
 import org.folio.tlib.postgres.TenantPgPool;
 import org.folio.tlib.util.TenantUtil;
 
@@ -390,6 +392,25 @@ public class Storage {
             addValuesToCluster(conn, clusterId, matchKeyConfigId, keys, foundKeys)
         )
         .map(clustersFound);
+  }
+
+  Future<Integer> touchClusters(PgCqlQuery query) {
+    String where = query.getWhereClause();
+    if (where == null
+        || !where.contains("global_records.source_id")
+        || !where.contains("cluster_meta.match_key_config_id")) {
+      return Future.failedFuture(
+        "query too broad, must at least contain 'matchkeyId' and 'sourceId'");
+    }
+    String q = "UPDATE " + clusterMetaTable
+        + " SET datestamp = $1"
+        + " FROM " + globalRecordTable + ", " + clusterRecordTable
+        + " WHERE cluster_meta.cluster_id = cluster_records.cluster_id"
+        + " AND cluster_records.record_id = global_records.id"
+        + " AND " + where;
+    return pool.preparedQuery(q)
+        .execute(Tuple.of(LocalDateTime.now(ZoneOffset.UTC)))
+        .map(RowSet<Row>::rowCount);
   }
 
   Future<Void> updateClusterForRecord(SqlConnection conn, UUID globalId,
