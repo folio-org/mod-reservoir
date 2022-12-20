@@ -8,7 +8,6 @@ import io.vertx.core.json.JsonObject;
 import io.vertx.ext.web.RoutingContext;
 import io.vertx.ext.web.validation.RequestParameters;
 import io.vertx.ext.web.validation.ValidationHandler;
-import io.vertx.reactivex.sqlclient.SqlResult;
 import io.vertx.sqlclient.Row;
 import io.vertx.sqlclient.RowIterator;
 import io.vertx.sqlclient.RowSet;
@@ -49,11 +48,19 @@ import org.folio.tlib.util.TenantUtil;
 // Define a constant instead of duplicating this literal
 @java.lang.SuppressWarnings({"squid:S1192"})
 public class Storage {
+  public static final String GLOBAL_RECORDS_TABLE = "global_records";
+  public static final String MATCH_KEY_CONFIG_TABLE = "match_key_config";
+  public static final String CLUSTER_META_TABLE = "cluster_meta";
+  public static final String CLUSTER_RECORDS_TABLE = "cluster_records";
+  public static final String CLUSTER_VALUES_TABLE = "cluster_values";
+  public static final String MODULE_TABLE = "module";
+  public static final String OAI_CONFIG_TABLE = "oai_config";
+  public static final String OAI_PMH_CLIENTS_TABLE = "oai_pmh_clients";
+
   private static final Logger log = LogManager.getLogger(Storage.class);
-
   private static final String CREATE_IF_NO_EXISTS = "CREATE TABLE IF NOT EXISTS ";
-
   private static final int MATCHVALUE_MAX_LENGTH = 600; // < 2704 / 4
+
   final TenantPgPool pool;
   final String globalRecordTable;
   final String matchKeyConfigTable;
@@ -66,7 +73,6 @@ public class Storage {
   private final String tenant;
   static int sqlStreamFetchSize = 50;
 
-
   /**
    * Create storage service for tenant.
    * @param vertx Vert.x hande
@@ -75,14 +81,14 @@ public class Storage {
   public Storage(Vertx vertx, String tenant) {
     this.pool = TenantPgPool.pool(vertx, tenant);
     this.tenant = tenant;
-    this.globalRecordTable = pool.getSchema() + ".global_records";
-    this.matchKeyConfigTable = pool.getSchema() + ".match_key_config";
-    this.clusterRecordTable = pool.getSchema() + ".cluster_records";
-    this.clusterValueTable = pool.getSchema() + ".cluster_values";
-    this.clusterMetaTable = pool.getSchema() + ".cluster_meta";
-    this.moduleTable = pool.getSchema() + ".module";
-    this.oaiConfigTable = pool.getSchema() + ".oai_config";
-    this.oaiPmhClientTable = pool.getSchema() + ".oai_pmh_clients";
+    this.globalRecordTable = pool.getSchema() + "." + GLOBAL_RECORDS_TABLE;
+    this.matchKeyConfigTable = pool.getSchema() + "." + MATCH_KEY_CONFIG_TABLE;
+    this.clusterRecordTable = pool.getSchema() + "." + CLUSTER_RECORDS_TABLE;
+    this.clusterValueTable = pool.getSchema() + "." + CLUSTER_VALUES_TABLE;
+    this.clusterMetaTable = pool.getSchema() + "." + CLUSTER_META_TABLE;
+    this.moduleTable = pool.getSchema() + "." + MODULE_TABLE;
+    this.oaiConfigTable = pool.getSchema() + "." + OAI_CONFIG_TABLE;
+    this.oaiPmhClientTable = pool.getSchema() + "." + OAI_PMH_CLIENTS_TABLE;
   }
 
   public Storage(RoutingContext routingContext) {
