@@ -8,7 +8,7 @@
   <artifactId>mod-reservoir-server</artifactId>
   <name>Reservoir storage server module</name>
   <properties>
-    <vertx.launcher>io.vertx.core.Launcher</vertx.launcher>
+    <vertx.launcher>org.folio.reservoir.server.ReservoirLauncher</vertx.launcher>
     <vertx.verticle>org.folio.reservoir.server.MainVerticle</vertx.verticle>
     <graal.compiler.dir>${project.build.directory}/compiler</graal.compiler.dir>
   </properties>
@@ -41,6 +41,18 @@
     <dependency>
       <groupId>io.vertx</groupId>
       <artifactId>vertx-pg-client</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>io.vertx</groupId>
+      <artifactId>vertx-micrometer-metrics</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>io.micrometer</groupId>
+      <artifactId>micrometer-registry-prometheus</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>io.micrometer</groupId>
+      <artifactId>micrometer-registry-jmx</artifactId>
     </dependency>
     <dependency>
       <groupId>org.folio</groupId>
@@ -185,6 +197,7 @@
                   <manifestEntries>
                     <Main-Class>${vertx.launcher}</Main-Class>
                     <Main-Verticle>${vertx.verticle}</Main-Verticle>
+                    <Main-Command>run</Main-Command>
                     <Multi-Release>true</Multi-Release>
                   </manifestEntries>
                 </transformer>

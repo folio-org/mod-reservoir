@@ -55,6 +55,11 @@ java -Dport=8081 --module-path=server/target/compiler/ \
   -jar server/target/mod-reservoir-server-fat.jar
 ```
 
+## Server metrics
+
+Reservoir can produce Prometheus and JMX metrics. Prometheus metrics are exposed on the path `/metrics` and port `PORT` if the `-Dmetrics.prometheus.port=PORT` option is specified.
+JMX metrics are exposed for domain `reservoir` if `-Dmetrics.jmx=true` option is specified.
+
 ## Running with Docker
 
 If you feel adventurous and want to run Reservoir in a docker container, build the container first:
