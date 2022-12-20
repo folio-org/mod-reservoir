@@ -55,6 +55,9 @@ java -Dport=8081 --module-path=server/target/compiler/ \
   -jar server/target/mod-reservoir-server-fat.jar
 ```
 
+Note: Prometheus metrics are reported on port `8082` and path `/metrics` by default.
+The port can be change by passing the `-Dprometheus.port=` option.
+
 ## Running with Docker
 
 If you feel adventurous and want to run Reservoir in a docker container, build the container first:

@@ -40,6 +40,7 @@
     <graalvm.version>22.2.0</graalvm.version>
     <okapi.version>4.14.5</okapi.version>
     <vertxlib.version>2.1.0-SNAPSHOT</vertxlib.version>
+    <micrometer.version>1.10.2</micrometer.version>
   </properties>
 
   <dependencyManagement>
@@ -50,6 +51,16 @@
         <version>4.3.4</version>
         <type>pom</type>
         <scope>import</scope>
+      </dependency>
+      <dependency>
+        <groupId>io.micrometer</groupId>
+        <artifactId>micrometer-registry-prometheus</artifactId>
+        <version>${micrometer.version}</version>
+      </dependency>
+      <dependency>
+        <groupId>io.micrometer</groupId>
+        <artifactId>micrometer-registry-jmx</artifactId>
+        <version>${micrometer.version}</version>
       </dependency>
       <dependency>
         <groupId>org.folio</groupId>
