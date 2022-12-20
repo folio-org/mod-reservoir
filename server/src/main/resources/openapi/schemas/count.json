@@ -1,5 +1,5 @@
 {
-  "description": "Result count of a processing operatior",
+  "description": "Result count of a processing operation",
   "type": "object",
   "properties": {
     "count": {
