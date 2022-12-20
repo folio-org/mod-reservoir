@@ -711,8 +711,8 @@ paths:
         - $ref: headers/okapi-token.yaml
         - $ref: headers/okapi-url.yaml
         - $ref: parameters/query.yaml
-      description: Update cluster timestamps. CQL must specify at least matchkeyId and sourceId,
-        sourceVersion and clusterId are optional.
+      description: Update cluster timestamps. CQL must specify at least matchkeyId and sourceId.
+        The sourceVersion and clusterId are optional.
       operationId: touchClusters
       responses:
         "200":
