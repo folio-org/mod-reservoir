@@ -171,11 +171,11 @@ These query parameters are for debugging and performance testing only:
 
 Note that this endpoint expects granular permissions for ingesting records from a particular source:
 
- * `resevoir-upload.source.*` to ingest records from a specific source, where `*` symbol must be replaced
+ * `reservoir-upload.source.*` to ingest records from a specific source, where `*` symbol must be replaced
     by the `sourceId` parameter
  * `reservoir-upload.all-sources` to ingest data for any source (admin permission).
 
- These permissions are enforced not by Okapi but by Reservoir directly and hence must be specifed through
+ These permissions are enforced not by Okapi but by Reservoir directly and hence must be specified through
  the `X-Okapi-Permissions` header if the request is performed directly against the module. This is achieved
  by adding `-H'X-Okapi-Permissions:["reservoir-upload.all-sources"]'` switch to the curl commands below.
 

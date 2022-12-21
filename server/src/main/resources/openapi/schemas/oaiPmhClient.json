@@ -56,7 +56,7 @@
     },
     "xmlFixing" : {
       "type": "boolean",
-      "description": "Attempt to fix malformed server response by remving invalid chars"
+      "description": "Attempt to fix malformed server response by removing invalid chars"
     }
   },
   "additionalProperties": false,
