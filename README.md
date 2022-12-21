@@ -512,6 +512,15 @@ curl -HX-Okapi-Tenant:$OKAPI_TENANT -HContent-Type:application/json \
   -XPUT $OKAPI_URL/reservoir/config/oai -d'{"transformer":"marc-transformer::transform"}'
 ```
 
+If a transformer is modified to produce a different result for a particular source,
+the clusters that include records from this source should be marked for re-export by having their datestamps updated.
+This can be achieved with the following call:
+
+```
+curl -G -HX-Okapi-Tenant:$OKAPI_TENANT $OKAPI_URL/reservoir/clusters/touch \
+  --data-urlencode "query=matchkeyId = title AND sourceId = BIB1" -XPOST
+```
+
 ## Additional information
 
 ### Issue tracker
@@ -548,4 +557,3 @@ The built artifacts for this module are available.
 See [configuration](https://dev.folio.org/download/artifacts) for repository access,
 and the Docker images for [released versions](https://hub.docker.com/r/folioorg/mod-reservoir/)
 and for [snapshot versions](https://hub.docker.com/r/folioci/mod-reservoir/).
-
