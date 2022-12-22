@@ -247,6 +247,15 @@
           "permissionsRequired": [
             "reservoir-clusters.item.get"
           ]
+        },
+        {
+          "methods": [
+            "POST"
+          ],
+          "pathPattern": "/reservoir/clusters/touch",
+          "permissionsRequired": [
+            "reservoir-clusters.collection.touch"
+          ]
         }
       ]
     },
@@ -535,12 +544,18 @@
       "description": "Get cluster"
     },
     {
+      "permissionName": "reservoir-clusters.collection.touch",
+      "displayName": "reservoir - update clusters timestamp",
+      "description": "Update clusters timestamp"
+    },
+    {
       "permissionName": "reservoir-clusters.all",
       "displayName": "reservoir - clusters",
       "description": "Clusters permissions",
       "subPermissions": [
         "reservoir-clusters.collection.get",
-        "reservoir-clusters.item.get"
+        "reservoir-clusters.item.get",
+        "reservoir-clusters.collection.touch"
       ]
     },
     {
@@ -638,6 +653,11 @@
             {
               "HostPort": "%p"
             }
+          ],
+          "9090/tcp": [
+            {
+              "HostPort": "9090"
+            }
           ]
         }
       }
@@ -645,7 +665,7 @@
     "env": [
       {
         "name": "JAVA_OPTIONS",
-        "value": "-XX:MaxRAMPercentage=66.0 --module-path=compiler/ --upgrade-module-path=compiler/compiler.jar:compiler/compiler-management.jar -XX:+UnlockExperimentalVMOptions -XX:+EnableJVMCI"
+        "value": "-XX:MaxRAMPercentage=66.0 --module-path=compiler/ --upgrade-module-path=compiler/compiler.jar:compiler/compiler-management.jar -XX:+UnlockExperimentalVMOptions -XX:+EnableJVMCI -Dmetrics.prometheus.port=9090"
       },
       {
         "name": "DB_HOST",

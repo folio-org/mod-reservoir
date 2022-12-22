@@ -40,6 +40,7 @@ import org.apache.logging.log4j.Logger;
 import org.awaitility.Awaitility;
 import org.folio.reservoir.server.entity.CodeModuleEntity;
 import org.folio.okapi.common.XOkapiHeaders;
+import org.hamcrest.MatcherAssert;
 import org.hamcrest.Matchers;
 import org.junit.After;
 import org.junit.Assert;
@@ -52,6 +53,7 @@ import static org.hamcrest.Matchers.containsString;
 import static org.hamcrest.Matchers.empty;
 import static org.hamcrest.Matchers.endsWith;
 import static org.hamcrest.Matchers.greaterThanOrEqualTo;
+import static org.hamcrest.Matchers.greaterThan;
 import static org.hamcrest.Matchers.hasLength;
 import static org.hamcrest.Matchers.hasSize;
 import static org.hamcrest.Matchers.is;
@@ -64,6 +66,7 @@ public class MainVerticleTest extends TestBase {
 
   static final String PMH_CLIENT_ID = "1";
   static final String SOURCE_ID_1 = "SOURCE-1";
+  static final String SOURCE_ID_2 = "SOURCE-2";
   static final int UNUSED_PORT = 9233;
 
   @After
@@ -1065,6 +1068,119 @@ public class MainVerticleTest extends TestBase {
         .header(XOkapiHeaders.TENANT, TENANT_1)
         .delete("/reservoir/config/matchkeys/" + matchKey.getString("id"))
         .then().statusCode(204);
+  }
+
+  @Test
+  public void testTouchClusters() {
+    createIsbnMatchKey();
+
+    JsonArray records1 = new JsonArray()
+        .add(new JsonObject()
+            .put("localId", "S101")
+            .put("payload", new JsonObject()
+                .put("marc", new JsonObject().put("leader", "00914naa  2200337   450 "))
+                .put("inventory", new JsonObject().put("isbn", new JsonArray().add("1")))
+            )
+        )
+        .add(new JsonObject()
+            .put("localId", "S102")
+            .put("payload", new JsonObject()
+                .put("marc", new JsonObject().put("leader", "00914naa  2200337   450 "))
+                .put("inventory", new JsonObject().put("isbn", new JsonArray().add("2").add("3")))
+            )
+        );
+    ingestRecords(records1, SOURCE_ID_1);
+
+    RestAssured.given()
+        .header(XOkapiHeaders.TENANT, TENANT_1)
+        .header("Content-Type", "application/json")
+        .param("query", "sourceId=" + SOURCE_ID_1)
+        .get("/reservoir/records")
+        .then().statusCode(200)
+        .contentType("application/json")
+        .body("items", hasSize(2));
+
+    ingestRecords(records1, SOURCE_ID_2);
+
+    RestAssured.given()
+        .header(XOkapiHeaders.TENANT, TENANT_1)
+        .header("Content-Type", "application/json")
+        .param("query", "sourceId=" + SOURCE_ID_2)
+        .get("/reservoir/records")
+        .then().statusCode(200)
+        .contentType("application/json")
+        .body("items", hasSize(2));
+
+    RestAssured.given()
+        .header(XOkapiHeaders.TENANT, TENANT_1)
+        .queryParam("query", "matchkeyId=isbn AND sourceId=wrong")
+        .post("/reservoir/clusters/touch")
+        .then()
+        .statusCode(200)
+        .contentType("application/json")
+        .body("count", is(0));
+
+    RestAssured.given()
+        .header(XOkapiHeaders.TENANT, TENANT_1)
+        .post("/reservoir/clusters/touch")
+        .then()
+        .statusCode(400)
+        .body(is("query too broad, must at least contain 'matchkeyId' and 'sourceId'"));
+
+    RestAssured.given()
+        .header(XOkapiHeaders.TENANT, TENANT_1)
+        .queryParam("query", "sourceId=not-enough")
+        .post("/reservoir/clusters/touch")
+        .then()
+        .statusCode(400)
+        .body(is("query too broad, must at least contain 'matchkeyId' and 'sourceId'"));
+
+    RestAssured.given()
+        .header(XOkapiHeaders.TENANT, TENANT_1)
+        .queryParam("query", "matchkeyId=not-enough")
+        .post("/reservoir/clusters/touch")
+        .then()
+        .statusCode(400)
+        .body(is("query too broad, must at least contain 'matchkeyId' and 'sourceId'"));
+
+    String s = RestAssured.given()
+        .header(XOkapiHeaders.TENANT, TENANT_1)
+        .header("Content-Type", "application/json")
+        .param("matchkeyid", "isbn")
+        .get("/reservoir/clusters")
+        .then().statusCode(200)
+        .contentType("application/json")
+        .body("items", hasSize(2))
+        .body("items[0].records", hasSize(2))
+        .body("items[1].records", hasSize(2))
+        .extract().body().asString();
+
+    String datestamp1 = new JsonObject(s).getJsonArray("items").getJsonObject(0).getString("datestamp");
+
+    RestAssured.given()
+        .header(XOkapiHeaders.TENANT, TENANT_1)
+        .queryParam("query", "matchkeyId=isbn AND sourceId=" + SOURCE_ID_1)
+        .post("/reservoir/clusters/touch")
+        .then()
+        .statusCode(200)
+        .contentType("application/json")
+        .body("count", is(2));
+
+    s = RestAssured.given()
+        .header(XOkapiHeaders.TENANT, TENANT_1)
+        .header("Content-Type", "application/json")
+        .param("matchkeyid", "isbn")
+        .get("/reservoir/clusters")
+        .then().statusCode(200)
+        .contentType("application/json")
+        .body("items", hasSize(2))
+        .body("items[0].records", hasSize(2))
+        .body("items[1].records", hasSize(2))
+        .extract().body().asString();
+
+    String datestamp2 = new JsonObject(s).getJsonArray("items").getJsonObject(0).getString("datestamp");
+
+    MatcherAssert.assertThat(datestamp2, greaterThan(datestamp1));
   }
 
   @Test

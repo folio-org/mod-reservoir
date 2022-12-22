@@ -1,10 +1,16 @@
 package org.folio.reservoir.util.readstream;
 
 import io.vertx.core.buffer.Buffer;
+import java.util.List;
 
 public class XmlFixerMapper implements Mapper<Buffer, Buffer> {
 
   private static final String REPLACEMENT_CHAR = "&#xFFFD;";
+
+  private static final int ASCII_LOOKAHED = 3;
+
+  private static final List<String> PREDEFINED_ENTITIES
+      = List.of("amp", "lt", "gt", "apos", "quot");
 
   private boolean ended;
 
@@ -18,9 +24,9 @@ public class XmlFixerMapper implements Mapper<Buffer, Buffer> {
 
   int tail;
 
-  int sequenceLength = 0; // number bytes remaining in a UTF-8 sequence
+  int sequenceStart = -1;
 
-  int moved = 0;
+  int sequenceLength = 0; // number bytes remaining in a UTF-8 sequence
 
   static boolean isAscii(byte b) {
     return (b & 128) == 0;
@@ -42,26 +48,85 @@ public class XmlFixerMapper implements Mapper<Buffer, Buffer> {
     return (b & 248) == 240;
   }
 
-  void handleSequence(Buffer input, byte leadingByte) {
+  boolean handleSequence(Buffer input, byte leadingByte) {
     // the order of checks doesn't matter here but the most occurring
     // check is listed first. There will always be more continuation bytes
     // than leading bytes.
     if (isContinuation(leadingByte)) {
-      if (sequenceLength > 0) {
-        sequenceLength--;
-      } else {
-        skipByte(input);
+      if (sequenceLength == 0) {
+        return addReplacement(input);
       }
-    } else if (is2byteSequence(leadingByte)) {
+      sequenceLength--;
+      if (sequenceLength == 0) {
+        flushSequence(input);
+      }
+      return false;
+    }
+    checkSkipSequence(input);
+    if (!ended && front + 3 + ASCII_LOOKAHED >= input.length()) {
+      incomplete(input);
+      return true;
+    }
+    if (is2byteSequence(leadingByte)) {
       sequenceLength = 1;
     } else if (is3byteSequence(leadingByte)) {
       sequenceLength = 2;
     } else if (is4byteSequence(leadingByte)) {
       sequenceLength = 3;
     } else {
-      sequenceLength = 0;
-      skipByte(input);
+      addReplacement(input);
+      return false;
     }
+    sequenceStart = front;
+    return false;
+  }
+
+  void checkSkipSequence(Buffer input) {
+    if (sequenceLength > 0) {
+      skipSequence(input);
+    }
+  }
+
+  void skipSequence(Buffer input) {
+    result.appendBuffer(input, tail, sequenceStart - tail);
+    boolean lastWasReplaced = false;
+    for (int i = sequenceStart; i < front; i++) {
+      byte b = input.getByte(i);
+      if (isAscii(b)) {
+        result.appendByte(b);
+        lastWasReplaced = false;
+      } else if (!lastWasReplaced) {
+        result.appendString(REPLACEMENT_CHAR);
+        lastWasReplaced = true;
+      }
+    }
+    tail = front;
+    sequenceStart = -1;
+    sequenceLength = 0;
+    numberOfFixes++;
+  }
+
+  void flushSequence(Buffer input) {
+    boolean fixes = false;
+    result.appendBuffer(input, tail, sequenceStart - tail);
+    for (int i = sequenceStart; i <= front; i++) {
+      byte b = input.getByte(i);
+      if (!isAscii(b)) {
+        result.appendByte(b);
+      }
+    }
+    for (int i = sequenceStart; i <= front; i++) {
+      byte b = input.getByte(i);
+      if (isAscii(b)) {
+        result.appendByte(b);
+        fixes = true;
+      }
+    }
+    if (fixes) {
+      numberOfFixes++;
+    }
+    tail = front + 1;
+    sequenceStart = -1;
   }
 
   @Override
@@ -81,92 +146,115 @@ public class XmlFixerMapper implements Mapper<Buffer, Buffer> {
     for (front = 0; front < input.length(); front++) {
       byte leadingByte = input.getByte(front);
       if (!isAscii(leadingByte)) {
-        handleSequence(input, leadingByte);
-      } else if (sequenceLength > 0) {
-        // bad UTF-8 sequence ... Take care of the special case where quote + gt
-        // is placed after a byte which is part of a UTF-8 sequence.
-        if (leadingByte == '"' && moved == 0) {
-          skipByte(input);
-          moved = 1;
-        } else if (leadingByte == '>' && moved == 1) {
-          skipByte(input);
-          moved = 2;
+        if (handleSequence(input, leadingByte)) {
+          return;
         }
       } else {
-        if (moved == 2) {
-          result.appendBuffer(input, tail, front - tail);
-          tail = front;
-          result.appendString("\">");
-          moved = 0;
+        if (sequenceLength > 0
+            && front - sequenceStart >= sequenceLength + ASCII_LOOKAHED - 1) {
+          skipSequence(input);
         }
         if (leadingByte < 32
             && leadingByte != '\t' && leadingByte != '\r' && leadingByte != '\n') {
-          result.appendBuffer(input, tail, front - tail);
-          addFix();
-        } else if (leadingByte == '&' && handleEntity(input)) {
-          return;
+          checkSkipSequence(input);
+          addReplacement(input);
+        } else if (leadingByte == '&') {
+          checkSkipSequence(input);
+          if (handleEntity(input)) {
+            return;
+          }
         }
       }
     }
+    checkSkipSequence(input);
     result.appendBuffer(input, tail, front - tail);
     pending = null;
   }
 
-  private void skipByte(Buffer input) {
+  private boolean addReplacement(Buffer input) {
     result.appendBuffer(input, tail, front - tail);
-    tail = front + 1;
-    numberOfFixes++;
-  }
-
-  private void addFix() {
-    tail = front + 1;
     result.appendString(REPLACEMENT_CHAR);
     numberOfFixes++;
+    tail = front + 1;
+    return false;
+  }
+
+  boolean addReplacement(Buffer input, int newFront, int extraStart, int extraLength) {
+    addReplacement(input);
+    if (extraLength > 0) {
+      result.appendBuffer(input, extraStart, extraLength);
+    }
+    front = newFront;
+    tail = front + 1;
+    return false;
   }
 
   private boolean handleEntity(Buffer input) {
-    if (front == input.length() - 1) {
-      incomplete(input, front + 1);
-      return true;
-    }
-    if (input.getByte(front + 1) != '#') {
-      return false;
-    }
-    int j;
-    for (j = front + 2; j < input.length(); j++) {
-      if (input.getByte(j) == ';') {
+    int j = front + 1;
+    while (true) {
+      if (j >= input.length()) {
+        incomplete(input);
+        return true;
+      }
+      byte b = input.getByte(j);
+      if (b == ';') {
         break;
       }
-    }
-    if (j == input.length()) {
-      incomplete(input, j);
-      return true;
-    }
-    try {
-      int v;
-      if (input.getByte(front + 2) == 'x') {
-        v = Integer.parseInt(input.getString(front + 3, j), 16);
-      } else {
-        v = Integer.parseInt(input.getString(front + 2, j));
+      if (b <= ' ' || b > 'z') {
+        // unfinished entity, replace & with replacement char
+        return addReplacement(input);
       }
-      if (v < 32 && v != '\t' && v != '\r' && v != '\n') {
-        result.appendBuffer(input, tail, front - tail);
-        front = j;
-        addFix();
+      j++;
+    }
+    byte b = input.getByte(front + 1);
+    int skip = 0;
+    while (!(b >= '0' && b <= '9' || b >= 'a' && b <= 'z' || b >= 'A' && b <= 'Z'
+        || b == '#' || b == ';')) {
+      if (skip == ASCII_LOOKAHED) {
+        return addReplacement(input, j, 0, 0);
       }
-    } catch (NumberFormatException e) {
-      // ignored; Data will be passed as is
+      skip++;
+      b = input.getByte(front + 1 + skip);
+    }
+    if (input.getByte(front + 1 + skip) == '#') {
+      try {
+        int v;
+        if (input.getByte(front + 2 + skip) == 'x') {
+          v = Integer.parseInt(input.getString(front + 3 + skip, j), 16);
+        } else {
+          v = Integer.parseInt(input.getString(front + 2 + skip, j));
+        }
+        if (v < 32 && v != '\t' && v != '\r' && v != '\n') {
+          return addReplacement(input, j, front + 1, skip);
+        }
+      } catch (NumberFormatException e) {
+        return addReplacement(input, j, front + 1, skip);
+      }
+    } else {
+      String ent = input.getString(front + 1 + skip, j);
+      if (!PREDEFINED_ENTITIES.contains(ent)) {
+        return addReplacement(input, j, front + 1, skip);
+      }
+    }
+    if (skip > 0) {
+      numberOfFixes++;
+      result.appendBuffer(input, tail, 1 + front - tail); // includes &
+      result.appendBuffer(input, front + 1 + skip, j - (front + skip));
+      result.appendBuffer(input, front + 1, skip);
+      front = j;
+      tail = front + 1;
     }
     return false;
   }
 
-  private void incomplete(Buffer input, int pos) {
+  private void incomplete(Buffer input) {
     if (ended) {
-      result.appendBuffer(input, tail, pos - tail);
+      result.appendBuffer(input, tail, input.length() - tail);
       pending = null;
     } else {
+      result.appendBuffer(input, tail, front - tail);
       pending = Buffer.buffer();
-      pending.appendBuffer(input, tail, pos - tail);
+      pending.appendBuffer(input, front, input.length() - front);
     }
   }
 
