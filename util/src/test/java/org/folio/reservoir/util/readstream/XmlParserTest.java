@@ -70,26 +70,13 @@ public class XmlParserTest {
   }
 
   @Test
-  public void testIncomplete() {
-    XmlMapper xmlMapper = new XmlMapper();
-    xmlMapper.push(Buffer.buffer("<foo"));
-    XMLStreamReader poll = xmlMapper.poll();
-    assertThat(poll.getEventType(), is(XMLStreamConstants.START_DOCUMENT));
-    poll = xmlMapper.poll();
-    assertThat(poll, nullValue());
-    xmlMapper.end();
-    Exception e = Assert.assertThrows(DecodeException.class, () -> xmlMapper.poll());
-    assertThat(e.getMessage(), is("Incomplete input"));
-  }
-
-  @Test
   public void feedInputThrowsException() {
     XmlMapper xmlMapper = new XmlMapper();
     xmlMapper.push(Buffer.buffer("<"));
     xmlMapper.end();
     Buffer xml2 = Buffer.buffer("xml/>");
     // we are violating the contract by using push after end
-    Exception e = Assert.assertThrows(DecodeException.class, () -> xmlMapper.push(xml2));
+    XmlMapperException e = Assert.assertThrows(XmlMapperException.class, () -> xmlMapper.push(xml2));
     assertThat(e.getMessage(), is("Still have 1 unread bytes"));
   }
 
@@ -246,5 +233,40 @@ public class XmlParserTest {
         })
         .onComplete(context.asyncAssertSuccess(
             end -> assertThat(events, hasSize(4))));
+  }
+
+  @Test
+  public void testIncomplete() {
+    XmlMapper xmlMapper = new XmlMapper();
+    xmlMapper.push(Buffer.buffer("<foo"));
+    XMLStreamReader poll = xmlMapper.poll();
+    assertThat(poll.getEventType(), is(XMLStreamConstants.START_DOCUMENT));
+    poll = xmlMapper.poll();
+    assertThat(poll, nullValue());
+    xmlMapper.end();
+    XmlMapperException e = Assert.assertThrows(XmlMapperException.class, () -> xmlMapper.poll());
+    assertThat(e.getMessage(), containsString("Incomplete input"));
+  }
+
+  @Test
+  public void testBad1() {
+    XmlMapper xmlMapper = new XmlMapper();
+    xmlMapper.push(Buffer.buffer("Hello"));
+    XMLStreamReader poll = xmlMapper.poll();
+    assertThat(poll.getEventType(), is(XMLStreamConstants.START_DOCUMENT));
+    XmlMapperException e = Assert.assertThrows(XmlMapperException.class, () -> xmlMapper.poll());
+    assertThat(e.getMessage(), containsString("Unexpected character 'H'"));
+  }
+
+  @Test
+  public void testBad() {
+    XmlMapper xmlMapper = new XmlMapper();
+    xmlMapper.push(Buffer.buffer("<foo><</end>"));
+    XMLStreamReader poll = xmlMapper.poll();
+    assertThat(poll.getEventType(), is(XMLStreamConstants.START_DOCUMENT));
+    poll = xmlMapper.poll();
+    assertThat(poll.getEventType(), is(XMLStreamConstants.START_ELEMENT));
+    XmlMapperException e = Assert.assertThrows(XmlMapperException.class, () -> xmlMapper.poll());
+    assertThat(e.getMessage(), containsString("Unexpected character '<'"));
   }
 }

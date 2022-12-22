@@ -5,7 +5,6 @@ import com.fasterxml.aalto.AsyncXMLInputFactory;
 import com.fasterxml.aalto.AsyncXMLStreamReader;
 import com.fasterxml.aalto.stax.InputFactoryImpl;
 import io.vertx.core.buffer.Buffer;
-import io.vertx.core.json.DecodeException;
 import javax.xml.stream.XMLStreamException;
 import javax.xml.stream.XMLStreamReader;
 
@@ -32,11 +31,11 @@ public class XmlMapper
       // even though we have told the parse of endOfInput, it still does not throw an
       // error when on incomplete input, so we have to make that check ourselves.
       if (ended && parser.getEventType() == AsyncXMLStreamReader.EVENT_INCOMPLETE) {
-        throw new DecodeException("Incomplete input");
+        throw new XMLStreamException("Incomplete input", parser.getLocation());
       }
       return null;
     } catch (XMLStreamException e) {
-      throw new DecodeException(e.getMessage(), e);
+      throw new XmlMapperException(e);
     }
   }
 
@@ -52,7 +51,7 @@ public class XmlMapper
     try {
       parser.getInputFeeder().feedInput(bytes, 0, bytes.length);
     } catch (XMLStreamException e) {
-      throw new DecodeException(e.getMessage(), e);
+      throw new XmlMapperException(e);
     }
   }
 
