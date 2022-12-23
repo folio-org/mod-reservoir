@@ -29,6 +29,7 @@ import org.folio.reservoir.module.ModuleInvocation;
 import org.folio.reservoir.server.entity.ClusterBuilder;
 import org.folio.reservoir.util.JsonToMarcXml;
 import org.folio.reservoir.util.MarcInJsonUtil;
+import org.folio.reservoir.util.oai.OaiException;
 import org.folio.tlib.util.TenantUtil;
 
 public final class OaiService {

@@ -98,7 +98,6 @@ public class OaiRequestHttp<T> implements OaiRequest<T> {
     return this;
   }
 
-  @java.lang.SuppressWarnings({"squid:S112"}) // Generic exceptions should never be thrown
   @Override
   public Future<OaiListResponse<T>> listRecords() {
     QueryStringEncoder enc = new QueryStringEncoder(url);
@@ -116,7 +115,7 @@ public class OaiRequestHttp<T> implements OaiRequest<T> {
         .compose(HttpClientRequest::send)
         .map(httpResponse -> {
           if (httpResponse.statusCode() != 200) {
-            throw new RuntimeException("OAI server returned status " + httpResponse.statusCode());
+            throw new OaiException("OAI server returned status " + httpResponse.statusCode());
           }
           ReadStream<Buffer> bufferReadStream = httpResponse;
           if (xmlFixing) {
@@ -142,9 +141,9 @@ public class OaiRequestHttp<T> implements OaiRequest<T> {
         .compose(HttpClientRequest::send)
         .map(httpResponse -> {
           if (httpResponse.statusCode() != 200) {
-            throw new RuntimeException("OAI server returned status " + httpResponse.statusCode());
+            throw new OaiException("OAI server returned status " + httpResponse.statusCode());
           }
-          throw new RuntimeException("Not implemented");
+          throw new OaiException("Not implemented");
         });
   }
 }
