@@ -34,10 +34,10 @@ import org.folio.reservoir.server.entity.OaiPmhStatus;
 import org.folio.reservoir.util.SourceId;
 import org.folio.reservoir.util.XmlMetadataParserMarcInJson;
 import org.folio.reservoir.util.XmlMetadataStreamParser;
-import org.folio.reservoir.util.oai.OaiHttpRequest;
+import org.folio.reservoir.util.oai.OaiListResponse;
 import org.folio.reservoir.util.oai.OaiRecord;
 import org.folio.reservoir.util.oai.OaiRequest;
-import org.folio.reservoir.util.oai.OaiResponse;
+import org.folio.reservoir.util.oai.OaiRequestHttp;
 
 public class OaiPmhClientService {
 
@@ -515,10 +515,10 @@ public class OaiPmhClientService {
     }
   }
 
-  Future<OaiResponse<JsonObject>> listRecordsRequest(OaiPmhStatus job) {
+  Future<OaiListResponse<JsonObject>> listRecordsRequest(OaiPmhStatus job) {
     JsonObject config = job.getConfig();
     XmlMetadataStreamParser<JsonObject> metadataParser = new XmlMetadataParserMarcInJson();
-    OaiRequest<JsonObject> oaiRequest = new OaiHttpRequest<>(httpClient, config.getString("url"),
+    OaiRequest<JsonObject> oaiRequest = new OaiRequestHttp<>(httpClient, config.getString("url"),
         metadataParser, config.getBoolean("xmlFixing", false), getHttpHeaders(config));
     String resumptionToken = config.getString(RESUMPTION_TOKEN_LITERAL);
     if (resumptionToken != null) {
@@ -573,7 +573,7 @@ public class OaiPmhClientService {
   }
 
   private Future<Void> listRecordsResponse(Storage storage, OaiPmhStatus job,
-      JsonArray matchKeyConfigs, OaiResponse<JsonObject> oaiResponse) {
+      JsonArray matchKeyConfigs, OaiListResponse<JsonObject> oaiResponse) {
 
     job.setTotalRequests(job.getTotalRequests() + 1);
     JsonObject config = job.getConfig();

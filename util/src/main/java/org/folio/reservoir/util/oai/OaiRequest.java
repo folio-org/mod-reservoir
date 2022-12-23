@@ -18,5 +18,10 @@ public interface OaiRequest<T> {
 
   OaiRequest<T> params(String k, String v);
 
-  Future<OaiResponse<T>> listRecords();
+  Future<OaiListResponse<T>> listRecords();
+
+  // probably add listIdentifiers later
+
+  Future<OaiRecord<T>> getRecord(String identifier);
+
 }

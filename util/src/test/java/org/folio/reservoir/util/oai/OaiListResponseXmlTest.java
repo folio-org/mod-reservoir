@@ -27,7 +27,7 @@ import static org.hamcrest.Matchers.is;
 import static org.hamcrest.Matchers.nullValue;
 
 @RunWith(VertxUnitRunner.class)
-public class OaiXmlResponseTest {
+public class OaiListResponseXmlTest {
 
   Vertx vertx;
   @Before
@@ -40,13 +40,13 @@ public class OaiXmlResponseTest {
     vertx.close().onComplete(context.asyncAssertSuccess());
   }
 
-  Future<OaiResponse<JsonObject>> parseOai(String fname, Handler<OaiRecord<JsonObject>> recordHandler) {
+  Future<OaiListResponse<JsonObject>> parseOai(String fname, Handler<OaiRecord<JsonObject>> recordHandler) {
     return vertx.fileSystem().open(fname, new OpenOptions()).compose(asyncFile -> {
       XmlParser xmlParser = XmlParser.newParser(asyncFile);
       XmlMetadataStreamParser<JsonObject> metadataParser = new XmlMetadataParserMarcInJson();
-      OaiResponse<JsonObject> oaiResponse = new OaiXmlResponse<>(xmlParser, metadataParser);
+      OaiListResponse<JsonObject> oaiResponse = new OaiListResponseXml<>(xmlParser, metadataParser);
       oaiResponse.handler(recordHandler);
-      Promise<OaiResponse<JsonObject>> promise = Promise.promise();
+      Promise<OaiListResponse<JsonObject>> promise = Promise.promise();
       oaiResponse.exceptionHandler(x -> promise.fail(x));
       oaiResponse.endHandler(e -> promise.tryComplete(oaiResponse));
       return promise.future();

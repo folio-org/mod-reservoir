@@ -8,7 +8,7 @@ import javax.xml.stream.XMLStreamReader;
 import org.folio.reservoir.util.XmlMetadataStreamParser;
 import org.folio.reservoir.util.readstream.XmlParser;
 
-public class OaiXmlResponse<T> implements OaiResponse<T>, Handler<XMLStreamReader> {
+public class OaiListResponseXml<T> implements OaiListResponse<T>, Handler<XMLStreamReader> {
 
   long demand = Long.MAX_VALUE;
 
@@ -49,7 +49,7 @@ public class OaiXmlResponse<T> implements OaiResponse<T>, Handler<XMLStreamReade
    * @param xmlParser OAI parser result.
    * @param metadataParser SAX based metadata parser producing T.
    */
-  public OaiXmlResponse(XmlParser xmlParser, XmlMetadataStreamParser<T> metadataParser) {
+  public OaiListResponseXml(XmlParser xmlParser, XmlMetadataStreamParser<T> metadataParser) {
     this.stream = xmlParser;
     this.metadataParser = metadataParser;
     this.stream.handler(this);
@@ -73,24 +73,24 @@ public class OaiXmlResponse<T> implements OaiResponse<T>, Handler<XMLStreamReade
   }
 
   @Override
-  public OaiResponse<T> handler(Handler<OaiRecord<T>> h) {
+  public OaiListResponse<T> handler(Handler<OaiRecord<T>> h) {
     recordHandler = h;
     return this;
   }
 
   @Override
-  public OaiResponse<T> pause() {
+  public OaiListResponse<T> pause() {
     demand = 0L;
     return this;
   }
 
   @Override
-  public OaiResponse<T> resume() {
+  public OaiListResponse<T> resume() {
     return fetch(Long.MAX_VALUE);
   }
 
   @Override
-  public OaiResponse<T> fetch(long l) {
+  public OaiListResponse<T> fetch(long l) {
     demand += l;
     if (demand < 0L) {
       demand = Long.MAX_VALUE;
@@ -102,7 +102,7 @@ public class OaiXmlResponse<T> implements OaiResponse<T>, Handler<XMLStreamReade
   }
 
   @Override
-  public OaiResponse<T> endHandler(Handler<Void> handler) {
+  public OaiListResponse<T> endHandler(Handler<Void> handler) {
     if (!ended) {
       endHandler = handler;
     }

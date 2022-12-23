@@ -16,7 +16,7 @@ import org.folio.reservoir.util.XmlMetadataStreamParser;
 import org.folio.reservoir.util.readstream.XmlFixer;
 import org.folio.reservoir.util.readstream.XmlParser;
 
-public class OaiHttpRequest<T> implements OaiRequest<T> {
+public class OaiRequestHttp<T> implements OaiRequest<T> {
 
   Map<String,String> queryParameters = new HashMap<>();
 
@@ -38,7 +38,7 @@ public class OaiHttpRequest<T> implements OaiRequest<T> {
    * @param xmlFixing whether XmlFixer should be used
    * @param headers HTTP headers
    */
-  public OaiHttpRequest(HttpClient httpClient, String url,
+  public OaiRequestHttp(HttpClient httpClient, String url,
       XmlMetadataStreamParser<T> metadataParser, boolean xmlFixing,
       MultiMap headers) {
 
@@ -49,7 +49,8 @@ public class OaiHttpRequest<T> implements OaiRequest<T> {
     if (headers == null) {
       headers = MultiMap.caseInsensitiveMultiMap();
     }
-    if (!headers.contains("accept")) {
+    // perhaps later also accept application/json
+    if (!headers.contains(HttpHeaders.ACCEPT)) {
       headers.add(HttpHeaders.ACCEPT, "text/xml");
     }
     this.headers = headers;
@@ -99,7 +100,7 @@ public class OaiHttpRequest<T> implements OaiRequest<T> {
 
   @java.lang.SuppressWarnings({"squid:S112"}) // Generic exceptions should never be thrown
   @Override
-  public Future<OaiResponse<T>> listRecords() {
+  public Future<OaiListResponse<T>> listRecords() {
     QueryStringEncoder enc = new QueryStringEncoder(url);
     queryParameters.forEach((n, v) -> {
       if (v != null) {
@@ -121,7 +122,29 @@ public class OaiHttpRequest<T> implements OaiRequest<T> {
           if (xmlFixing) {
             bufferReadStream = new XmlFixer(bufferReadStream);
           }
-          return new OaiXmlResponse<>(XmlParser.newParser(bufferReadStream), metadataParser);
+          // we may probably also handle JSON transport
+          // by simply inspecting the Content-Type
+          return new OaiListResponseXml<>(XmlParser.newParser(bufferReadStream), metadataParser);
+        });
+  }
+
+  @Override
+  public Future<OaiRecord<T>> getRecord(String identifier) {
+    QueryStringEncoder enc = new QueryStringEncoder(url);
+    enc.addParam("verb", "GetRecord");
+
+    RequestOptions requestOptions = new RequestOptions()
+        .setMethod(HttpMethod.GET)
+        .setHeaders(headers)
+        .setAbsoluteURI(enc.toString());
+
+    return httpClient.request(requestOptions)
+        .compose(HttpClientRequest::send)
+        .map(httpResponse -> {
+          if (httpResponse.statusCode() != 200) {
+            throw new RuntimeException("OAI server returned status " + httpResponse.statusCode());
+          }
+          throw new RuntimeException("Not implemented");
         });
   }
 }

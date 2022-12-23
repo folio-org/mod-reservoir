@@ -29,7 +29,7 @@ import static org.hamcrest.Matchers.is;
 import static org.hamcrest.Matchers.nullValue;
 
 @RunWith(VertxUnitRunner.class)
-public class OaiHttpRequestTest {
+public class OaiRequestHttpTest {
 
   static final int OKAPI_PORT = 9230;
 
@@ -104,7 +104,7 @@ public class OaiHttpRequestTest {
   @Test
   public void testNotFound(TestContext context) {
     XmlMetadataStreamParser<JsonObject> metadataParser = new XmlMetadataParserMarcInJson();
-    OaiRequest<JsonObject> oaiRequest = new OaiHttpRequest<>(
+    OaiRequest<JsonObject> oaiRequest = new OaiRequestHttp<>(
         httpClient, OKAPI_URL + "/xx", metadataParser, false, MultiMap.caseInsensitiveMultiMap());
     oaiRequest.listRecords().onComplete(context.asyncAssertFailure(oaiResponse -> {
       assertThat(oaiResponse.getMessage(), is("OAI server returned status 404"));
@@ -112,10 +112,10 @@ public class OaiHttpRequestTest {
   }
 
   @Test
-  public void test1(TestContext context) {
+  public void listRecords1(TestContext context) {
     XmlMetadataStreamParser<JsonObject> metadataParser = new XmlMetadataParserMarcInJson();
     oaiFilename = "oai-response-1.xml";
-    OaiRequest<JsonObject> oaiRequest = new OaiHttpRequest<>(
+    OaiRequest<JsonObject> oaiRequest = new OaiRequestHttp<>(
         httpClient, OKAPI_URL + "/oai1", metadataParser, false, null);
     oaiRequest.listRecords().onComplete(context.asyncAssertSuccess(oaiResponse -> {
       List<OaiRecord<JsonObject>> records = new ArrayList<>();
@@ -144,9 +144,9 @@ public class OaiHttpRequestTest {
   }
 
   @Test
-  public void test2(TestContext context) {
+  public void listRecords2(TestContext context) {
     XmlMetadataStreamParser<JsonObject> metadataParser = new XmlMetadataParserMarcInJson();
-    OaiRequest<JsonObject> oaiRequest = new OaiHttpRequest<>(
+    OaiRequest<JsonObject> oaiRequest = new OaiRequestHttp<>(
         httpClient, OKAPI_URL + "/oai2", metadataParser, false, null);
     oaiRequest.token("abc");
     oaiRequest.from("2004-01-01");
