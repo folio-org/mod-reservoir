@@ -689,7 +689,9 @@ paths:
       - $ref: parameters/query.yaml
       - $ref: parameters/offset.yaml
     get:
-      description: Get clusters with matchkeyid. CQL query with matchValue, clusterId fields
+      description: >
+        Get clusters based on matchkeyid. Query is CQL with the following fields supported:
+        matchValue, clusterId, globalId, localId, sourceId, sourceVersion.
       operationId: getClusters
       responses:
         "200":

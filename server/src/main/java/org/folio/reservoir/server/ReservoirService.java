@@ -164,6 +164,10 @@ public class ReservoirService implements RouterCreator, TenantInitHooks {
         new PgCqlFieldText().withColumn(CqlFields.MATCH_VALUE.getQualifiedSqlName()));
     definition.addField(CqlFields.CLUSTER_ID.getCqlName(),
         new PgCqlFieldUuid().withColumn(CqlFields.CLUSTER_ID.getQualifiedSqlName()));
+    definition.addField(CqlFields.GLOBAL_ID.getCqlName(),
+        new PgCqlFieldText().withColumn(CqlFields.GLOBAL_ID.getQualifiedSqlName()));
+    definition.addField(CqlFields.LOCAL_ID.getCqlName(),
+        new PgCqlFieldText().withColumn(CqlFields.LOCAL_ID.getQualifiedSqlName()));
     definition.addField(CqlFields.SOURCE_ID.getCqlName(),
         new PgCqlFieldText().withColumn(CqlFields.SOURCE_ID.getQualifiedSqlName()));
     definition.addField(CqlFields.SOURCE_VERSION.getCqlName(),

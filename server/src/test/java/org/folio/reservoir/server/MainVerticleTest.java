@@ -1032,6 +1032,34 @@ public class MainVerticleTest extends TestBase {
         .extract().body().asString();
     verifyClusterResponse(s, List.of(List.of("S101"), List.of("S102")));
 
+    s = RestAssured.given()
+        .header(XOkapiHeaders.TENANT, TENANT_1)
+        .header("Content-Type", "application/json")
+        .param("query", "localId=S101")
+        .param("matchkeyid", "isbn")
+        .get("/reservoir/clusters")
+        .then().statusCode(200)
+        .contentType("application/json")
+        .body("items", hasSize(1))
+        .body("items[0].records", hasSize(1))
+        .extract().body().asString();
+    verifyClusterResponse(s, List.of(List.of("S101")));
+
+    JsonObject obj = new JsonObject(s);
+    String globalId = obj.getJsonArray("items").getJsonObject(0)
+        .getJsonArray("records").getJsonObject(0).getString("globalId");
+    s = RestAssured.given()
+        .header(XOkapiHeaders.TENANT, TENANT_1)
+        .header("Content-Type", "application/json")
+        .param("query", "globalId=" + globalId)
+        .param("matchkeyid", "isbn")
+        .get("/reservoir/clusters")
+        .then().statusCode(200)
+        .contentType("application/json")
+        .body("items", hasSize(1))
+        .body("items[0].records", hasSize(1))
+        .extract().body().asString();
+    verifyClusterResponse(s, List.of(List.of("S101")));
 
     ingestRecords(records1, SOURCE_ID_1);
 
