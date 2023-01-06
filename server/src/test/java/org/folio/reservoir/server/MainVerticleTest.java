@@ -4017,8 +4017,8 @@ public class MainVerticleTest extends TestBase {
         .contentType("application/json")
         .body("items[0].status", is("idle"))
         .body("items[0].totalRecords", is(0))
-        .body("items[0].totalRequests", is(1))
-        .body("items[0].error", containsString("HTTP status 400: mock error"))
+        .body("items[0].totalRequests", is(0))
+        .body("items[0].error", containsString("OAI server returned status 400"))
         .body("items[0].config.id", is(PMH_CLIENT_ID))
         .body("items[0].config.sourceId", is(SOURCE_ID_1));
   }

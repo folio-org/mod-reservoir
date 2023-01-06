@@ -1,6 +1,7 @@
 package org.folio.reservoir.util.oai;
 
 import io.vertx.core.Future;
+import io.vertx.core.Handler;
 import io.vertx.core.Promise;
 import io.vertx.core.Vertx;
 import io.vertx.core.file.OpenOptions;
@@ -14,18 +15,19 @@ import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
+
 import java.util.ArrayList;
 import java.util.List;
-import java.util.function.Consumer;
 
 import static org.hamcrest.MatcherAssert.assertThat;
+import static org.hamcrest.Matchers.containsString;
 import static org.hamcrest.Matchers.empty;
 import static org.hamcrest.Matchers.hasSize;
 import static org.hamcrest.Matchers.is;
 import static org.hamcrest.Matchers.nullValue;
 
 @RunWith(VertxUnitRunner.class)
-public class OaiParserStreamTest {
+public class OaiListResponseXmlTest {
 
   Vertx vertx;
   @Before
@@ -38,24 +40,24 @@ public class OaiParserStreamTest {
     vertx.close().onComplete(context.asyncAssertSuccess());
   }
 
-  Future<OaiParserStream<JsonObject>> parseOai(String fname, Consumer<OaiRecord<JsonObject>> recordHandler) {
+  Future<OaiListResponse<JsonObject>> parseOai(String fname, Handler<OaiRecord<JsonObject>> recordHandler) {
     return vertx.fileSystem().open(fname, new OpenOptions()).compose(asyncFile -> {
       XmlParser xmlParser = XmlParser.newParser(asyncFile);
       XmlMetadataStreamParser<JsonObject> metadataParser = new XmlMetadataParserMarcInJson();
-      OaiParserStream<JsonObject> oaiParserStream = new OaiParserStream<>(xmlParser, metadataParser);
-      oaiParserStream.parse(recordHandler);
-      Promise<OaiParserStream<JsonObject>> promise = Promise.promise();
-      oaiParserStream.exceptionHandler(e -> promise.tryFail(e));
-      xmlParser.endHandler(e -> promise.complete(oaiParserStream));
+      OaiListResponse<JsonObject> oaiResponse = new OaiListResponseXml<>(xmlParser, metadataParser);
+      oaiResponse.handler(recordHandler);
+      Promise<OaiListResponse<JsonObject>> promise = Promise.promise();
+      oaiResponse.exceptionHandler(x -> promise.fail(x));
+      oaiResponse.endHandler(e -> promise.tryComplete(oaiResponse));
       return promise.future();
     });
   }
 
- @Test
- public void listRecords1(TestContext context) {
+  @Test
+  public void listRecords1(TestContext context) {
     List<OaiRecord<JsonObject>> records = new ArrayList<>();
     parseOai("oai-response-1.xml", records::add)
-        .onComplete(context.asyncAssertSuccess(oaiParserStream -> {
+        .onComplete(context.asyncAssertSuccess(oaiXmlResponse -> {
           assertThat(records, hasSize(4));
           assertThat(records.get(0).deleted, is(true));
           assertThat(records.get(1).deleted, is(false));
@@ -69,7 +71,7 @@ public class OaiParserStreamTest {
           assertThat(records.get(1).metadata.getString("leader"), is("10873cam a22004693i 4500"));
           assertThat(records.get(2).metadata.getString("leader"), is("02052cam a22004213i 4500"));
           assertThat(records.get(3).metadata.getString("leader"), is("02225nam a2200469 i 4500"));
-          assertThat(oaiParserStream.getResumptionToken(), is("MzM5OzE7Ozt2MS4w"));
+          assertThat(oaiXmlResponse.getResumptionToken(), is("MzM5OzE7Ozt2MS4w"));
           assertThat(records.get(3).datestamp, is("2022-05-03"));
         }));
   }
@@ -132,4 +134,14 @@ public class OaiParserStreamTest {
           assertThat(records.get(0).identifier, is("998212783503681"));
         }));
   }
+
+  @Test
+  public void badEncodingInResponse(TestContext context) {
+    List<OaiRecord<JsonObject>> records = new ArrayList<>();
+    parseOai("pennstate-bad-rec-20221216.xml", records::add)
+        .onComplete(context.asyncAssertFailure(e -> {
+          assertThat(e.getMessage(), containsString("Invalid UTF-8 middle byte 0x22"));
+        }));
+  }
+
 }
