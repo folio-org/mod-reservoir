@@ -108,9 +108,9 @@ public class ReservoirService implements RouterCreator, TenantInitHooks {
     def.addField(CqlFields.GLOBAL_ID.getCqlName(),
       new PgCqlFieldUuid().withColumn(CqlFields.GLOBAL_ID.getSqllName()));
     def.addField(CqlFields.LOCAL_ID.getCqlName(),
-      new PgCqlFieldText().withColumn(CqlFields.LOCAL_ID.getSqllName()));
+      new PgCqlFieldText().withExact().withColumn(CqlFields.LOCAL_ID.getSqllName()));
     def.addField(CqlFields.SOURCE_ID.getCqlName(),
-      new PgCqlFieldText().withColumn(CqlFields.SOURCE_ID.getSqllName()));
+      new PgCqlFieldText().withExact().withColumn(CqlFields.SOURCE_ID.getSqllName()));
     def.addField(CqlFields.SOURCE_VERSION.getCqlName(),
       new PgCqlFieldNumber().withColumn(CqlFields.SOURCE_VERSION.getSqllName()));
     return def;
@@ -161,15 +161,15 @@ public class ReservoirService implements RouterCreator, TenantInitHooks {
   Future<Void> getClusters(RoutingContext ctx) {
     PgCqlDefinition definition = createDefinitionBase();
     definition.addField(CqlFields.MATCH_VALUE.getCqlName(),
-        new PgCqlFieldText().withColumn(CqlFields.MATCH_VALUE.getQualifiedSqlName()));
+        new PgCqlFieldText().withExact().withColumn(CqlFields.MATCH_VALUE.getQualifiedSqlName()));
     definition.addField(CqlFields.CLUSTER_ID.getCqlName(),
         new PgCqlFieldUuid().withColumn(CqlFields.CLUSTER_ID.getQualifiedSqlName()));
     definition.addField(CqlFields.GLOBAL_ID.getCqlName(),
-        new PgCqlFieldText().withColumn(CqlFields.GLOBAL_ID.getQualifiedSqlName()));
+        new PgCqlFieldText().withExact().withColumn(CqlFields.GLOBAL_ID.getQualifiedSqlName()));
     definition.addField(CqlFields.LOCAL_ID.getCqlName(),
-        new PgCqlFieldText().withColumn(CqlFields.LOCAL_ID.getQualifiedSqlName()));
+        new PgCqlFieldText().withExact().withColumn(CqlFields.LOCAL_ID.getQualifiedSqlName()));
     definition.addField(CqlFields.SOURCE_ID.getCqlName(),
-        new PgCqlFieldText().withColumn(CqlFields.SOURCE_ID.getQualifiedSqlName()));
+        new PgCqlFieldText().withExact().withColumn(CqlFields.SOURCE_ID.getQualifiedSqlName()));
     definition.addField(CqlFields.SOURCE_VERSION.getCqlName(),
         new PgCqlFieldNumber().withColumn(CqlFields.SOURCE_VERSION.getQualifiedSqlName()));
 
@@ -190,11 +190,11 @@ public class ReservoirService implements RouterCreator, TenantInitHooks {
   Future<Void> touchClusters(RoutingContext ctx) {
     PgCqlDefinition definition = createDefinitionBase();
     definition.addField(CqlFields.MATCHKEY_ID.getCqlName(),
-      new PgCqlFieldText().withColumn(CqlFields.MATCHKEY_ID.getQualifiedSqlName()));
+      new PgCqlFieldText().withExact().withColumn(CqlFields.MATCHKEY_ID.getQualifiedSqlName()));
     definition.addField(CqlFields.CLUSTER_ID.getCqlName(),
         new PgCqlFieldUuid().withColumn(CqlFields.CLUSTER_ID.getQualifiedSqlName()));
     definition.addField(CqlFields.SOURCE_ID.getCqlName(),
-        new PgCqlFieldText().withColumn(CqlFields.SOURCE_ID.getQualifiedSqlName()));
+        new PgCqlFieldText().withExact().withColumn(CqlFields.SOURCE_ID.getQualifiedSqlName()));
     definition.addField(CqlFields.SOURCE_VERSION.getCqlName(),
         new PgCqlFieldNumber().withColumn(CqlFields.SOURCE_VERSION.getQualifiedSqlName()));
 
@@ -315,9 +315,9 @@ public class ReservoirService implements RouterCreator, TenantInitHooks {
 
   Future<Void> getConfigMatchKeys(RoutingContext ctx) {
     PgCqlDefinition definition = createDefinitionBase();
-    definition.addField(CqlFields.ID.getCqlName(), new PgCqlFieldText());
-    definition.addField(CqlFields.METHOD.getCqlName(), new PgCqlFieldText());
-    definition.addField(CqlFields.MATCHER.getCqlName(), new PgCqlFieldText());
+    definition.addField(CqlFields.ID.getCqlName(), new PgCqlFieldText().withExact());
+    definition.addField(CqlFields.METHOD.getCqlName(), new PgCqlFieldText().withExact());
+    definition.addField(CqlFields.MATCHER.getCqlName(), new PgCqlFieldText().withExact());
 
     RequestParameters params = ctx.get(ValidationHandler.REQUEST_CONTEXT_KEY);
     PgCqlQuery pgCqlQuery = definition.parse(Util.getQueryParameter(params));
@@ -407,8 +407,8 @@ public class ReservoirService implements RouterCreator, TenantInitHooks {
 
   Future<Void> getCodeModules(RoutingContext ctx) {
     PgCqlDefinition definition = createDefinitionBase();
-    definition.addField(CqlFields.ID.getCqlName(), new PgCqlFieldText());
-    definition.addField(CqlFields.FUNCTION.getCqlName(), new PgCqlFieldText());
+    definition.addField(CqlFields.ID.getCqlName(), new PgCqlFieldText().withExact());
+    definition.addField(CqlFields.FUNCTION.getCqlName(), new PgCqlFieldText().withExact());
 
     RequestParameters params = ctx.get(ValidationHandler.REQUEST_CONTEXT_KEY);
     PgCqlQuery pgCqlQuery = definition.parse(Util.getQueryParameter(params));
