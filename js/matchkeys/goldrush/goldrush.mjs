@@ -8,11 +8,6 @@ function loadMarcJson(record) {
   if (!Array.isArray(marcObj.fields)) {
     throw new Error('MARC fields is not an array.');
   }
-  const field0 = Object.keys(marcObj.fields[0]);
-  const re = /^\d+$/;
-  if (!re.test(field0)) {
-    throw new Error('MARC fields[0] key is not numeric.');
-  }
   if (!marcObj.leader) {
     marcObj.leader = '00000nam a22000000a 4500';
   }
