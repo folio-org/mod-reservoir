@@ -3,12 +3,6 @@ buildMvn {
   mvnDeploy = true
   buildNode =  'jenkins-agent-java17'
 
-  doApiLint = true
-  doApiDoc = true
-  apiTypes = 'OAS'
-  apiDirectories = 'server/src/main/resources/openapi'
-  apiExcludes = 'headers parameters'
-
   doDocker = {
     buildJavaDocker {
       publishMaster = true
