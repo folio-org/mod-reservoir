@@ -37,8 +37,8 @@
 
   <properties>
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-    <graalvm.version>22.3.0</graalvm.version>
-    <okapi.version>4.14.10</okapi.version>
+    <graalvm.version>22.3.2</graalvm.version>
+    <okapi.version>5.1.2</okapi.version>
     <vertxlib.version>3.0.0</vertxlib.version>
     <micrometer.version>1.10.2</micrometer.version>
   </properties>
@@ -48,7 +48,7 @@
       <dependency>
         <groupId>io.vertx</groupId>
         <artifactId>vertx-stack-depchain</artifactId>
-        <version>4.3.7</version>
+        <version>4.4.6</version>
         <type>pom</type>
         <scope>import</scope>
       </dependency>
