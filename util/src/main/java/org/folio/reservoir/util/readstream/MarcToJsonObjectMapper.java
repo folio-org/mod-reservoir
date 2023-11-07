@@ -33,30 +33,35 @@ public class MarcToJsonObjectMapper implements Mapper<Record, JsonObject> {
 
   private JsonObject convert(Record in) {
     JsonObject out = new JsonObject();
-    out.put("leader", in.getLeader().toString());
+    out.put("leader", escape(in.getLeader().toString()));
     JsonArray fields = new JsonArray();
     out.put("fields", fields);
 
     for (final ControlField cf : in.getControlFields()) {
       JsonObject field = new JsonObject();
-      field.put(cf.getTag(), cf.getData());
+      field.put(escape(cf.getTag()), escape(cf.getData()));
       fields.add(field);
     }
     for (final DataField df : in.getDataFields()) {
       JsonObject field = new JsonObject();
       JsonObject tag = new JsonObject();
-      field.put(df.getTag(), tag);
+      field.put(escape(df.getTag()), tag);
       JsonArray subfields = new JsonArray();
       tag.put("subfields", subfields);
       for (final Subfield sf : df.getSubfields()) {
         JsonObject subfield = new JsonObject();
-        subfield.put(String.valueOf(sf.getCode()), sf.getData());
+        subfield.put(escape(String.valueOf(sf.getCode())), escape(sf.getData()));
         subfields.add(subfield);
       }
-      tag.put("ind1", String.valueOf(df.getIndicator1()));
-      tag.put("ind2", String.valueOf(df.getIndicator2()));
+      tag.put("ind1", escape(String.valueOf(df.getIndicator1())));
+      tag.put("ind2", escape(String.valueOf(df.getIndicator2())));
       fields.add(field);
     }
     return out;
+  }
+
+  private static String escape(String in) {
+    //NUL is valid in JSON but not in PG's JSONB
+    return in.replace("\0", "");
   }
 }
