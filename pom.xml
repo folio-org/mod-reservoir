@@ -38,6 +38,8 @@
   <properties>
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
     <graalvm.version>22.3.2</graalvm.version>
+    <log4j2.version>2.19.0</log4j2.version>
+    <vertx.version>4.4.6</vertx.version>
     <okapi.version>5.1.2</okapi.version>
     <vertxlib.version>3.0.0</vertxlib.version>
     <micrometer.version>1.10.2</micrometer.version>
@@ -45,10 +47,18 @@
 
   <dependencyManagement>
     <dependencies>
+      <!-- first listed takes precedednce, e.g log4j-bom will override log4j deps from vertx-stack-depchain -->
+      <dependency>
+        <groupId>org.apache.logging.log4j</groupId>
+        <artifactId>log4j-bom</artifactId>
+        <version>${log4j2.version}</version>
+        <type>pom</type>
+        <scope>import</scope>
+      </dependency>
       <dependency>
         <groupId>io.vertx</groupId>
         <artifactId>vertx-stack-depchain</artifactId>
-        <version>4.4.6</version>
+        <version>${vertx.version}</version>
         <type>pom</type>
         <scope>import</scope>
       </dependency>
@@ -71,13 +81,6 @@
         <groupId>org.folio</groupId>
         <artifactId>vertx-lib-pg-testing</artifactId>
         <version>${vertxlib.version}</version>
-      </dependency>
-      <dependency>
-        <groupId>org.apache.logging.log4j</groupId>
-        <artifactId>log4j-bom</artifactId>
-        <version>2.19.0</version>
-        <type>pom</type>
-        <scope>import</scope>
       </dependency>
       <dependency>
         <groupId>org.folio.okapi</groupId>
