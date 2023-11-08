@@ -58,6 +58,7 @@
       <groupId>org.folio</groupId>
       <artifactId>vertx-lib</artifactId>
     </dependency>
+    <!-- log4j deps rely on log4j-bom since vertx-stack-depchain only inludes log4j-core in test scope-->
     <dependency>
       <groupId>org.apache.logging.log4j</groupId>
       <artifactId>log4j-api</artifactId>
