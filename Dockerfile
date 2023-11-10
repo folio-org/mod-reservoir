@@ -1,4 +1,10 @@
+# https://github.com/folio-org/folio-tools/tree/master/folio-java-docker/openjdk17
 FROM folioci/alpine-jre-openjdk17:latest
+
+# Install latest patch versions of packages: https://pythonspeed.com/articles/security-updates-in-docker/
+USER root
+RUN apk upgrade --no-cache
+USER folio
 
 ENV VERTICLE_FILE mod-reservoir-server-fat.jar
 
