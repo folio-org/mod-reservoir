@@ -1,4 +1,4 @@
-package org.folio.reservoir.server;
+package org.folio.reservoir.util.oai;
 
 public class OaiException extends RuntimeException {
 
@@ -24,8 +24,14 @@ public class OaiException extends RuntimeException {
     return new OaiException("idDoesNotExist", msg);
   }
 
+  public OaiException(String msg) {
+    super(msg);
+    this.errorCode = "client";
+  }
+
   public OaiException(String errorCode, String msg) {
     super(msg);
     this.errorCode = errorCode;
   }
+
 }
