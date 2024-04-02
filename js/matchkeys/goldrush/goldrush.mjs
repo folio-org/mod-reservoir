@@ -129,16 +129,6 @@ function doTitle(fieldData) {
   return padContent(fieldStr, 70);
 }
 
-function doGMD(fieldData) {
-  // General medium designator
-  let fieldStr = '';
-  if (fieldData !== null) {
-    fieldStr = normalizeAndUnaccent(fieldData);
-    fieldStr = fieldStr.replace(/[^a-zA-Z0-9]/g, '');
-  }
-  return padContent(fieldStr, 5);
-}
-
 function doPublicationYear(fieldData) {
   let fieldStr = '';
   for (let n = 0; n < fieldData.length; n += 1) {
@@ -396,7 +386,6 @@ export function matchkey(record) {
     getField(marcObj, '245', 'b'),
     getField(marcObj, '245', 'p'),
   ]));
-  keyStr += addComponent(doGMD(getField(marcObj, '245', 'h')));
   keyStr += addComponent(doPublicationYear([
     getField(marcObj, '008'),
     getField(marcObj, '264', 'c'),
