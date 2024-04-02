@@ -125,7 +125,7 @@ function doTitle(fieldData) {
       fieldStr += stripPunctuation(fieldData[n], ' ').trim();
     }
   }
-  fieldStr = normalizeAndUnaccent(fieldStr);
+  fieldStr = normalizeAndUnaccent(fieldStr.replace(/ /g, ''));
   return padContent(fieldStr, 70);
 }
 
