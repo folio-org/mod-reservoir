@@ -1,0 +1,836 @@
+{
+  "leader": "03377cam a22006134i 4500",
+  "fields": [
+    {
+      "001": "ocn968309193"
+    },
+    {
+      "003": "OCoLC"
+    },
+    {
+      "005": "20220118021716.0"
+    },
+    {
+      "008": "170403s2017 nyu 000 0 eng"
+    },
+    {
+      "010": {
+        "subfields": [
+          {
+            "a": " 2017000492"
+          }
+        ],
+        "ind1": " ",
+        "ind2": " "
+      }
+    },
+    {
+      "019": {
+        "subfields": [
+          {
+            "a": "1201964573"
+          }
+        ],
+        "ind1": " ",
+        "ind2": " "
+      }
+    },
+    {
+      "020": {
+        "subfields": [
+          {
+            "a": "9780804190114"
+          },
+          {
+            "q": "(trade pbk.)"
+          }
+        ],
+        "ind1": " ",
+        "ind2": " "
+      }
+    },
+    {
+      "020": {
+        "subfields": [
+          {
+            "a": "0804190119"
+          },
+          {
+            "q": "(trade pbk.)"
+          }
+        ],
+        "ind1": " ",
+        "ind2": " "
+      }
+    },
+    {
+      "020": {
+        "subfields": [
+          {
+            "z": "9780804190121"
+          },
+          {
+            "q": "(ebook)"
+          }
+        ],
+        "ind1": " ",
+        "ind2": " "
+      }
+    },
+    {
+      "024": {
+        "subfields": [
+          {
+            "a": "99971776779"
+          }
+        ],
+        "ind1": "8",
+        "ind2": " "
+      }
+    },
+    {
+      "035": {
+        "subfields": [
+          {
+            "a": "(OCoLC)968309193"
+          },
+          {
+            "z": "(OCoLC)1201964573"
+          }
+        ],
+        "ind1": " ",
+        "ind2": " "
+      }
+    },
+    {
+      "037": {
+        "subfields": [
+          {
+            "b": "Random House Inc, Attn Order Entry 400 Hahn rd, Westminster, MD, USA, 21157"
+          },
+          {
+            "n": "SAN 201-3975"
+          }
+        ],
+        "ind1": " ",
+        "ind2": " "
+      }
+    },
+    {
+      "040": {
+        "subfields": [
+          {
+            "a": "DLC"
+          },
+          {
+            "b": "eng"
+          },
+          {
+            "e": "rda"
+          },
+          {
+            "c": "DLC"
+          },
+          {
+            "d": "YDX"
+          },
+          {
+            "d": "HBP"
+          },
+          {
+            "d": "NBO"
+          },
+          {
+            "d": "OCLCF"
+          },
+          {
+            "d": "IMT"
+          },
+          {
+            "d": "MYG"
+          },
+          {
+            "d": "ZLM"
+          },
+          {
+            "d": "CZA"
+          },
+          {
+            "d": "JAI"
+          },
+          {
+            "d": "NDS"
+          },
+          {
+            "d": "OCLCQ"
+          },
+          {
+            "d": "WFB"
+          },
+          {
+            "d": "OCLCQ"
+          },
+          {
+            "d": "BDP"
+          },
+          {
+            "d": "RB0"
+          },
+          {
+            "d": "IL4J6"
+          },
+          {
+            "d": "OCLCO"
+          },
+          {
+            "d": "UKEHC"
+          },
+          {
+            "d": "OCLCO"
+          },
+          {
+            "d": "IVU"
+          },
+          {
+            "d": "WYU"
+          }
+        ],
+        "ind1": " ",
+        "ind2": " "
+      }
+    },
+    {
+      "042": {
+        "subfields": [
+          {
+            "a": "pcc"
+          }
+        ],
+        "ind1": " ",
+        "ind2": " "
+      }
+    },
+    {
+      "043": {
+        "subfields": [
+          {
+            "a": "n-us---"
+          }
+        ],
+        "ind1": " ",
+        "ind2": " "
+      }
+    },
+    {
+      "049": {
+        "subfields": [
+          {
+            "a": "WYUA"
+          }
+        ],
+        "ind1": " ",
+        "ind2": " "
+      }
+    },
+    {
+      "050": {
+        "subfields": [
+          {
+            "a": "JC495"
+          },
+          {
+            "b": ".S55 2017"
+          }
+        ],
+        "ind1": "0",
+        "ind2": "0"
+      }
+    },
+    {
+      "082": {
+        "subfields": [
+          {
+            "a": "321.9"
+          },
+          {
+            "2": "23"
+          }
+        ],
+        "ind1": "0",
+        "ind2": "0"
+      }
+    },
+    {
+      "100": {
+        "subfields": [
+          {
+            "a": "Snyder, Timothy,"
+          },
+          {
+            "e": "author."
+          }
+        ],
+        "ind1": "1",
+        "ind2": " "
+      }
+    },
+    {
+      "245": {
+        "subfields": [
+          {
+            "a": "On tyranny :"
+          },
+          {
+            "b": "twenty lessons from the twentieth century /"
+          },
+          {
+            "c": "Timothy Snyder."
+          }
+        ],
+        "ind1": "1",
+        "ind2": "0"
+      }
+    },
+    {
+      "250": {
+        "subfields": [
+          {
+            "a": "First edition."
+          }
+        ],
+        "ind1": " ",
+        "ind2": " "
+      }
+    },
+    {
+      "264": {
+        "subfields": [
+          {
+            "a": "New York :"
+          },
+          {
+            "b": "Tim Duggan Books,"
+          },
+          {
+            "c": "[2017]"
+          }
+        ],
+        "ind1": " ",
+        "ind2": "1"
+      }
+    },
+    {
+      "264": {
+        "subfields": [
+          {
+            "c": "©2017"
+          }
+        ],
+        "ind1": " ",
+        "ind2": "4"
+      }
+    },
+    {
+      "300": {
+        "subfields": [
+          {
+            "a": "126 pages ;"
+          },
+          {
+            "c": "16 cm"
+          }
+        ],
+        "ind1": " ",
+        "ind2": " "
+      }
+    },
+    {
+      "336": {
+        "subfields": [
+          {
+            "a": "text"
+          },
+          {
+            "b": "txt"
+          },
+          {
+            "2": "rdacontent"
+          }
+        ],
+        "ind1": " ",
+        "ind2": " "
+      }
+    },
+    {
+      "337": {
+        "subfields": [
+          {
+            "a": "unmediated"
+          },
+          {
+            "b": "n"
+          },
+          {
+            "2": "rdamedia"
+          }
+        ],
+        "ind1": " ",
+        "ind2": " "
+      }
+    },
+    {
+      "338": {
+        "subfields": [
+          {
+            "a": "volume"
+          },
+          {
+            "b": "nc"
+          },
+          {
+            "2": "rdacarrier"
+          }
+        ],
+        "ind1": " ",
+        "ind2": " "
+      }
+    },
+    {
+      "505": {
+        "subfields": [
+          {
+            "t": "Do not obey in advance --"
+          },
+          {
+            "t": "Defend institutions --"
+          },
+          {
+            "t": "Beware the one-party state --"
+          },
+          {
+            "t": "Take responsibility for the face of the world --"
+          },
+          {
+            "t": "Remember professional ethics --"
+          },
+          {
+            "t": "Be wary of paramilitaries --"
+          },
+          {
+            "t": "Be reflective if you must be armed --"
+          },
+          {
+            "t": "Stand out --"
+          },
+          {
+            "t": "Be kind to our language --"
+          },
+          {
+            "t": "Believe in truth --"
+          },
+          {
+            "t": "Investigate --"
+          },
+          {
+            "t": "Make eye contact and small talk --"
+          },
+          {
+            "t": "Practice corporeal politics --"
+          },
+          {
+            "t": "Establish a private life --"
+          },
+          {
+            "t": "Contribute to good causes --"
+          },
+          {
+            "t": "Learn from peers in other countries --"
+          },
+          {
+            "t": "Listen for dangerous words --"
+          },
+          {
+            "t": "Be calm when the unthinkable arrives --"
+          },
+          {
+            "t": "Be a patriot --"
+          },
+          {
+            "t": "Be as courageous as you can."
+          }
+        ],
+        "ind1": "0",
+        "ind2": "0"
+      }
+    },
+    {
+      "520": {
+        "subfields": [
+          {
+            "a": "In previous books, Holocaust historian Timothy Snyder dissected the events and values that enabled the rise of Hitler and Stalin and the execution of their catastrophic policies. With Twenty Lessons, Snyder draws from the darkest hours of the twentieth century to provide hope for the twenty-first. As he writes, \"Americans are no wiser than the Europeans who saw democracy yield to fascism, Nazism and communism. Our one advantage is that we might learn from their experience.\""
+          }
+        ],
+        "ind1": " ",
+        "ind2": " "
+      }
+    },
+    {
+      "650": {
+        "subfields": [
+          {
+            "a": "Despotism."
+          }
+        ],
+        "ind1": " ",
+        "ind2": "0"
+      }
+    },
+    {
+      "650": {
+        "subfields": [
+          {
+            "a": "History, Modern"
+          },
+          {
+            "y": "20th century."
+          }
+        ],
+        "ind1": " ",
+        "ind2": "0"
+      }
+    },
+    {
+      "650": {
+        "subfields": [
+          {
+            "a": "Political ethics."
+          }
+        ],
+        "ind1": " ",
+        "ind2": "0"
+      }
+    },
+    {
+      "650": {
+        "subfields": [
+          {
+            "a": "Democracy"
+          },
+          {
+            "z": "United States."
+          }
+        ],
+        "ind1": " ",
+        "ind2": "0"
+      }
+    },
+    {
+      "650": {
+        "subfields": [
+          {
+            "a": "Political culture"
+          },
+          {
+            "z": "United States."
+          }
+        ],
+        "ind1": " ",
+        "ind2": "0"
+      }
+    },
+    {
+      "650": {
+        "subfields": [
+          {
+            "a": "Twentieth century."
+          }
+        ],
+        "ind1": " ",
+        "ind2": "1"
+      }
+    },
+    {
+      "650": {
+        "subfields": [
+          {
+            "a": "Democracy."
+          },
+          {
+            "2": "fast"
+          },
+          {
+            "0": "(OCoLC)fst00890077"
+          }
+        ],
+        "ind1": " ",
+        "ind2": "7"
+      }
+    },
+    {
+      "650": {
+        "subfields": [
+          {
+            "a": "Despotism."
+          },
+          {
+            "2": "fast"
+          },
+          {
+            "0": "(OCoLC)fst00891415"
+          }
+        ],
+        "ind1": " ",
+        "ind2": "7"
+      }
+    },
+    {
+      "650": {
+        "subfields": [
+          {
+            "a": "History, Modern."
+          },
+          {
+            "2": "fast"
+          },
+          {
+            "0": "(OCoLC)fst00958367"
+          }
+        ],
+        "ind1": " ",
+        "ind2": "7"
+      }
+    },
+    {
+      "650": {
+        "subfields": [
+          {
+            "a": "Political culture."
+          },
+          {
+            "2": "fast"
+          },
+          {
+            "0": "(OCoLC)fst01069263"
+          }
+        ],
+        "ind1": " ",
+        "ind2": "7"
+      }
+    },
+    {
+      "650": {
+        "subfields": [
+          {
+            "a": "Political ethics."
+          },
+          {
+            "2": "fast"
+          },
+          {
+            "0": "(OCoLC)fst01069286"
+          }
+        ],
+        "ind1": " ",
+        "ind2": "7"
+      }
+    },
+    {
+      "651": {
+        "subfields": [
+          {
+            "a": "United States."
+          },
+          {
+            "2": "fast"
+          },
+          {
+            "0": "(OCoLC)fst01204155"
+          }
+        ],
+        "ind1": " ",
+        "ind2": "7"
+      }
+    },
+    {
+      "648": {
+        "subfields": [
+          {
+            "a": "1900-1999."
+          }
+        ],
+        "ind1": " ",
+        "ind2": "4"
+      }
+    },
+    {
+      "648": {
+        "subfields": [
+          {
+            "a": "1900-1999"
+          },
+          {
+            "2": "fast"
+          }
+        ],
+        "ind1": " ",
+        "ind2": "7"
+      }
+    },
+    {
+      "710": {
+        "subfields": [
+          {
+            "a": "John and Diane Cooke Gift."
+          }
+        ],
+        "ind1": "2",
+        "ind2": " "
+      }
+    },
+    {
+      "907": {
+        "subfields": [
+          {
+            "a": ".b100093668"
+          },
+          {
+            "b": "08-25-22"
+          },
+          {
+            "c": "01-18-22"
+          }
+        ],
+        "ind1": " ",
+        "ind2": " "
+      }
+    },
+    {
+      "998": {
+        "subfields": [
+          {
+            "a": "wc"
+          },
+          {
+            "b": "01-18-22"
+          },
+          {
+            "c": "m"
+          },
+          {
+            "d": "a "
+          },
+          {
+            "e": "-"
+          },
+          {
+            "f": "eng"
+          },
+          {
+            "g": "nyu"
+          },
+          {
+            "h": "0"
+          },
+          {
+            "i": "1"
+          }
+        ],
+        "ind1": " ",
+        "ind2": " "
+      }
+    },
+    {
+      "901": {
+        "subfields": [
+          {
+            "a": "20220118"
+          },
+          {
+            "b": "lc"
+          },
+          {
+            "c": "new"
+          },
+          {
+            "d": "DLCcopy"
+          }
+        ],
+        "ind1": " ",
+        "ind2": " "
+      }
+    },
+    {
+      "994": {
+        "subfields": [
+          {
+            "a": "C0"
+          },
+          {
+            "b": "WYU"
+          }
+        ],
+        "ind1": " ",
+        "ind2": " "
+      }
+    },
+    {
+      "946": {
+        "subfields": [
+          {
+            "g": "1"
+          },
+          {
+            "i": "U181026482945"
+          },
+          {
+            "j": "0"
+          },
+          {
+            "l": "wcc "
+          },
+          {
+            "n": "Gift of John and Diane Cooke."
+          },
+          {
+            "o": "-"
+          },
+          {
+            "p": "$0.00"
+          },
+          {
+            "q": "-"
+          },
+          {
+            "r": "-"
+          },
+          {
+            "s": "- "
+          },
+          {
+            "t": "0"
+          },
+          {
+            "u": "3"
+          },
+          {
+            "v": "0"
+          },
+          {
+            "w": "2"
+          },
+          {
+            "x": "1"
+          },
+          {
+            "y": ".i4070175x"
+          },
+          {
+            "z": "01-18-22"
+          }
+        ],
+        "ind1": " ",
+        "ind2": " "
+      }
+    }
+  ]
+}
