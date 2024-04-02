@@ -137,13 +137,13 @@ function doPublicationYear(fieldData) {
       if (n === 0) {
         // Try for date2 from field 008
         dataStr = `${fieldData[n]}`.substring(11, 15).replace(/[^0-9]/g, '');
-        if ((dataStr.match(/[0-9]{4}/)) && (dataStr !== '9999')) {
+        if ((dataStr.match(/[1-9][0-9]{3}/)) && (dataStr !== '9999')) {
           fieldStr = dataStr;
           break;
         } else {
           // Try for date1 from field 008
           dataStr = `${fieldData[n]}`.substring(7, 11).replace(/[^0-9]/g, '');
-          if ((dataStr.match(/[0-9]{4}/)) && (dataStr !== '9999')) {
+          if ((dataStr.match(/[1-9][0-9]{3}/)) && (dataStr !== '9999')) {
             fieldStr = dataStr;
             break;
           }
@@ -151,14 +151,14 @@ function doPublicationYear(fieldData) {
       } else if (n === 1) {
         // Try for date from field 264$c
         dataStr = `${fieldData[n]}`.replace(/[^0-9]/g, '');
-        if ((dataStr.match(/[0-9]{4}/)) && (dataStr !== '9999')) {
+        if ((dataStr.match(/[1-9][0-9]{3}/)) && (dataStr !== '9999')) {
           fieldStr = dataStr;
           break;
         }
       } else {
         // Try for date from field 260$c
         dataStr = `${fieldData[n]}`.replace(/[^0-9]/g, '');
-        if ((dataStr.match(/[0-9]{4}/)) && (dataStr !== '9999')) {
+        if ((dataStr.match(/[1-9][0-9]{3}/)) && (dataStr !== '9999')) {
           fieldStr = dataStr;
           break;
         }
@@ -243,11 +243,11 @@ function doPublisherName(fieldData) {
   for (let n = 0; n < fieldData.length; n += 1) {
     if (fieldData[n] !== null) {
       if (n === 0) {
-        // Try first for field 264$a
+        // Try first for field 264$b
         fieldStr = normalizeAndUnaccent(fieldData[n]).toLowerCase();
         break;
       } else {
-        // Try then for field 260$a
+        // Try then for field 260$b
         fieldStr = normalizeAndUnaccent(fieldData[n]).toLowerCase();
       }
     }
