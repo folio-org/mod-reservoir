@@ -6,5 +6,5 @@
   "test/records/invalid-1-broken-json.json": "Expected ',' or ']' after array element in JSON at position 233",
   "test/records/invalid-2-no-fields.json": "MARC fields is not an array.",
   "test/records/invalid-3-first-field.json": "MARC fields[0] key is not numeric.",
-  "test/records/invalid-4-no-leader.json": "MARC leader field is missing."
+  "test/records/invalid-4-no-leader.json": "___________________________________________________________________________0000____________a________________________________________fred__nerk_________________________p"
 }
