@@ -383,7 +383,7 @@ function addComponent(component) {
 /**
  * Generates GoldRush match key.
  *
- * @version 1.1.0 (for specification September 2021)
+ * @version 1.2.0 (for specification January2024_0)
  * @param {string} record - The MARC-in-JSON input string wrapped in {marc: ...} object.
  * @return {string} The matchkey. Components are gathered from relevant fields
  *     and concatenated to a long string.
