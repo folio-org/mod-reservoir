@@ -186,7 +186,7 @@ function doPagination(fieldData) {
 function doEditionStatement(fieldData) {
   let fieldStr = '';
   if (fieldData !== null) {
-    let dataStr = normalizeAndUnaccent(fieldData);
+    const dataStr = normalizeAndUnaccent(fieldData).trim();
     // Detect contiguous numeric
     for (let n = 3; n > 0; n -= 1) {
       const regexNum = new RegExp(`([0-9]{${n}})`);
@@ -198,40 +198,43 @@ function doEditionStatement(fieldData) {
     }
     if (!fieldStr) {
       // Detect words
-      dataStr = dataStr.substring(0, 3).toLowerCase();
-      switch (dataStr) {
-        case 'fir':
-          fieldStr = '1';
-          break;
-        case 'sec':
-          fieldStr = '2';
-          break;
-        case 'thi':
-          fieldStr = '3';
-          break;
-        case 'fou':
-          fieldStr = '4';
-          break;
-        case 'fif':
-          fieldStr = '5';
-          break;
-        case 'six':
-          fieldStr = '6';
-          break;
-        case 'sev':
-          fieldStr = '7';
-          break;
-        case 'eig':
-          fieldStr = '8';
-          break;
-        case 'nin':
-          fieldStr = '9';
-          break;
-        case 'ten':
-          fieldStr = '10';
-          break;
-        default:
-          fieldStr = '1';
+      const match = dataStr.match(/^([a-zA-Z]{3})/);
+      if (match) {
+        const matchStr = `${match[1]}`.toLowerCase();
+        switch (matchStr) {
+          case 'fir':
+            fieldStr = '1';
+            break;
+          case 'sec':
+            fieldStr = '2';
+            break;
+          case 'thi':
+            fieldStr = '3';
+            break;
+          case 'fou':
+            fieldStr = '4';
+            break;
+          case 'fif':
+            fieldStr = '5';
+            break;
+          case 'six':
+            fieldStr = '6';
+            break;
+          case 'sev':
+            fieldStr = '7';
+            break;
+          case 'eig':
+            fieldStr = '8';
+            break;
+          case 'nin':
+            fieldStr = '9';
+            break;
+          case 'ten':
+            fieldStr = '10';
+            break;
+          default:
+            fieldStr = '1';
+        }
       }
     }
   }
