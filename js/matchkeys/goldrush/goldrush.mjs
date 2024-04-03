@@ -189,7 +189,7 @@ function doEditionStatement(fieldData) {
     const dataStr = normalizeAndUnaccent(fieldData).trim();
     // Detect contiguous numeric
     for (let n = 3; n > 0; n -= 1) {
-      const regexNum = new RegExp(`([0-9]{${n}})`);
+      const regexNum = new RegExp(`^([0-9]{${n}})`);
       const match = dataStr.match(regexNum);
       if (match) {
         fieldStr = `${match[1]}`;
