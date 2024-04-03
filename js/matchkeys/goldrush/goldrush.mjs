@@ -231,9 +231,12 @@ function doEditionStatement(fieldData) {
           fieldStr = '10';
           break;
         default:
-          fieldStr = '';
+          fieldStr = '1';
       }
     }
+  }
+  if (!fieldStr) {
+    fieldStr = '1';
   }
   return padContent(fieldStr, 3);
 }
