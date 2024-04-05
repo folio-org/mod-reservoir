@@ -6,7 +6,7 @@ Match keys utilise some specific elements from MARC bibliographic records to gen
 
 ### goldrush
 
-The [matchkeys/goldrush](matchkeys/goldrush/goldrush.js) implements the "Gold Rush - Colorado Alliance MARC record match key generation" (specification September 2021).
+The [matchkeys/goldrush](matchkeys/goldrush/goldrush.mjs) implements the "Gold Rush - Colorado Alliance MARC record match key generation" (specification January 12, 2024).
 
 It takes input being a MARC-in-JSON string of MARC fields, and returns the matchkey string.
 
