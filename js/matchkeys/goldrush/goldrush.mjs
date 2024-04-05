@@ -343,25 +343,25 @@ function doGDCN(fieldData) {
 
 function doElectronicIndicator(marcObj) {
   let field = '';
-  field = normalizeAndUnaccent(getField(marcObj, '245', 'h'));
+  field = normalizeAndUnaccent(getRelevantSubField(marcObj, '245', 'h'));
   if (field) {
     if (field.match(/\belectronic resource\b/i)) {
       return 'e';
     }
   }
-  field = normalizeAndUnaccent(getField(marcObj, '590', 'a'));
+  field = normalizeAndUnaccent(getRelevantSubField(marcObj, '590', 'a'));
   if (field) {
     if (field.match(/\belectronic reproduction\b/i)) {
       return 'e';
     }
   }
-  field = normalizeAndUnaccent(getField(marcObj, '533', 'a'));
+  field = normalizeAndUnaccent(getRelevantSubField(marcObj, '533', 'a'));
   if (field) {
     if (field.match(/\belectronic reproduction\b/i)) {
       return 'e';
     }
   }
-  field = normalizeAndUnaccent(getField(marcObj, '300', 'a'));
+  field = normalizeAndUnaccent(getRelevantSubField(marcObj, '300', 'a'));
   if (field) {
     if (field.match(/\bonline resource\b/i)) {
       return 'e';
@@ -409,16 +409,16 @@ export function matchkey(record) {
   let keyStr = '';
   const marcObj = loadMarcJson(record);
   keyStr += addComponent(doTitle([
-    getField(marcObj, '245', 'a'),
-    getField(marcObj, '245', 'b'),
-    getField(marcObj, '245', 'p'),
+    getRelevantSubField(marcObj, '245', 'a'),
+    getRelevantSubField(marcObj, '245', 'b'),
+    getRelevantSubField(marcObj, '245', 'p'),
   ]));
   keyStr += addComponent(doPublicationYear([
     getField(marcObj, '008'),
     getRelevantSubField(marcObj, '264', 'c'),
     getRelevantSubField(marcObj, '260', 'c'),
   ]));
-  keyStr += addComponent(doPagination(getField(marcObj, '300', 'a')));
+  keyStr += addComponent(doPagination(getRelevantSubField(marcObj, '300', 'a')));
   keyStr += addComponent(doEditionStatement(getRelevantSubField(marcObj, '250', 'a')));
   keyStr += addComponent(doPublisherName([
     getRelevantSubField(marcObj, '264', 'b'),
@@ -426,14 +426,14 @@ export function matchkey(record) {
   ]));
   keyStr += addComponent(doTypeOfRecord(marcObj.leader));
   keyStr += addComponent(doTitlePart(getMultiSubfields(marcObj, '245', 'p')));
-  keyStr += addComponent(doTitleNumber(getField(marcObj, '245', 'n')));
+  keyStr += addComponent(doTitleNumber(getRelevantSubField(marcObj, '245', 'n')));
   keyStr += addComponent(doAuthor([
     getField(marcObj, '100', 'a'),
     getField(marcObj, '110', 'a'),
     getField(marcObj, '111', 'a'),
   ]));
-  keyStr += addComponent(doInclusiveDates(getField(marcObj, '245', 'f')));
-  keyStr += addComponent(doGDCN(getField(marcObj, '086', 'a')));
+  keyStr += addComponent(doInclusiveDates(getRelevantSubField(marcObj, '245', 'f')));
+  keyStr += addComponent(doGDCN(getRelevantSubField(marcObj, '086', 'a')));
   keyStr += addComponent(doElectronicIndicator(marcObj));
   return keyStr.toLowerCase();
 }
