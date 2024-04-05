@@ -12,6 +12,8 @@
     },
     "rules": {
         "no-console": "off",
-        "import/prefer-default-export": "off"
+        "import/prefer-default-export": "off",
+        "no-labels": [ "error", { "allowLoop": true } ],
+        "no-restricted-syntax": [ "off", "LabeledStatement" ]
     }
 }

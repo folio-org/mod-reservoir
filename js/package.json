@@ -3,6 +3,7 @@
   "type": "module",
   "scripts": {
     "lint-goldrush": "eslint matchkeys/goldrush/goldrush.mjs",
+    "explain-lint-goldrush": "eslint --print-config matchkeys/goldrush/goldrush.mjs",
     "lint-test": "eslint test/main.js",
     "test": "node test/main.js"
   },
