@@ -79,9 +79,22 @@
       "250": {
         "subfields": [
           {
+            "7": "dpecou"
+          }
+        ],
+        "ind1": " ",
+        "ind2": " "
+      }
+    },
+    {
+      "250": {
+        "subfields": [
+          {
             "a": "Fîfth edition."
           }
-        ]
+        ],
+        "ind1": " ",
+        "ind2": " "
       }
     },
     {

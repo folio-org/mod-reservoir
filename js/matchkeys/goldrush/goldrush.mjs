@@ -43,6 +43,27 @@ function getField(record, tag, sf) {
   return data;
 }
 
+function getRelevantSubField(record, tag, sf) {
+  // Get the first repeating field that has the relevant subfield.
+  let data = null;
+  const fields = record.fields.filter((f) => f[tag]);
+  loop1:
+  for (let x = 0; x < fields.length; x += 1) {
+    const f = fields[x];
+    if (f[tag].subfields) {
+      for (let n = 0; n < f[tag].subfields.length; n += 1) {
+        const s = f[tag].subfields[n];
+        if (s[sf]) {
+          data = s[sf];
+          // Use the first relevant subfield
+          break loop1;
+        }
+      }
+    }
+  }
+  return data;
+}
+
 function getMultiSubfields(record, tag, sf) {
   const data = [];
   const fields = record.fields.filter((f) => f[tag]);
@@ -398,7 +419,7 @@ export function matchkey(record) {
     getField(marcObj, '260', 'c'),
   ]));
   keyStr += addComponent(doPagination(getField(marcObj, '300', 'a')));
-  keyStr += addComponent(doEditionStatement(getField(marcObj, '250', 'a')));
+  keyStr += addComponent(doEditionStatement(getRelevantSubField(marcObj, '250', 'a')));
   keyStr += addComponent(doPublisherName([
     getField(marcObj, '264', 'b'),
     getField(marcObj, '260', 'b'),
