@@ -421,8 +421,8 @@ export function matchkey(record) {
   keyStr += addComponent(doPagination(getField(marcObj, '300', 'a')));
   keyStr += addComponent(doEditionStatement(getRelevantSubField(marcObj, '250', 'a')));
   keyStr += addComponent(doPublisherName([
-    getField(marcObj, '264', 'b'),
-    getField(marcObj, '260', 'b'),
+    getRelevantSubField(marcObj, '264', 'b'),
+    getRelevantSubField(marcObj, '260', 'b'),
   ]));
   keyStr += addComponent(doTypeOfRecord(marcObj.leader));
   keyStr += addComponent(doTitlePart(getMultiSubfields(marcObj, '245', 'p')));
