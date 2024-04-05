@@ -415,8 +415,8 @@ export function matchkey(record) {
   ]));
   keyStr += addComponent(doPublicationYear([
     getField(marcObj, '008'),
-    getField(marcObj, '264', 'c'),
-    getField(marcObj, '260', 'c'),
+    getRelevantSubField(marcObj, '264', 'c'),
+    getRelevantSubField(marcObj, '260', 'c'),
   ]));
   keyStr += addComponent(doPagination(getField(marcObj, '300', 'a')));
   keyStr += addComponent(doEditionStatement(getRelevantSubField(marcObj, '250', 'a')));
