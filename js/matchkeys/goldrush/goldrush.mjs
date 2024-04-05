@@ -313,12 +313,12 @@ function doAuthor(fieldData) {
   let fieldStr = '';
   for (let n = 0; n < fieldData.length; n += 1) {
     if (fieldData[n] !== null) {
-      let dataStr = stripPunctuation(fieldData[n], '_');
+      let dataStr = stripPunctuation(fieldData[n], '');
       dataStr = normalizeAndUnaccent(dataStr);
       fieldStr += dataStr;
     }
   }
-  return padContent(fieldStr, 20);
+  return padContent(fieldStr.replace(/[^a-zA-Z0-9]/g, ''), 5);
 }
 
 function doInclusiveDates(fieldData) {
