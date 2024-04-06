@@ -1,0 +1,268 @@
+{
+  "leader": "00901cam a2200241 a 4500",
+  "fields": [
+    {
+      "001": "933394"
+    },
+    {
+      "005": "20230811171234.9"
+    },
+    {
+      "008": "860818s1937 xnaaf j 000 1 eng d"
+    },
+    {
+      "019": {
+        "subfields": [
+          {
+            "a": "4744082"
+          }
+        ],
+        "ind1": "1",
+        "ind2": " "
+      }
+    },
+    {
+      "035": {
+        "subfields": [
+          {
+            "9": "(AuCNLDY)1598533"
+          }
+        ],
+        "ind1": " ",
+        "ind2": " "
+      }
+    },
+    {
+      "035": {
+        "subfields": [
+          {
+            "a": "933394"
+          }
+        ],
+        "ind1": " ",
+        "ind2": " "
+      }
+    },
+    {
+      "040": {
+        "subfields": [
+          {
+            "a": "ANL"
+          },
+          {
+            "b": "eng"
+          },
+          {
+            "c": "ANL"
+          },
+          {
+            "d": "VMOU"
+          }
+        ],
+        "ind1": " ",
+        "ind2": " "
+      }
+    },
+    {
+      "042": {
+        "subfields": [
+          {
+            "a": "anuc"
+          }
+        ],
+        "ind1": " ",
+        "ind2": " "
+      }
+    },
+    {
+      "082": {
+        "subfields": [
+          {
+            "a": "A823.3"
+          },
+          {
+            "2": "19"
+          }
+        ],
+        "ind1": "1",
+        "ind2": "4"
+      }
+    },
+    {
+      "100": {
+        "subfields": [
+          {
+            "a": "Wall, Dorothy,"
+          },
+          {
+            "d": "1894-1942."
+          },
+          {
+            "0": "8320"
+          },
+          {
+            "9": "be11c046-5943-5ebc-aec6-8a1b46a3ee2a"
+          }
+        ],
+        "ind1": "1",
+        "ind2": " "
+      }
+    },
+    {
+      "245": {
+        "subfields": [
+          {
+            "a": "Blinky Bill and Nutsy :"
+          },
+          {
+            "b": "two little Australians /"
+          },
+          {
+            "c": "story and illustrations by Dorothy Wall."
+          }
+        ],
+        "ind1": "1",
+        "ind2": "0"
+      }
+    },
+    {
+      "260": {
+        "subfields": [
+          {
+            "a": "Sydney :"
+          },
+          {
+            "b": "Angus & Robertson,"
+          },
+          {
+            "c": "1937"
+          },
+          {
+            "e": "(Sydney :"
+          },
+          {
+            "f": "Halstead Press)"
+          }
+        ],
+        "ind1": " ",
+        "ind2": " "
+      }
+    },
+    {
+      "300": {
+        "subfields": [
+          {
+            "a": "115 p. :"
+          },
+          {
+            "b": "ill. ;"
+          },
+          {
+            "c": "25 cm."
+          }
+        ],
+        "ind1": " ",
+        "ind2": " "
+      }
+    },
+    {
+      "500": {
+        "subfields": [
+          {
+            "a": "For children."
+          }
+        ],
+        "ind1": " ",
+        "ind2": " "
+      }
+    },
+    {
+      "510": {
+        "subfields": [
+          {
+            "a": "Muir, M. A bibliography of Australian children's books,"
+          },
+          {
+            "c": "7831."
+          }
+        ],
+        "ind1": "4",
+        "ind2": " "
+      }
+    },
+    {
+      "650": {
+        "subfields": [
+          {
+            "a": "Koala"
+          },
+          {
+            "v": "Juvenile fiction."
+          }
+        ],
+        "ind1": " ",
+        "ind2": "0"
+      }
+    },
+    {
+      "655": {
+        "subfields": [
+          {
+            "a": "Children's stories, Australian."
+          },
+          {
+            "2": "lcsh"
+          }
+        ],
+        "ind1": " ",
+        "ind2": "7"
+      }
+    },
+    {
+      "999": {
+        "subfields": [
+          {
+            "i": "a20c4297-56d6-524f-b929-6e26a302600b"
+          },
+          {
+            "s": "e699685a-0c03-563f-b621-31fb9360ab8c"
+          }
+        ],
+        "ind1": "f",
+        "ind2": "f"
+      }
+    },
+    {
+      "952": {
+        "subfields": [
+          {
+            "a": "National Library of Australia"
+          },
+          {
+            "b": "Parkes"
+          },
+          {
+            "c": "Parkes"
+          },
+          {
+            "d": "Main Reading Room (AUS [East])"
+          },
+          {
+            "e": "N A 823 WAL"
+          },
+          {
+            "h": "Dewey Decimal classification"
+          },
+          {
+            "m": "8e2ba3be-52ec-573d-aab1-81fa1139d292"
+          },
+          {
+            "z": "Holdings note: N hbk"
+          }
+        ],
+        "ind1": "f",
+        "ind2": "f"
+      }
+    }
+  ]
+}
