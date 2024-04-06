@@ -3,7 +3,7 @@
   "test/records/spec-example-1.json": "whatistheuseofjewishhistoryessays_____________________________________1992____1__schoca________________________________________dawid_______________p",
   "test/records/spec-example-2.json": "ontyrannytwentylessonsfromthetwentiethcentury_________________________2017____1__timdua________________________________________snyde_______________p",
   "test/records/three.json": "mytestrecordexamplefurmodmetastoragefictitious________________________202234435__mypreasecond_p_extra_p_su___________part_one__theem2022may29______not_a_real_gdcn_e",
-  "test/records/two.json": "blinkybillandnutsytwolittleaustralians________________________________0000____1_______a________________________________________walld_______________e",
+  "test/records/blinky-nutsy-gutenberg.json": "blinkybillandnutsy____________________________________________________0000____1_______a________________________________________walld_______________e",
   "test/records/invalid-1-broken-json.json": "Expected ',' or ']' after array element in JSON at position 233",
   "test/records/invalid-2-no-fields.json": "MARC fields is not an array.",
   "test/records/invalid-3-first-field.json": "______________________________________________________________________0000____1_______a____________________________________________________________p",
