@@ -10,6 +10,12 @@ The [matchkeys/goldrush](matchkeys/goldrush/goldrush.mjs) implements the "Gold R
 
 It takes input being a MARC-in-JSON string of MARC fields, and returns the matchkey string.
 
+#### goldrush components
+
+Components are padded with the underscore character to fill to the field width.
+
+The [diagram](matchkeys/goldrush/explain-matchkey-goldrush.png) indicates the components.
+
 ### matchkeys tests
 
 Do 'npm install' in this top-level directory to install and configure ESLint. Do 'npm run lint-goldrush' and 'npm run lint-test'.
@@ -20,4 +26,4 @@ The tests are basic at this stage. Do 'npm run test' to process the samples.
 
 ### transformers
 
-Example transformer that collects MARC fields from all member records and creates field 999_10 for each withe sourceId, localId and globalId.
+Example transformer that collects MARC fields from all member records and creates field 999_10 for each with: sourceId, localId and globalId.
