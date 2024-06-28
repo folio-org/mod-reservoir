@@ -8,6 +8,7 @@ import io.vertx.core.Vertx;
 import io.vertx.core.VertxException;
 import io.vertx.core.buffer.Buffer;
 import io.vertx.core.http.HttpClient;
+import io.vertx.core.http.HttpClientOptions;
 import io.vertx.core.http.HttpClientRequest;
 import io.vertx.core.http.HttpClientResponse;
 import io.vertx.core.http.HttpMethod;
@@ -64,7 +65,7 @@ public class OaiPmhClientService {
 
   public OaiPmhClientService(Vertx vertx) {
     this.vertx = vertx;
-    this.httpClient = vertx.createHttpClient();
+    this.httpClient = vertx.createHttpClient(new HttpClientOptions().setTcpKeepAlive(true));
   }
 
   /**
@@ -685,6 +686,8 @@ public class OaiPmhClientService {
                           listRecordsResponse(storage, job, matchKeyConfigs, res)))
               .map(0)
               .recover(e -> {
+                log.info("harvest loop id={} owner={} error={}, will retry",
+                    id, owner, e.getMessage());
                 if (e instanceof VertxException && "Connection was closed".equals(e.getMessage())
                     && retries < config.getInteger("numberRetries", 3)) {
                   Promise<Integer> promise = Promise.promise();
@@ -707,7 +710,8 @@ public class OaiPmhClientService {
           if (OAI_ERROR_NORECORDSMATCH.equals(e.getMessage())) {
             log.info("harvest loop id={} owner={} all harvested", id, owner);
           } else {
-            log.warn("harvest loop id={} owner={} error {}", id, owner, e.getMessage(), e);
+            log.warn("harvest loop id={} owner={} error={}, terminating",
+                id, owner, e.getMessage(), e);
             job.setError(e.getMessage());
           }
           // hopefully updateJob works so that error can be saved.
