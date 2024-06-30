@@ -686,15 +686,17 @@ public class OaiPmhClientService {
                           listRecordsResponse(storage, job, matchKeyConfigs, res)))
               .map(0)
               .recover(e -> {
-                log.info("harvest loop id={} owner={} error={}, will retry",
-                    id, owner, e.getMessage());
                 if (e instanceof VertxException && "Connection was closed".equals(e.getMessage())
                     && retries < config.getInteger("numberRetries", 3)) {
+                  log.info("harvest loop id={} owner={} error={}, will retry",
+                      id, owner, e.getMessage());
                   Promise<Integer> promise = Promise.promise();
                   long w = config.getInteger("waitRetries", 10);
                   vertx.setTimer(1000 * w, x -> promise.complete(retries + 1));
                   return promise.future();
                 }
+                log.info("harvest loop id={} owner={} error={}, will not retry",
+                    id, owner, e.getMessage());
                 return Future.failedFuture(e);
               })
               .compose(newRetries ->
