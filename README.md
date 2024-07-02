@@ -521,6 +521,30 @@ curl -G -HX-Okapi-Tenant:$OKAPI_TENANT $OKAPI_URL/reservoir/clusters/touch \
   --data-urlencode "query=matchkeyId = title AND sourceId = BIB1" -XPOST
 ```
 
+## Hosting notes
+
+OAI-PMH client operations and certain server operations like `/config/matchkeys/{name}/initialize`
+and `/clusters/?matchkeyid={name}&count=exact`may take a long time and appear idle which may cause
+timeouts in gateways and load-balancers (NGINX, ALB/NAT gateway, etc). Reservoir enables _TCP keepalive_
+in an attempt to workaround this problem but the default `tcp_keepalive_time` on Linux is much too high (2hrs)
+to make a difference and should be decreased to ~300 seconds with:
+
+```
+echo 300 > /proc/sys/net/ipv4/tcp_keepalive_time
+```
+
+This will help with client connections (OAI-PMH) resets but NGINX does not use _TCP keepalive_ for server sockets by
+default and it must be enabled with `so_keepalive=on` parameter on the `listen` (directive)[https://nginx.org/en/docs/http/ngx_http_core_module.html#listen]
+
+Additionally, it's a good idea to disable request buffering in NGINX with:
+
+``
+proxy_request_buffering off
+```
+
+when dealing with large uploads.
+
+
 ## Additional information
 
 ### Issue tracker
