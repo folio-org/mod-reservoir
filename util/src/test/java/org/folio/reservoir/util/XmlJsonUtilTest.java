@@ -77,6 +77,16 @@ public class XmlJsonUtilTest {
           .add(new JsonObject().put("001", "a1"))
       );
 
+  static final String MARCXML_BAD_CHAR_SAMPLE =
+      "<record xmlns=\"http://www.loc.gov/MARC21/slim\">\n"
+          + "  <controlfield tag=\"001\">&#xFFFD;</controlfield>\n"
+          + "</record>";
+
+  static final JsonObject MARCJSON_BAD_CHAR_SAMPLE = new JsonObject()
+      .put("fields", new JsonArray()
+          .add(new JsonObject().put("001", "\u001d"))
+      );
+
   @Test
   public void testGetSubDocumentNamespace() throws XMLStreamException {
     String collection = "<a xmlns=\"http://foo.com\">\n<b type=\"1\"><c/></b><b xmlns=\"http://bar.com\"/></a>";
@@ -215,6 +225,12 @@ public class XmlJsonUtilTest {
   public void convertJsonToMarcXml3() {
     String got = JsonToMarcXml.convert(MARCJSON3_SAMPLE);
     Assert.assertEquals(MARCXML3_SAMPLE, got);
+  }
+
+  @Test
+  public void convertJsonToMarcXmlBadChar() {
+    String got = JsonToMarcXml.convert(MARCJSON_BAD_CHAR_SAMPLE);
+    Assert.assertEquals(MARCXML_BAD_CHAR_SAMPLE, got);
   }
 
   @Test
