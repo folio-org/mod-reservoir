@@ -550,7 +550,7 @@ proxy_socket_keepalive on
 
 Additionally, it's a good idea to disable request buffering in NGINX with:
 
-``
+```
 proxy_request_buffering off
 ```
 
