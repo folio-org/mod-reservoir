@@ -538,7 +538,7 @@ This will help with client connections (OAI-PMH) idle resets.
 NGINX does not use _TCP keepalive_ for its server and client sockets by default.
 
 For the server socket it can be enabled with the `so_keepalive=on` parameter on
-the `listen` (directive)[https://nginx.org/en/docs/http/ngx_http_core_module.html#listen]
+the `listen` [directive](https://nginx.org/en/docs/http/ngx_http_core_module.html#listen)
 
 For the client (upstream) socket it can be enabled with the:
 
@@ -546,7 +546,7 @@ For the client (upstream) socket it can be enabled with the:
 proxy_socket_keepalive on
 ```
 
-(directive)[https://nginx.org/en/docs/http/ngx_http_proxy_module.html#proxy_socket_keepalive].
+[directive](https://nginx.org/en/docs/http/ngx_http_proxy_module.html#proxy_socket_keepalive).
 
 Additionally, it's a good idea to disable request buffering in NGINX with:
 
