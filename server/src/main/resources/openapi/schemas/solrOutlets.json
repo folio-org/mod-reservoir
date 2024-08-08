@@ -1,0 +1,23 @@
+{
+  "description": "Solr outlets",
+  "type": "object",
+  "properties": {
+    "items": {
+      "description": "List Solr outlets",
+      "type": "array",
+      "items": {
+        "type": "object",
+        "$ref": "solrOutlet.json"
+      }
+    },
+    "resultInfo": {
+      "description": "Common result set information",
+      "type": "object",
+      "$ref" : "resultInfo.json"
+    }
+  },
+  "additionalProperties": false,
+  "required": [
+    "items"
+  ]
+}
