@@ -30,7 +30,12 @@ public class MappingReadStream<T,V> implements ReadStream<T>, Handler<V> {
     this.stream = stream;
     this.mapper = mapper;
     stream.handler(this);
-    stream.endHandler(v -> end());
+    stream.endHandler(v -> {
+      //might be already ended due to exception
+      if (!ended) {
+        end();
+      }
+    });
     stream.exceptionHandler(e -> {
       if (exceptionHandler != null) {
         exceptionHandler.handle(e);
@@ -126,9 +131,21 @@ public class MappingReadStream<T,V> implements ReadStream<T>, Handler<V> {
         }
       }
     } catch (Exception e) {
-      stream.handler(null); // only interested in first error
+      // unregister so no more errors may be raised
+      stream.handler(null);
       if (exceptionHandler != null) {
         exceptionHandler.handle(e);
+      }
+      // unregistering may suppress end handler
+      // raise it and end imediately
+      if (!ended) {
+        ended = true;
+        mapper.end();
+        var handler = endHandler;
+        endHandler = null;
+        if (handler != null) {
+          handler.handle(null);
+        }
       }
     } finally {
       emitting = false;

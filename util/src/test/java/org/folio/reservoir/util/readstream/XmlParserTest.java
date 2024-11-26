@@ -232,7 +232,7 @@ public class XmlParserTest {
           return promise.future();
         })
         .onComplete(context.asyncAssertSuccess(
-            end -> assertThat(events, hasSize(4))));
+            end -> assertThat(events, hasSize(2))));
   }
 
   @Test
