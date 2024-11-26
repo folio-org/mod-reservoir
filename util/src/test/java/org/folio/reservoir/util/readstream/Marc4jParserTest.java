@@ -39,7 +39,11 @@ public class Marc4jParserTest {
 
   Future<MappingReadStream<Record, Buffer>> marc4jParserFromFile(String fname) {
     return vertx.fileSystem().open(fname, new OpenOptions())
-        .map(file -> new MappingReadStream<>(file, new Marc4jMapper()));
+        .map(file -> {
+          var parser = new MappingReadStream<>(file, new Marc4jMapper());
+          parser.pause();
+          return parser;
+        });
   }
 
   Future<MappingReadStream<Record, Buffer>> marc4jParserFromFile() {
@@ -49,12 +53,13 @@ public class Marc4jParserTest {
   @Test
   public void marc3(TestContext context) {
     marc4jParserFromFile()
-        .compose(xmlParser -> {
+        .compose(parser -> {
           List<Record> records = new ArrayList<>();
           Promise<List<Record>> promise = Promise.promise();
-          xmlParser.handler(records::add);
-          xmlParser.endHandler(e -> promise.complete(records));
-          xmlParser.exceptionHandler(promise::tryFail);
+          parser.handler(records::add);
+          parser.endHandler(e -> promise.complete(records));
+          parser.exceptionHandler(promise::tryFail);
+          parser.resume();
           return promise.future();
         })
         .onComplete(context.asyncAssertSuccess(records -> {
@@ -72,6 +77,7 @@ public class Marc4jParserTest {
           Promise<Void> promise = Promise.promise();
           parser.exceptionHandler(promise::tryFail);
           parser.endHandler(x -> promise.tryComplete());
+          parser.resume();
           return promise.future();
         })
         .onComplete(context.asyncAssertSuccess());
@@ -86,6 +92,7 @@ public class Marc4jParserTest {
           parser.endHandler(x -> {
             throw new RuntimeException("end exception");
           });
+          parser.resume();
           return promise.future();
         })
         .onComplete(context.asyncAssertFailure(e -> assertThat(e.getMessage(), is("end exception"))));
@@ -100,6 +107,7 @@ public class Marc4jParserTest {
             promise.tryFail("must stop");
             throw new RuntimeException("end exception");
           });
+          parser.resume();
           return promise.future();
         })
         .onComplete(context.asyncAssertFailure(e -> assertThat(e.getMessage(), is("must stop"))));
@@ -117,6 +125,7 @@ public class Marc4jParserTest {
               promise.tryComplete();
             }
           });
+          parser.resume();
           return promise.future();
         })
         .onComplete(context.asyncAssertSuccess());
@@ -126,6 +135,7 @@ public class Marc4jParserTest {
   public void testPauseFetch(TestContext context) {
     marc4jParserFromFile()
         .compose(parser -> {
+          parser.resume();
           parser.fetch(1);
           parser.pause();
           parser.fetch(1);
@@ -148,6 +158,7 @@ public class Marc4jParserTest {
   public void testDoubleEnd(TestContext context) {
     marc4jParserFromFile()
         .map(parser -> {
+          parser.resume();
           parser.end();
           parser.endHandler(x -> {});
           parser.end();
@@ -166,6 +177,7 @@ public class Marc4jParserTest {
           });
           parser.exceptionHandler(promise::tryFail);
           parser.endHandler(promise::complete);
+          parser.resume();
           return promise.future();
         })
         .onComplete(context.asyncAssertFailure(
