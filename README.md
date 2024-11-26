@@ -523,19 +523,24 @@ curl -G -HX-Okapi-Tenant:$OKAPI_TENANT $OKAPI_URL/reservoir/clusters/touch \
 
 ## Hosting notes
 
-OAI-PMH client operations and certain server operations like `/config/matchkeys/{name}/initialize`
-and `/clusters/?matchkeyid={name}&count=exact`may take a long time and appear idle which may cause
-timeouts in gateways and load-balancers (NGINX, ALB/NAT gateway, etc). Reservoir enables _TCP keepalive_
-in an attempt to workaround this problem but the default `tcp_keepalive_time` on Linux is much too high (2hrs)
-to make a difference and should be decreased to ~300 seconds with:
+OAI-PMH client operations and certain Reservoir API operations, including:
 
-```
-echo 300 > /proc/sys/net/ipv4/tcp_keepalive_time
-```
+  * `/config/matchkeys/{name}/initialize`
+  * `/clusters/?matchkeyid={name}&count=exact`
 
-This will help with client connections (OAI-PMH) idle resets.
+may take a long time and appear idle which can cause timeouts in gateways and load-balancers (NGINX, ALB/NAT gateway, etc).
 
-NGINX does not use _TCP keepalive_ for its server and client sockets by default.
+Reservoir enables _TCP keepalive_ for client sockets in an attempt to workaround OAI-PMH idle resets. The following values are used:
+
+  * `tcp_keepalive_idle` `45s`
+  * `tcp_keepalive_interval` `45s`
+
+which is below the default NAT gateway (300s) or reverse proxy timeouts (60s).
+
+Reservoir API timeouts are typically caused by a load-balancer/ingress controller and may require
+custom configuration to enable _TCP keepalive_.
+
+Specifically, NGINX does not use _TCP keepalive_ for its server and client sockets by default.
 
 For the server socket it can be enabled with the `so_keepalive=on` parameter on
 the `listen` [directive](https://nginx.org/en/docs/http/ngx_http_core_module.html#listen)

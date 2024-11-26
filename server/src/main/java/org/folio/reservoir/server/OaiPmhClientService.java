@@ -63,9 +63,18 @@ public class OaiPmhClientService {
 
   private static final Logger log = LogManager.getLogger(OaiPmhClientService.class);
 
+  /**
+   * Create OAI-PMH client service.
+   *
+   * @param vertx vertx context
+   */
   public OaiPmhClientService(Vertx vertx) {
     this.vertx = vertx;
-    this.httpClient = vertx.createHttpClient(new HttpClientOptions().setTcpKeepAlive(true));
+    var opts = new HttpClientOptions()
+        .setTcpKeepAlive(true);
+    opts.setTcpKeepAliveIdleSeconds(45);
+    opts.setTcpKeepAliveIntervalSeconds(45);
+    this.httpClient = vertx.createHttpClient(opts);
   }
 
   /**
