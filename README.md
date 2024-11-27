@@ -523,44 +523,45 @@ curl -G -HX-Okapi-Tenant:$OKAPI_TENANT $OKAPI_URL/reservoir/clusters/touch \
 
 ## Hosting notes
 
-OAI-PMH client operations and certain Reservoir API operations, including:
-
-  * `/config/matchkeys/{name}/initialize`
-  * `/clusters/?matchkeyid={name}&count=exact`
-
-may take a long time and appear idle which can cause timeouts in gateways and load-balancers (NGINX, ALB/NAT gateway, etc).
+Harvest operations against slow OAI-PMH servers may take a long time and appear idle which can cause timeouts in NAT gateways or firewalls.
 
 Reservoir enables _TCP keepalive_ for client sockets in an attempt to workaround OAI-PMH idle resets. The following values are used:
 
   * `tcp_keepalive_idle` `45s`
   * `tcp_keepalive_interval` `45s`
+  * `tcp_keepalive_count` (default, 9)
 
-which is below the default NAT gateway (300s) or reverse proxy timeouts (60s).
+which are below the default idle timeout values (~300s).
 
-Reservoir API timeouts are typically caused by a load-balancer/ingress controller and may require
-custom configuration to enable _TCP keepalive_.
+Similarly, certain Reservoir API operations, including:
 
-Specifically, NGINX does not use _TCP keepalive_ for its server and client sockets by default.
+  * `/config/matchkeys/{name}/initialize`
+  * `/clusters/?matchkeyid={name}&count=exact`
 
-For the server socket it can be enabled with the `so_keepalive=on` parameter on
-the `listen` [directive](https://nginx.org/en/docs/http/ngx_http_core_module.html#listen)
+are database heavy and may take a long time. Such request may be considered idle by the front load-balancer
+or ingress controller and require tuning of the timeout values.
 
-For the client (upstream) socket it can be enabled with the:
+Specifically, for NGINX it's recommended that the read timeout is increased beyond the default 60s:
 
 ```
-proxy_socket_keepalive on
+proxy_read_timeout 600s
 ```
 
-[directive](https://nginx.org/en/docs/http/ngx_http_proxy_module.html#proxy_socket_keepalive).
-
-Additionally, it's a good idea to disable request buffering in NGINX with:
+Additionally to allow uploading large files, it's a good idea to disable request buffering in NGINX and
+increase the max size:
 
 ```
 proxy_request_buffering off
+client_max_body_size 10G
 ```
 
-when dealing with large uploads.
+In `ingress-nginx` the following annotations should be used:
 
+```
+    nginx.ingress.kubernetes.io/proxy-body-size: 10G
+    nginx.ingress.kubernetes.io/proxy-read-timeout: "600"
+    nginx.ingress.kubernetes.io/proxy-request-buffering: "off"
+```
 
 ## Additional information
 
