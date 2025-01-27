@@ -6,7 +6,5 @@
   "test/records/blinky-nutsy-gutenberg.json": "blinkybillandnutsy____________________________________________________0000____1_______a________________________________________walld_______________e",
   "test/records/blinky-nutsy-nla.json": "blinkybillandnutsytwolittleaustralians________________________________1937____1__angusa________________________________________walld_______________p",
   "test/records/invalid-1-broken-json.json": "Expected ',' or ']' after array element in JSON at position 233",
-  "test/records/invalid-2-no-fields.json": "MARC fields is not an array.",
-  "test/records/invalid-3-first-field.json": "______________________________________________________________________0000____1_______a____________________________________________________________p",
-  "test/records/invalid-4-no-leader.json": "______________________________________________________________________0000____1_______a________________________________________nerkf_______________p"
+  "test/records/invalid-2-no-fields.json": "MARC fields is not an array."
 }
