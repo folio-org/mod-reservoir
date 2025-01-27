@@ -8,6 +8,7 @@ import io.vertx.core.Vertx;
 import io.vertx.core.VertxException;
 import io.vertx.core.buffer.Buffer;
 import io.vertx.core.http.HttpClient;
+import io.vertx.core.http.HttpClientOptions;
 import io.vertx.core.http.HttpClientRequest;
 import io.vertx.core.http.HttpClientResponse;
 import io.vertx.core.http.HttpMethod;
@@ -62,9 +63,18 @@ public class OaiPmhClientService {
 
   private static final Logger log = LogManager.getLogger(OaiPmhClientService.class);
 
+  /**
+   * Create OAI-PMH client service.
+   *
+   * @param vertx vertx context
+   */
   public OaiPmhClientService(Vertx vertx) {
     this.vertx = vertx;
-    this.httpClient = vertx.createHttpClient();
+    var opts = new HttpClientOptions()
+        .setTcpKeepAlive(true);
+    opts.setTcpKeepAliveIdleSeconds(45);
+    opts.setTcpKeepAliveIntervalSeconds(45);
+    this.httpClient = vertx.createHttpClient(opts);
   }
 
   /**
@@ -663,10 +673,11 @@ public class OaiPmhClientService {
   }
 
   void oaiHarvestLoop(Storage storage, String id, OaiPmhStatus job, UUID owner, int retries) {
-    log.info("harvest loop id={} owner={} retries={}", id, owner, retries);
     job.setError(null);
     job.setLastActiveTimestampRaw(LocalDateTime.now(ZoneOffset.UTC));
     JsonObject config = job.getConfig();
+    log.info("harvest loop id={} owner={} rt={} retries={}",
+        id, owner, getRt(config), retries);
     getStopOwner(storage, id)
         .compose(row -> {
           if (!row.getUUID("owner").equals(owner)) {
@@ -687,11 +698,15 @@ public class OaiPmhClientService {
               .recover(e -> {
                 if (e instanceof VertxException && "Connection was closed".equals(e.getMessage())
                     && retries < config.getInteger("numberRetries", 3)) {
+                  log.info("harvest loop id={} owner={} rt={} error={}, will retry",
+                      id, owner, getRt(config), e.getMessage());
                   Promise<Integer> promise = Promise.promise();
                   long w = config.getInteger("waitRetries", 10);
                   vertx.setTimer(1000 * w, x -> promise.complete(retries + 1));
                   return promise.future();
                 }
+                log.info("harvest loop id={} owner={} rt={} error={}, will not retry",
+                    id, owner, getRt(config), e.getMessage());
                 return Future.failedFuture(e);
               })
               .compose(newRetries ->
@@ -707,7 +722,8 @@ public class OaiPmhClientService {
           if (OAI_ERROR_NORECORDSMATCH.equals(e.getMessage())) {
             log.info("harvest loop id={} owner={} all harvested", id, owner);
           } else {
-            log.warn("harvest loop id={} owner={} error {}", id, owner, e.getMessage(), e);
+            log.warn("harvest loop id={} owner={} rt={} error={}, terminating",
+                id, owner, getRt(config), e.getMessage(), e);
             job.setError(e.getMessage());
           }
           // hopefully updateJob works so that error can be saved.
@@ -717,5 +733,9 @@ public class OaiPmhClientService {
             // if we make it here even saving didn't work!!!
             log.error("harvest loop fail id={} owner={} fatal {}", id, owner, e.getMessage(), e)
         );
+  }
+
+  private String getRt(JsonObject config) {
+    return config.getString(RESUMPTION_TOKEN_LITERAL);
   }
 }

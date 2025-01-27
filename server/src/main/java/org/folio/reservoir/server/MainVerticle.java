@@ -38,7 +38,8 @@ public class MainVerticle extends AbstractVerticle {
           HttpServerOptions so = new HttpServerOptions()
               .setCompressionSupported(true)
               .setDecompressionSupported(true)
-              .setHandle100ContinueAutomatically(true);
+              .setHandle100ContinueAutomatically(true)
+              .setTcpKeepAlive(true);
           return vertx.createHttpServer(so)
               .requestHandler(router)
               .listen(port).mapEmpty();

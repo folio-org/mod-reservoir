@@ -521,6 +521,48 @@ curl -G -HX-Okapi-Tenant:$OKAPI_TENANT $OKAPI_URL/reservoir/clusters/touch \
   --data-urlencode "query=matchkeyId = title AND sourceId = BIB1" -XPOST
 ```
 
+## Hosting notes
+
+Harvest operations against slow OAI-PMH servers may take a long time and appear idle which can cause timeouts in NAT gateways or firewalls.
+
+Reservoir enables _TCP keepalive_ for client sockets in an attempt to workaround OAI-PMH idle resets. The following values are used:
+
+  * `tcp_keepalive_idle` `45s`
+  * `tcp_keepalive_interval` `45s`
+  * `tcp_keepalive_count` (default, 9)
+
+which are below the default idle timeout values (~300s).
+
+Similarly, certain Reservoir API operations, including:
+
+  * `/config/matchkeys/{name}/initialize`
+  * `/clusters/?matchkeyid={name}&count=exact`
+
+are database heavy and may take a long time. Such request may be considered idle by the front load-balancer
+or ingress controller and require tuning of the timeout values.
+
+Specifically, for NGINX it's recommended that the read timeout is increased beyond the default 60s:
+
+```
+proxy_read_timeout 600s
+```
+
+Additionally to allow uploading large files, it's a good idea to disable request buffering in NGINX and
+increase the max size:
+
+```
+proxy_request_buffering off
+client_max_body_size 10G
+```
+
+In `ingress-nginx` the following annotations should be used:
+
+```
+    nginx.ingress.kubernetes.io/proxy-body-size: 10G
+    nginx.ingress.kubernetes.io/proxy-read-timeout: "600"
+    nginx.ingress.kubernetes.io/proxy-request-buffering: "off"
+```
+
 ## Additional information
 
 ### Issue tracker
