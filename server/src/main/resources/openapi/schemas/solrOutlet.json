@@ -1,0 +1,35 @@
+{
+  "description": "Solr outlet configuration",
+  "type": "object",
+  "properties": {
+    "id": {
+      "type": "string",
+      "description": "Solr outlet identifier"
+    },
+    "solrUrl" : {
+      "type" : "string",
+      "description" : "Solr server URL"
+    },
+    "transformer": {
+      "type": "string",
+      "description" : "OAI server response transformer invocation: 'moduleId<::function>' where <::function> is optional"
+    },
+    "matchkeyId" : {
+      "type": "string",
+      "description" : "Use global records with this matchkey configuration"
+    },
+    "from" : {
+      "type": "string",
+      "description" : "OAI \"from\" date"
+    },
+    "until" : {
+      "type": "string",
+      "description" : "OAI \"until\" date"
+    }
+  },
+  "additionalProperties": false,
+  "required": [
+    "id", "solrUrl", "matchkeyId"
+  ]
+}
+
