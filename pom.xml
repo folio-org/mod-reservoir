@@ -42,7 +42,7 @@
     <log4j2.version>2.19.0</log4j2.version>
     <vertx.version>4.5.11</vertx.version>
     <okapi.version>5.1.2</okapi.version>
-    <vertxlib.version>3.0.0</vertxlib.version>
+    <vertxlib.version>3.3.0</vertxlib.version>
     <micrometer.version>1.10.2</micrometer.version>
   </properties>
 
