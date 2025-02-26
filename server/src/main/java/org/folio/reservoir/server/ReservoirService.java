@@ -508,6 +508,7 @@ public class ReservoirService implements RouterCreator, TenantInitHooks {
   @Override
   public Future<Router> createRouter(Vertx vertx) {
     OaiPmhClientService oaiPmhClient = new OaiPmhClientService(vertx);
+    SruService sruService = new SruService();
     UploadService uploadService = new UploadService();
     return RouterBuilder.create(vertx, "openapi/reservoir.yaml")
         .map(routerBuilder -> {
@@ -543,6 +544,7 @@ public class ReservoirService implements RouterCreator, TenantInitHooks {
           add(routerBuilder, "startOaiPmhClient", oaiPmhClient::start);
           add(routerBuilder, "stopOaiPmhClient", oaiPmhClient::stop);
           add(routerBuilder, "statusOaiPmhClient", oaiPmhClient::status);
+          add(routerBuilder, "sruService", sruService::get);
           Router router = Router.router(vertx);
           // this endpoint is streaming, and we handle it without OpenAPI and validation
           router.put("/reservoir/records").handler(ctx ->
