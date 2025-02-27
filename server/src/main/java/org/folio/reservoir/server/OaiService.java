@@ -29,6 +29,10 @@ import org.folio.reservoir.module.ModuleInvocation;
 import org.folio.reservoir.server.entity.ClusterBuilder;
 import org.folio.reservoir.util.JsonToMarcXml;
 import org.folio.reservoir.util.MarcInJsonUtil;
+import org.folio.tlib.postgres.PgCqlDefinition;
+import org.folio.tlib.postgres.PgCqlQuery;
+import org.folio.tlib.postgres.cqlfield.PgCqlFieldAlwaysMatches;
+import org.folio.tlib.postgres.cqlfield.PgCqlFieldUuid;
 import org.folio.tlib.util.TenantUtil;
 
 public final class OaiService {
@@ -276,7 +280,7 @@ public final class OaiService {
           return storage.selectCodeModuleEntity(invocation.getModuleName())
               .compose(entity -> {
                 if (entity == null) {
-                  return Future.failedFuture("Transformer module '" 
+                  return Future.failedFuture("Transformer module '"
                     + invocation.getModuleName() + "' not found");
                 }
                 return ModuleCache.getInstance().lookup(ctx.vertx(), TenantUtil.tenant(ctx), entity)
@@ -382,6 +386,91 @@ public final class OaiService {
                       return null;
                     });
               }));
+    });
+  }
+
+  static Future<Void> sruGetResponse(RoutingContext ctx, String query) {
+    HttpServerResponse response = ctx.response();
+    // should use createDefinitionBase
+    PgCqlDefinition definition = PgCqlDefinition.create();
+    definition.addField(CqlFields.CQL_ALL_RECORDS.getCqlName(), new PgCqlFieldAlwaysMatches());
+    // id instead of clusterId in CqlFields.CLUSTER_ID
+    definition.addField("id", new PgCqlFieldUuid().withColumn(CqlFields.CLUSTER_ID.getSqllName()));
+    PgCqlQuery pgCqlQuery;
+    try {
+      pgCqlQuery = definition.parse(query);
+    } catch (Exception e) {
+      response.write("  <diagnostics>\n");
+      response.write("    <diagnostic xmlns:diag=\"http://docs.oasis-open.org/ns/search-ws/diagnostic\">\n");
+      response.write("      <uri>info:srw/diagnostic/1/10</uri>\n");
+      response.write("      <message>Query syntax error</message>\n");
+      response.write("    </diagnostic>\n");
+      response.write("  </diagnostics>\n");
+      return Future.succeededFuture();
+    }
+    // TODO: consider startRecord, maximumRecords, recordSchema
+    Storage storage = new Storage(ctx);
+    String sqlWhere = pgCqlQuery.getWhereClause();
+
+    response.write("  <records>\n");
+    AtomicInteger cnt = new AtomicInteger();
+    return getTransformer(storage, ctx).compose(transformer -> {
+      final String wClause = sqlWhere == null ? "" : " WHERE " + sqlWhere;
+      String sqlQuery = "SELECT * FROM " + storage.getClusterMetaTable() + wClause;
+      return storage.getPool()
+          .withConnection(conn -> conn.query(sqlQuery)
+              .execute()
+              .compose(res -> {
+                RowIterator<Row> iterator = res.iterator();
+                Future<Void> future = Future.succeededFuture();
+                while (iterator.hasNext()) {
+                  Row row = iterator.next();
+                  future = future.compose(x -> {
+                    log.info("row cnt={}", cnt.get());
+                    ClusterRecordItem cr = new ClusterRecordItem(row);
+                    ClusterRecordStream clusterRecordStream = new ClusterRecordStream(
+                        ctx.vertx(), storage, conn, response, transformer, false);
+                    return clusterRecordStream.getClusterMarcXml(cr)
+                        .map(marcxml -> {
+                          if (marcxml == null) {
+                            return null; // deleted record
+                          }
+                          cnt.incrementAndGet();
+                          response.write("    <record>\n");
+                          response.write("      <recordData>\n");
+                          response.write(marcxml);
+                          response.write("      </recordData>\n");
+                          response.write("    </record>\n");
+                          return null;
+                        });
+                  });
+                }
+                return future.onComplete(x -> {
+                  response.write("  </records>\n");
+                  response.write("  <numberOfRecords>" + cnt.get() + "</numberOfRecords>\n");
+                });
+              }));
+    });
+  }
+
+  static Future<Void> sruGet(RoutingContext ctx) {
+    HttpServerResponse response = ctx.response();
+    response.setChunked(true);
+    response.putHeader("Content-Type", "text/xml");
+    response.setStatusCode(200);
+
+    RequestParameters params = ctx.get(ValidationHandler.REQUEST_CONTEXT_KEY);
+    final String query = Util.getParameterString(params.queryParameter("query"));
+    if (query == null) {
+      // TODO: return explain response
+      response.write("Query is required");
+      response.end();
+      return Future.succeededFuture();
+    }
+    response.write("<searchRetrieveResponse xmlns=\"http://docs.oasis-open.org/ns/search-ws/sruResponse\">\n");
+    return sruGetResponse(ctx, query).onComplete(x -> {
+      response.write("</searchRetrieveResponse>\n");
+      response.end();
     });
   }
 }

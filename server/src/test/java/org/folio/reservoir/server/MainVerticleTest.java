@@ -40,7 +40,6 @@ import org.apache.logging.log4j.Logger;
 import org.awaitility.Awaitility;
 import org.folio.reservoir.server.entity.CodeModuleEntity;
 import org.folio.okapi.common.XOkapiHeaders;
-import org.hamcrest.MatcherAssert;
 import org.hamcrest.Matchers;
 import org.junit.After;
 import org.junit.Assert;
@@ -59,6 +58,7 @@ import static org.hamcrest.Matchers.hasSize;
 import static org.hamcrest.Matchers.is;
 import static org.hamcrest.Matchers.nullValue;
 import static org.hamcrest.Matchers.startsWith;
+import static org.hamcrest.MatcherAssert.assertThat;
 
 @RunWith(VertxUnitRunner.class)
 public class MainVerticleTest extends TestBase {
@@ -1208,7 +1208,7 @@ public class MainVerticleTest extends TestBase {
 
     String datestamp2 = new JsonObject(s).getJsonArray("items").getJsonObject(0).getString("datestamp");
 
-    MatcherAssert.assertThat(datestamp2, greaterThan(datestamp1));
+    assertThat(datestamp2, greaterThan(datestamp1));
   }
 
   @Test
@@ -2488,12 +2488,29 @@ public class MainVerticleTest extends TestBase {
         .extract().body().asString();
     verifyOaiResponse(s, "GetRecord", identifiers, 1, expectedIssn);
 
-    RestAssured.given()
+    s = RestAssured.given()
         .header(XOkapiHeaders.TENANT, TENANT_1)
-        .param("query", "id=" + identifiers.get(0))
+        .param("query", "id=" + identifiers.get(0).substring(4))
         .get("/reservoir/sru")
         .then().statusCode(200)
-        .contentType("text/xml");
+        .contentType("text/xml")
+        .extract().body().asString();
+
+    assertThat(s, containsString("numberOfRecords>1<"));
+    assertThat(s, containsString("<subfield code=\"s\">SOURCE-1</subfield>"));
+
+    assertThat(identifiers, hasSize(3));
+
+    s = RestAssured.given()
+        .header(XOkapiHeaders.TENANT, TENANT_1)
+        .param("query", "cql.AllRecords=true")
+        .get("/reservoir/sru")
+        .then().statusCode(200)
+        .contentType("text/xml")
+        .extract().body().asString();
+
+    assertThat(s, containsString("numberOfRecords>3<"));
+    assertThat(s, containsString("<subfield code=\"s\">SOURCE-1</subfield>"));
 
     RestAssured.given()
         .header(XOkapiHeaders.TENANT, TENANT_1)
