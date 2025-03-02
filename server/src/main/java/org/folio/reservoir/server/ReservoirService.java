@@ -543,7 +543,7 @@ public class ReservoirService implements RouterCreator, TenantInitHooks {
           add(routerBuilder, "startOaiPmhClient", oaiPmhClient::start);
           add(routerBuilder, "stopOaiPmhClient", oaiPmhClient::stop);
           add(routerBuilder, "statusOaiPmhClient", oaiPmhClient::status);
-          add(routerBuilder, "sruService", OaiService::sruGet);
+          add(routerBuilder, "sruService", SruService::get);
           Router router = Router.router(vertx);
           // this endpoint is streaming, and we handle it without OpenAPI and validation
           router.put("/reservoir/records").handler(ctx ->
