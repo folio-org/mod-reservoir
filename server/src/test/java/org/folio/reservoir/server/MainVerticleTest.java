@@ -742,6 +742,56 @@ public class MainVerticleTest extends TestBase {
     }
   }
 
+  static int verifySruResponse(String s, List<String> identifiers) throws XMLStreamException, IOException, SAXException {
+    InputStream stream = new ByteArrayInputStream(s.getBytes());
+    XMLInputFactory factory = XMLInputFactory.newInstance();
+    XMLStreamReader xmlStreamReader = factory.createXMLStreamReader(stream);
+
+    int totalRecords = 0;
+    int level = 0;
+    while (xmlStreamReader.hasNext()) {
+      int event = xmlStreamReader.next();
+      if (event == XMLStreamConstants.START_ELEMENT) {
+        String elem = xmlStreamReader.getLocalName();
+        if ("searchRetrieveResponse".equals(elem)) {
+          if (level != 0) {
+            throw new IllegalStateException("searchRetrieve not at level 0");
+          }
+          level = 1;
+        } else if ("numberOfRecords".equals(elem)) {
+          if (level != 1) {
+            throw new IllegalStateException("numberOfRecords not at level 1");
+          }
+          event = xmlStreamReader.next();
+          if (event == XMLStreamConstants.CHARACTERS) {
+            totalRecords = Integer.parseInt(xmlStreamReader.getText());
+          }
+        } else if ("records".equals(elem)) {
+          if (level != 1) {
+            throw new IllegalStateException("records not at level 1");
+          }
+          level = 2;
+        } else if ("record".equals(elem)) {
+            if (level == 2) {
+                identifiers.add("1");
+            }
+            level++;
+          }
+        }
+      if (event == XMLStreamConstants.END_ELEMENT) {
+        String elem = xmlStreamReader.getLocalName();
+        if ("searchRetrieveResponse".equals(elem)) {
+          level = 0;
+        } else if ("records".equals(elem)) {
+          level = 1;
+        } else if ("record".equals(elem)) {
+          level--;
+        }
+      }
+    }
+    return totalRecords;
+  }
+
   static String verifyOaiResponse(String s, String verb, List<String> identifiers, int length, JsonArray expRecords)
       throws XMLStreamException, IOException, SAXException {
     InputStream stream = new ByteArrayInputStream(s.getBytes());
@@ -2491,6 +2541,8 @@ public class MainVerticleTest extends TestBase {
     s = RestAssured.given()
         .header(XOkapiHeaders.TENANT, TENANT_1)
         .param("query", "id=" + identifiers.get(0).substring(4))
+        .param("startRecord", "1")
+        .param("maximumRecord", "1")
         .get("/reservoir/sru")
         .then().statusCode(200)
         .contentType("text/xml")
@@ -2499,7 +2551,10 @@ public class MainVerticleTest extends TestBase {
     assertThat(s, containsString("numberOfRecords>1<"));
     assertThat(s, containsString("<subfield code=\"s\">SOURCE-1</subfield>"));
 
-    assertThat(identifiers, hasSize(3));
+    List<String> sruIdentifiers = new LinkedList<>();
+    int total = verifySruResponse(s, sruIdentifiers);
+    assertThat(total, is(1));
+    assertThat(sruIdentifiers, hasSize(1));
 
     s = RestAssured.given()
         .header(XOkapiHeaders.TENANT, TENANT_1)
@@ -2509,8 +2564,38 @@ public class MainVerticleTest extends TestBase {
         .contentType("text/xml")
         .extract().body().asString();
 
-    assertThat(s, containsString("numberOfRecords>3<"));
-    assertThat(s, containsString("<subfield code=\"s\">SOURCE-1</subfield>"));
+    sruIdentifiers.clear();
+    total = verifySruResponse(s, sruIdentifiers);
+    assertThat(total, is(3));
+    assertThat(sruIdentifiers, hasSize(3));
+
+    s = RestAssured.given()
+        .header(XOkapiHeaders.TENANT, TENANT_1)
+        .param("query", "cql.AllRecords=true")
+        .param("startRecord", "3")
+        .get("/reservoir/sru")
+        .then().statusCode(200)
+        .contentType("text/xml")
+        .extract().body().asString();
+
+    sruIdentifiers.clear();
+    total = verifySruResponse(s, sruIdentifiers);
+    assertThat(total, is(3));
+    assertThat(sruIdentifiers, hasSize(1));
+
+    s = RestAssured.given()
+        .header(XOkapiHeaders.TENANT, TENANT_1)
+        .param("query", "cql.AllRecords=true")
+        .param("maximumRecords", "2")
+        .get("/reservoir/sru")
+        .then().statusCode(200)
+        .contentType("text/xml")
+        .extract().body().asString();
+
+    sruIdentifiers.clear();
+    total = verifySruResponse(s, sruIdentifiers);
+    assertThat(total, is(3));
+    assertThat(sruIdentifiers, hasSize(2));
 
     RestAssured.given()
         .header(XOkapiHeaders.TENANT, TENANT_1)

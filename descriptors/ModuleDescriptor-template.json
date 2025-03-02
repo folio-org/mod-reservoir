@@ -393,20 +393,13 @@
             "GET"
           ],
           "pathPattern": "/reservoir/sru",
-          "permissionsRequired": [
-            "reservoir-sru.get"
-          ]
+          "permissionsRequired": []
         }
       ]
     }
   ],
   "requires": [],
   "permissionSets": [
-    {
-      "permissionName": "reservoir-sru.get",
-      "displayName": "reservoir - SRU GET",
-      "description": "Perform SRU query"
-    },
     {
       "permissionName": "reservoir-config-oai.get",
       "displayName": "reservoir - retrieve OAI configuration",
@@ -660,8 +653,7 @@
         "reservoir-config-oai.all",
         "reservoir-pmh-clients.all",
         "reservoir-records.all",
-        "reservoir-upload.all",
-        "reservoir-sru.get"
+        "reservoir-upload.all"
       ]
     }
   ],

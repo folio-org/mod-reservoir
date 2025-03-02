@@ -957,6 +957,10 @@ paths:
       - $ref: headers/okapi-token.yaml
       - $ref: headers/okapi-url.yaml
       - $ref: parameters/query.yaml
+      - $ref: parameters/start-record.yaml
+      - $ref: parameters/maximum-records.yaml
+      - $ref: parameters/sru-version.yaml
+      - $ref: parameters/sru-operation.yaml
     get:
       description: SRU service
       operationId: sruService
