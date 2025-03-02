@@ -22,8 +22,7 @@ public class SruService {
   private SruService() { }
 
 
-  static Future<Integer> getTotalRecords(RoutingContext ctx, Storage storage,
-      PgCqlQuery pgCqlQuery) {
+  static Future<Integer> getTotalRecords(Storage storage, PgCqlQuery pgCqlQuery) {
     String sqlWhere = pgCqlQuery.getWhereClause();
     final String wClause = sqlWhere == null ? "" : " WHERE " + sqlWhere;
     String sqlQuery = "SELECT COUNT(*) FROM " + storage.getClusterMetaTable() + wClause;
@@ -31,49 +30,6 @@ public class SruService {
         .withConnection(conn -> conn.query(sqlQuery)
             .execute()
             .map(res -> res.iterator().next().getInteger(0)));
-  }
-
-  static Future<Void> getResponse(RoutingContext ctx, String query) {
-    HttpServerResponse response = ctx.response();
-
-    RequestParameters params = ctx.get(ValidationHandler.REQUEST_CONTEXT_KEY);
-    Integer v = params.queryParameter("startRecord").getInteger();
-    final int startRecord = v == null ? 1 : v;
-    v = params.queryParameter("maximumRecords").getInteger();
-    final int maximumRecords = v == null ? 10 : v;
-
-    // should use createDefinitionBase
-    PgCqlDefinition definition = PgCqlDefinition.create();
-    definition.addField(CqlFields.CQL_ALL_RECORDS.getCqlName(), new PgCqlFieldAlwaysMatches());
-    // id instead of clusterId in CqlFields.CLUSTER_ID
-    definition.addField("id", new PgCqlFieldUuid().withColumn(CqlFields.CLUSTER_ID.getSqllName()));
-    PgCqlQuery pgCqlQuery;
-    try {
-      pgCqlQuery = definition.parse(query);
-    } catch (Exception e) {
-      response.write("  <diagnostics>\n");
-      response.write("    <diagnostic xmlns:diag=\"http://docs.oasis-open.org/ns/search-ws/diagnostic\">\n");
-      response.write("      <uri>info:srw/diagnostic/1/10</uri>\n");
-      response.write("      <message>Query syntax error</message>\n");
-      response.write("    </diagnostic>\n");
-      response.write("  </diagnostics>\n");
-      return Future.succeededFuture();
-    }
-    // TODO: consider recordSchema
-    Storage storage = new Storage(ctx);
-
-    Future<Void> future = Future.succeededFuture();
-    future = future.compose(x -> getTotalRecords(ctx, storage, pgCqlQuery)
-        .map(totalRecords -> {
-          response.write(
-              "  <numberOfRecords>" + totalRecords + "</numberOfRecords>\n");
-          return null;
-        }));
-    future = future.onComplete(x -> response.write("  <records>\n"));
-    future = future.compose(x -> getRecords(ctx, storage, pgCqlQuery, startRecord, maximumRecords));
-    return future.onComplete(x -> {
-      response.write("  </records>\n");
-    });
   }
 
   private static Future<Void> getRecords(RoutingContext ctx, Storage storage, PgCqlQuery pgCqlQuery,
@@ -85,7 +41,7 @@ public class SruService {
       final String wClause = sqlWhere == null ? "" : " WHERE " + sqlWhere;
       String sqlQuery = "SELECT * FROM " + storage.getClusterMetaTable() + wClause
           + " LIMIT " + maximumRecords + " OFFSET " + (startRecord - 1);
-      log.info("SQL Query: " + sqlQuery);
+      log.info("SQL Query: {}", sqlQuery);
       return storage.getPool()
           .withConnection(conn -> conn.query(sqlQuery)
               .execute()
@@ -118,6 +74,61 @@ public class SruService {
     });
   }
 
+  static Future<Void> returnDiagnostics(HttpServerResponse response, String no, String message,
+      String details) {
+
+    response.write("  <diagnostics>\n");
+    response.write("    <diagnostic xmlns:diag=\"http://docs.oasis-open.org/ns/search-ws/diagnostic\">\n");
+    response.write("      <uri>info:srw/diagnostic/1/" + no + "</uri>\n");
+    response.write("      <message>" + message + "</message>\n");
+    if (details != null) {
+      response.write("      <details>" + details + "</details>\n");
+    }
+    response.write("    </diagnostic>\n");
+    response.write("  </diagnostics>\n");
+    return Future.succeededFuture();
+  }
+
+  static Future<Void> getResponse(RoutingContext ctx, String query) {
+    HttpServerResponse response = ctx.response();
+
+    RequestParameters params = ctx.get(ValidationHandler.REQUEST_CONTEXT_KEY);
+    final String sruVersion = Util.getQueryParameter(params, "version");
+    if (sruVersion != null && !sruVersion.equals("2.0")) {
+      return returnDiagnostics(response, "5", "Unsupported Version", "2.0");
+    }
+
+    Integer v = params.queryParameter("startRecord").getInteger();
+    final int startRecord = v == null ? 1 : v;
+    v = params.queryParameter("maximumRecords").getInteger();
+    final int maximumRecords = v == null ? 10 : v;
+
+    // should use createDefinitionBase
+    PgCqlDefinition definition = PgCqlDefinition.create();
+    definition.addField(CqlFields.CQL_ALL_RECORDS.getCqlName(), new PgCqlFieldAlwaysMatches());
+    // id instead of clusterId in CqlFields.CLUSTER_ID
+    definition.addField("id", new PgCqlFieldUuid().withColumn(CqlFields.CLUSTER_ID.getSqllName()));
+    PgCqlQuery pgCqlQuery;
+    try {
+      pgCqlQuery = definition.parse(query);
+    } catch (Exception e) {
+      return returnDiagnostics(response, "10", "Query syntax error", e.getMessage());
+    }
+    // TODO: consider recordSchema
+    Storage storage = new Storage(ctx);
+
+    Future<Void> future = Future.succeededFuture();
+    future = future.compose(x -> getTotalRecords(storage, pgCqlQuery)
+        .map(totalRecords -> {
+          response.write(
+              "  <numberOfRecords>" + totalRecords + "</numberOfRecords>\n");
+          return null;
+        }));
+    future = future.onComplete(x -> response.write("  <records>\n"));
+    future = future.compose(x -> getRecords(ctx, storage, pgCqlQuery, startRecord, maximumRecords));
+    return future.onComplete(x -> response.write("  </records>\n"));
+  }
+
   static Future<Void> get(RoutingContext ctx) {
     HttpServerResponse response = ctx.response();
     response.setChunked(true);
@@ -127,21 +138,16 @@ public class SruService {
     response.write("<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n");
 
     RequestParameters params = ctx.get(ValidationHandler.REQUEST_CONTEXT_KEY);
-    final String sruVersion = Util.getQueryParameter(params, "version");
-    if (sruVersion != null && !sruVersion.equals("2.0")) {
-      response.write("Only version 2.0 is supported");
-      response.end();
-      return Future.succeededFuture();
-    }
     final String query = Util.getQueryParameter(params, "query");
     if (query == null) {
-      // TODO: return explain response
-      response.write("Query is required");
+      response.write("<explainResponse xmlns=\"http://docs.oasis-open.org/ns/search-ws/sruResponse\">\n");
+      response.write("  <version>2.0</version>\n");
+      response.write("</explainResponse>\n");
       response.end();
       return Future.succeededFuture();
     }
-
     response.write("<searchRetrieveResponse xmlns=\"http://docs.oasis-open.org/ns/search-ws/sruResponse\">\n");
+    response.write("  <version>2.0</version>\n");
     return getResponse(ctx, query).onComplete(x -> {
       response.write("</searchRetrieveResponse>\n");
       response.end();

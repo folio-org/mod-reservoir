@@ -2538,6 +2538,40 @@ public class MainVerticleTest extends TestBase {
         .extract().body().asString();
     verifyOaiResponse(s, "GetRecord", identifiers, 1, expectedIssn);
 
+    // SRU tests for same records...
+
+    // CQL syntax error
+    s = RestAssured.given()
+        .header(XOkapiHeaders.TENANT, TENANT_1)
+        .param("query", "xd=")
+        .get("/reservoir/sru")
+        .then().statusCode(200)
+        .contentType("text/xml")
+        .extract().body().asString();
+
+    assertThat(s, containsString("<message>Query syntax error</message>"));
+
+    List<String> sruIdentifiers = new LinkedList<>();
+    int total = verifySruResponse(s, sruIdentifiers);
+    assertThat(total, is(0));
+    assertThat(sruIdentifiers, hasSize(0));
+
+    // unsupported SRU version
+    s = RestAssured.given()
+        .header(XOkapiHeaders.TENANT, TENANT_1)
+        .param("query", "xd=1")
+        .param("version", "1.2")
+        .get("/reservoir/sru")
+        .then().statusCode(200)
+        .contentType("text/xml")
+        .extract().body().asString();
+
+    sruIdentifiers.clear();
+    total = verifySruResponse(s, sruIdentifiers);
+    assertThat(total, is(0));
+    assertThat(sruIdentifiers, hasSize(0));
+
+    // search for one record
     s = RestAssured.given()
         .header(XOkapiHeaders.TENANT, TENANT_1)
         .param("query", "id=" + identifiers.get(0).substring(4))
@@ -2551,8 +2585,8 @@ public class MainVerticleTest extends TestBase {
     assertThat(s, containsString("numberOfRecords>1<"));
     assertThat(s, containsString("<subfield code=\"s\">SOURCE-1</subfield>"));
 
-    List<String> sruIdentifiers = new LinkedList<>();
-    int total = verifySruResponse(s, sruIdentifiers);
+    sruIdentifiers.clear();
+    total = verifySruResponse(s, sruIdentifiers);
     assertThat(total, is(1));
     assertThat(sruIdentifiers, hasSize(1));
 

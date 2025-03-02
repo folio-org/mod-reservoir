@@ -23,6 +23,10 @@ public final class Util {
     return Util.getParameterString(params.queryParameter(key));
   }
 
+  static String getQueryParameterQuery(RequestParameters params) {
+    return getQueryParameter(params, "query");
+  }
+
   /**
    * Parse ISO time.
    * @param s time string
