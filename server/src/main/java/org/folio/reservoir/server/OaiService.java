@@ -193,7 +193,7 @@ public final class OaiService {
       }
       ResumptionToken resumptionToken = new ResumptionToken(conf.getString("id"), until);
       sqlQuery.append(" ORDER BY datestamp, cluster_id");
-      return getTransformer(storage, ctx)
+      return storage.getTransformer(ctx)
           .compose(transformer -> storage.getPool().getConnection().compose(conn ->
               listRecordsResponse(ctx, transformer, storage, conn, sqlQuery.toString(),
                   Tuple.from(tupleList), limit, withMetadata, resumptionToken)
@@ -264,29 +264,6 @@ public final class OaiService {
     }
     MarcInJsonUtil.createMarcDataField(combinedMarc, "999", "1", "0").addAll(identifiersField);
     return JsonToMarcXml.convert(combinedMarc);
-  }
-
-  static Future<ModuleExecutable> getTransformer(Storage storage, RoutingContext ctx) {
-    return storage.selectOaiConfig()
-        .compose(oaiCfg -> {
-          if (oaiCfg == null) {
-            return Future.succeededFuture(null);
-          }
-          String transformerProp = oaiCfg.getString("transformer");
-          if (transformerProp == null) {
-            return Future.succeededFuture(null);
-          }
-          ModuleInvocation invocation = new ModuleInvocation(transformerProp);
-          return storage.selectCodeModuleEntity(invocation.getModuleName())
-              .compose(entity -> {
-                if (entity == null) {
-                  return Future.failedFuture("Transformer module '"
-                    + invocation.getModuleName() + "' not found");
-                }
-                return ModuleCache.getInstance().lookup(ctx.vertx(), TenantUtil.tenant(ctx), entity)
-                          .map(mod -> new ModuleExecutable(mod, invocation));
-              });
-        });
   }
 
   static Future<ClusterBuilder> getClusterValues(Storage storage, SqlConnection conn,
@@ -361,7 +338,7 @@ public final class OaiService {
     }
     UUID clusterId = decodeOaiIdentifier(identifier);
     Storage storage = new Storage(ctx);
-    return getTransformer(storage, ctx).compose(transformer -> {
+    return storage.getTransformer(ctx).compose(transformer -> {
       String sqlQuery = "SELECT * FROM " + storage.getClusterMetaTable() + " WHERE cluster_id = $1";
       return storage.getPool()
           .withConnection(conn -> conn.preparedQuery(sqlQuery)
@@ -414,7 +391,7 @@ public final class OaiService {
 
     response.write("  <records>\n");
     AtomicInteger cnt = new AtomicInteger();
-    return getTransformer(storage, ctx).compose(transformer -> {
+    return storage.getTransformer(ctx).compose(transformer -> {
       final String wClause = sqlWhere == null ? "" : " WHERE " + sqlWhere;
       String sqlQuery = "SELECT * FROM " + storage.getClusterMetaTable() + wClause;
       return storage.getPool()
