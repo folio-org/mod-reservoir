@@ -94,13 +94,11 @@ public class ClusterRecordStream implements WriteStream<ClusterRecordItem> {
             return Future.succeededFuture(getMetadataJava(cb.build()));
           }
           JsonObject cluster = cb.build();
-          return vertx.executeBlocking(prom -> {
-            try {
-              prom.handle(transformer.execute(cluster).map(JsonToMarcXml::convert));
-            } catch (Exception e) {
-              prom.fail(e);
-            }
-          });
+          try {
+            return transformer.execute(cluster).map(JsonToMarcXml::convert);
+          } catch (Exception e) {
+            return Future.failedFuture(e);
+          }
         });
   }
 

@@ -10,6 +10,7 @@ import io.vertx.ext.web.client.predicate.ResponsePredicate;
 import java.io.IOException;
 import java.util.Collection;
 import java.util.HashSet;
+import java.util.concurrent.Callable;
 import org.folio.okapi.common.WebClientFactory;
 import org.folio.reservoir.module.Module;
 import org.folio.reservoir.server.entity.CodeModuleEntity;
@@ -25,9 +26,11 @@ public class ModuleJavaScript implements Module {
   private Value module;
   private Value function;
   private Context context;
+  private Vertx vertx;
 
   @Override
   public Future<Void> initialize(Vertx vertx, CodeModuleEntity entity) {
+    this.vertx = vertx;
     id = entity.getId();
     if (id == null || id.isEmpty()) {
       return Future.failedFuture(
@@ -98,25 +101,28 @@ public class ModuleJavaScript implements Module {
       throw new IllegalStateException("uninitialized");
     }
   }
-  
+
   @Override
   public Future<JsonObject> execute(String functionName, JsonObject input) {
-    Value output = getFunction(functionName).execute(input.encode());
-    if (output.isString()) {
-      //only support string encoded JSON objects for now
-      try {
-        return Future.succeededFuture(new JsonObject(output.asString()));
-      } catch (DecodeException de) {
-        return Future.failedFuture(de);
+    Callable<Value> c = () -> getFunction(functionName).execute(input.encode());
+    return vertx.executeBlocking(c).compose(output -> {
+      if (output.isString()) {
+        //only support string encoded JSON objects for now
+        try {
+          return Future.succeededFuture(new JsonObject(output.asString()));
+        } catch (DecodeException de) {
+          return Future.failedFuture(de);
+        }
+      } else {
+        return Future.failedFuture(
+          "Function " + functionName + " of module " + id + " must return JSON string");
       }
-    } else {
-      return Future.failedFuture(
-        "Function " + functionName + " of module " + id + " must return JSON string");
-    }
+    });
   }
 
   @Override
-  public Collection<String> executeAsCollection(String functionName, JsonObject input) {
+    public Collection<String> executeAsCollection(String functionName, JsonObject input) {
+
     Value output = getFunction(functionName).execute(input.encode());
     Collection<String> keys = new HashSet<>();
     if (output.hasArrayElements()) {
