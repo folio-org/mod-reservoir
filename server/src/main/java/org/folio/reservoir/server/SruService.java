@@ -74,9 +74,8 @@ public class SruService {
     });
   }
 
-  static Future<Void> returnDiagnostics(HttpServerResponse response, String no, String message,
-      String details) {
-
+  static void  returnDiagnostics(HttpServerResponse response, String no,
+      String message, String details) {
     response.write("  <diagnostics>\n");
     response.write("    <diagnostic xmlns:diag=\"http://docs.oasis-open.org/ns/search-ws/diagnostic\">\n");
     response.write("      <uri>info:srw/diagnostic/1/" + no + "</uri>\n");
@@ -86,16 +85,15 @@ public class SruService {
     }
     response.write("    </diagnostic>\n");
     response.write("  </diagnostics>\n");
-    return Future.succeededFuture();
   }
 
-  static Future<Void> getResponse(RoutingContext ctx, String query) {
+  static Future<Void> getSearchRetrieveResponse(RoutingContext ctx, String query) {
     HttpServerResponse response = ctx.response();
-
     RequestParameters params = ctx.get(ValidationHandler.REQUEST_CONTEXT_KEY);
     final String sruVersion = Util.getQueryParameter(params, "version");
     if (sruVersion != null && !sruVersion.equals("2.0")) {
-      return returnDiagnostics(response, "5", "Unsupported Version", "2.0");
+      returnDiagnostics(response, "5", "Unsupported version", "2.0");
+      return Future.succeededFuture();
     }
 
     Integer v = params.queryParameter("startRecord").getInteger();
@@ -112,7 +110,8 @@ public class SruService {
     try {
       pgCqlQuery = definition.parse(query);
     } catch (Exception e) {
-      return returnDiagnostics(response, "10", "Query syntax error", e.getMessage());
+      returnDiagnostics(response, "10", "Query syntax error", e.getMessage());
+      return Future.succeededFuture();
     }
     // TODO: consider recordSchema
     Storage storage = new Storage(ctx);
@@ -129,6 +128,22 @@ public class SruService {
     return future.onComplete(x -> response.write("  </records>\n"));
   }
 
+  static Future<Void> getExplainResponse(RoutingContext ctx) {
+    HttpServerResponse response = ctx.response();
+    RequestParameters params = ctx.get(ValidationHandler.REQUEST_CONTEXT_KEY);
+
+    response.write("<explainResponse xmlns=\"http://docs.oasis-open.org/ns/search-ws/sruResponse\">\n");
+    response.write("  <version>2.0</version>\n");
+
+    final String sruVersion = Util.getQueryParameter(params, "version");
+    if (sruVersion != null && !sruVersion.equals("2.0")) {
+      returnDiagnostics(response, "5", "Unsupported version", "2.0");
+    }
+    response.write("</explainResponse>\n");
+    response.end();
+    return Future.succeededFuture();
+  }
+
   static Future<Void> get(RoutingContext ctx) {
     HttpServerResponse response = ctx.response();
     response.setChunked(true);
@@ -140,15 +155,11 @@ public class SruService {
     RequestParameters params = ctx.get(ValidationHandler.REQUEST_CONTEXT_KEY);
     final String query = Util.getQueryParameter(params, "query");
     if (query == null) {
-      response.write("<explainResponse xmlns=\"http://docs.oasis-open.org/ns/search-ws/sruResponse\">\n");
-      response.write("  <version>2.0</version>\n");
-      response.write("</explainResponse>\n");
-      response.end();
-      return Future.succeededFuture();
+      return getExplainResponse(ctx);
     }
     response.write("<searchRetrieveResponse xmlns=\"http://docs.oasis-open.org/ns/search-ws/sruResponse\">\n");
     response.write("  <version>2.0</version>\n");
-    return getResponse(ctx, query).onComplete(x -> {
+    return getSearchRetrieveResponse(ctx, query).onComplete(x -> {
       response.write("</searchRetrieveResponse>\n");
       response.end();
     });
