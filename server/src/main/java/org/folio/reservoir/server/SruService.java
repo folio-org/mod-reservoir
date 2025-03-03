@@ -85,12 +85,19 @@ public class SruService {
     response.write("  </diagnostics>\n");
   }
 
-  static Future<Void> getSearchRetrieveResponse(RoutingContext ctx, String query) {
-    HttpServerResponse response = ctx.response();
-    RequestParameters params = ctx.get(ValidationHandler.REQUEST_CONTEXT_KEY);
+  static boolean checkVersion(HttpServerResponse response, RequestParameters params) {
     final String sruVersion = Util.getQueryParameter(params, "version");
     if (sruVersion != null && !sruVersion.equals("2.0")) {
       returnDiagnostics(response, "5", "Unsupported version", "2.0");
+      return false;
+    }
+    return true;
+  }
+
+  static Future<Void> getSearchRetrieveResponse(RoutingContext ctx, String query) {
+    HttpServerResponse response = ctx.response();
+    RequestParameters params = ctx.get(ValidationHandler.REQUEST_CONTEXT_KEY);
+    if (!checkVersion(response, params)) {
       return Future.succeededFuture();
     }
 
@@ -133,10 +140,7 @@ public class SruService {
     response.write("<explainResponse xmlns=\"http://docs.oasis-open.org/ns/search-ws/sruResponse\">\n");
     response.write("  <version>2.0</version>\n");
 
-    final String sruVersion = Util.getQueryParameter(params, "version");
-    if (sruVersion != null && !sruVersion.equals("2.0")) {
-      returnDiagnostics(response, "5", "Unsupported version", "2.0");
-    }
+    checkVersion(response, params);
     response.write("</explainResponse>\n");
     response.end();
     return Future.succeededFuture();

@@ -2582,6 +2582,20 @@ public class MainVerticleTest extends TestBase {
     assertThat(sruVerify.errors, hasSize(1));
     assertThat(sruVerify.errors.get(0), is("Unsupported version"));
 
+    s = RestAssured.given()
+        .header(XOkapiHeaders.TENANT, TENANT_1)
+        .param("version", "2.0")
+        .get("/reservoir/sru")
+        .then().statusCode(200)
+        .contentType("text/xml")
+        .extract().body().asString();
+
+    sruVerify = new SruVerify(s);
+    assertThat(sruVerify.response, is("explainResponse"));
+    assertThat(sruVerify.numberOfRecords, is(0));
+    assertThat(sruVerify.identifiers, hasSize(0));
+    assertThat(sruVerify.errors, hasSize(0));
+
     // CQL syntax error
     s = RestAssured.given()
         .header(XOkapiHeaders.TENANT, TENANT_1)
