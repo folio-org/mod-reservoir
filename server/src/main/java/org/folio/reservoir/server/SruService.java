@@ -80,9 +80,7 @@ public class SruService {
     response.write("    <diagnostic xmlns:diag=\"http://docs.oasis-open.org/ns/search-ws/diagnostic\">\n");
     response.write("      <uri>info:srw/diagnostic/1/" + no + "</uri>\n");
     response.write("      <message>" + message + "</message>\n");
-    if (details != null) {
-      response.write("      <details>" + details + "</details>\n");
-    }
+    response.write("      <details>" + details + "</details>\n");
     response.write("    </diagnostic>\n");
     response.write("  </diagnostics>\n");
   }

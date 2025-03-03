@@ -108,7 +108,7 @@ public class MainVerticleTest extends TestBase {
     int numberOfRecords = 0;
     String response;
 
-    public SruVerify(String s) throws XMLStreamException, IOException, SAXException {
+    public SruVerify(String s) throws XMLStreamException {
         InputStream stream = new ByteArrayInputStream(s.getBytes());
         XMLInputFactory factory = XMLInputFactory.newInstance();
         XMLStreamReader xmlStreamReader = factory.createXMLStreamReader(stream);
@@ -2609,6 +2609,7 @@ public class MainVerticleTest extends TestBase {
         .extract().body().asString();
 
     sruVerify = new SruVerify(s);
+    assertThat(sruVerify.response, is("searchRetrieveResponse"));
     assertThat(sruVerify.numberOfRecords, is(0));
     assertThat(sruVerify.identifiers, hasSize(0));
     assertThat(sruVerify.errors, hasSize(1));
@@ -2629,6 +2630,7 @@ public class MainVerticleTest extends TestBase {
     assertThat(s, containsString("<subfield code=\"s\">SOURCE-1</subfield>"));
 
     sruVerify = new SruVerify(s);
+    assertThat(sruVerify.response, is("searchRetrieveResponse"));
     assertThat(sruVerify.numberOfRecords, is(1));
     assertThat(sruVerify.identifiers, hasSize(1));
     assertThat(sruVerify.errors, hasSize(0));
