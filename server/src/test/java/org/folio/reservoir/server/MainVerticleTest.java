@@ -2692,6 +2692,13 @@ public class MainVerticleTest extends TestBase {
 
     RestAssured.given()
         .header(XOkapiHeaders.TENANT, TENANT_1)
+        .param("query", "cql.AllRecords=true")
+        .param("maximumRecords", "x")
+        .get("/reservoir/sru")
+        .then().statusCode(400);
+
+    RestAssured.given()
+        .header(XOkapiHeaders.TENANT, TENANT_1)
         .param("verb", "GetRecord")
         .param("metadataPrefix", "marcxml")
         .param("identifier", UUID.randomUUID().toString())
