@@ -101,10 +101,9 @@ public class SruService {
       return Future.succeededFuture();
     }
 
-    Integer v = params.queryParameter("startRecord").getInteger();
-    final int startRecord = v == null ? 1 : v;
-    v = params.queryParameter("maximumRecords").getInteger();
-    final int maximumRecords = v == null ? 10 : v;
+    // no need to check for null as default value is given in API spec
+    Integer startRecord = params.queryParameter("startRecord").getInteger();
+    Integer maximumRecords = params.queryParameter("maximumRecords").getInteger();
 
     // should use createDefinitionBase
     PgCqlDefinition definition = PgCqlDefinition.create();
