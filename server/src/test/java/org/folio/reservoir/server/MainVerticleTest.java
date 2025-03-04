@@ -2281,6 +2281,7 @@ public class MainVerticleTest extends TestBase {
   }
 
   @Test
+  @java.lang.SuppressWarnings("squid:S5961")
   public void testOaiConfigRU() {
     RestAssured.given()
         .header(XOkapiHeaders.TENANT, TENANT_1)
