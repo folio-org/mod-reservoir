@@ -102,8 +102,8 @@ public class SruService {
     }
 
     // no need to check for null as default value is given in API spec
-    Integer startRecord = params.queryParameter("startRecord").getInteger();
-    Integer maximumRecords = params.queryParameter("maximumRecords").getInteger();
+    final Integer startRecord = params.queryParameter("startRecord").getInteger();
+    final Integer maximumRecords = params.queryParameter("maximumRecords").getInteger();
 
     // should use createDefinitionBase
     PgCqlDefinition definition = PgCqlDefinition.create();

@@ -2387,6 +2387,7 @@ public class MainVerticleTest extends TestBase {
     ingestRecords(ingest1a, SOURCE_ID_1, 2);
     ingestRecords(ingest1b, SOURCE_ID_1, 2);
 
+    // use OAI to get record identifiers out
     String s = RestAssured.given()
       .header(XOkapiHeaders.TENANT, TENANT_1)
       .param("set", "isbn")
