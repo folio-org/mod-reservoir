@@ -961,6 +961,7 @@ paths:
       - $ref: parameters/maximum-records.yaml
       - $ref: parameters/sru-version.yaml
       - $ref: parameters/sru-operation.yaml
+      - $ref: parameters/sru-record-schema.yaml
     get:
       description: SRU service
       operationId: sruService

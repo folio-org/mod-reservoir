@@ -118,7 +118,11 @@ public class SruService {
       returnDiagnostics(response, "10", "Query syntax error", e.getMessage());
       return Future.succeededFuture();
     }
-    // TODO: consider recordSchema
+    String recordSchema = Util.getQueryParameter(params, "recordSchema");
+    if (recordSchema != null && !recordSchema.equals("marcxml")) {
+      returnDiagnostics(response, "66", "Unknown schema for retrieval", recordSchema);
+      return Future.succeededFuture();
+    }
     Storage storage = new Storage(ctx);
 
     Future<Void> future = Future.succeededFuture();

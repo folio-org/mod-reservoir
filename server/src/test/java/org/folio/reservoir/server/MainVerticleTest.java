@@ -2324,7 +2324,6 @@ public class MainVerticleTest extends TestBase {
         .put("/reservoir/config/oai")
         .then()
         .statusCode(400);
-
   }
 
   @Test
@@ -2629,12 +2628,31 @@ public class MainVerticleTest extends TestBase {
     assertThat(sruVerify.errors, hasSize(1));
     assertThat(sruVerify.errors.get(0), is("Unsupported version"));
 
+    // unsupported record schema
+        s = RestAssured.given()
+        .header(XOkapiHeaders.TENANT, TENANT_1)
+        .param("query", "xd=1")
+        .param("version", "2.0")
+        .param("recordSchema", "mods")
+        .get("/reservoir/sru")
+        .then().statusCode(200)
+        .contentType("text/xml")
+        .extract().body().asString();
+
+    sruVerify = new SruVerify(s);
+    assertThat(sruVerify.response, is("searchRetrieveResponse"));
+    assertThat(sruVerify.numberOfRecords, is(0));
+    assertThat(sruVerify.identifiers, hasSize(0));
+    assertThat(sruVerify.errors, hasSize(1));
+    assertThat(sruVerify.errors.get(0), is("Unknown schema for retrieval"));
+
     // search for one record
     s = RestAssured.given()
         .header(XOkapiHeaders.TENANT, TENANT_1)
         .param("query", "id=" + identifiers.get(0).substring(4))
         .param("startRecord", "1")
         .param("maximumRecord", "1")
+        .param("recordSchema", "marcxml")
         .get("/reservoir/sru")
         .then().statusCode(200)
         .contentType("text/xml")
