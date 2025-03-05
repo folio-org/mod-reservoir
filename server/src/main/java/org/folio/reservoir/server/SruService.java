@@ -5,8 +5,6 @@ import io.vertx.core.http.HttpServerResponse;
 import io.vertx.ext.web.RoutingContext;
 import io.vertx.ext.web.validation.RequestParameters;
 import io.vertx.ext.web.validation.ValidationHandler;
-import io.vertx.sqlclient.Row;
-import io.vertx.sqlclient.RowIterator;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.folio.tlib.postgres.PgCqlDefinition;
@@ -21,57 +19,21 @@ public class SruService {
 
   private SruService() { }
 
-
-  static Future<Integer> getTotalRecords(Storage storage, PgCqlQuery pgCqlQuery) {
-    String sqlWhere = pgCqlQuery.getWhereClause();
-    final String wClause = sqlWhere == null ? "" : " WHERE " + sqlWhere;
-    String sqlQuery = "SELECT COUNT(*) FROM " + storage.getClusterMetaTable() + wClause;
-    return storage.getPool()
-        .withConnection(conn -> conn.query(sqlQuery)
-            .execute()
-            .map(res -> res.iterator().next().getInteger(0)));
-  }
-
   private static Future<Void> getRecords(RoutingContext ctx, Storage storage, PgCqlQuery pgCqlQuery,
       int startRecord, int maximumRecords) {
 
     HttpServerResponse response = ctx.response();
-    String sqlWhere = pgCqlQuery.getWhereClause();
-    return storage.getTransformer(ctx).compose(transformer -> {
-      final String wClause = sqlWhere == null ? "" : " WHERE " + sqlWhere;
-      String sqlQuery = "SELECT * FROM " + storage.getClusterMetaTable() + wClause
-          + " LIMIT " + maximumRecords + " OFFSET " + (startRecord - 1);
-      log.info("SQL Query: {}", sqlQuery);
-      return storage.getPool()
-          .withConnection(conn -> conn.query(sqlQuery)
-              .execute()
-              .compose(res -> {
-                RowIterator<Row> iterator = res.iterator();
-                Future<Void> future = Future.succeededFuture();
-                while (iterator.hasNext()) {
-                  Row row = iterator.next();
-                  future = future.compose(x -> {
-                    ClusterRecordItem cr = new ClusterRecordItem(row);
-                    ClusterRecordStream clusterRecordStream = new ClusterRecordStream(
-                        ctx.vertx(), storage, conn, response, transformer, false);
-                    return clusterRecordStream.getClusterMarcXml(cr)
-                        .map(marcxml -> {
-                          if (marcxml == null) {
-                            return null; // deleted record
-                          }
-                          response.write("    <record>\n");
-                          response.write("      <recordData>\n");
-                          response.write(marcxml);
-                          response.write("      </recordData>\n");
-                          response.write("    </record>\n");
-                          return null;
-                        });
-                  });
-                }
-                return future;
-              }
-        ));
-    });
+    return ClusterRecordStream.getMarcxmlRecords(ctx, storage, pgCqlQuery,
+        startRecord - 1, maximumRecords, marcxml -> {
+        if (marcxml == null) {
+          return;
+        }
+        response.write("    <record>\n");
+        response.write("      <recordData>\n");
+        response.write(marcxml);
+        response.write("      </recordData>\n");
+        response.write("    </record>\n");
+      });
   }
 
   static void  returnDiagnostics(HttpServerResponse response, String no,
@@ -125,7 +87,7 @@ public class SruService {
     Storage storage = new Storage(ctx);
 
     Future<Void> future = Future.succeededFuture();
-    future = future.compose(x -> getTotalRecords(storage, pgCqlQuery)
+    future = future.compose(x -> ClusterRecordStream.getTotalRecords(storage, pgCqlQuery)
         .map(totalRecords -> {
           response.write(
               "  <numberOfRecords>" + totalRecords + "</numberOfRecords>\n");

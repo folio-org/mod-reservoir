@@ -13,6 +13,9 @@ import io.vertx.core.Vertx;
 import io.vertx.core.buffer.Buffer;
 import io.vertx.core.json.JsonObject;
 import io.vertx.core.streams.WriteStream;
+import io.vertx.ext.web.RoutingContext;
+import io.vertx.sqlclient.Row;
+import io.vertx.sqlclient.RowIterator;
 import io.vertx.sqlclient.SqlConnection;
 import io.vertx.sqlclient.Tuple;
 import java.util.HashSet;
@@ -22,6 +25,7 @@ import org.apache.logging.log4j.Logger;
 import org.folio.reservoir.module.ModuleExecutable;
 import org.folio.reservoir.server.entity.ClusterBuilder;
 import org.folio.reservoir.util.JsonToMarcXml;
+import org.folio.tlib.postgres.PgCqlQuery;
 
 public class ClusterRecordStream implements WriteStream<ClusterRecordItem> {
 
@@ -187,6 +191,56 @@ public class ClusterRecordStream implements WriteStream<ClusterRecordItem> {
   public WriteStream<ClusterRecordItem> drainHandler(@Nullable Handler<Void> handler) {
     this.drainHandler = handler;
     return this;
+  }
+
+  static Future<Void> getMarcxmlRecords(RoutingContext ctx, Storage storage, PgCqlQuery pgCqlQuery,
+      int offset, int limit, Handler<String> handler) {
+
+    String sqlWhere = pgCqlQuery.getWhereClause();
+    final String wClause = sqlWhere == null ? "" : " WHERE " + sqlWhere;
+    String sqlQuery = "SELECT * FROM " + storage.getClusterMetaTable() + wClause
+        + " LIMIT " + limit + " OFFSET " + offset;
+    return getMarcxmlRecords(ctx, storage, sqlQuery, handler);
+  }
+
+  static Future<Void> getMarcxmlRecords(RoutingContext ctx, Storage storage, String sqlQuery,
+      Handler<String> handler) {
+
+    return storage.getTransformer(ctx).compose(transformer -> {
+      log.info("SQL Query: {}", sqlQuery);
+      return storage.getPool()
+          .withConnection(conn -> conn.query(sqlQuery)
+              .execute()
+              .compose(res -> {
+                RowIterator<Row> iterator = res.iterator();
+                Future<Void> future = Future.succeededFuture();
+                while (iterator.hasNext()) {
+                  Row row = iterator.next();
+                  future = future.compose(x -> {
+                    ClusterRecordItem cr = new ClusterRecordItem(row);
+                    ClusterRecordStream clusterRecordStream = new ClusterRecordStream(
+                        ctx.vertx(), storage, conn, null, transformer, false);
+                    return clusterRecordStream.getClusterMarcXml(cr)
+                        .map(marcxml -> {
+                          handler.handle(marcxml);
+                          return null;
+                        });
+                  });
+                }
+                return future;
+              }
+        ));
+    });
+  }
+
+  static Future<Integer> getTotalRecords(Storage storage, PgCqlQuery pgCqlQuery) {
+    String sqlWhere = pgCqlQuery.getWhereClause();
+    final String wClause = sqlWhere == null ? "" : " WHERE " + sqlWhere;
+    String sqlQuery = "SELECT COUNT(*) FROM " + storage.getClusterMetaTable() + wClause;
+    return storage.getPool()
+        .withConnection(conn -> conn.query(sqlQuery)
+            .execute()
+            .map(res -> res.iterator().next().getInteger(0)));
   }
 
 }
