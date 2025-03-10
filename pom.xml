@@ -39,11 +39,12 @@
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
     <!-- graalvm >= 23.1.0 requires reorganisation: https://medium.com/graalvm/truffle-unchained-13887b77b62c -->
     <graalvm.version>23.0.6</graalvm.version>
-    <log4j2.version>2.19.0</log4j2.version>
-    <vertx.version>4.5.11</vertx.version>
+    <log4j2.version>2.24.3</log4j2.version>
+    <vertx.version>4.5.13</vertx.version>
     <okapi.version>5.1.2</okapi.version>
-    <vertxlib.version>3.0.0</vertxlib.version>
+    <vertxlib.version>3.3.0</vertxlib.version>
     <micrometer.version>1.10.2</micrometer.version>
+    <folio-module-descriptor-validator.version>1.0.1</folio-module-descriptor-validator.version>
   </properties>
 
   <dependencyManagement>
@@ -290,7 +291,7 @@
         <artifactId>maven-compiler-plugin</artifactId>
         <version>3.8.1</version>
         <configuration>
-          <release>17</release>
+          <release>21</release>
           <encoding>UTF-8</encoding>
           <compilerArgument>-Xlint:unchecked</compilerArgument>
         </configuration>
@@ -378,6 +379,13 @@
       <url>https://maven.indexdata.com/</url>
     </repository>
   </repositories>
+  <pluginRepositories>
+    <pluginRepository>
+      <id>folio-nexus</id>
+      <name>FOLIO Maven repository</name>
+      <url>https://repository.folio.org/repository/maven-folio</url>
+    </pluginRepository>
+  </pluginRepositories>
 
   <distributionManagement>
     <repository>
