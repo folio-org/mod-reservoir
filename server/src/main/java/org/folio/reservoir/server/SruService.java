@@ -1,10 +1,13 @@
 package org.folio.reservoir.server;
 
 import io.vertx.core.Future;
+import io.vertx.core.Handler;
 import io.vertx.core.http.HttpServerResponse;
 import io.vertx.ext.web.RoutingContext;
 import io.vertx.ext.web.validation.RequestParameters;
 import io.vertx.ext.web.validation.ValidationHandler;
+import io.vertx.sqlclient.Row;
+import io.vertx.sqlclient.RowIterator;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.folio.tlib.postgres.PgCqlDefinition;
@@ -12,28 +15,72 @@ import org.folio.tlib.postgres.PgCqlQuery;
 import org.folio.tlib.postgres.cqlfield.PgCqlFieldAlwaysMatches;
 import org.folio.tlib.postgres.cqlfield.PgCqlFieldUuid;
 
-
 public class SruService {
 
   private static final Logger log = LogManager.getLogger(SruService.class);
 
   private SruService() { }
 
+  static Future<Integer> getTotalRecords(Storage storage, PgCqlQuery pgCqlQuery) {
+    String sqlWhere = pgCqlQuery.getWhereClause();
+    final String wClause = sqlWhere == null ? "" : " WHERE " + sqlWhere;
+    String sqlQuery = "SELECT COUNT(*) FROM " + storage.getClusterMetaTable() + wClause;
+    return storage.getPool()
+        .withConnection(conn -> conn.query(sqlQuery)
+            .execute()
+            .map(res -> res.iterator().next().getInteger(0)));
+  }
+
+  static Future<Void> getMarcxmlRecords(RoutingContext ctx, Storage storage, PgCqlQuery pgCqlQuery,
+      int offset, int limit) {
+
+    String sqlWhere = pgCqlQuery.getWhereClause();
+    final String wClause = sqlWhere == null ? "" : " WHERE " + sqlWhere;
+    String sqlQuery = "SELECT * FROM " + storage.getClusterMetaTable() + wClause
+        + " LIMIT " + limit + " OFFSET " + offset;
+    return getMarcxmlRecords(ctx, storage, sqlQuery);
+  }
+
+  static Future<Void> getMarcxmlRecords(RoutingContext ctx, Storage storage, String sqlQuery) {
+
+    return storage.getTransformer(ctx).compose(transformer -> {
+      log.info("SQL Query: {}", sqlQuery);
+      return storage.getPool()
+          .withConnection(conn -> conn.query(sqlQuery)
+              .execute()
+              .compose(res -> {
+                RowIterator<Row> iterator = res.iterator();
+                Future<Void> future = Future.succeededFuture();
+                while (iterator.hasNext()) {
+                  Row row = iterator.next();
+                  future = future.compose(x -> {
+                    ClusterRecordItem cr = new ClusterRecordItem(row);
+                    return cr.populateCluster(storage, conn, true)
+                      .compose(cb -> ClusterMarcXml.getClusterMarcXml(cb, transformer, ctx.vertx())
+                      .compose(marcxml -> {
+                        if (marcxml == null) {
+                          return Future.succeededFuture();
+                        }
+                        HttpServerResponse response = ctx.response();
+                        response.write("    <record>\n");
+                        response.write("      <recordData>\n");
+                        response.write(marcxml);
+                        response.write("      </recordData>\n");
+                        response.write("    </record>\n");
+                        return Future.succeededFuture();
+                      }));
+                  });
+                }
+                return future;
+              }
+        ));
+    });
+  }
+
   private static Future<Void> getRecords(RoutingContext ctx, Storage storage, PgCqlQuery pgCqlQuery,
       int startRecord, int maximumRecords) {
 
-    HttpServerResponse response = ctx.response();
-    return ClusterRecordStream.getMarcxmlRecords(ctx, storage, pgCqlQuery,
-        startRecord - 1, maximumRecords, marcxml -> {
-        if (marcxml == null) {
-          return;
-        }
-        response.write("    <record>\n");
-        response.write("      <recordData>\n");
-        response.write(marcxml);
-        response.write("      </recordData>\n");
-        response.write("    </record>\n");
-      });
+    return getMarcxmlRecords(ctx, storage, pgCqlQuery, startRecord - 1, maximumRecords);
   }
 
   static void  returnDiagnostics(HttpServerResponse response, String no,
@@ -87,7 +134,7 @@ public class SruService {
     Storage storage = new Storage(ctx);
 
     Future<Void> future = Future.succeededFuture();
-    future = future.compose(x -> ClusterRecordStream.getTotalRecords(storage, pgCqlQuery)
+    future = future.compose(x -> getTotalRecords(storage, pgCqlQuery)
         .map(totalRecords -> {
           response.write(
               "  <numberOfRecords>" + totalRecords + "</numberOfRecords>\n");
