@@ -1,6 +1,7 @@
 package org.folio.reservoir.server;
 
 import io.vertx.core.Future;
+import io.vertx.core.Handler;
 import io.vertx.core.http.HttpServerResponse;
 import io.vertx.ext.web.RoutingContext;
 import io.vertx.ext.web.validation.RequestParameters;
@@ -18,6 +19,47 @@ public class SruService {
   private static final Logger log = LogManager.getLogger(SruService.class);
 
   private SruService() { }
+
+
+  static Future<Void> getMarcxmlRecords(RoutingContext ctx, Storage storage, PgCqlQuery pgCqlQuery,
+      int offset, int limit, Handler<String> handler) {
+
+    String sqlWhere = pgCqlQuery.getWhereClause();
+    final String wClause = sqlWhere == null ? "" : " WHERE " + sqlWhere;
+    String sqlQuery = "SELECT * FROM " + storage.getClusterMetaTable() + wClause
+        + " LIMIT " + limit + " OFFSET " + offset;
+    return getMarcxmlRecords(ctx, storage, sqlQuery, handler);
+  }
+
+  static Future<Void> getMarcxmlRecords(RoutingContext ctx, Storage storage, String sqlQuery,
+      Handler<String> handler) {
+
+    return storage.getTransformer(ctx).compose(transformer -> {
+      log.info("SQL Query: {}", sqlQuery);
+      return storage.getPool()
+          .withConnection(conn -> conn.query(sqlQuery)
+              .execute()
+              .compose(res -> {
+                RowIterator<Row> iterator = res.iterator();
+                Future<Void> future = Future.succeededFuture();
+                while (iterator.hasNext()) {
+                  Row row = iterator.next();
+                  future = future.compose(x -> {
+                    ClusterRecordItem cr = new ClusterRecordItem(row);
+                    ClusterRecordStream clusterRecordStream = new ClusterRecordStream(
+                        ctx.vertx(), storage, conn, null, transformer, false, null);
+                    return clusterRecordStream.getClusterMarcXml(cr)
+                        .map(marcxml -> {
+                          handler.handle(marcxml);
+                          return null;
+                        });
+                  });
+                }
+                return future;
+              }
+        ));
+    });
+  }
 
   private static Future<Void> getRecords(RoutingContext ctx, Storage storage, PgCqlQuery pgCqlQuery,
       int startRecord, int maximumRecords) {

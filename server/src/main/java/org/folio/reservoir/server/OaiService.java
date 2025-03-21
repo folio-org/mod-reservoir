@@ -3,6 +3,8 @@ package org.folio.reservoir.server;
 import static org.folio.reservoir.util.EncodeXmlText.encodeXmlText;
 
 import io.vertx.core.Future;
+import io.vertx.core.Vertx;
+import io.vertx.core.buffer.Buffer;
 import io.vertx.core.http.HttpServerResponse;
 import io.vertx.core.json.JsonArray;
 import io.vertx.core.json.JsonObject;
@@ -274,6 +276,53 @@ public final class OaiService {
     response.write("</resumptionToken>\n");
   }
 
+  static Future<String> getClusterMarcXml(ClusterBuilder cb, ModuleExecutable transformer,
+      Vertx vertx) {
+
+    if (cb == null) {
+      return Future.succeededFuture(null); // deleted record
+    } else if (transformer == null) {
+      return Future.succeededFuture(getMetadataJava(cb.build()));
+    }
+    JsonObject cluster = cb.build();
+    return vertx.executeBlocking(prom -> {
+      try {
+        prom.handle(transformer.execute(cluster).map(JsonToMarcXml::convert));
+      } catch (Exception e) {
+        prom.fail(e);
+      }
+    });
+  }
+
+  static Future<Buffer> getClusterRecordMetadata(Row row, ModuleExecutable transformer,
+      Storage storage, SqlConnection connection, boolean withMetadata, Vertx vertx) {
+
+    ClusterRecordItem cr = new ClusterRecordItem(row);
+    return cr.populateCluster(storage, connection, withMetadata)
+      .compose(cb -> getClusterMarcXml(cb, transformer, vertx)
+        .map(metadata -> {
+          String begin = withMetadata ? "    <record>\n" : "";
+          String end = withMetadata ? "    </record>\n" : "";
+          return Buffer.buffer(
+              begin
+                  + "      <header" + (metadata == null
+                  ? " status=\"deleted\"" : "") + ">\n"
+                  + "        <identifier>"
+                  + encodeXmlText(encodeOaiIdentifier(cr.clusterId)) + "</identifier>\n"
+                  + "        <datestamp>"
+                  + encodeXmlText(Util.formatOaiDateTime(cr.datestamp))
+                  + "</datestamp>\n"
+                  + "        <setSpec>" + encodeXmlText(cr.oaiSet) + "</setSpec>\n"
+                  + "      </header>\n"
+                  + (withMetadata && metadata != null
+                  ? "    <metadata>\n" + metadata + "\n"
+                  + "    </metadata>\n"
+                  : "")
+                  + end);
+        })
+    );
+  }
+
   @java.lang.SuppressWarnings({"squid:S107"})  // too many arguments
   static Future<Void> listRecordsResponse(RoutingContext ctx, ModuleExecutable transformer,
       Storage storage, SqlConnection conn, String sqlQuery, Tuple tuple, Integer limit,
@@ -284,7 +333,10 @@ public final class OaiService {
         conn.begin().compose(tx -> {
           HttpServerResponse response = ctx.response();
           ClusterRecordStream clusterRecordStream = new ClusterRecordStream(
-              ctx.vertx(), storage, conn, response, transformer, withMetadata);
+              ctx.vertx(), storage, conn, response, transformer, withMetadata, row ->
+                getClusterRecordMetadata(row, transformer, storage, conn,
+                withMetadata, ctx.vertx())
+          );
           RowStream<Row> stream = pq.createStream(100, tuple);
           AtomicInteger cnt = new AtomicInteger();
           clusterRecordStream.drainHandler(x -> stream.resume());
@@ -304,8 +356,7 @@ public final class OaiService {
               return;
             }
             cnt.incrementAndGet();
-            ClusterRecordItem cr = new ClusterRecordItem(row);
-            clusterRecordStream.write(cr);
+            clusterRecordStream.write(row);
             if (clusterRecordStream.writeQueueFull()) {
               stream.pause();
             }
@@ -342,13 +393,10 @@ public final class OaiService {
                   throw OaiException.idDoesNotExist(identifier);
                 }
                 Row row = iterator.next();
-                ClusterRecordItem cr = new ClusterRecordItem(row);
-                HttpServerResponse response = ctx.response();
-                ClusterRecordStream clusterRecordStream = new ClusterRecordStream(
-                    ctx.vertx(), storage, conn, response, transformer, true);
-                return clusterRecordStream.getClusterRecordMetadata(cr)
+                return getClusterRecordMetadata(row, transformer, storage, conn, true, ctx.vertx())
                     .map(buf -> {
                       oaiHeader(ctx);
+                      HttpServerResponse response = ctx.response();
                       response.write("  <GetRecord>\n");
                       response.write(buf);
                       response.write("  </GetRecord>\n");
