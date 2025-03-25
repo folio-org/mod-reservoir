@@ -26,9 +26,9 @@ Do 'cd ..' to change to the 'mod-reservoir/js' directory.
 
 Do 'npm install' to install and configure ESLint.
 
-Do 'npm run lint-goldrush' and 'npm run lint-test'.
+Do 'npm run lint-goldrush2024' and 'npm run lint-test-goldrush2024' etc.
 
 There are some sample MARC files in the [js/test/records](../test/records) directory.
 
-The tests are basic at this stage. Do 'npm run test' to process the samples.
+The tests are basic at this stage. Do 'npm run test-goldrush2024' to process the samples.
 

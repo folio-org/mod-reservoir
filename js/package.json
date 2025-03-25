@@ -2,10 +2,14 @@
   "license": "Apache-2.0",
   "type": "module",
   "scripts": {
-    "lint-goldrush": "eslint matchkeys/goldrush/goldrush.mjs",
-    "explain-lint-goldrush": "eslint --print-config matchkeys/goldrush/goldrush.mjs",
-    "lint-test": "eslint test/main.js",
-    "test": "node test/main.js"
+    "lint-goldrush2024": "eslint matchkeys/goldrush2024/goldrush.mjs",
+    "explain-lint-goldrush2024": "eslint --print-config matchkeys/goldrush2024/goldrush.mjs",
+    "lint-test-goldrush2024": "eslint test/goldrush2024.mjs",
+    "test-goldrush2024": "node test/goldrush2024.mjs",
+    "lint-goldrush2021": "eslint matchkeys/goldrush/goldrush.mjs",
+    "explain-lint-goldrush2021": "eslint --print-config matchkeys/goldrush/goldrush.mjs",
+    "lint-test-goldrush2021": "eslint test/goldrush2021.mjs",
+    "test-goldrush2021": "node test/goldrush2021.mjs"
   },
   "devDependencies": {
     "eslint": "^8.2.0",
