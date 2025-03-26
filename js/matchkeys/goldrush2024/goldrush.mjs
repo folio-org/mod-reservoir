@@ -156,14 +156,17 @@ function doPublicationYear(fieldData) {
     if (fieldData[n] !== null) {
       let dataStr = '';
       if (n === 0) {
-        // Try for date2 from field 008
-        dataStr = `${fieldData[n]}`.substring(11, 15).replace(/[^0-9]/g, '');
-        if ((dataStr.match(/[1-9][0-9]{3}/)) && (dataStr !== '9999')) {
-          fieldStr = dataStr;
-          break;
-        } else {
-          // Try for date1 from field 008
+        const dateType = `${fieldData[n]}`.substring(6, 7);
+        if (dateType === 'r') {
+          // Try for date1 from field 008 -- reissue
           dataStr = `${fieldData[n]}`.substring(7, 11).replace(/[^0-9]/g, '');
+          if ((dataStr.match(/[1-9][0-9]{3}/)) && (dataStr !== '9999')) {
+            fieldStr = dataStr;
+            break;
+          }
+        } else {
+          // Try for date2 from field 008
+          dataStr = `${fieldData[n]}`.substring(11, 15).replace(/[^0-9]/g, '');
           if ((dataStr.match(/[1-9][0-9]{3}/)) && (dataStr !== '9999')) {
             fieldStr = dataStr;
             break;
