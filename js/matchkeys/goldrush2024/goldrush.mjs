@@ -431,6 +431,7 @@ export function matchkey(record) {
     getField(marcObj, '100', 'a'),
     getField(marcObj, '110', 'a'),
     getField(marcObj, '111', 'a'),
+    getField(marcObj, '130', 'a'),
   ]));
   keyStr += addComponent(doInclusiveDates(getRelevantSubField(marcObj, '245', 'f')));
   keyStr += addComponent(doGDCN(getRelevantSubField(marcObj, '086', 'a')));
