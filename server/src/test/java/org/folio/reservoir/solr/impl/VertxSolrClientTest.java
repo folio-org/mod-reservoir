@@ -30,7 +30,7 @@ public class VertxSolrClientTest {
   private final static String COLLECTION = "col1";
 
   @ClassRule
-  public static SolrContainer solrContainer = new SolrContainer("solr:9.1.0")
+  public static SolrContainer solrContainer = new SolrContainer("solr:9.8.1-slim")
       .withCollection(COLLECTION);
 
   private static Vertx vertx;
