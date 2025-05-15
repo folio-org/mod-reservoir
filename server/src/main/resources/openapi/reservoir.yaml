@@ -951,6 +951,173 @@ paths:
           $ref: "#/components/responses/trait_404"
         "500":
           $ref: "#/components/responses/trait_500"
+  /reservoir/solr:
+    parameters:
+      - $ref: headers/okapi-tenant.yaml
+      - $ref: headers/okapi-token.yaml
+      - $ref: headers/okapi-url.yaml
+    post:
+      description: Create Solr outlet
+      operationId: postSolrOutlet
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: schemas/solrOutlet.json
+      responses:
+        "201":
+          description: Solr outlet created
+          content:
+            application/json:
+              schema:
+                $ref: schemas/solrOutlet.json
+        "400":
+          $ref: "#/components/responses/trait_400"
+        "500":
+          $ref: "#/components/responses/trait_500"
+    get:
+      description: Get collection of Solr outlets
+      operationId: getSolrOutlets
+      responses:
+        "201":
+          description: List of Solr outlets
+          content:
+            application/json:
+              schema:
+                $ref: schemas/solrOutlets.json
+        "400":
+          $ref: "#/components/responses/trait_400"
+        "500":
+          $ref: "#/components/responses/trait_500"
+  /reservoir/solr/{id}:
+    parameters:
+      - $ref: headers/okapi-tenant.yaml
+      - $ref: headers/okapi-token.yaml
+      - $ref: headers/okapi-url.yaml
+      - in: path
+        name: id
+        required: true
+        description: Solr outlet identifier
+        schema:
+          type: string
+    get:
+      description: Get Solr outlet
+      operationId: getSolrOutlet
+      responses:
+        "200":
+          description: Solr outlet returned
+          content:
+            application/json:
+              schema:
+                $ref: schemas/solrOutlet.json
+        "400":
+          $ref: "#/components/responses/trait_400"
+        "404":
+          $ref: "#/components/responses/trait_404"
+        "500":
+          $ref: "#/components/responses/trait_500"
+    put:
+      description: Update Solr outlet
+      operationId: putSolrOutlet
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: schemas/solrOutlet.json
+      responses:
+        "204":
+          description: Updated OK
+        "400":
+          $ref: "#/components/responses/trait_400"
+        "404":
+          $ref: "#/components/responses/trait_404"
+        "500":
+          $ref: "#/components/responses/trait_500"
+    delete:
+      description: Delete Solr outlet
+      operationId: deleteSolrOutlet
+      responses:
+        "204":
+          description: Solr outlet deleted
+        "400":
+          $ref: "#/components/responses/trait_400"
+        "404":
+          $ref: "#/components/responses/trait_404"
+        "500":
+          $ref: "#/components/responses/trait_500"
+  /reservoir/solr/{id}/start:
+    parameters:
+      - $ref: headers/okapi-tenant.yaml
+      - $ref: headers/okapi-token.yaml
+      - $ref: headers/okapi-url.yaml
+      - in: path
+        name: id
+        required: true
+        description: Solr outlet identifier; "_all" for all outlets
+        schema:
+          type: string
+    post:
+      description: Start Solr outlet job
+      operationId: startSolrOutlet
+      responses:
+        "204":
+          description: Started OK
+        "400":
+          $ref: "#/components/responses/trait_400"
+        "404":
+          $ref: "#/components/responses/trait_404"
+        "500":
+          $ref: "#/components/responses/trait_500"
+  /reservoir/solr/{id}/stop:
+    parameters:
+      - $ref: headers/okapi-tenant.yaml
+      - $ref: headers/okapi-token.yaml
+      - $ref: headers/okapi-url.yaml
+      - in: path
+        name: id
+        required: true
+        description: Solr outlet identifier; "_all" for all outlets
+        schema:
+          type: string
+    post:
+      description: Stop Solr outlet job
+      operationId: stopSolrOutlet
+      responses:
+        "204":
+          description: Stopped OK
+        "400":
+          $ref: "#/components/responses/trait_400"
+        "404":
+          $ref: "#/components/responses/trait_404"
+        "500":
+          $ref: "#/components/responses/trait_500"
+  /reservoir/sol1r/{id}/status:
+    parameters:
+      - $ref: headers/okapi-tenant.yaml
+      - $ref: headers/okapi-token.yaml
+      - $ref: headers/okapi-url.yaml
+      - in: path
+        name: id
+        required: true
+        description: Solr outlet identifier; "_all" for all outlets
+        schema:
+          type: string
+    get:
+      description: Get Solr outlet(s) status
+      operationId: statusSolrOutlets
+      responses:
+        "200":
+          description: Status
+          content:
+            application/json:
+              schema:
+                $ref: schemas/solrOutletStatus.json
+        "400":
+          $ref: "#/components/responses/trait_400"
+        "404":
+          $ref: "#/components/responses/trait_404"
+        "500":
+          $ref: "#/components/responses/trait_500"
 # Reservoir error responses
 components:
   responses:
