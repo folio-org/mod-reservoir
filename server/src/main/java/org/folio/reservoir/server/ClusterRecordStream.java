@@ -85,44 +85,44 @@ public class ClusterRecordStream implements WriteStream<ClusterRecordItem> {
         });
   }
 
-  Future<Buffer> getClusterRecordMetadata(ClusterRecordItem cr) {
+  Future<String> getClusterMarcXml(ClusterRecordItem cr) {
     return populateCluster(cr)
         .compose(cb -> {
-          Future<String> future;
           if (cb == null) {
-            future = Future.succeededFuture(null); // deleted record
+            return Future.succeededFuture(null); // deleted record
           } else if (transformer == null) {
-            future = Future.succeededFuture(getMetadataJava(cb.build()));
-          } else {
-            JsonObject cluster = cb.build();
-            future = vertx.executeBlocking(prom -> {
-              try {
-                prom.handle(transformer.execute(cluster).map(JsonToMarcXml::convert));
-              } catch (Exception e) {
-                prom.fail(e);
-              }
-            });
+            return Future.succeededFuture(getMetadataJava(cb.build()));
           }
-          return future.map(metadata -> {
-            String begin = withMetadata ? "    <record>\n" : "";
-            String end = withMetadata ? "    </record>\n" : "";
-            return Buffer.buffer(
-                begin
-                    + "      <header" + (metadata == null
-                    ? " status=\"deleted\"" : "") + ">\n"
-                    + "        <identifier>"
-                    + encodeXmlText(encodeOaiIdentifier(cr.clusterId)) + "</identifier>\n"
-                    + "        <datestamp>"
-                    + encodeXmlText(Util.formatOaiDateTime(cr.datestamp))
-                    + "</datestamp>\n"
-                    + "        <setSpec>" + encodeXmlText(cr.oaiSet) + "</setSpec>\n"
-                    + "      </header>\n"
-                    + (withMetadata && metadata != null
-                    ? "    <metadata>\n" + metadata + "\n"
-                    + "    </metadata>\n"
-                    : "")
-                    + end);
-          });
+          JsonObject cluster = cb.build();
+          try {
+            return transformer.execute(cluster).map(JsonToMarcXml::convert);
+          } catch (Exception e) {
+            return Future.failedFuture(e);
+          }
+        });
+  }
+
+  Future<Buffer> getClusterRecordMetadata(ClusterRecordItem cr) {
+    return getClusterMarcXml(cr)
+        .map(metadata -> {
+          String begin = withMetadata ? "    <record>\n" : "";
+          String end = withMetadata ? "    </record>\n" : "";
+          return Buffer.buffer(
+              begin
+                  + "      <header" + (metadata == null
+                  ? " status=\"deleted\"" : "") + ">\n"
+                  + "        <identifier>"
+                  + encodeXmlText(encodeOaiIdentifier(cr.clusterId)) + "</identifier>\n"
+                  + "        <datestamp>"
+                  + encodeXmlText(Util.formatOaiDateTime(cr.datestamp))
+                  + "</datestamp>\n"
+                  + "        <setSpec>" + encodeXmlText(cr.oaiSet) + "</setSpec>\n"
+                  + "      </header>\n"
+                  + (withMetadata && metadata != null
+                  ? "    <metadata>\n" + metadata + "\n"
+                  + "    </metadata>\n"
+                  : "")
+                  + end);
         });
   }
 

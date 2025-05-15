@@ -23,13 +23,10 @@ import java.util.concurrent.atomic.AtomicInteger;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.folio.okapi.common.HttpResponse;
-import org.folio.reservoir.module.ModuleCache;
 import org.folio.reservoir.module.ModuleExecutable;
-import org.folio.reservoir.module.ModuleInvocation;
 import org.folio.reservoir.server.entity.ClusterBuilder;
 import org.folio.reservoir.util.JsonToMarcXml;
 import org.folio.reservoir.util.MarcInJsonUtil;
-import org.folio.tlib.util.TenantUtil;
 
 public final class OaiService {
   private static final Logger log = LogManager.getLogger(OaiService.class);
@@ -62,7 +59,7 @@ public final class OaiService {
     response.write(OAI_HEADER);
     response.write("  <responseDate>" + Instant.now() + "</responseDate>\n");
     response.write("  <request");
-    String verb = Util.getParameterString(params.queryParameter("verb"));
+    String verb = Util.getQueryParameter(params, "verb");
     if (verb != null) {
       response.write(" verb=\"" + encodeXmlText(verb) + "\"");
     }
@@ -96,11 +93,11 @@ public final class OaiService {
   static Future<Void> getCheck(RoutingContext ctx) {
     try {
       RequestParameters params = ctx.get(ValidationHandler.REQUEST_CONTEXT_KEY);
-      String verb = Util.getParameterString(params.queryParameter("verb"));
+      String verb = Util.getQueryParameter(params, "verb");
       if (verb == null) {
         throw OaiException.badVerb("missing verb");
       }
-      String metadataPrefix = Util.getParameterString(params.queryParameter("metadataPrefix"));
+      String metadataPrefix = Util.getQueryParameter(params, "metadataPrefix");
       if (metadataPrefix != null && !"marcxml".equals(metadataPrefix)) {
         throw OaiException.cannotDisseminateFormat("only metadataPrefix \"marcxml\" supported");
       }
@@ -149,13 +146,13 @@ public final class OaiService {
 
   static Future<Void> listRecords(RoutingContext ctx, boolean withMetadata) {
     RequestParameters params = ctx.get(ValidationHandler.REQUEST_CONTEXT_KEY);
-    String coded = Util.getParameterString(params.queryParameter("resumptionToken"));
+    String coded = Util.getQueryParameter(params, "resumptionToken");
     ResumptionToken token = coded != null ? new ResumptionToken(coded) : null;
     String set = token != null
-        ? token.getSet() : Util.getParameterString(params.queryParameter("set"));
-    String from = Util.getParameterString(params.queryParameter("from"));
+        ? token.getSet() : Util.getQueryParameter(params, "set");
+    String from = Util.getQueryParameter(params, "from");
     String until = token != null
-        ? token.getUntil() : Util.getParameterString(params.queryParameter("until"));
+        ? token.getUntil() : Util.getQueryParameter(params, "until");
     Integer limit = params.queryParameter("limit").getInteger();
     Storage storage = new Storage(ctx);
     return storage.selectMatchKeyConfig(set).compose(conf -> {
@@ -189,7 +186,7 @@ public final class OaiService {
       }
       ResumptionToken resumptionToken = new ResumptionToken(conf.getString("id"), until);
       sqlQuery.append(" ORDER BY datestamp, cluster_id");
-      return getTransformer(storage, ctx)
+      return storage.getTransformer(ctx)
           .compose(transformer -> storage.getPool().getConnection().compose(conn ->
               listRecordsResponse(ctx, transformer, storage, conn, sqlQuery.toString(),
                   Tuple.from(tupleList), limit, withMetadata, resumptionToken)
@@ -262,29 +259,6 @@ public final class OaiService {
     return JsonToMarcXml.convert(combinedMarc);
   }
 
-  static Future<ModuleExecutable> getTransformer(Storage storage, RoutingContext ctx) {
-    return storage.selectOaiConfig()
-        .compose(oaiCfg -> {
-          if (oaiCfg == null) {
-            return Future.succeededFuture(null);
-          }
-          String transformerProp = oaiCfg.getString("transformer");
-          if (transformerProp == null) {
-            return Future.succeededFuture(null);
-          }
-          ModuleInvocation invocation = new ModuleInvocation(transformerProp);
-          return storage.selectCodeModuleEntity(invocation.getModuleName())
-              .compose(entity -> {
-                if (entity == null) {
-                  return Future.failedFuture("Transformer module '" 
-                    + invocation.getModuleName() + "' not found");
-                }
-                return ModuleCache.getInstance().lookup(ctx.vertx(), TenantUtil.tenant(ctx), entity)
-                          .map(mod -> new ModuleExecutable(mod, invocation));
-              });
-        });
-  }
-
   static Future<ClusterBuilder> getClusterValues(Storage storage, SqlConnection conn,
       UUID clusterId, ClusterBuilder cb) {
     return conn.preparedQuery("SELECT match_value FROM " + storage.getClusterValuesTable()
@@ -351,13 +325,13 @@ public final class OaiService {
 
   static Future<Void> getRecord(RoutingContext ctx) {
     RequestParameters params = ctx.get(ValidationHandler.REQUEST_CONTEXT_KEY);
-    String identifier = Util.getParameterString(params.queryParameter("identifier"));
+    String identifier = Util.getQueryParameter(params, "identifier");
     if (identifier == null) {
       throw OaiException.badArgument("missing identifier");
     }
     UUID clusterId = decodeOaiIdentifier(identifier);
     Storage storage = new Storage(ctx);
-    return getTransformer(storage, ctx).compose(transformer -> {
+    return storage.getTransformer(ctx).compose(transformer -> {
       String sqlQuery = "SELECT * FROM " + storage.getClusterMetaTable() + " WHERE cluster_id = $1";
       return storage.getPool()
           .withConnection(conn -> conn.preparedQuery(sqlQuery)
@@ -384,4 +358,5 @@ public final class OaiService {
               }));
     });
   }
+
 }
