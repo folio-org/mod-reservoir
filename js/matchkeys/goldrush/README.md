@@ -1,6 +1,6 @@
 # Matchkeys - goldrush2021
 
-This implements the "Gold Rush - Colorado Alliance MARC record match key generation" (specification September 2021).
+This implements the "Gold Rush - Colorado Alliance MARC record match key generation" (specification dated September 2021).
 
 ## Status
 
