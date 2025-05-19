@@ -49,10 +49,10 @@ The server's database connection is then configured by setting environment varia
 Once configured, start the server with:
 
 ```
-java -Dport=8081 --module-path=server/target/compiler/ \
-  --upgrade-module-path=server/target/compiler/compiler.jar \
-  -XX:+UnlockExperimentalVMOptions -XX:+EnableJVMCI \
-  -jar server/target/mod-reservoir-server-fat.jar
+java -Dport=8081 --module-path=compiler/ \
+   --upgrade-module-path=compiler/compiler.jar:compiler/compiler-management.jar \
+   -XX:+UnlockExperimentalVMOptions -XX:+EnableJVMCI \
+   -jar server/target/mod-reservoir-server-fat.jar
 ```
 
 ## Server metrics
