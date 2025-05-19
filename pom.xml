@@ -38,7 +38,7 @@
   <properties>
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
     <!-- graalvm >= 23.1.0 requires reorganisation: https://medium.com/graalvm/truffle-unchained-13887b77b62c -->
-    <graalvm.version>23.0.6</graalvm.version>
+    <graalvm.version>23.1.2</graalvm.version>
     <log4j2.version>2.24.3</log4j2.version>
     <vertx.version>4.5.14</vertx.version>
     <okapi.version>6.2.3</okapi.version>
@@ -146,14 +146,16 @@
         <version>12.5</version>
       </dependency>
       <dependency>
-        <groupId>org.graalvm.js</groupId>
-        <artifactId>js</artifactId>
+        <groupId>org.graalvm.polyglot</groupId>
+        <artifactId>polyglot</artifactId>
         <version>${graalvm.version}</version>
+        <type>jar</type>
       </dependency>
       <dependency>
-        <groupId>org.graalvm.regex</groupId>
-        <artifactId>regex</artifactId>
+        <groupId>org.graalvm.polyglot</groupId>
+        <artifactId>js</artifactId>
         <version>${graalvm.version}</version>
+        <type>pom</type>
       </dependency>
       <dependency>
         <groupId>org.awaitility</groupId>

@@ -76,12 +76,13 @@
       <artifactId>json-path</artifactId>
     </dependency>
     <dependency>
-      <groupId>org.graalvm.js</groupId>
-      <artifactId>js</artifactId>
+      <groupId>org.graalvm.polyglot</groupId>
+      <artifactId>polyglot</artifactId>
     </dependency>
     <dependency>
-      <groupId>org.graalvm.regex</groupId>
-      <artifactId>regex</artifactId>
+      <groupId>org.graalvm.polyglot</groupId>
+      <artifactId>js</artifactId>
+      <type>pom</type>
     </dependency>
     <!-- Test dependencies -->
     <dependency>
@@ -242,7 +243,8 @@
             <goals>
               <goal>copy</goal>
             </goals>
-            <configuration>
+	    <!-- https://github.com/graalvm/polyglot-embedding-demo/blob/main/pom.xml -->
+	    <configuration>
               <artifactItems>
                 <artifactItem>
                   <groupId>org.graalvm.compiler</groupId>
