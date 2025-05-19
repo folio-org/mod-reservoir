@@ -11,7 +11,7 @@ function assert(result, message) {
   return result;
 }
 
-const assertionsFile = 'test/assertions-goldrush.json';
+const assertionsFile = 'test/assertions-goldrush2021.json';
 const assertionsJson = fs.readFileSync(assertionsFile, 'utf8');
 const assertionsGoldrush = JSON.parse(assertionsJson);
 let testsNum = 0;
