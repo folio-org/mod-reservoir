@@ -81,7 +81,7 @@
     </dependency>
     <dependency>
       <groupId>org.graalvm.polyglot</groupId>
-      <artifactId>js</artifactId>
+      <artifactId>js-community</artifactId>
       <type>pom</type>
     </dependency>
     <!-- Test dependencies -->
