@@ -1258,4 +1258,26 @@ public class Storage {
             .onFailure(x -> sqlConnection.close()));
   }
 
+  Future<ModuleExecutable> getTransformer(RoutingContext ctx) {
+    return selectOaiConfig()
+        .compose(oaiCfg -> {
+          if (oaiCfg == null) {
+            return Future.succeededFuture(null);
+          }
+          String transformerProp = oaiCfg.getString("transformer");
+          if (transformerProp == null) {
+            return Future.succeededFuture(null);
+          }
+          ModuleInvocation invocation = new ModuleInvocation(transformerProp);
+          return selectCodeModuleEntity(invocation.getModuleName())
+              .compose(entity -> {
+                if (entity == null) {
+                  return Future.failedFuture("Transformer module '"
+                    + invocation.getModuleName() + "' not found");
+                }
+                return ModuleCache.getInstance().lookup(ctx.vertx(), TenantUtil.tenant(ctx), entity)
+                          .map(mod -> new ModuleExecutable(mod, invocation));
+              });
+        });
+  }
 }
