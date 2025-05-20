@@ -1,6 +1,6 @@
 # Reservoir
 
-Copyright (C) 2021-2023 The Open Library Foundation
+Copyright (C) 2021-2025 The Open Library Foundation
 
 This software is distributed under the terms of the Apache License,
 Version 2.0. See the file "[LICENSE](LICENSE)" for more information.
@@ -19,7 +19,7 @@ This project has three subprojects:
 
 Requirements:
 
-* Java 17 or later
+* Java 21 (later versions might not work with graalvm)
 * Maven 3.6.3 or later
 * Docker (unless `-DskipTests` is used)
 
