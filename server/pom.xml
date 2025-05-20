@@ -243,8 +243,8 @@
             <goals>
               <goal>copy</goal>
             </goals>
-	          <!-- https://github.com/graalvm/polyglot-embedding-demo/blob/main/pom.xml -->
-	          <configuration>
+            <!-- https://github.com/graalvm/polyglot-embedding-demo/blob/main/pom.xml -->
+            <configuration>
               <outputDirectory>${graal.compiler.dir}</outputDirectory>
               <overWriteReleases>true</overWriteReleases>
               <overWriteSnapshots>true</overWriteSnapshots>
