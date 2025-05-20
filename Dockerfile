@@ -1,4 +1,4 @@
-# https://github.com/folio-org/folio-tools/tree/master/folio-java-docker/openjdk17
+# https://github.com/folio-org/folio-tools/tree/master/folio-java-docker/openjdk21
 FROM folioci/alpine-jre-openjdk21:latest
 
 # Install latest patch versions of packages: https://pythonspeed.com/articles/security-updates-in-docker/
